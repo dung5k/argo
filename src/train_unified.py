@@ -324,11 +324,19 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             try:
                 subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
                 subprocess.run(["git", "add", "runs/"], cwd=base_dir, capture_output=True)
-                subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True)
-                subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, timeout=60)
-                print("    [GIT] Đã đồng bộ kết quả mới lên kho chứa Github.")
+                c_res = subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True, text=True)
+                p_res = subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, text=True, timeout=60)
+                
+                if p_res.returncode == 0:
+                    print("    [GIT] Đã đồng bộ kết quả mới lên kho chứa Github.")
+                else:
+                    err = p_res.stderr.strip() if p_res.stderr else p_res.stdout.strip()
+                    if "nothing to commit" in c_res.stdout:
+                        print("    [GIT] Không có thay đổi mới để commit.")
+                    else:
+                        print(f"    [GIT LỖI PUSH] {err}")
             except Exception as e:
-                print(f"    [GIT LỖI] {e}")
+                print(f"    [GIT LỖI THỰC THI THÊM] {e}")
         
         # Chạy đồng bộ ngầm
         import threading

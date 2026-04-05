@@ -455,11 +455,18 @@ class TelegramAgent:
 
                 peak_lines = [l for l in lines if "ĐỈNH MỚI" in l]
                 current_peak = peak_lines[-1] if peak_lines else ""
+
+                git_err_lines = [l for l in lines if "[GIT LỖI PUSH]" in l or "[GIT LỖI THỰC THI THÊM]" in l]
+                current_git_err = git_err_lines[-1] if git_err_lines else ""
                 
                 import html
                 send_msg = ""
                 
-                if current_peak and current_peak != last_peak_line:
+                if current_git_err and current_git_err != getattr(self, "_last_git_err", ""):
+                    self._last_git_err = current_git_err
+                    send_msg = f"🚨 <b>{self.client_id}</b> GẶP LỖI ĐẨY GIT!\n"
+                    send_msg += f"<pre>{html.escape(current_git_err.strip())}</pre>"
+                elif current_peak and current_peak != last_peak_line:
                     last_peak_line = current_peak
                     send_msg = f"🏆 <b>{self.client_id}</b> TÌM THẤY MẪU MỚI!\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
