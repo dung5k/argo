@@ -15,6 +15,7 @@ data/*.pkl
 # File nhan dien tung may khach
 .client_id
 .python_path
+client*/
 
 # Bỏ qua lịch sử model cũ, nhưng giữ lại các Thư mục Run mới
 runs/old/
