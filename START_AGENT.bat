@@ -69,15 +69,21 @@ echo Vui long mo thu muc cai dat Python tren may, copy duong dan file python.exe
 echo ^(Vi du: C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe^)
 set /p MANUAL_PY="Nhap duong dan python.exe (hoac Enter de thoat): "
 if "!MANUAL_PY!"=="" exit /b 1
+
+:: Giup user neu ho chi nhap thu muc thay vi file python.exe
+if exist "!MANUAL_PY!\python.exe" set MANUAL_PY=!MANUAL_PY!\python.exe
+
 if not exist "!MANUAL_PY!" (
     echo [LOI] Duong dan khong hop le hoac khong ton tai file python.exe!
     goto :prompt_python
 )
 set PYTHON_EXE=!MANUAL_PY!
+attrib -h ".python_path" >nul 2>&1
 echo !PYTHON_EXE!>".python_path"
-attrib +h ".python_path"
+attrib +h ".python_path" >nul 2>&1
 
 :found_python
+attrib -h ".python_path" >nul 2>&1
 echo !PYTHON_EXE!>".python_path"
 attrib +h ".python_path" >nul 2>&1
 echo [OK] Python phat hien: !PYTHON_EXE!
@@ -88,7 +94,7 @@ echo.
 :: =============================================================
 if exist ".git" (
     git --version >nul 2>&1
-    if %errorlevel% equ 0 (
+    if !errorlevel! equ 0 (
         echo [GIT] Dang dong bo code moi nhat tu ARGO...
         git pull --rebase
     ) else (
@@ -118,7 +124,7 @@ echo [INFO] Dang cai dat moi truong (chi mat vai phut lan dau)...
 :install_deps
 echo [INFO] Dang cai dat cac thu vien can thiet...
 "venv\Scripts\python.exe" -m pip install -q -r requirements.txt 2>nul
-if %errorlevel% neq 0 (
+if !errorlevel! neq 0 (
     "venv\Scripts\python.exe" -m pip install -q torch pandas numpy pyarrow scikit-learn
 )
 echo [OK] Thu vien san sang.
