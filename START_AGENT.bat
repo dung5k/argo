@@ -28,9 +28,15 @@ echo [OK] Client hien tai: !CLIENT_ID!
 echo.
 
 :: =============================================================
-:: TIM PYTHON
+:: TIM PYTHON HOAC YEU CAU NHAP DUONG DAN
 :: =============================================================
 set PYTHON_EXE=
+if exist ".python_path" (
+    set /p PYTHON_EXE=<".python_path"
+    for /f "tokens=*" %%a in ("!PYTHON_EXE!") do set PYTHON_EXE=%%a
+    if exist "!PYTHON_EXE!" goto :found_python
+)
+
 python -c "import sys; print(sys.executable)" >"%TEMP%\py_path.txt" 2>nul
 if %errorlevel% equ 0 (
     set /p PYTHON_EXE=<"%TEMP%\py_path.txt"
@@ -41,6 +47,8 @@ if %errorlevel% equ 0 (
     set /p PYTHON_EXE=<"%TEMP%\py_path.txt"
     goto :found_python
 )
+
+:: Quet cac path pho bien
 for %%P in (
     "%LOCALAPPDATA%\Programs\Python\Python314\python.exe"
     "%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
@@ -49,16 +57,29 @@ for %%P in (
     "C:\Python313\python.exe"
     "C:\Program Files\Python314\python.exe"
 ) do (
-    if exist %%P (
+    if exist "%%~P" (
         set PYTHON_EXE=%%~P
         goto :found_python
     )
 )
-echo [LOI] Khong tim thay Python tren may nay! Vui long cai Python.
-pause
-exit /b 1
+
+:prompt_python
+echo [LOI] Khong tim thay Python tu dong tren may nay!
+echo Vui long mo thu muc cai dat Python tren may, copy duong dan file python.exe
+echo ^(Vi du: C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe^)
+set /p MANUAL_PY="Nhap duong dan python.exe (hoac Enter de thoat): "
+if "!MANUAL_PY!"=="" exit /b 1
+if not exist "!MANUAL_PY!" (
+    echo [LOI] Duong dan khong hop le hoac khong ton tai file python.exe!
+    goto :prompt_python
+)
+set PYTHON_EXE=!MANUAL_PY!
+echo !PYTHON_EXE!>".python_path"
+attrib +h ".python_path"
 
 :found_python
+echo !PYTHON_EXE!>".python_path"
+attrib +h ".python_path" >nul 2>&1
 echo [OK] Python phat hien: !PYTHON_EXE!
 echo.
 

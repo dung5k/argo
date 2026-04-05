@@ -14,6 +14,7 @@ data/*.pkl
 
 # File nhan dien tung may khach
 .client_id
+.python_path
 
 # Runs va logs (lon, khong can sync qua git)
 
