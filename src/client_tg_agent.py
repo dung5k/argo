@@ -283,6 +283,27 @@ class TelegramAgent:
                 except Exception as e:
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy {script}: {e}")
             threading.Thread(target=_run_script, daemon=True).start()
+            
+        elif action == "run_code":
+            code = payload.get("code", "")
+            if not code: return
+            def _run_raw():
+                try:
+                    import tempfile
+                    # Tạo file python tạm thời và chạy
+                    fd, path = tempfile.mkstemp(suffix=".py", text=True)
+                    with os.fdopen(fd, "w", encoding="utf-8") as f:
+                        f.write(code)
+                    python = self.manager._python_exe()
+                    r = subprocess.run([python, path], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    if self.mqtt:
+                        out = r.stdout.strip() if r.stdout else r.stderr.strip()
+                        self.mqtt.send_log("RUN_OUT", f"[RAW_CODE] \n{out}")
+                    try: os.remove(path)
+                    except: pass
+                except Exception as e:
+                    if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy RAW_CODE: {e}")
+            threading.Thread(target=_run_raw, daemon=True).start()
         elif action == "update":
             def _do_update():
                 time.sleep(2)  # Đợi 2s để vòng lặp chính hồi đáp(ack) tin nhắn cho MQTT/TG
