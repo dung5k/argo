@@ -637,6 +637,11 @@ if __name__ == "__main__":
     features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
 
+    if not os.path.exists(target_path):
+        fallback_target = os.path.join(data_path, "target_direction.parquet")
+        if os.path.exists(fallback_target):
+            target_path = fallback_target
+
     print(f"[INIT] Tìm file features: {features_path}")
 
     if os.path.exists(features_path):
