@@ -523,9 +523,17 @@ class TelegramAgent:
                          f"📂 {self.base_dir}\n\n"
                          f"Lệnh: /train {self.client_id} | /kill {self.client_id} | /status | /log {self.client_id}")
 
-        # Chạy 2 thread song song
+        # Chạy thread cập nhật tiến độ
         threading.Thread(target=self._progress_loop, daemon=True, name="progress").start()
-        self._poll_loop()  # blocking
+        
+        if self.mqtt:
+            self.logger.info("📡 Chế độ Đa Client: Đã TẮT Telegram Long-Polling để tránh đụng độ (HTTP 409).")
+            self.logger.info("📡 (Luồng lệnh bây giờ sẽ đi hoàn toàn qua MQTT từ Host Orchestrator).")
+            while True:
+                time.sleep(1)
+        else:
+            self.logger.info("🔌 Chạy Độc lập: Bật Telegram Long-Polling (Không có MQTT).")
+            self._poll_loop()  # blocking
 
 
 def main():
