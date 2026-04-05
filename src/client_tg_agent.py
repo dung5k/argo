@@ -435,12 +435,14 @@ class TelegramAgent:
                 time.sleep(self.poll_sec)
 
     def _progress_loop(self):
-        """Theo dõi log và tự động gửi cập nhật mỗi N epoch."""
+        """Theo dõi log và tự động gửi cập nhật mỗi N epoch HOẶC khi có đỉnh mới."""
         last_sent_epoch = 0
+        last_peak_line = ""
         while True:
-            time.sleep(15)
+            time.sleep(5)  # Poll nhanh hơn để bắt đỉnh mới kịp thời
             if not self.manager.is_busy():
                 last_sent_epoch = 0
+                last_peak_line = ""
                 continue
             log_file = self.manager.log_file()
             if not log_file or not log_file.exists():
@@ -448,23 +450,30 @@ class TelegramAgent:
             try:
                 lines = log_file.read_text(encoding="utf-8", errors="replace").splitlines()
                 epoch_lines = [l for l in lines if l.startswith("Epoch")]
-                if not epoch_lines:
-                    continue
-                last_line = epoch_lines[-1]
-                epoch_num = int(last_line.split()[1]) if len(last_line.split()) > 1 else 0
-                if epoch_num > 0 and epoch_num % self.progress_n == 0 and epoch_num != last_sent_epoch:
+                last_line = epoch_lines[-1] if epoch_lines else ""
+                epoch_num = int(last_line.split()[1]) if last_line and len(last_line.split()) > 1 else 0
+
+                peak_lines = [l for l in lines if "ĐỈNH MỚI" in l]
+                current_peak = peak_lines[-1] if peak_lines else ""
+                
+                import html
+                send_msg = ""
+                
+                if current_peak and current_peak != last_peak_line:
+                    last_peak_line = current_peak
+                    send_msg = f"🏆 <b>{self.client_id}</b> TÌM THẤY MẪU MỚI!\n"
+                    if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
+                    send_msg += f"<pre>{html.escape(current_peak.strip())}</pre>\n"
+                    send_msg += "<i>(Đang tự động Commit lên Git...)</i>"
+                elif epoch_num > 0 and epoch_num % self.progress_n == 0 and epoch_num != last_sent_epoch:
                     last_sent_epoch = epoch_num
-                    # Tìm dòng ĐỈNH MỚI gần nhất
-                    peak_lines = [l for l in lines if "ĐỈNH MỚI" in l]
-                    peak = peak_lines[-1] if peak_lines else ""
-                    import html
-                    msg = (f"📈 <b>{self.client_id}</b> — Epoch {epoch_num}\n"
-                           f"<pre>{html.escape(last_line.strip())}</pre>")
-                    if peak:
-                        msg += f"\n🏆 <pre>{html.escape(peak.strip())}</pre>"
-                    self._notify_all(msg)
-            except Exception:
-                pass
+                    send_msg = f"📈 <b>{self.client_id}</b> — Tiến độ (Epoch {epoch_num})\n"
+                    if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>"
+                    
+                if send_msg:
+                    self._notify_all(send_msg)
+            except Exception as e:
+                self.logger.error(f"Progress lỗi: {e}")
 
     def run(self):
         self.logger.info("╔══════════════════════════════════════════")
