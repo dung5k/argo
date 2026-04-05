@@ -27,7 +27,8 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import pandas as pd
 
-from train_ga import TransformerModel, TimeSeriesDataset, device
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from legacy.train_ga import TransformerModel, TimeSeriesDataset, device
 
 
 def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
