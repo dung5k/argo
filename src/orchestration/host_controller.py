@@ -43,21 +43,7 @@ class HostController:
                 if self.connected: break
                 time.sleep(0.1)
         
-        if cmd == "train":
-            try:
-                import os
-                train_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "core", "train_unified.py")
-                with open(train_file, "r", encoding="utf-8") as f:
-                    code_content = f.read()
-                # Bơm biến môi trường ARGV giả định để script hiểu
-                injector = f'import sys; sys.argv=["train_unified.py", "{symbol}"]\n'
-                full_code = injector + code_content
-                payload = json.dumps({"cmd": "train_code", "code": full_code})
-                print(f"[HOST] 🧬 Bơm Nhộng Code ({len(full_code)} ký tự) trực tiếp qua sóng MQTT cho Client chạy!")
-            except Exception as e:
-                print(f"[LỖI] Đóng gói Nhộng Train thất bại: {e}")
-                return
-        elif cmd == "run" and raw and script:
+        if cmd == "run" and raw and script:
             try:
                 import os
                 with open(script, "r", encoding="utf-8") as f:
