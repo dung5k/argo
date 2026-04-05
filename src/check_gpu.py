@@ -1,6 +1,11 @@
 import torch
 import sys
-import psutil
+import subprocess
+try:
+    import psutil
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "psutil"])
+    import psutil
 
 print("="*40)
 print("🔍 BÁO CÁO HỆ THỐNG PHẦN CỨNG CLIENT")
