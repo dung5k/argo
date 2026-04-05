@@ -146,7 +146,7 @@ echo.
 
 set PYTHONUTF8=1
 set PYTHONUNBUFFERED=1
-"venv\Scripts\python.exe" src\client_tg_agent.py --client-id !CLIENT_ID! --base-dir "%cd%"
+"venv\Scripts\python.exe" src\orchestration\client_tg_agent.py --client-id !CLIENT_ID! --base-dir "%cd%"
 
 if !errorlevel! equ 69 (
     echo [AUTO-UPDATE] He thong dang tu dong khoi dong lai Agent sau khi cap nhat...

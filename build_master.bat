@@ -26,7 +26,7 @@ python -m PyInstaller ^
     --distpath "..\dist_master" ^
     --workpath "..\build_master" ^
     --specpath "..\build_master" ^
-    src\client_master.py
+    src\orchestration\client_master.py
 
 if errorlevel 1 (
     echo [ERROR] Build that bai!
