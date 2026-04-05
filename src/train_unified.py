@@ -389,8 +389,10 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     total_epoch       = 0
     need_reload_loader = False
 
+    import time
     try:
         while phoenix_count <= MAX_PHOENIX:
+            epoch_start_time = time.time()
 
             # Tạo lại loader nếu Chiến lược D thay đổi batch_size
             if need_reload_loader:
@@ -462,7 +464,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
             # In log
             phoenix_tag = f"[P{phoenix_count}]" if phoenix_count > 0 else ""
-            print(f"Epoch {total_epoch:04d} {phoenix_tag}| VLoss: {avg_val_loss:.4f} | LR: {cur_lr:.2e} | WR: {val_acc*100:.1f}% | MaxTh: {max_thresh:.2f}")
+            epoch_time = time.time() - epoch_start_time
+            print(f"Epoch {total_epoch:04d} {phoenix_tag}| VLoss: {avg_val_loss:.4f} | LR: {cur_lr:.2e} | WR: {val_acc*100:.1f}% | MaxTh: {max_thresh:.2f} | Time: {epoch_time:.1f}s")
             thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f}%({totals_t[i]}L)" for i, t in enumerate(thresholds))
             print(f"  {thr_str}")
 
@@ -597,6 +600,19 @@ if __name__ == "__main__":
         base_runs_dir = os.path.join(BASE_PROJ_DIR, "runs")
         run_dir  = os.path.join(base_runs_dir, run_name)
         os.makedirs(run_dir, exist_ok=True)
+        
+        class TeeLogger:
+            def __init__(self, filename):
+                self.terminal = sys.stdout
+                self.log = open(filename, "w", encoding="utf-8", buffering=1)
+            def write(self, message):
+                self.terminal.write(message)
+                self.log.write(message)
+            def flush(self):
+                self.terminal.flush()
+                self.log.flush()
+        sys.stdout = TeeLogger(os.path.join(run_dir, "train.log"))
+        
         print(f"📁 Tạo thư mục run: {run_name}")
 
         import glob, shutil
