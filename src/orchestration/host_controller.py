@@ -130,8 +130,73 @@ class HostController:
             except Exception as e:
                 print(f"[LỖI] Upload HF thất bại: {e}")
 
+    def deploy_agent(self, version: str = "latest"):
+        """
+        Deploy một version cụ thể của agent sang Client.
+        - version='latest' → dùng file hiện tại
+        - version='v1.3.5' → dùng file trong versions/client_tg_agent_v1.3.5.py
+        """
+        self._wait_connected()
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        versions_dir = os.path.join(base_dir, "versions")
+        agent_src = os.path.join(base_dir, "client_tg_agent.py")
+
+        if version == "latest":
+            target_file = agent_src
+            ver_label = "latest"
+        else:
+            target_file = os.path.join(versions_dir, f"client_tg_agent_{version}.py")
+            ver_label = version
+
+        if not os.path.exists(target_file):
+            print(f"[LỖI] Không tìm thấy file: {target_file}")
+            print(f"[INFO] Các version hiện có:")
+            if os.path.exists(versions_dir):
+                for f in sorted(os.listdir(versions_dir)):
+                    print(f"  - {f}")
+            return
+
+        with open(target_file, "rb") as f:
+            raw_bytes = f.read()
+        import base64
+        b64 = base64.b64encode(raw_bytes).decode("utf-8")
+        file_size = len(raw_bytes)
+
+        payload = json.dumps({
+            "cmd": "deploy_agent",
+            "version": ver_label,
+            "content_b64": b64,
+            "size": file_size
+        })
+        self.client.publish(self.cmd_topic, payload, qos=1)
+        print(f"[HOST] 🚀 Deploy agent {ver_label} ({file_size/1024:.1f}KB) → {self.client_id} (client sẽ tự restart)")
+
+    @staticmethod
+    def save_version(tag: str = ""):
+        """Lưu phiên bản hiện tại của agent vào thư mục versions/ với tag version."""
+        import shutil, datetime
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        versions_dir = os.path.join(base_dir, "versions")
+        os.makedirs(versions_dir, exist_ok=True)
+        agent_src = os.path.join(base_dir, "client_tg_agent.py")
+
+        if not tag:
+            tag = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        dest = os.path.join(versions_dir, f"client_tg_agent_{tag}.py")
+        shutil.copy2(agent_src, dest)
+        print(f"[HOST] 💾 Đã lưu version: {dest}")
+        # Liệt kê tất cả versions
+        print("[HOST] Danh sách versions hiện có:")
+        for f in sorted(os.listdir(versions_dir)):
+            fpath = os.path.join(versions_dir, f)
+            sz = os.path.getsize(fpath) / 1024
+            print(f"  - {f} ({sz:.1f}KB)")
+        return dest
+
+
     def sync_data_to_client(self):
-        """Đẩy toàn bộ thư mục data/ lên HF rồi báo Client kéo về."""
+
         self._wait_connected()
         print("[HOST] 📤 Đang đẩy data/ lên HuggingFace...")
         try:
@@ -157,38 +222,53 @@ class HostController:
 
 def main():
     parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data"])
-    parser.add_argument("--client-id", "-c", required=True)
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data", "deploy_agent", "save_version"])
+    parser.add_argument("--client-id", "-c", default="")
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")
-    parser.add_argument("--raw", action="store_true", help="Gửi trực tiếp nội dung code qua MQTT (chỉ dùng với lệnh run)")
-    parser.add_argument("--file", default="", help="Đường dẫn file cần gửi (dùng với send_file)")
-    parser.add_argument("--dest", default="", help="Đường dẫn đích trên Client (dùng với send_file)")
-    parser.add_argument("--time", "-t", type=int, default=15, help="Thời gian nghe log (giây)")
+    parser.add_argument("--raw", action="store_true")
+    parser.add_argument("--file", default="")
+    parser.add_argument("--dest", default="")
+    parser.add_argument("--version", "-v", default="latest", help="Version agent cần deploy (VD: v1.3.5 hoặc latest)")
+    parser.add_argument("--tag", default="", help="Tag version khi lưu (VD: v1.3.5). Mặc định: timestamp")
+    parser.add_argument("--time", "-t", type=int, default=15)
     
     args = parser.parse_args()
-    
+
+    # Các lệnh không cần kết nối MQTT
+    if args.cmd == "save_version":
+        HostController.save_version(args.tag)
+        return
+
+    if not args.client_id:
+        print("[LỖI] Cần truyền --client-id (-c)")
+        return
+
     host = HostController(args.client_id)
     host.client.connect(BROKER, PORT, 60)
     host.client.loop_start()
 
     if args.cmd == "send_file":
         if not args.file or not args.dest:
-            print("[LỖI] Cần truyền --file và --dest. VD: --file data/bot_config_xau.json --dest data/bot_config_xau.json")
+            print("[LỖI] Cần truyền --file và --dest.")
         else:
             host.send_file(args.file, args.dest)
             host.listen_logs(args.time)
     elif args.cmd == "sync_data":
         host.sync_data_to_client()
         host.listen_logs(args.time)
+    elif args.cmd == "deploy_agent":
+        host.deploy_agent(args.version)
+        host.listen_logs(args.time)
     elif args.cmd in ["train", "kill", "run", "update"]:
         host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False))
         host.listen_logs(args.time)
     elif args.cmd == "listen":
         host.listen_logs(args.time)
-        
+
     host.client.loop_stop()
     host.client.disconnect()
+
 
 if __name__ == "__main__":
     main()

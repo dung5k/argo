@@ -404,6 +404,43 @@ class TelegramAgent:
                     if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi pull_hf_runs: {e}")
             threading.Thread(target=_pull_runs, daemon=True).start()
 
+        elif action == "deploy_agent":
+            # Nhận code agent mới, backup bản cũ, ghi đè và restart
+            import base64, shutil, datetime
+            version   = payload.get("version", "unknown")
+            content   = payload.get("content_b64", "")
+            file_size = payload.get("size", 0)
+            if not content:
+                self.logger.error("  [DEPLOY] Thiếu content_b64!")
+                return
+
+            agent_path = Path(__file__).resolve()
+            versions_dir = agent_path.parent / "versions"
+            versions_dir.mkdir(parents=True, exist_ok=True)
+
+            # Backup bản hiện tại
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup = versions_dir / f"client_tg_agent_backup_{ts}.py"
+            shutil.copy2(agent_path, backup)
+            self.logger.info(f"  [DEPLOY] Đã backup bản cũ → {backup.name}")
+            if self.mqtt: self.mqtt.send_log("INFO", f"Backup agent cũ → {backup.name}")
+
+            # Ghi bản mới
+            raw_bytes = base64.b64decode(content)
+            with open(agent_path, "wb") as f:
+                f.write(raw_bytes)
+            msg = f"Deploy agent '{version}' ({file_size/1024:.1f}KB) thành công! Đang restart..."
+            self.logger.info(f"  [DEPLOY] {msg}")
+            if self.mqtt: self.mqtt.send_log("INFO", msg)
+
+            # Restart sau 2 giây
+            def _restart():
+                time.sleep(2)
+                self.manager.kill()
+                os._exit(69)
+            threading.Thread(target=_restart, daemon=True).start()
+
+
         elif action == "update":
             def _do_update():
                 time.sleep(2)  # Đợi 2s để vòng lặp chính hồi đáp(ack) tin nhắn cho MQTT/TG
@@ -416,6 +453,7 @@ class TelegramAgent:
                 self.manager.kill()
                 os._exit(69)
             threading.Thread(target=_do_update, daemon=True).start()
+
 
 
     def _send(self, chat_id: int, text: str):
