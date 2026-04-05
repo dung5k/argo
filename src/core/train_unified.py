@@ -325,9 +325,15 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             try:
                 subprocess.run(["git", "config", "user.email", "client@argo.ai"], cwd=base_dir, capture_output=True)
                 subprocess.run(["git", "config", "user.name", "ARGO Client"], cwd=base_dir, capture_output=True)
-                subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
+                
+                # 1. Thêm và Commit thay đổi mới trước
                 subprocess.run(["git", "add", "runs/"], cwd=base_dir, capture_output=True)
                 c_res = subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True, text=True)
+                
+                # 2. Pull rebase để trộn (phải làm SAU KHI commit)
+                subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
+                
+                # 3. Đẩy lên Github
                 p_res = subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, text=True, timeout=60)
                 
                 if p_res.returncode == 0:
