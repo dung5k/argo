@@ -621,21 +621,34 @@ if __name__ == "__main__":
     import json
 
     BASE_PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    config_path = os.path.join(BASE_PROJ_DIR, "data", "bot_config.json")
-    if len(sys.argv) > 1:
-        for arg in sys.argv:
-            if arg.endswith('.json'):
-                config_path = arg
 
-    TARGET_PREFIX = "XAU_USD"
-    if os.path.exists(config_path):
+    # Ưu tiên config truyền vào argv, fallback bot_config_xau.json → bot_config.json
+    config_path = None
+    for arg in sys.argv[1:]:
+        if arg.endswith('.json'):
+            config_path = arg if os.path.isabs(arg) else os.path.join(BASE_PROJ_DIR, arg)
+            break
+    if not config_path:
+        for candidate in ["data/bot_config_xau.json", "data/bot_config.json"]:
+            p = os.path.join(BASE_PROJ_DIR, candidate)
+            if os.path.exists(p):
+                config_path = p
+                break
+
+    TARGET_PREFIX = "XAUUSD"  # mặc định hợp lệ
+    if config_path and os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
-            TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAU_USD")
+            TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
+
+    print(f"[INIT] Config: {config_path}")
+    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
 
     data_path = os.path.join(BASE_PROJ_DIR, "data")
     features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
+
+    print(f"[INIT] Tìm file features: {features_path}")
 
     if os.path.exists(features_path):
         features = pd.read_parquet(features_path)
