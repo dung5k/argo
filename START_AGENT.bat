@@ -34,6 +34,7 @@ set PYTHON_EXE=
 if exist ".python_path" (
     set /p PYTHON_EXE=<".python_path"
     for /f "tokens=*" %%a in ("!PYTHON_EXE!") do set PYTHON_EXE=%%a
+    if exist "!PYTHON_EXE!\python.exe" set PYTHON_EXE=!PYTHON_EXE!\python.exe
     if exist "!PYTHON_EXE!" goto :found_python
 )
 
@@ -98,10 +99,10 @@ if exist ".git" (
         echo [GIT] Dang dong bo code moi nhat tu ARGO...
         git pull --rebase
     ) else (
-        echo [CANH BAO] Khong the chay git pull (Chua cai Git).
+        echo [CANH BAO] Khong the chay git pull. Chua cai Git
     )
 ) else (
-    echo [INFO] Dang chay che do thu muc (khong phai git clone).
+    echo [INFO] Dang chay che do thu muc thuong, khong phai git clone
 )
 echo.
 
