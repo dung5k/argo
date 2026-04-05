@@ -464,7 +464,7 @@ class TelegramAgent:
         self.bot.delete_webhook()
 
         # Thông báo online
-        self._notify_all(f"🟢 <b>{self.client_id}</b> online!\n"
+        self._notify_all(f"🟢 <b>{self.client_id}</b> online! (v{AGENT_VERSION})\n"
                          f"🖥 {platform.system()} {platform.release()}\n"
                          f"📂 {self.base_dir}\n\n"
                          f"Lệnh: /train {self.client_id} | /kill {self.client_id} | /status | /log {self.client_id}")
