@@ -133,7 +133,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     ).to(device)
 
     # === [RESUME] LOAD CHECKPOINT + ĐỌC WIN RATE TỪ LỊCH SỬ ===
-    runs_base = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs"
+    runs_base = str(Path(__file__).resolve().parent.parent / "runs")
     checkpoint_candidates = sorted(
         [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth")],
         key=lambda p: p.stat().st_mtime,
