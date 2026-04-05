@@ -349,38 +349,27 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 json.dump(data, bf, indent=4, ensure_ascii=False)
         except: pass
 
-        # AUTO SYNC TO GIT
-        def git_sync_runs():
-            import subprocess
-            base_dir = os.path.dirname(os.path.dirname(run_dir))
+        # AUTO SYNC TO HF
+        def hf_sync_best_weights():
             try:
-                subprocess.run(["git", "config", "user.email", "client@argo.ai"], cwd=base_dir, capture_output=True)
-                subprocess.run(["git", "config", "user.name", "ARGO Client"], cwd=base_dir, capture_output=True)
-                
-                # 1. Thêm và Commit thay đổi mới trước
-                subprocess.run(["git", "add", "runs/"], cwd=base_dir, capture_output=True)
-                c_res = subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True, text=True)
-                
-                # 2. Pull rebase để trộn (phải làm SAU KHI commit)
-                subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
-                
-                # 3. Đẩy lên Github
-                p_res = subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, text=True, timeout=60)
-                
-                if p_res.returncode == 0:
-                    print("    [GIT] Đã đồng bộ kết quả mới lên kho chứa Github.")
+                import sys
+                import os
+                base_dir = os.path.dirname(os.path.dirname(run_dir))
+                orchestration_dir = os.path.join(base_dir, "src", "orchestration")
+                if orchestration_dir not in sys.path:
+                    sys.path.insert(0, orchestration_dir)
+                from hf_sync import push_runs
+                ok = push_runs()
+                if ok:
+                    print("    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.")
                 else:
-                    err = p_res.stderr.strip() if p_res.stderr else p_res.stdout.strip()
-                    if "nothing to commit" in c_res.stdout:
-                        print("    [GIT] Không có thay đổi mới để commit.")
-                    else:
-                        print(f"    [GIT LỖI PUSH] {err}")
+                    print("    [HF LỖI] Đồng bộ trọng số lên HF thất bại.")
             except Exception as e:
-                print(f"    [GIT LỖI THỰC THI THÊM] {e}")
+                print(f"    [HF LỖI THỰC THI] {e}")
         
         # Chạy đồng bộ ngầm
         import threading
-        threading.Thread(target=git_sync_runs, daemon=True).start()
+        threading.Thread(target=hf_sync_best_weights, daemon=True).start()
 
     # === [BƯỚC ĐẦU] Lưu bản đầu tiên nếu đã load được Win Rate ===
     if resumed and global_best_score > 0:
