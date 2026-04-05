@@ -285,7 +285,10 @@ class TelegramAgent:
             threading.Thread(target=_run_script, daemon=True).start()
         elif action == "update":
             def _do_update():
-                try: subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+                time.sleep(2)  # Đợi 2s để vòng lặp chính hồi đáp(ack) tin nhắn cho MQTT/TG
+                try: 
+                    subprocess.run(["git", "stash"], cwd=str(self.base_dir), timeout=20)
+                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
                 except: pass
                 if self.mqtt: self.mqtt.send_log("INFO", "Tự động Khởi động lại theo lệnh Update...")
                 self.manager.kill()
@@ -387,7 +390,10 @@ class TelegramAgent:
                 return
             self._send(chat_id, f"♻️ <b>{self.client_id}</b>: Đang kéo Code mới và Tự Khởi Động Lại...")
             def _do_update_tg():
-                try: subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+                time.sleep(2)  # Đợi 2s để vòng lặp chính của Telegram kịp đánh dấu(nghiệm thu) msg
+                try: 
+                    subprocess.run(["git", "stash"], cwd=str(self.base_dir), timeout=20)
+                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
                 except: pass
                 self.manager.kill()
                 os._exit(69)
