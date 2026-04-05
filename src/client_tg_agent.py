@@ -37,12 +37,16 @@ import subprocess
 import time
 from pathlib import Path
 
-# Thêm src vào path để import tg_helper
+# Thêm src vào path để import tg_helper và mqtt_helper
 _SRC = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SRC))
 from tg_helper import TelegramBot
+try:
+    from mqtt_helper import MqttHelper
+except ImportError:
+    MqttHelper = None
 
-AGENT_VERSION = "1.1.0"
+AGENT_VERSION = "1.2.0-Dual"
 CONFIG_MAP = {
     "xauusd": "data/bot_config_xau.json",
     "xau"   : "data/bot_config_xau.json",
@@ -78,10 +82,11 @@ def setup_logger(log_dir: Path, client_id: str) -> logging.Logger:
 class TrainingManager:
     """Quản lý subprocess training — thread-safe."""
 
-    def __init__(self, base_dir: Path, client_id: str, logger: logging.Logger):
+    def __init__(self, base_dir: Path, client_id: str, logger: logging.Logger, mqtt_helper=None):
         self.base_dir  = base_dir
         self.client_id = client_id
         self.logger    = logger
+        self.mqtt_helper = mqtt_helper
         self._lock     = threading.Lock()
         self._proc: subprocess.Popen | None = None
         self._task_id: str | None = None
@@ -176,6 +181,8 @@ class TrainingManager:
                     for line in proc.stdout:
                         lf.write(line)
                         lf.flush()
+                        if self.mqtt_helper:
+                            self.mqtt_helper.send_log("TRAIN", line.strip())
 
                 exit_code = proc.wait()
                 self.logger.info(f"{'✓' if exit_code == 0 else '✗'} Task {task_id} xong, exit={exit_code}")
@@ -232,7 +239,25 @@ class TelegramAgent:
 
         log_dir      = base_dir / client_id / "logs"
         self.logger  = setup_logger(log_dir, client_id)
-        self.manager = TrainingManager(base_dir, client_id, self.logger)
+
+        self.mqtt = MqttHelper(client_id, self._handle_mqtt_cmd) if MqttHelper else None
+        if not self.mqtt:
+            self.logger.warning("Không tìm thấy MqttHelper. Chạy chế độ Single-mode (Telegram only).")
+
+        self.manager = TrainingManager(base_dir, client_id, self.logger, self.mqtt)
+
+    def _handle_mqtt_cmd(self, payload: dict):
+        action = payload.get("cmd", "")
+        if action == "train":
+            symbol = payload.get("symbol", "xauusd")
+            config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
+            self.manager.start_train(config)
+            if self.mqtt:
+                self.mqtt.send_log("INFO", f"Khởi động train bằng MQTT cho {symbol}")
+        elif action == "kill":
+            self.manager.kill()
+            if self.mqtt:
+                self.mqtt.send_log("INFO", "Đã nhận lệnh Kill bằng MQTT")
 
     def _send(self, chat_id: int, text: str):
         self.bot.send_message(chat_id, text)
@@ -352,6 +377,10 @@ class TelegramAgent:
         self.logger.info(f"║ Base  : {self.base_dir}")
         self.logger.info(f"║ Broker: Telegram Bot API")
         self.logger.info("╚══════════════════════════════════════════")
+
+        # Khởi động kết nối MQTT nếu có
+        if self.mqtt:
+            self.mqtt.start()
 
         # Xóa webhook cũ nếu có
         self.bot.delete_webhook()
