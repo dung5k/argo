@@ -126,7 +126,7 @@ class TrainingManager:
             return f"🔄 BUSY — task: <code>{self._task_id}</code>{elapsed}"
         return "💤 IDLE"
 
-    def start_train(self, config_path: str, on_done=None) -> dict:
+    def start_train(self, config_path: str, code: str = None, on_done=None) -> dict:
         if self.is_busy():
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
@@ -136,14 +136,23 @@ class TrainingManager:
         log_file = log_dir / f"{task_id}.log"
 
         python       = self._python_exe()
-        train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
-        config_abs   = (str(self.base_dir / config_path)
-                        if not Path(config_path).is_absolute() else config_path)
+        
+        if code:
+            train_script = str(self.base_dir / f"train_temp_{self.client_id}.py")
+            with open(train_script, "w", encoding="utf-8") as f:
+                f.write(code)
+        else:
+            train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
 
-        if not Path(config_abs).exists():
-            return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
+        cmd = [python, train_script]
+        
+        if config_path:
+            config_abs = (str(self.base_dir / config_path)
+                          if not Path(config_path).is_absolute() else config_path)
+            if not Path(config_abs).exists() and not code:
+                return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
+            cmd.append(config_abs)
 
-        cmd = [python, train_script, config_abs]
         env = os.environ.copy()
         env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"})
 
@@ -151,20 +160,6 @@ class TrainingManager:
         self._on_done_cb = on_done
 
         def _run():
-            # ── BƯỚC 1: git pull để lấy code và data mới nhất ──
-            try:
-                self.logger.info("  [GIT] Đang git pull --rebase ...")
-                r = subprocess.run(
-                    ["git", "pull", "--rebase"],
-                    cwd=str(self.base_dir), capture_output=True,
-                    text=True, encoding="utf-8", timeout=120
-                )
-                if r.returncode == 0:
-                    self.logger.info(f"  [GIT] ✓ {r.stdout.strip() or 'Already up to date.'}")
-                else:
-                    self.logger.warning(f"  [GIT] ⚠ git pull thất bại (tiếp tục): {r.stderr.strip()}")
-            except Exception as git_ex:
-                self.logger.warning(f"  [GIT] ⚠ Không thể git pull: {git_ex} (tiếp tục)")
 
             # ── BƯỚC 1.5: Tải Data Khổng lồ từ HuggingFace (nếu có cấu hình) ──
             if hf_sync:
@@ -264,7 +259,13 @@ class TelegramAgent:
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
             self.manager.start_train(config)
             if self.mqtt:
-                self.mqtt.send_log("INFO", f"Khởi động train bằng MQTT cho {symbol}")
+                self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol}")
+        elif action == "train_code":
+            code = payload.get("code", "")
+            if not code: return
+            self.manager.start_train(config_path="", code=code)
+            if self.mqtt:
+                self.mqtt.send_log("INFO", f"Khởi động tiến trình Bơm Code Train trực tiếp (Zero-Git)")
         elif action == "kill":
             self.manager.kill()
             if self.mqtt:

@@ -27,9 +27,92 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import pandas as pd
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from legacy.train_ga import TransformerModel, TimeSeriesDataset, device
+# --- KHÓI MODEL ĐỘC LẬP (ZERO-DEPENDENCY) ---
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+class TimeSeriesDataset(torch.utils.data.Dataset):
+    def __init__(self, features, targets, window_size=60):
+        self.targets = targets
+        self.window_size = window_size
+        self.valid_indices = []
+        if 'is_imputed_flag' in features.columns:
+            flags_array = features['is_imputed_flag'].values
+            for i in range(len(features) - window_size):
+                window_flags_sum = sum(flags_array[i : i + window_size])
+                if window_flags_sum <= (0.15 * window_size):
+                    self.valid_indices.append(i)
+        else:
+            self.valid_indices = list(range(len(features) - window_size))
+        print(f"-> [DATASET] Khởi tạo Cửa sổ Trượt: Tổng {len(features)-window_size:,} Mẫu. Loại bỏ {len(features) - window_size - len(self.valid_indices):,} Mẫu Rách (Nến Ma > 15%).")
+        self.features_tensor = torch.tensor(features.values, dtype=torch.float32).to(device)
+        self.targets_tensor = torch.tensor(targets.values, dtype=torch.long).to(device)
+
+    def __len__(self): return len(self.valid_indices)
+
+    def __getitem__(self, raw_idx):
+        idx = self.valid_indices[raw_idx]
+        x = self.features_tensor[idx : idx + self.window_size]
+        y = self.targets_tensor[idx + self.window_size - 1]
+        return x, y
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=200, dropout=0.1):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term[:d_model // 2])
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:, :x.size(1), :]
+        return self.dropout(x)
+
+class TransformerModel(nn.Module):
+    def __init__(self, num_features, d_model=64, nhead=4, num_layers=2, dropout_rate=0.2, num_xau_features=None):
+        super(TransformerModel, self).__init__()
+        self.num_xau_features = num_xau_features if num_xau_features else max(1, num_features // 3)
+        self.num_macro_features = num_features - self.num_xau_features
+        if d_model % nhead != 0: d_model = (d_model // nhead) * nhead
+        self.d_model = d_model
+        
+        self.xau_input_proj = nn.Linear(self.num_xau_features, d_model)
+        self.xau_pos_enc = PositionalEncoding(d_model, dropout=dropout_rate)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=d_model * 4,
+            dropout=dropout_rate, batch_first=True, norm_first=True
+        )
+        self.xau_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers, enable_nested_tensor=False)
+        
+        macro_hidden = max(16, d_model // 4)
+        self.macro_fc = nn.Sequential(
+            nn.Linear(self.num_macro_features, d_model // 2), nn.GELU(),
+            nn.LayerNorm(d_model // 2), nn.Dropout(dropout_rate),
+            nn.Linear(d_model // 2, macro_hidden), nn.GELU()
+        )
+        
+        merged_size = d_model + macro_hidden
+        self.decision_head = nn.Sequential(
+            nn.LayerNorm(merged_size), nn.Linear(merged_size, d_model),
+            nn.GELU(), nn.Dropout(dropout_rate), nn.Linear(d_model, 2)
+        )
+
+    def forward(self, x):
+        xau_feats = x[:, :, :self.num_xau_features]
+        macro_feats = x[:, -1, self.num_xau_features:]
+        
+        xau_t = self.xau_input_proj(xau_feats)
+        xau_t = self.xau_pos_enc(xau_t)
+        xau_t = self.xau_transformer(xau_t)
+        xau_signal = xau_t[:, -1, :]
+        macro_signal = self.macro_fc(macro_feats)
+        
+        merged = torch.cat([xau_signal, macro_signal], dim=1)
+        return self.decision_head(merged)
+# --- KẾT THÚC KHỐI MODEL ---
 
 def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
     """
@@ -318,38 +401,45 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 json.dump(data, bf, indent=4, ensure_ascii=False)
         except: pass
 
-        # AUTO SYNC TO GIT
-        def git_sync_runs():
-            import subprocess
-            base_dir = os.path.dirname(os.path.dirname(run_dir))
+        # AUTO SYNC TO CLOUD (HUGGINGFACE) INSTEAD OF GIT
+        def hf_sync_runs():
+            import json
+            from huggingface_hub import HfApi
+            base_dir = Path(__file__).resolve().parent.parent.parent
+            cfg_path = base_dir / "tg_config.json"
+            
             try:
-                subprocess.run(["git", "config", "user.email", "client@argo.ai"], cwd=base_dir, capture_output=True)
-                subprocess.run(["git", "config", "user.name", "ARGO Client"], cwd=base_dir, capture_output=True)
+                if not cfg_path.exists():
+                    print("    [HF] Không tìm thấy tg_config.json, bỏ qua đồng bộ Cloud.")
+                    return
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
                 
-                # 1. Thêm và Commit thay đổi mới trước
-                subprocess.run(["git", "add", "runs/"], cwd=base_dir, capture_output=True)
-                c_res = subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True, text=True)
+                if "hf_token" not in cfg or "hf_repo_id" not in cfg:
+                    print("    [HF] Chưa cấu hình hf_token hoặc hf_repo_id. Bỏ qua.")
+                    return
+                    
+                token = cfg["hf_token"]
+                repo_id = cfg["hf_repo_id"]
+                runs_folder = base_dir / "runs"
                 
-                # 2. Pull rebase để trộn (phải làm SAU KHI commit)
-                subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
-                
-                # 3. Đẩy lên Github
-                p_res = subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, text=True, timeout=60)
-                
-                if p_res.returncode == 0:
-                    print("    [GIT] Đã đồng bộ kết quả mới lên kho chứa Github.")
-                else:
-                    err = p_res.stderr.strip() if p_res.stderr else p_res.stdout.strip()
-                    if "nothing to commit" in c_res.stdout:
-                        print("    [GIT] Không có thay đổi mới để commit.")
-                    else:
-                        print(f"    [GIT LỖI PUSH] {err}")
+                print(f"    [HF] ☁️ Đang đồng bộ Mốc Trọng Số lên {repo_id} (Zero-Git)...")
+                api = HfApi()
+                api.upload_folder(
+                    folder_path=str(runs_folder),
+                    path_in_repo="runs",
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    token=token,
+                    commit_message=f"Auto-Sync Best Weights: {target_name}"
+                )
+                print("    [HF] Đã đồng bộ kết quả lên Cổng Đám Mây thành công! 🚀")
             except Exception as e:
-                print(f"    [GIT LỖI THỰC THI THÊM] {e}")
+                print(f"    [HF LỖI PUSH] Bắn lên Đám mây thất bại: {e}")
         
         # Chạy đồng bộ ngầm
         import threading
-        threading.Thread(target=git_sync_runs, daemon=True).start()
+        threading.Thread(target=hf_sync_runs, daemon=True).start()
 
     # === [BƯỚC ĐẦU] Lưu bản đầu tiên nếu đã load được Win Rate ===
     if resumed and global_best_score > 0:
