@@ -39,6 +39,14 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     print("🧠 TRANSFORMER UNIFIED MODEL v5.0 (Deep Phoenix)     ")
     print("=======================================================")
 
+    # === [HARDWARE CHECK] Tự động móc cấu hình GPU của Client ===
+    try:
+        if torch.cuda.is_available():
+            print(f"🖥️ [HARDWARE] Phát hiện sư tử đá GPU: {torch.cuda.get_device_name(0)}")
+        else:
+            print(f"🖥️ [HARDWARE] Máy này KHÔNG CÓ GPU (đang chạy bằng sức trâu CPU).")
+    except: pass
+
     # === CỐ ĐỊNH HYPERPARAMS V5 (Phá vỡ còng số 8 của genes cũ) ===
     window_size = 60
     d_model = 256
