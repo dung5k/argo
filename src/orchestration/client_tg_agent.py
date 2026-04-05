@@ -319,6 +319,91 @@ class TelegramAgent:
                     self.logger.error(f"  [RUN_CODE ERR] {e}")
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy RAW_CODE: {e}")
             threading.Thread(target=_run_raw, daemon=True).start()
+
+        elif action == "receive_file":
+            # Nhận file nhỏ (<= 512KB) gửi thẳng qua MQTT (base64)
+            import base64
+            dest    = payload.get("dest", "")
+            content = payload.get("content_b64", "")
+            fname   = payload.get("filename", dest)
+            size    = payload.get("size", 0)
+            if not dest or not content:
+                self.logger.error("  [RECV_FILE] Thiếu dest hoặc content_b64!")
+                return
+            try:
+                dest_path = self.base_dir / dest
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                raw_bytes = base64.b64decode(content)
+                with open(dest_path, "wb") as f:
+                    f.write(raw_bytes)
+                msg = f"Đã nhận và lưu file '{fname}' ({size/1024:.1f}KB) → {dest}"
+                self.logger.info(f"  [RECV_FILE] {msg}")
+                if self.mqtt: self.mqtt.send_log("INFO", msg)
+            except Exception as e:
+                self.logger.error(f"  [RECV_FILE ERR] {e}")
+                if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi lưu file {fname}: {e}")
+
+        elif action == "pull_hf_data":
+            # Kéo thư mục data/ từ HuggingFace về
+            self.logger.info("  ➜ [PULL_HF_DATA] Đang kéo data từ HuggingFace...")
+            def _pull_data():
+                try:
+                    import sys as _sys
+                    _sys.path.insert(0, str(self.base_dir / "src" / "orchestration"))
+                    from hf_sync import pull_data
+                    ok = pull_data(self.logger)
+                    if self.mqtt:
+                        self.mqtt.send_log("INFO", "Kéo data từ HF hoàn tất!" if ok else "Kéo data HF thất bại!")
+                except Exception as e:
+                    self.logger.error(f"  [PULL_HF ERR] {e}")
+                    if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi pull_hf_data: {e}")
+            threading.Thread(target=_pull_data, daemon=True).start()
+
+        elif action == "pull_hf_file":
+            # Kéo 1 file cụ thể từ HuggingFace về
+            hf_path   = payload.get("hf_path", "")
+            local_dest = payload.get("local_dest", hf_path)
+            if not hf_path:
+                return
+            self.logger.info(f"  ➜ [PULL_HF_FILE] Đang kéo {hf_path} từ HuggingFace...")
+            def _pull_file():
+                try:
+                    import json as _json
+                    cfg_path = self.base_dir / "tg_config.json"
+                    if not cfg_path.exists():
+                        self.logger.error(f"  [PULL_HF_FILE] Không tìm thấy tg_config.json")
+                        return
+                    cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+                    from huggingface_hub import hf_hub_download
+                    local_path = hf_hub_download(
+                        repo_id=cfg["hf_repo_id"], repo_type="dataset",
+                        token=cfg["hf_token"], filename=hf_path,
+                        local_dir=str(self.base_dir), local_dir_use_symlinks=False
+                    )
+                    msg = f"Đã kéo file '{hf_path}' từ HF về '{local_path}'"
+                    self.logger.info(f"  [PULL_HF_FILE] {msg}")
+                    if self.mqtt: self.mqtt.send_log("INFO", msg)
+                except Exception as e:
+                    self.logger.error(f"  [PULL_HF_FILE ERR] {e}")
+                    if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi pull_hf_file: {e}")
+            threading.Thread(target=_pull_file, daemon=True).start()
+
+        elif action == "pull_hf_runs":
+            # Kéo thư mục runs/ (trọng số) từ HuggingFace về
+            self.logger.info("  ➜ [PULL_HF_RUNS] Đang kéo trọng số từ HuggingFace...")
+            def _pull_runs():
+                try:
+                    import sys as _sys
+                    _sys.path.insert(0, str(self.base_dir / "src" / "orchestration"))
+                    from hf_sync import pull_runs
+                    ok = pull_runs(self.logger)
+                    if self.mqtt:
+                        self.mqtt.send_log("INFO", "Kéo trọng số từ HF hoàn tất!" if ok else "Kéo trọng số HF thất bại!")
+                except Exception as e:
+                    self.logger.error(f"  [PULL_HF_RUNS ERR] {e}")
+                    if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi pull_hf_runs: {e}")
+            threading.Thread(target=_pull_runs, daemon=True).start()
+
         elif action == "update":
             def _do_update():
                 time.sleep(2)  # Đợi 2s để vòng lặp chính hồi đáp(ack) tin nhắn cho MQTT/TG
@@ -331,6 +416,7 @@ class TelegramAgent:
                 self.manager.kill()
                 os._exit(69)
             threading.Thread(target=_do_update, daemon=True).start()
+
 
     def _send(self, chat_id: int, text: str):
         self.bot.send_message(chat_id, text)

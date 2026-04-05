@@ -1,11 +1,14 @@
 import time
 import json
+import os
 import argparse
+import base64
 import paho.mqtt.client as mqtt
 
 BROKER = "broker.emqx.io"
 PORT = 1883
 PREFIX = "argo_dungla_9213"
+MAX_DIRECT_SIZE = 512 * 1024  # 512KB - gửi thẳng qua MQTT
 
 class HostController:
     def __init__(self, client_id: str):
@@ -36,16 +39,18 @@ class HostController:
         except Exception:
             print(f"[RAW LOG] {msg.payload.decode('utf-8', errors='replace')}")
 
-    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False):
+    def _wait_connected(self):
         if not self.connected:
             print("[HOST] Đang đợi kết nối...")
             for _ in range(50):
                 if self.connected: break
                 time.sleep(0.1)
+
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False):
+        self._wait_connected()
         
         if cmd == "run" and raw and script:
             try:
-                import os
                 with open(script, "r", encoding="utf-8") as f:
                     code_content = f.read()
                 payload = json.dumps({"cmd": "run_code", "code": code_content})
@@ -59,6 +64,89 @@ class HostController:
         self.client.publish(self.cmd_topic, payload, qos=1)
         print(f"[HOST] Lệnh '{cmd}{' (RAW)' if raw else ''}' đã được phát sóng lên kênh: {self.cmd_topic}")
 
+    def send_file(self, local_path: str, remote_dest: str):
+        """
+        Gửi file từ Host sang Client.
+        - File <= 512KB: gửi thẳng qua MQTT (base64)
+        - File > 512KB : upload lên HuggingFace rồi báo Client kéo về
+        """
+        self._wait_connected()
+
+        if not os.path.exists(local_path):
+            print(f"[LỖI] Không tìm thấy file: {local_path}")
+            return
+
+        file_size = os.path.getsize(local_path)
+        file_name = os.path.basename(local_path)
+
+        if file_size <= MAX_DIRECT_SIZE:
+            # === GỬI THẲNG QUA MQTT (Base64) ===
+            with open(local_path, "rb") as f:
+                raw_bytes = f.read()
+            b64_content = base64.b64encode(raw_bytes).decode("utf-8")
+            payload = json.dumps({
+                "cmd": "receive_file",
+                "dest": remote_dest,
+                "filename": file_name,
+                "content_b64": b64_content,
+                "size": file_size
+            })
+            self.client.publish(self.cmd_topic, payload, qos=1)
+            print(f"[HOST] 📁 Gửi file '{file_name}' ({file_size/1024:.1f}KB) thẳng qua MQTT → {remote_dest}")
+        else:
+            # === FILE LỚN: Upload lên HuggingFace rồi báo Client kéo về ===
+            print(f"[HOST] 📦 File '{file_name}' lớn ({file_size/1024/1024:.1f}MB) — Upload HuggingFace trước...")
+            try:
+                import sys
+                hf_sync_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+                sys.path.insert(0, hf_sync_path)
+                from hf_sync import _load_config
+                from huggingface_hub import HfApi
+                
+                cfg = _load_config()
+                if not cfg:
+                    print("[LỖI] Không đọc được tg_config.json")
+                    return
+                
+                api = HfApi()
+                api.upload_file(
+                    path_or_fileobj=local_path,
+                    path_in_repo=remote_dest,
+                    repo_id=cfg["hf_repo_id"],
+                    repo_type="dataset",
+                    token=cfg["hf_token"],
+                    commit_message=f"Send file: {file_name}"
+                )
+                print(f"[HOST] ☁️ Đã upload '{file_name}' lên HuggingFace tại '{remote_dest}'")
+
+                # Báo Client kéo file về từ HF
+                payload = json.dumps({
+                    "cmd": "pull_hf_file",
+                    "hf_path": remote_dest,
+                    "local_dest": remote_dest
+                })
+                self.client.publish(self.cmd_topic, payload, qos=1)
+                print(f"[HOST] 📡 Đã báo Client kéo file từ HF về: {remote_dest}")
+            except Exception as e:
+                print(f"[LỖI] Upload HF thất bại: {e}")
+
+    def sync_data_to_client(self):
+        """Đẩy toàn bộ thư mục data/ lên HF rồi báo Client kéo về."""
+        self._wait_connected()
+        print("[HOST] 📤 Đang đẩy data/ lên HuggingFace...")
+        try:
+            import sys
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from hf_sync import push_data
+            push_data()
+        except Exception as e:
+            print(f"[LỖI] push_data thất bại: {e}")
+            return
+
+        payload = json.dumps({"cmd": "pull_hf_data"})
+        self.client.publish(self.cmd_topic, payload, qos=1)
+        print(f"[HOST] 📡 Đã báo Client ({self.client_id}) kéo data mới từ HuggingFace.")
+
     def listen_logs(self, timeout: int = 15):
         print(f"[HOST] Đang lắng nghe log trực tiếp từ {self.client_id} (thời gian: {timeout}s)...")
         print("-" * 60)
@@ -66,13 +154,16 @@ class HostController:
         print("-" * 60)
         print("[HOST] Đã kết thúc phiên nghe lén.")
 
+
 def main():
     parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update"])
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data"])
     parser.add_argument("--client-id", "-c", required=True)
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")
     parser.add_argument("--raw", action="store_true", help="Gửi trực tiếp nội dung code qua MQTT (chỉ dùng với lệnh run)")
+    parser.add_argument("--file", default="", help="Đường dẫn file cần gửi (dùng với send_file)")
+    parser.add_argument("--dest", default="", help="Đường dẫn đích trên Client (dùng với send_file)")
     parser.add_argument("--time", "-t", type=int, default=15, help="Thời gian nghe log (giây)")
     
     args = parser.parse_args()
@@ -80,10 +171,18 @@ def main():
     host = HostController(args.client_id)
     host.client.connect(BROKER, PORT, 60)
     host.client.loop_start()
-    
-    if args.cmd in ["train", "kill", "run", "update"]:
+
+    if args.cmd == "send_file":
+        if not args.file or not args.dest:
+            print("[LỖI] Cần truyền --file và --dest. VD: --file data/bot_config_xau.json --dest data/bot_config_xau.json")
+        else:
+            host.send_file(args.file, args.dest)
+            host.listen_logs(args.time)
+    elif args.cmd == "sync_data":
+        host.sync_data_to_client()
+        host.listen_logs(args.time)
+    elif args.cmd in ["train", "kill", "run", "update"]:
         host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False))
-        # Lắng nghe 1 lúc để xem phản hồi
         host.listen_logs(args.time)
     elif args.cmd == "listen":
         host.listen_logs(args.time)
