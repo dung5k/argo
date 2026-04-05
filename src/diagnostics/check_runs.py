@@ -2,7 +2,7 @@ import os
 import sys
 
 def list_runs():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     runs_dir = os.path.join(base_dir, "runs")
     
     if not os.path.exists(runs_dir):

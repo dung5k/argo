@@ -582,7 +582,7 @@ if __name__ == "__main__":
     import sys
     import json
 
-    BASE_PROJ_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    BASE_PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     config_path = os.path.join(BASE_PROJ_DIR, "data", "bot_config.json")
     if len(sys.argv) > 1:
         for arg in sys.argv:

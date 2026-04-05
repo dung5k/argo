@@ -3,7 +3,7 @@ import sys
 import glob
 
 def print_log():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     logs_dir = os.path.join(base_dir, "clientGH", "logs")
     
     if not os.path.exists(logs_dir):

@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 print("Testing git sync on client...")
 print("PULL:")
