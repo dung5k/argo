@@ -9,12 +9,18 @@ import urllib.parse
 import urllib.error
 from typing import Optional
 
+import sys
+import ssl
 
 class TelegramBot:
     BASE = "https://api.telegram.org/bot{token}/{method}"
 
     def __init__(self, token: str):
         self.token = token
+        # Bỏ qua xác thực SSL (Fix lỗi tự ký SSL certificate của Windows/Antivirus)
+        self.ssl_ctx = ssl.create_default_context()
+        self.ssl_ctx.check_hostname = False
+        self.ssl_ctx.verify_mode = ssl.CERT_NONE
 
     def _call(self, method: str, payload: dict = None, timeout: int = 10) -> Optional[dict]:
         url = self.BASE.format(token=self.token, method=method)
@@ -25,7 +31,7 @@ class TelegramBot:
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout, context=self.ssl_ctx) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")
