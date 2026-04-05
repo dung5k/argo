@@ -400,6 +400,15 @@ class TelegramAgent:
             threading.Thread(target=_do_update_tg, daemon=True).start()
 
     def _poll_loop(self):
+        self.logger.info("🔄 Đang dọn dẹp các lệnh cũ bị kẹt trong lúc Offline...")
+        try:
+            old_updates = self.bot.get_updates(offset=self._offset, timeout=0)
+            if old_updates:
+                self._offset = old_updates[-1]["update_id"] + 1
+                self.logger.info(f"🗑 Đã bỏ qua {len(old_updates)} lệnh cũ.")
+        except Exception:
+            pass
+
         self.logger.info(f"🔄 Bắt đầu poll Telegram mỗi {self.poll_sec}s (long-poll timeout=30s)")
         while True:
             try:
