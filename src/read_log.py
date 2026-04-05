@@ -10,9 +10,9 @@ def print_log():
         print("Không có thư mục log.")
         return
         
-    log_files = glob.glob(os.path.join(logs_dir, "*.log"))
+    log_files = glob.glob(os.path.join(logs_dir, "*_train.log"))
     if not log_files:
-        print("Trống.")
+        print("Trống (Chưa có log training).")
         return
         
     latest_log = max(log_files, key=os.path.getmtime)
