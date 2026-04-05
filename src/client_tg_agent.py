@@ -347,7 +347,8 @@ class TelegramAgent:
                 return
             n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 20
             log_text = self.manager.last_log_lines(n)
-            self._send(chat_id, f"📋 <b>{self.client_id}</b> — Log gần nhất:\n<pre>{log_text[:3000]}</pre>")
+            import html
+            self._send(chat_id, f"📋 <b>{self.client_id}</b> — Log gần nhất:\n<pre>{html.escape(log_text[:3000])}</pre>")
 
         # /run [client_id] [script_path]
         elif cmd == "run":
@@ -373,7 +374,8 @@ class TelegramAgent:
                 try:
                     r = subprocess.run([python, str(abs_path)], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
                     out = r.stdout[-3000:] if r.stdout else (r.stderr[-3000:] if r.stderr else "(Không có output)")
-                    self._send(chat_id, f"✅ <b>{self.client_id}</b> chạy `{script_path}` thành công:\n<pre>{out}</pre>")
+                    import html
+                    self._send(chat_id, f"✅ <b>{self.client_id}</b> chạy `{script_path}` thành công:\n<pre>{html.escape(out)}</pre>")
                 except Exception as e:
                     self._send(chat_id, f"❌ <b>{self.client_id}</b> Lỗi chạy script: {e}")
             
@@ -438,10 +440,11 @@ class TelegramAgent:
                     # Tìm dòng ĐỈNH MỚI gần nhất
                     peak_lines = [l for l in lines if "ĐỈNH MỚI" in l]
                     peak = peak_lines[-1] if peak_lines else ""
+                    import html
                     msg = (f"📈 <b>{self.client_id}</b> — Epoch {epoch_num}\n"
-                           f"<pre>{last_line.strip()}</pre>")
+                           f"<pre>{html.escape(last_line.strip())}</pre>")
                     if peak:
-                        msg += f"\n🏆 <pre>{peak.strip()}</pre>"
+                        msg += f"\n🏆 <pre>{html.escape(peak.strip())}</pre>"
                     self._notify_all(msg)
             except Exception:
                 pass
