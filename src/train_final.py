@@ -5,9 +5,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import pandas as pd
 
-from train_ga import CNN_LSTM_Model, TimeSeriesDataset, device
+from train_ga import CNN_LSTM_Model, TimeSeriesDataset, FocalLoss, device
 
-def train_session_model(features, targets, num_features, session_name, start_hour, end_hour):
+def train_session_model(features, targets, num_features, session_name, start_hour, end_hour, run_dir):
     print(f"\n=================================================")
     print(f"🧠 BẮT ĐẦU ÉP KHUNG MODEL PHIÊN: {session_name.upper()} 🧠")
     print(f"=================================================")
@@ -50,86 +50,146 @@ def train_session_model(features, targets, num_features, session_name, start_hou
         print(f"⚠️ [CẢNH BÁO] Không thấy Trái Tim best_genes.json, dùng Cấu Hình Cứng Bù Đắp!")
     
     epochs = 300 # Chạy Mở Rộng 300 Vòng Máu (Deep Training)
-    batch_size = 512
+    batch_size = 4096 # GIA TỐC: Đẩy lô dữ liệu lên 4096 nến/Batch (Do tính năng In-Memory GPU)
     patience = 15 # Cho Nơ-ron Đáy Bật Thêm 15 Cơ Hội Mới Cắt Đuôi (Tránh Early Stopping quá sớm)
     
-    split_idx = int(len(session_features) * 0.8)
+    # 🌟 OOS SPLIT (Chống Overfitting): Học Tháng 1,2 | Thi Tháng 3 🌟
+    train_mask = session_features.index < '2026-03-01'
+    val_mask = session_features.index >= '2026-03-01'
     
-    # ⚠️ BẢO HIỂM MẠNG NEURON: Tránh Out-of-Bound do Cửa Sổ Trượt 60 nến
-    if len(session_features) - split_idx <= window_size:
-        split_idx = len(session_features) - window_size - 5
-        
-    if split_idx <= window_size:
-        print(f"⚠️ Dữ liệu siêu cạn kiệt cho {session_name} (chẳng đủ nhét 1 khung {window_size} nến). Rụng kíp Học!")
+    train_features = session_features[train_mask]
+    train_targets = session_targets[train_mask]
+    val_features = session_features[val_mask]
+    val_targets = session_targets[val_mask]
+    
+    if len(train_features) <= window_size or len(val_features) <= window_size:
+        print(f"⚠️ Dữ liệu siêu cạn kiệt cho {session_name} (chẳng đủ nhét 1 khung {window_size} nến). Rụng kíp Học OOS!")
         return
-
-    train_features = session_features.iloc[:split_idx]
-    train_targets = session_targets.iloc[:split_idx]
-    val_features = session_features.iloc[split_idx:]
-    val_targets = session_targets.iloc[split_idx:]
 
     print(f"-> Tổng Lượng Nến (Khung M1): {len(train_features)} Train | {len(val_features)} Test")
     
+    # ĐỌC METADATA DUAL-STREAM để biết ranh giới tách XAU vs Macro features
+    meta_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\feature_meta.json"
+    num_xau_features = None
+    if os.path.exists(meta_path):
+        with open(meta_path, "r") as f:
+            import json as _json
+            meta = _json.load(f)
+            num_xau_features = meta.get("num_xau_features", None)
+            print(f"🧬 [DUAL-STREAM] XAU Features: {num_xau_features} | Macro: {num_features - (num_xau_features or 0)}")
+    
+    model = CNN_LSTM_Model(
+        num_features, 
+        cnn_filters=cnn_filters, 
+        lstm_layers=lstm_layers, 
+        lstm_units=lstm_units, 
+        dropout_rate=dropout_rate,
+        num_xau_features=num_xau_features
+    ).to(device)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-3)
+    criterion = FocalLoss(gamma=2.0, label_smoothing=0.1)
+    
+    global_best_val_loss = float('inf')
+    best_val_acc_at_lowest_loss = 0.0
+    save_path = run_dir
+    os.makedirs(save_path, exist_ok=True)
+    model_file = os.path.join(save_path, f"xauusd_{session_name}_weights.pth")
+    
+    # 🌟 HUẤN LUYỆN TRUYỀN THỐNG (GỘP TOÀN BỘ DATA - TẮT CURRICULUM LÀM NHIỄU) 🌟
+    # Tạo Dataset đầy đủ (Tuyết đối Data đã chặn đuôi để không học lấn sang OOS Tháng 3)
     train_dataset = TimeSeriesDataset(train_features, train_targets, window_size)
     val_dataset = TimeSeriesDataset(val_features, val_targets, window_size)
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     
-    model = CNN_LSTM_Model(num_features, cnn_filters=cnn_filters, lstm_layers=lstm_layers, lstm_units=lstm_units, dropout_rate=dropout_rate).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=lr)
-    criterion = nn.CrossEntropyLoss()
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=3, factor=0.5)
-    
-    best_val_acc = 0.0
     epochs_no_improve = 0
-    save_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\models"
-    os.makedirs(save_path, exist_ok=True)
-    model_file = os.path.join(save_path, f"xauusd_{session_name}_weights.pth")
     
     for epoch in range(epochs):
         model.train()
         train_loss = 0.0
         for batch_x, batch_y in train_loader:
-            batch_x, batch_y = batch_x.to(device), batch_y.view(-1).to(device)
+            batch_y = batch_y.view(-1)
             optimizer.zero_grad()
             outputs = model(batch_x)
             loss = criterion(outputs, batch_y)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             train_loss += loss.item()
             
         model.eval()
         correct, total = 0, 0
+        conf_correct, conf_total = 0, 0
+        soft_correct, soft_total = 0, 0   # Ngưỡng Mềm Hơn >55% / <45%
         val_loss = 0.0
         with torch.no_grad():
+            import torch.nn.functional as F
             for batch_x, batch_y in val_loader:
-                batch_x, batch_y = batch_x.to(device), batch_y.view(-1).to(device)
+                batch_y = batch_y.view(-1)
                 outputs = model(batch_x)
                 loss = criterion(outputs, batch_y)
                 val_loss += loss.item()
+                
+                # Mặc định (Tín hiệu Tu mù)
                 _, predicted = torch.max(outputs.data, 1)
                 total += batch_y.size(0)
                 correct += (predicted == batch_y).sum().item()
                 
-        val_acc = correct / total
-        print(f"Kỷ nguyên {epoch+1:02d}/{epochs} - Train Loss: {train_loss/len(train_loader):.4f} | Win-Rate: {val_acc*100:.2f}%")
+                probs = F.softmax(outputs.data, dim=1)
+                prob_up = probs[:, 1]
+                
+                # Ngưỡng Khắt Khe >60% / <40%
+                buy_mask_60 = prob_up > 0.60
+                sell_mask_60 = prob_up < 0.40
+                conf_total += buy_mask_60.sum().item() + sell_mask_60.sum().item()
+                conf_correct += (batch_y[buy_mask_60] == 1).sum().item() + (batch_y[sell_mask_60] == 0).sum().item()
+                
+                # Ngưỡng Mềm Hơn >55% / <45%
+                buy_mask_55 = prob_up > 0.55
+                sell_mask_55 = prob_up < 0.45
+                soft_total += buy_mask_55.sum().item() + sell_mask_55.sum().item()
+                soft_correct += (batch_y[buy_mask_55] == 1).sum().item() + (batch_y[sell_mask_55] == 0).sum().item()
+                
+        val_acc = correct / total if total > 0 else 0.0
+        conf_acc = conf_correct / conf_total if conf_total > 0 else 0.0
+        soft_acc = soft_correct / soft_total if soft_total > 0 else 0.0
+        avg_val_loss = val_loss / len(val_loader) if len(val_loader) > 0 else 0
+        
+        print(f"Kỷ nguyên {epoch+1:02d}/{epochs} - Train Loss: {(train_loss/len(train_loader)) if len(train_loader) > 0 else 0:.4f} | Val Loss: {avg_val_loss:.4f} | WR Thô: {val_acc*100:.1f}% | >55%: {soft_acc*100:.1f}%({soft_total}L) | >60%: {conf_acc*100:.1f}%({conf_total}L)")
         
         if isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
             scheduler.step(val_acc)
         
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
+        # KHÔNG DÙNG WIN-RATE ĐỂ LỌC TRỌNG SỐ NỮA (DO SẼ BỊ OVERFIT), DÙNG VALIDATION LOSS CHUẨN MỰC
+        if avg_val_loss < global_best_val_loss:
+            global_best_val_loss = avg_val_loss
+            best_val_acc_at_lowest_loss = conf_acc
             epochs_no_improve = 0
             torch.save(model.state_dict(), model_file)
-            print(f" 🔥 Đã Khắc Ký Ức Phiên {session_name.upper()} (Đỉnh Mới)!")
+            print(f" 🔥 Đáy Suy Hao Mới Phiên {session_name.upper()} - KHÓA TÍN HIỆU! (Thực Chiến Khắt Khe Đạt: {conf_acc*100:.2f}%)")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
-                print(f" 🛑 Hội tụ hoàn hảo. Ngừng Sớm (Early Stopping) Phiên {session_name.upper()}.")
+                print(f" 🛑 Cán mốc Hội Tụ Cứng. Rút lệnh sớm để chống Nhồi Cũ (Overfitting) Phiên {session_name.upper()}!")
                 break
                 
     print(f"✅ HOÀN TẤT Phiên {session_name.upper()} -> Đã lưu tại: {model_file}")
+    
+    # GHI REPORT KẾT QUẢ ĐỂ MAI SAU SO SÁNH (EXPERIMENT TRACKING)
+    report_file = os.path.join(save_path, f"{session_name}_report.txt")
+    with open(report_file, "w", encoding="utf-8") as f:
+        f.write(f"Phiên Giao Dịch: {session_name.upper()}\n")
+        f.write(f"Chiến thuật: HỌC TOÀN BỘ DATA MỎNG BÁM THEO MIN VALIDATION LOSS\n")
+        f.write(f"Kiến trúc: DUAL-STREAM (XAU CNN-LSTM + Macro FC Embedder) + BatchNorm + ATR Barrier\n")
+        f.write(f"Đáy Validation Loss (Sự kiện lưu Model): {global_best_val_loss:.4f}\n")
+        f.write(f"Win-Rate Lọc Ngưỡng >55%: {soft_acc*100:.2f}% ({soft_total} lệnh lọc / {total} tổng)\n")
+        f.write(f"Win-Rate Lọc Ngưỡng >60%: {best_val_acc_at_lowest_loss*100:.2f}% ({conf_total} lệnh lọc / {total} tổng)\n")
+        f.write(f"Mô hình đã kết thúc trong {epoch+1} vòng (Epochs).\n")
+        f.write(f"Đáy Validation Loss (Sự kiện lưu Model): {global_best_val_loss:.4f}\n")
+        f.write(f"Tỷ lệ Win-Rate Thực Chiến Khắt Khe (>60% Softmax): {best_val_acc_at_lowest_loss*100:.2f}%\n")
+        f.write(f"Mô hình đã kết thúc trong {epoch+1} vòng (Epochs).\n")
 
 if __name__ == "__main__":
     data_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data"
@@ -141,14 +201,33 @@ if __name__ == "__main__":
         targets = pd.read_parquet(target_path)
         num_features = features.shape[1]
         
-        # 1. Phiên Á (Tokyo/Sydney) -> 22:00 - 08:00 UTC
-        train_session_model(features, targets, num_features, "asian", 22, 8)
+        import concurrent.futures
+        import datetime
+        print("\n🚀 BẬT CHẾ ĐỘ MULTI-PROCESSING ĐA LUỒNG - NƯỚNG 3 NÃO BỘ Á/ÂU/MỸ SONG SONG...")
         
-        # 2. Phiên Âu (London) -> 08:00 - 13:00 UTC
-        train_session_model(features, targets, num_features, "european", 8, 13)
+        # 🌟 KHỞI TẠO TRACKING DIR (TÁCH THƯ MỤC LƯU VẾT) 🌟
+        run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        source_name = "BINANCE"
+        if any('MT5' in col for col in features.columns):
+            source_name = "MT5"
         
-        # 3. Phiên Mỹ (New York) -> 13:00 - 22:00 UTC
-        train_session_model(features, targets, num_features, "us", 13, 22)
+        run_name = f"run_{run_timestamp}_{source_name}"
+        run_dir = os.path.join(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs", run_name)
+        os.makedirs(run_dir, exist_ok=True)
+        print(f"📁 Tự động tạo Hồ Sơ Quản Trị Trọng Số tại: {run_name}")
+        
+        sessions = [
+            ("asian", 22, 8),
+            ("european", 8, 13),
+            ("us", 13, 22)
+        ]
+        
+        # THÁO BỎ THREADPOOL (TRÁNH XUNG ĐỘT PYTORCH CPU CORES)
+        # Chạy tuần tự để PyTorch được gánh trọn vẹn sức mạnh 100% CPU vào từng Mẻ nướng
+        for session_name, start_hour, end_hour in sessions:
+            train_session_model(features, targets, num_features, session_name, start_hour, end_hour, run_dir)
+                
+        print("\n🏆 ĐÃ HOÀN TẤT LẦN LƯỢT ĐÚC NÃO 3 PHIÊN CÙNG KÈM REPORT! MỜI SẾP DÙNG! 🏆")
         
     else:
         print("Lỗi: Không tìm thấy dữ liệu Tensor đầu vào!")

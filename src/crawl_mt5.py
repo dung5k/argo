@@ -27,7 +27,7 @@ def fetch_mt5_data(symbol="XAUUSD", timeframe=mt5.TIMEFRAME_M1):
     print(f"Bắt đầu tải nến 1 phút (M1) gần nhất cho {symbol}...")
     
     is_live = (len(sys.argv) > 1 and sys.argv[1] == "live")
-    bars = 1440 if is_live else 500000 # Live chỉ lấy 1 ngày (1440 nến) để siêu tốc
+    bars = 1440 if is_live else 1000000 # Cào siêu sâu 1 triệu nến để đảm bảo phủ kín năm ngoái
     rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
     
     if rates is None or len(rates) == 0:
@@ -39,7 +39,7 @@ def fetch_mt5_data(symbol="XAUUSD", timeframe=mt5.TIMEFRAME_M1):
     
     # --- THUẬT TOÁN ĐỒNG BỘ MÚI GIỜ MT5 VỀ UTC CHUẨN ---
     tick = mt5.symbol_info_tick(symbol)
-    offset_sec = tick.time - int(time.time()) if tick else 0
+    offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
     offset_hours = round(offset_sec / 3600)
     
     df = pd.DataFrame(rates)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     data_path = os.path.join(base_path, "data")
     os.makedirs(data_path, exist_ok=True)
     
-    symbols = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD"]
+    symbols = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "XAGUSD", "VIXY"]
     
     for symbol in symbols:
         print(f"\n{'='*40}")

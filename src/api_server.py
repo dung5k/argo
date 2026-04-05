@@ -38,7 +38,7 @@ def load_models_once():
     base_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\models"
     for session in ["asian", "european", "us"]:
         model = CNN_LSTM_Model(num_features, cnn_filters, lstm_units, lstm_layers, dropout_rate).to(device)
-        weights_path = os.path.join(base_path, f"xauusd_{session}_weights.pth")
+        weights_path = os.path.join(base_path, f"btcusdt_{session}_weights.pth")
         if os.path.exists(weights_path):
             model.load_state_dict(torch.load(weights_path, map_location=device, weights_only=True))
         model.eval()

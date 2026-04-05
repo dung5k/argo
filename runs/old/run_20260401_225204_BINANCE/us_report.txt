@@ -1,0 +1,5 @@
+Phiên Giao Dịch: US
+Chiến thuật: HỌC TOÀN BỘ DATA MỎNG BÁM THEO MIN VALIDATION LOSS
+Đáy Validation Loss (Sự kiện lưu Model): 0.6938
+Tỷ lệ Win-Rate Thực Chiến OOS Cùng Thời Điểm Lưu: 49.56%
+Mô hình đã kết thúc trong 18 vòng (Epochs).

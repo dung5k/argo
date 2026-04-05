@@ -1,0 +1,16 @@
+{
+    "TARGET_SYMBOL": "LTCUSDm",
+    "TARGET_PREFIX": "LTC_USD",
+    "WEIGHT_FILE": "ltcusdm_unified_weights.pth",
+    "CRAWL_SCRIPT": "crawl_mt5_alt.py",
+    "BUY_ENTRY_THR": 0.57,
+    "SELL_ENTRY_THR": 0.43,
+    "CLOSE_BUY_THR": 0.46,
+    "CLOSE_SELL_THR": 0.54,
+    "lot_size": 0.01,
+    "sl_pips": 50,
+    "tp_pips": 100,
+    "SESSION_GUARD_ENABLED": false,
+    "MARKET_OPEN": "00:00",
+    "MARKET_CLOSE": "23:59"
+}

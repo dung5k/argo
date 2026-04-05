@@ -1,0 +1,26 @@
+--- BÁO CÁO VÀO LỆNH (TICKET: 8044266357) ---
+Thời gian mở: 2026-04-02 23:50:07
+Loại lệnh: BUY
+AI Lực Khuyến Nghị (Prediction): 60.09%
+Khối lượng: 0.01
+Entry Price: 4661.49
+SL Đặt: 4656.49
+TP Đặt: 4671.49
+--- BẮT ĐẦU THEO DÕI TRACING TICK ---
+[23:50:07] TRACING: Bid=4660.14 | Ask=4660.31
+[23:50:19] TRACING: Bid=4660.5 | Ask=4660.67
+[23:50:33] 🛠️ ĐÃ DỜI SL THÀNH CÔNG: SL Mới = 4660.21
+[23:50:33] TRACING: Bid=4665.0 | Ask=4665.17
+[23:50:46] 🔒 LỆNH ĐÃ ĐÓNG (Chạm SL/TP hoặc bị cắt tay). VÀO GIAI ĐOẠN 5 PHÚT HẬU KỲ...
+[23:50:59] POST-CLOSE (+12s): Bid=4662.42 | Ask=4662.59
+[23:51:10] POST-CLOSE (+23s): Bid=4661.54 | Ask=4661.71
+[23:51:23] POST-CLOSE (+37s): Bid=4659.94 | Ask=4660.11
+[23:51:34] POST-CLOSE (+48s): Bid=4659.71 | Ask=4659.88
+[23:51:46] POST-CLOSE (+60s): Bid=4659.92 | Ask=4660.09
+[23:51:58] POST-CLOSE (+71s): Bid=4661.02 | Ask=4661.19
+[23:52:09] POST-CLOSE (+83s): Bid=4660.26 | Ask=4660.43
+[23:52:21] POST-CLOSE (+94s): Bid=4659.86 | Ask=4660.03
+[23:52:31] POST-CLOSE (+104s): Bid=4660.45 | Ask=4660.62
+[23:52:42] POST-CLOSE (+115s): Bid=4660.19 | Ask=4660.36
+[23:52:53] POST-CLOSE (+126s): Bid=4660.06 | Ask=4660.23
+[23:53:04] POST-CLOSE (+137s): Bid=4659.98 | Ask=4660.15

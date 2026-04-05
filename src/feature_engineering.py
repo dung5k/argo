@@ -1,16 +1,58 @@
 import os
 import pandas as pd
 import numpy as np
+import json
 from sklearn.preprocessing import StandardScaler
 
+# ==========================================
+# CÔNG TẮC NGUỒN CẤP DỮ LIỆU (SOURCE TOGGLE)
+# ==========================================
+USE_MT5_DATA = True  # (False = Binance | True = MT5)
+
+# Đọc config để lấy target
+import sys
+import json
+config_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config.json"
+if len(sys.argv) > 1:
+    for arg in sys.argv:
+        if arg.endswith('.json'):
+            config_path = arg
+
+if os.path.exists(config_path):
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = json.load(f)
+        TARGET_PREFIX = config.get("TARGET_PREFIX", "XAU_USD")
+else:
+    TARGET_PREFIX = "XAU_USD"
+
+
 def load_and_align_data(data_path):
-    print("1. Đang gộp toàn bộ dữ liệu & CHUẨN HOÁ MÚI GIỜ (Timezone Validation)...")
-    # Lấy danh sách file nhưng loại trừ ngay 2 file thành phẩm đầu ra để tránh lỗi vòng lặp đệ quy ma trận
-    files = [f for f in os.listdir(data_path) if f.endswith('.parquet') and not f.startswith('final') and not f.startswith('target')]
+    print("1. Đang gộp toàn bộ dữ liệu & CHUẨN HOÁ MÚI GIỜ (Timezone Alignment)...")
     
+    if USE_MT5_DATA:
+        print(">> Chế độ: ĐANG ĐỌC NGUỒN DỮ LIỆU MT5 TỔNG HỢP <<")
+        files = [f for f in os.listdir(data_path) if f.endswith('.parquet') and 'usdt' not in f.lower() and 'target_' not in f.lower() and 'final_' not in f.lower()]
+        
+        # Nếu đang train/trade XAUUSD, dọn dẹp các mã gây nhiễu (Crypto, JPY, DXY...) theo như phân tích Feature Importance
+        if 'XAU' in TARGET_PREFIX.upper():
+            useless_features = ['btc', 'eth', 'sol', 'xrp', 'ada', 'bnb', 'bch', 'ltc', 'usdjpy', 'jp225', 'us30', 'dxy']
+            filtered_files = []
+            for f in files:
+                f_lower = f.lower()
+                is_useless = any(u in f_lower for u in useless_features)
+                if not is_useless:
+                    filtered_files.append(f)
+                else:
+                    print(f"🗑️ Đã gạt bỏ nhiễu {f}")
+            files = filtered_files
+            print(f"✅ Số lượng Features (Files) được giữ lại cho Vàng: {len(files)}")
+    else:
+        print(">> Chế độ: ĐANG ĐỌC NGUỒN DỮ LIỆU BINANCE (CCXT) <<")
+        files = [f for f in os.listdir(data_path) if f.endswith('_usdt_1m_2025_2026.parquet')]
+        
     df_list = []
     for file in files:
-        symbol = file.replace('_1m_2025_2026.parquet', '').replace('_1h_2025_2026.parquet', '').upper()
+        symbol = file.replace('_1m_2025_2026.parquet', '').replace('_mt5_1m_2026.parquet', '').upper()
         df = pd.read_parquet(os.path.join(data_path, file))
         
         # ĐỒNG BỘ MÚI GIỜ (Timezone Alignment) VỀ CHUẨN UTC TRƯỚC KHI GỘP
@@ -31,21 +73,55 @@ def load_and_align_data(data_path):
     print("-> Đang hợp nhất (Outer Join) tất cả các mã vào 1 bảng duy nhất...")
     merged_df = pd.concat(df_list, axis=1)
     
-    # 🌟 GỌT NẾN MA (GHOST CANDLE FIX): Lấy XAUUSD làm Xương Sống 🌟
-    # Nếu Crypto cào data muộn hơn và nòi ra 1 phút tương lai, ta Rụng bỏ phút đó đi!
-    xauusd_col = [c for c in merged_df.columns if 'XAUUSD_close' in c]
-    if xauusd_col:
-        xauusd_series = merged_df[xauusd_col[0]].dropna()
-        merged_df = merged_df.reindex(xauusd_series.index)
-    
-    # Rất quan trọng: Phải sort Index theo thời gian trước, nếu không ffill sẽ bị điền rác.
+    # Rất quan trọng: Phải sort Index theo thời gian trước
     merged_df.sort_index(inplace=True)
+    
+    # 🌟 GỌT NẾN MA (GHOST CANDLE FIX): Lấy TARGET_PREFIX làm Xương Sống 🌟
+    # Tập hợp các mã Tỉ Giá và Chỉ số vào Trục Thước Đo Chuẩn Của Target.
+    xau_usd_col = [c for c in merged_df.columns if f'{TARGET_PREFIX}_close' in c]
+    if xau_usd_col:
+        xau_usd_series = merged_df[xau_usd_col[0]].dropna()
+        merged_df = merged_df.loc[xau_usd_series.index]
+        
+    # -------------------------------------------------------------
+    # CHIẾN LƯỢC ĐIỀN KHUYẾT ĐA HỆ DANH (IMPUTATION)
+    # -------------------------------------------------------------
+    # 1. Với Giá trị (Price) và Macro 1H: Bơm kế thừa mốc giá gần nhất (ffill) với GIỚI HẠN chặt chẽ 120 phút.
+    # LƯU Ý: Phải ffill trước khi tính Tỷ lệ Thiếu (Missing Tolerance) vì Macro Data chỉ có nến 1H!
+    merged_df.ffill(limit=120, inplace=True)
+
+    # 2. Với Cột Thanh Khoản (Volume/Tick_Volume): Lấp bằng 0 (Thị trường đóng băng/Khớp lệnh = 0)
+    vol_cols = [c for c in merged_df.columns if 'volume' in c.lower()]
+    merged_df[vol_cols] = merged_df[vol_cols].fillna(0)
+    
+    # -------------------------------------------------------------
+    
+    # 🔥 BỘ LỌC TOÀN VẸN DỮ LIỆU (DATA INTEGRITY: MISSING TOLERANCE) 🔥
+    missing_ratio = merged_df.isna().sum(axis=1) / len(merged_df.columns)
+    
+    # Huỷ diệt (Drop) ngay lập tức các cây nến có dữ liệu khuyết rách trên 15%
+    MISSING_TOLERANCE = 0.15
+    invalid_rows = missing_ratio > MISSING_TOLERANCE
+    num_ghost_candles = invalid_rows.sum()
+    merged_df = merged_df[~invalid_rows]
+    missing_ratio = missing_ratio[~invalid_rows]
+    
+    print(f"   [DATA INTEGRITY] Đã phát hiện và tiêu huỷ {num_ghost_candles:,} Cây Nến Ma (Thiếu > {MISSING_TOLERANCE*100:.0f}% dữ liệu Vĩ mô).")
+    
+    # Tạo Cờ Vàng (Flag) để theo dõi Tỷ lệ Nến Ma theo Cửa Sổ Bề Ngang
+    merged_df['is_imputed_flag'] = (missing_ratio > 0).astype(int)
+    
+    # Dọn dẹp nốt cặn bã nếu lấp 120 phút vẫn không kín (Nghĩa là có tài sản bị đứt Mạng luới > 2 tiếng)
+    final_drop_count = merged_df.isna().any(axis=1).sum()
+    merged_df.dropna(inplace=True)
+    print(f"   [DATA INTEGRITY] Đã loại bỏ thêm {final_drop_count:,} Cây Nến bị đứt gãy dữ liệu kéo dài (>2 giờ).")
+    
+    # 🔥 MỞ RỘNG LỊCH SỬ DATA về 2024 🔥
+    merged_df = merged_df[merged_df.index >= '2024-01-01']
+    print(f"-> Khối lượng Nến Training hợp lệ còn lại: {len(merged_df):,} Nến (Từ 2024).")
     
     # 🌟 ĐỒNG BỘ THEO MÚI GIỜ CHUẨN MỸ 🌟
     merged_df.index = merged_df.index.tz_convert('America/New_York')
-    
-    # Điền khuyết (ffill) các thông số Macro (Vĩ mô) chạy theo ngày hoặc giờ
-    merged_df.ffill(inplace=True)
     
     print("-> Data Unlocked: Gộp Trọn Vẹn Giai Đoạn 2025-2026 (Full History)...")
     
@@ -69,21 +145,55 @@ def load_and_align_data(data_path):
 import joblib
 
 def create_stationary_features(df, is_live=False):
-    print("2. Chuyển đổi dữ liệu sang dạng dừng (Stationary) bằng Log Returns...")
-    feature_df = pd.DataFrame(index=df.index)
+    print("2. Chuyển đổi dữ liệu sang dạng dừng (Stationary) bằng Log Returns & Đúc T.A cho XAUUSD...")
+    new_features = {}
     
+    # Tách is_imputed_flag để không bị scale
+    imputed_flags = df['is_imputed_flag'].copy() if 'is_imputed_flag' in df.columns else pd.Series(0, index=df.index)
+    if 'is_imputed_flag' in df.columns:
+        df = df.drop(columns=['is_imputed_flag'])
+        
+    # [GIÁC QUAN ĐẶC BIỆT]: Tính toán Chỉ báo Điểm chạm của XAUUSD
+    if f'{TARGET_PREFIX}_close' in df.columns:
+        # 1. Đo lường sức mạnh giá (RSI 14)
+        delta = df[f'{TARGET_PREFIX}_close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / (loss + 1e-9)
+        new_features[f'{TARGET_PREFIX}_RSI'] = 100 - (100 / (1 + rs))
+        
+        # 2. Đo lường sức mạnh Xu Hướng mượt (Khoảng cách nến tới 2 đường EMA)
+        new_features[f'{TARGET_PREFIX}_EMA9_dist'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_close'].ewm(span=9, adjust=False).mean())
+        new_features[f'{TARGET_PREFIX}_EMA21_dist'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_close'].ewm(span=21, adjust=False).mean())
+        
+        # 3. Phân tách Cấu trúc Râu Nến và Thân Nến Cổ Điển (Nhận diện PinBar, Doji)
+        if all(k in df.columns for k in [f'{TARGET_PREFIX}_open', f'{TARGET_PREFIX}_high', f'{TARGET_PREFIX}_low']):
+            new_features[f'{TARGET_PREFIX}_Body'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_open'].replace(0, np.nan))
+            new_features[f'{TARGET_PREFIX}_Upper_Shadow'] = np.log(df[f'{TARGET_PREFIX}_high'] / df[[f'{TARGET_PREFIX}_open', f'{TARGET_PREFIX}_close']].max(axis=1).replace(0, np.nan))
+            new_features[f'{TARGET_PREFIX}_Lower_Shadow'] = np.log(df[[f'{TARGET_PREFIX}_open', f'{TARGET_PREFIX}_close']].min(axis=1) / df[f'{TARGET_PREFIX}_low'].replace(0, np.nan))
+        
+        # 4. [MỚI] MULTI-HORIZON RETURN FEATURES - Đo Quán Tính Giá Đa Khung
+        for horizon in [5, 10, 30]:
+            past_close = df[f'{TARGET_PREFIX}_close'].shift(horizon).replace(0, np.nan)
+            new_features[f'{TARGET_PREFIX}_ret_{horizon}m'] = np.log(df[f'{TARGET_PREFIX}_close'] / past_close)
+        
+        # 5. [MỚI] ATR RATIO - Tỷ lệ biến động Hiện Tại so với Trung bình 60p
+        if all(k in df.columns for k in [f'{TARGET_PREFIX}_high', f'{TARGET_PREFIX}_low']):
+            curr_range = df[f'{TARGET_PREFIX}_high'] - df[f'{TARGET_PREFIX}_low']
+            avg_range = curr_range.rolling(60).mean()
+            new_features[f'{TARGET_PREFIX}_ATR_ratio'] = curr_range / (avg_range + 1e-9)
+
     for col in df.columns:
         if col in ['hour_sin', 'hour_cos', 'dow_sin', 'dow_cos']:
-            # Giữ nguyên giá trị Vector hình học thuần khiết, KHÔNG tính Log Return
-            feature_df[col] = df[col]
+            new_features[col] = df[col]
         elif 'volume' in col.lower() or 'spread' in col.lower():
-            # Log(Volume + 1) để chuẩn hóa khối lượng và tránh lỗi chia rỗng
-            feature_df[col] = np.log1p(df[col].fillna(0))
+            new_features[col] = np.log1p(df[col].fillna(0))
         else:
-            # Trừ khử "Tính không dừng" (Trend) bằng Log Return của giá
-            # Cẩn thận xử lý lỗi chia cho 0 bằng cách thay 0 thành NaN trước
             shifted_col = df[col].shift(1).replace(0, np.nan)
-            feature_df[f"{col}_log_ret"] = np.log(df[col] / shifted_col)
+            new_features[f"{col}_log_ret"] = np.log(df[col] / shifted_col)
+            
+    # Xây dựng DataFrame một lần ở cuối (Chống Phân Mảnh / Fragmentation)
+    feature_df = pd.DataFrame(new_features, index=df.index)
             
     # Loại bỏ các giá trị Inf do phép chia sinh ra và các hàng NaN
     feature_df.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -105,7 +215,29 @@ def create_stationary_features(df, is_live=False):
         
     scaled_df = pd.DataFrame(scaled_data, index=feature_df.index, columns=feature_df.columns)
     
+    # [DUAL-STREAM METADATA] Đếm và lưu số lượng Feature thuộc mục tiêu để Model biết cách tách luồng
+    xau_cols = [c for c in scaled_df.columns if c.startswith(TARGET_PREFIX)]
+    num_xau_features = len(xau_cols)
+    
+    # Chèn cờ báo hiệu nến lắp ghép lại vào Dataset cuối
+    scaled_df['is_imputed_flag'] = imputed_flags.loc[scaled_df.index]
+    
+    # Sắp xếp lại cột: XAU features đứng TRƯỚC để Model slice dễ dàng
+    other_cols = [c for c in scaled_df.columns if not c.startswith(TARGET_PREFIX) and c != 'is_imputed_flag']
+    scaled_df = scaled_df[xau_cols + other_cols + ['is_imputed_flag']]
+    
+    # Lưu metadata ra JSON để train_final.py đọc
+    import json
+    meta_path = os.path.join(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data", f"feature_meta_{TARGET_PREFIX}.json")
+    with open(meta_path, "w") as f:
+        json.dump({
+            "num_xau_features": num_xau_features, 
+            "total_features": len(scaled_df.columns),
+            "target_prefix": TARGET_PREFIX
+        }, f)
+    
     print(f"-> Hoàn tất Stationarity & Scaling. Kích thước Tensor: {scaled_df.shape}")
+    print(f"-> [DUAL-STREAM] XAU Features: {num_xau_features} | Macro Features: {len(other_cols)}")
     return scaled_df, scaler
 
 def create_3d_sequences(features_df, target_series, window_size=60, forecast_horizon=5):
@@ -146,62 +278,48 @@ if __name__ == "__main__":
     # 1. Gộp toàn bộ Data
     merged_df = load_and_align_data(data_path)
     
-    # Lưu giá Close của Vàng làm cột Mục tiêu (Target) trước khi Feature Engineering biến đổi nó
-    xauusd_close = merged_df['XAUUSD_close']
+    # Lưu giá Close của VÀNG (XAU) làm Cột Mục tiêu Chỉ Lối (Target)
+    xau_usd_close = merged_df[f'{TARGET_PREFIX}_close']
     
     # 2. Xử lý tính năng tĩnh (Stationary Log Returns & Scaling)
     scaled_features, scaler = create_stationary_features(merged_df, is_live=is_live)
     
     # Cân bằng index do hàm tạo Log Return làm mất 1 dòng đầu tiên
-    target_aligned = xauusd_close.loc[scaled_features.index]
+    target_aligned = xau_usd_close.loc[scaled_features.index]
     
-    print("3. Khởi tạo mảng Target T+5 (Phương án Triple Barrier T+5 phút)...")
+    print("3. Khởi tạo Target Momentum T+5 (Close[T+5] > Close[T])...")
     lookahead_minutes = 5
-    tp_threshold = 0.5  # Chạm chốt lời 0.5 giá vàng (+5 pip)
-    sl_threshold = 0.5  # Chạm cắt lỗ 0.5 giá vàng (-5 pip)
     
-    # [LIVE MODE FIX] Nếu Live thì không DropNA! Giữ trọn vẹn điểm Giao dịch Cuối cùng.
+    # [LIVE MODE FIX]
     if is_live:
         final_features = scaled_features
     else:
-        # Cắt ma trận chênh lệch giá 5 phút trong tương lai
-        future_diffs = []
-        for i in range(1, lookahead_minutes + 1):
-            future_diffs.append((xauusd_close.shift(-i) - xauusd_close).loc[scaled_features.index].values)
-            
-        diff_matrix = np.array(future_diffs).T  # Shape: (N_Samples, 5)
+        # [A] XỬ LÝ TARGET TRÁNH SIDEWAYS (LỌC NHIỄU)
+        # Thay vì bắt AI đoán bừa khi giá chỉ nhích thêm 0.00001, ta Xoá Bỏ các cây nến Đi Ngang
+        future_close = xau_usd_close.shift(-lookahead_minutes)
+        pct_change = (future_close / xau_usd_close) - 1.0
         
-        print("-> Đang gán rào cản SL/TP bằng Numpy...")
-        labels = np.zeros(len(diff_matrix))
+        # Ngưỡng biến động (Tối thiểu 0.02% để coi là xu hướng)
+        MIN_MOVE_PCT = 0.0002
+        valid_trend_mask = pct_change.abs() > MIN_MOVE_PCT
         
-        for i in range(len(diff_matrix)):
-            row = diff_matrix[i]
-            if np.isnan(row[-1]):  # Đuôi dữ liệu khuyết
-                labels[i] = np.nan
-                continue
-                
-            hit_tp = np.where(row >= tp_threshold)[0]
-            hit_sl = np.where(row <= -sl_threshold)[0]
-            
-            first_tp = hit_tp[0] if len(hit_tp) > 0 else 999
-            first_sl = hit_sl[0] if len(hit_sl) > 0 else 999
-            
-            if first_tp < first_sl and first_tp != 999:
-                labels[i] = 1.0  # Lên chạm TP trước
-            elif first_sl < first_tp and first_sl != 999:
-                labels[i] = 0.0  # Xuống chạm SL trước
-            else:
-                # Không chạm biên, chốt sổ theo giá tại T+5
-                labels[i] = 1.0 if row[-1] > 0 else 0.0
-                
-        target_direction = pd.Series(labels, index=scaled_features.index)
-        target_direction.dropna(inplace=True)
+        raw_labels = (future_close > xau_usd_close).astype(float)
+        # Gán NaN cho nến vô hướng để thả rơi, giúp AI không học Rác (Noise Bias)
+        raw_labels[~valid_trend_mask] = np.nan
+
+        target_direction = raw_labels.loc[scaled_features.index].copy()
+        valid_mask = target_direction.notna()
+        target_direction = target_direction[valid_mask]
         final_features = scaled_features.loc[target_direction.index]
-        target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, "target_direction.parquet"))
+        
+        n_buy = (target_direction == 1).sum()
+        n_sell = (target_direction == 0).sum()
+        print(f"-> [Momentum Label T+5] Tổng: {len(target_direction):,} | BUY: {n_buy:,} ({n_buy/len(target_direction)*100:.1f}%) | SELL: {n_sell:,} ({n_sell/len(target_direction)*100:.1f}%)")
+        
+        target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet"))
     
     print(f"-> Dữ liệu Input cuối cùng: {final_features.shape}")
-    
-    # Lưu file siêu nhẹ ra Parquet để PyTorch DataLoader đọc (Tránh quá tải 7GB RAM bằng ma trận 3D cục bộ)
-    final_features.to_parquet(os.path.join(data_path, "final_features_2d.parquet"))
-    
-    print("\n[OK] Pipeline Feature Engineering siêu nén đã lưu thành công. Chuyển qua khởi động PyTorch Dataset!")
+    final_features.to_parquet(os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet"))
+    print(f"\n[OK] Feature Engineering hoàn tất! Chuyển qua train.")
+
+

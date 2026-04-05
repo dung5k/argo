@@ -1,8 +1,0 @@
-{
-    "window_size": 60,
-    "cnn_filters": 16,
-    "lstm_units": 128,
-    "lstm_layers": 2,
-    "dropout_rate": 0.2,
-    "learning_rate": 0.0005
-}

@@ -1,0 +1,26 @@
+{
+    "target": "ltcusd",
+    "status": "RUNNING_OR_DONE",
+    "epochs_trained": 0,
+    "best_winrate": 64.03867102396515,
+    "best_val_loss": Infinity,
+    "best_max_thresh": 0.73,
+    "thresholds": [
+        0.5,
+        0.5767,
+        0.6533,
+        0.73
+    ],
+    "win_rates": [
+        51.45728643216081,
+        54.25531914893617,
+        56.209150326797385,
+        75.0
+    ],
+    "totals": [
+        4975,
+        940,
+        153,
+        32
+    ]
+}

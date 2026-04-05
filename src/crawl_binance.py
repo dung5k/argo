@@ -7,8 +7,8 @@ import sys
 import concurrent.futures
 
 def fetch_historical_data(symbol='BTC/USDT', timeframe='1m', since_str='2025-01-01T00:00:00Z'):
-    # Tạo exchange instance local cho mỗi thread để đảm bảo an toàn bộ nhớ (Thread-safe)
-    exchange = ccxt.binance({'enableRateLimit': False})
+    # Tạo exchange instance local cho mỗi thread để đảm bảo an toàn bộ nhớ (Bật Rate Limit để tránh kẹt IP)
+    exchange = ccxt.binance({'enableRateLimit': True})
     
     since_ts = exchange.parse8601(since_str)
     now_ts = exchange.milliseconds()
@@ -78,8 +78,8 @@ def main():
         tasks.append((symbol, since_str))
         
     if tasks:
-        # Sử dụng Đa Luồng Vật Lý (ThreadPoolExecutor) nạp 10 Request cùng lúc
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # Giảm số luồng xuống 3 để tránh nghẽn API Rate-Limit của Binance làm treo lệnh
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             future_to_symbol = {executor.submit(fetch_historical_data, sym, '1m', since): sym for sym, since in tasks}
             
             for future in concurrent.futures.as_completed(future_to_symbol):

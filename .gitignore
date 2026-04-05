@@ -1,0 +1,25 @@
+temp/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Cau hinh bi mat - Hien tai push theo yeu cau cua chu repo
+# tg_config.json
+
+# Data nang > 100MB khong day len Git (dung OneDrive ngam)
+data/*.parquet
+data/*.pkl
+
+# File nhan dien tung may khach
+.client_id
+
+# Runs va logs (lon, khong can sync qua git)
+
+runs/
+*.log
+
+# OneDrive placeholders
+*.url
+desktop.ini

@@ -1,0 +1,18 @@
+Model: TRANSFORMER UNIFIED v3.2 (Rolling Window + Adaptive Win Rate)
+Kiến trúc: TRANSFORMER DUAL-STREAM + Cosine LR + Multi-Horizon Features
+--- DỮ LIỆU ROLLING WINDOW ---
+Train: 2026-02-28 → 2026-03-30 (~30 ngày)
+Test : 2026-03-30 → 2026-04-03 (4 ngày thực chiến)
+
+[Class Weight] SELL=0.985, BUY=1.015
+Phân phối Train: 12,661 Sell | 12,293 Buy
+Đáy Validation Loss: 0.7002
+Best Win Rate (L4): 44.23% @ ngưỡng >56%
+
+--- 4 MỨC WIN-RATE THỰC CHIẾN (Adaptive, test 2026-03-30→2026-04-03) ---
+L1 >50%: 47.45% (4,335 lệnh / 4,335 tổng)
+L2 >52%: 46.88% (3,505 lệnh / 4,335 tổng)
+L3 >54%: 46.58% (1,022 lệnh / 4,335 tổng)
+L4 >56%: 44.23% (52 lệnh / 4,335 tổng)
+
+Số Epoch đã chạy: 2

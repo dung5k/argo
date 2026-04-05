@@ -1,0 +1,93 @@
+--- BÁO CÁO VÀO LỆNH (TICKET: 8046686082) ---
+Thời gian mở: 2026-04-03 02:33:07
+Loại lệnh: BUY
+AI Lực Khuyến Nghị (Prediction): 60.31%
+Khối lượng: 0.01
+Entry Price: 4666.0
+SL Đặt: 4661.0
+TP Đặt: 4676.0
+--- BẮT ĐẦU THEO DÕI TRACING TICK ---
+[02:33:07] TRACING: Bid=4665.83 | Ask=4666.0 | Giá trị Hợp đồng: -0.17$
+[02:33:17] TRACING: Bid=4665.65 | Ask=4665.82 | Giá trị Hợp đồng: -0.35$
+[02:33:26] TRACING: Bid=4663.7 | Ask=4663.93 | Giá trị Hợp đồng: -2.30$
+[02:33:36] TRACING: Bid=4663.74 | Ask=4663.91 | Giá trị Hợp đồng: -2.26$
+[02:33:46] TRACING: Bid=4663.48 | Ask=4663.65 | Giá trị Hợp đồng: -2.52$
+[02:33:55] TRACING: Bid=4663.8 | Ask=4663.97 | Giá trị Hợp đồng: -2.20$
+[02:34:05] TRACING: Bid=4664.3 | Ask=4664.47 | Giá trị Hợp đồng: -1.70$
+[02:34:14] TRACING: Bid=4663.88 | Ask=4664.05 | Giá trị Hợp đồng: -2.12$
+[02:34:24] TRACING: Bid=4663.76 | Ask=4663.93 | Giá trị Hợp đồng: -2.24$
+[02:34:33] TRACING: Bid=4663.52 | Ask=4663.69 | Giá trị Hợp đồng: -2.48$
+[02:34:42] TRACING: Bid=4664.02 | Ask=4664.19 | Giá trị Hợp đồng: -1.98$
+[02:34:52] TRACING: Bid=4664.59 | Ask=4664.89 | Giá trị Hợp đồng: -1.41$
+[02:35:02] TRACING: Bid=4664.77 | Ask=4664.94 | Giá trị Hợp đồng: -1.23$
+[02:35:11] TRACING: Bid=4665.57 | Ask=4665.76 | Giá trị Hợp đồng: -0.43$
+[02:35:21] TRACING: Bid=4665.56 | Ask=4665.73 | Giá trị Hợp đồng: -0.44$
+[02:35:31] TRACING: Bid=4665.41 | Ask=4665.58 | Giá trị Hợp đồng: -0.59$
+[02:35:40] TRACING: Bid=4664.85 | Ask=4665.01 | Giá trị Hợp đồng: -1.15$
+[02:35:49] TRACING: Bid=4664.74 | Ask=4664.91 | Giá trị Hợp đồng: -1.26$
+[02:35:59] TRACING: Bid=4663.92 | Ask=4664.09 | Giá trị Hợp đồng: -2.08$
+[02:36:09] TRACING: Bid=4664.31 | Ask=4664.48 | Giá trị Hợp đồng: -1.69$
+[02:36:18] TRACING: Bid=4664.45 | Ask=4664.62 | Giá trị Hợp đồng: -1.55$
+[02:36:27] TRACING: Bid=4664.97 | Ask=4665.14 | Giá trị Hợp đồng: -1.03$
+[02:36:37] TRACING: Bid=4664.69 | Ask=4664.86 | Giá trị Hợp đồng: -1.31$
+[02:36:46] TRACING: Bid=4664.81 | Ask=4664.98 | Giá trị Hợp đồng: -1.19$
+[02:36:56] TRACING: Bid=4663.72 | Ask=4663.89 | Giá trị Hợp đồng: -2.28$
+[02:37:06] TRACING: Bid=4662.71 | Ask=4662.88 | Giá trị Hợp đồng: -3.29$
+[02:37:15] TRACING: Bid=4663.39 | Ask=4663.56 | Giá trị Hợp đồng: -2.61$
+[02:37:24] TRACING: Bid=4662.92 | Ask=4663.1 | Giá trị Hợp đồng: -3.08$
+[02:37:34] TRACING: Bid=4662.57 | Ask=4662.74 | Giá trị Hợp đồng: -3.43$
+[02:37:43] TRACING: Bid=4662.14 | Ask=4662.31 | Giá trị Hợp đồng: -3.86$
+[02:37:53] TRACING: Bid=4662.18 | Ask=4662.35 | Giá trị Hợp đồng: -3.82$
+[02:38:03] TRACING: Bid=4661.92 | Ask=4662.09 | Giá trị Hợp đồng: -4.08$
+[02:38:12] TRACING: Bid=4662.33 | Ask=4662.5 | Giá trị Hợp đồng: -3.67$
+[02:38:22] TRACING: Bid=4662.92 | Ask=4663.1 | Giá trị Hợp đồng: -3.08$
+[02:38:32] TRACING: Bid=4662.3 | Ask=4662.47 | Giá trị Hợp đồng: -3.70$
+[02:38:42] TRACING: Bid=4662.19 | Ask=4662.36 | Giá trị Hợp đồng: -3.81$
+[02:38:51] TRACING: Bid=4662.4 | Ask=4662.57 | Giá trị Hợp đồng: -3.60$
+[02:39:01] TRACING: Bid=4662.2 | Ask=4662.37 | Giá trị Hợp đồng: -3.80$
+[02:39:10] TRACING: Bid=4661.63 | Ask=4661.8 | Giá trị Hợp đồng: -4.37$
+[02:39:19] TRACING: Bid=4662.08 | Ask=4662.25 | Giá trị Hợp đồng: -3.92$
+[02:39:29] TRACING: Bid=4662.06 | Ask=4662.23 | Giá trị Hợp đồng: -3.94$
+[02:39:39] TRACING: Bid=4663.15 | Ask=4663.32 | Giá trị Hợp đồng: -2.85$
+[02:39:48] TRACING: Bid=4664.23 | Ask=4664.4 | Giá trị Hợp đồng: -1.77$
+[02:39:58] TRACING: Bid=4664.28 | Ask=4664.45 | Giá trị Hợp đồng: -1.72$
+[02:40:07] TRACING: Bid=4664.22 | Ask=4664.39 | Giá trị Hợp đồng: -1.78$
+[02:40:16] TRACING: Bid=4664.85 | Ask=4665.02 | Giá trị Hợp đồng: -1.15$
+[02:40:27] 🛠️ ĐÃ DỜI SL THÀNH CÔNG: SL Mới = 4661.03
+[02:40:27] TRACING: Bid=4665.99 | Ask=4666.16 | Giá trị Hợp đồng: -0.01$
+[02:40:36] 🛠️ ĐÃ DỜI SL THÀNH CÔNG: SL Mới = 4662.03
+[02:40:36] TRACING: Bid=4666.84 | Ask=4667.01 | Giá trị Hợp đồng: +0.84$
+[02:40:46] 🔒 LỆNH ĐÃ ĐÓNG (Nguyên nhân: Đóng Kỹ Thuật Bằng Lệnh Thoát Trái Tuyến Tính (Do AI nhận thấy tín hiệu Đảo chiều Xấu)) | TỔNG KẾT PnL: Lãi/Lỗ +0.84$
+[02:40:46] VÀO GIAI ĐOẠN 5 PHÚT GIÁM SÁT HẬU KỲ...
+[02:40:56] POST-CLOSE (+9s): Bid=4666.47 | Ask=4666.64
+[02:41:05] POST-CLOSE (+19s): Bid=4666.35 | Ask=4666.52
+[02:41:15] POST-CLOSE (+28s): Bid=4666.53 | Ask=4666.7
+[02:41:24] POST-CLOSE (+38s): Bid=4667.2 | Ask=4667.37
+[02:41:34] POST-CLOSE (+47s): Bid=4667.87 | Ask=4668.04
+[02:41:43] POST-CLOSE (+57s): Bid=4668.0 | Ask=4668.17
+[02:41:53] POST-CLOSE (+66s): Bid=4667.49 | Ask=4667.66
+[02:42:02] POST-CLOSE (+76s): Bid=4667.93 | Ask=4668.1
+[02:42:12] POST-CLOSE (+85s): Bid=4667.78 | Ask=4667.95
+[02:42:21] POST-CLOSE (+95s): Bid=4666.51 | Ask=4666.68
+[02:42:31] POST-CLOSE (+104s): Bid=4667.22 | Ask=4667.39
+[02:42:40] POST-CLOSE (+114s): Bid=4667.24 | Ask=4667.41
+[02:42:49] POST-CLOSE (+123s): Bid=4667.45 | Ask=4667.62
+[02:42:59] POST-CLOSE (+132s): Bid=4667.16 | Ask=4667.33
+[02:43:09] POST-CLOSE (+142s): Bid=4666.68 | Ask=4666.85
+[02:43:18] POST-CLOSE (+152s): Bid=4667.0 | Ask=4667.17
+[02:43:27] POST-CLOSE (+161s): Bid=4667.2 | Ask=4667.37
+[02:43:37] POST-CLOSE (+170s): Bid=4666.87 | Ask=4667.04
+[02:43:47] POST-CLOSE (+180s): Bid=4666.96 | Ask=4667.13
+[02:43:56] POST-CLOSE (+190s): Bid=4667.42 | Ask=4667.59
+[02:44:06] POST-CLOSE (+199s): Bid=4666.68 | Ask=4666.85
+[02:44:15] POST-CLOSE (+208s): Bid=4666.93 | Ask=4667.1
+[02:44:26] POST-CLOSE (+219s): Bid=4667.23 | Ask=4667.4
+[02:44:35] POST-CLOSE (+229s): Bid=4667.17 | Ask=4667.34
+[02:44:44] POST-CLOSE (+238s): Bid=4666.7 | Ask=4666.87
+[02:44:54] POST-CLOSE (+248s): Bid=4666.41 | Ask=4666.58
+[02:45:04] POST-CLOSE (+257s): Bid=4666.39 | Ask=4666.58
+[02:45:13] POST-CLOSE (+267s): Bid=4666.85 | Ask=4667.02
+[02:45:23] POST-CLOSE (+276s): Bid=4667.36 | Ask=4667.53
+[02:45:33] POST-CLOSE (+286s): Bid=4668.09 | Ask=4668.13
+[02:45:42] POST-CLOSE (+296s): Bid=4667.52 | Ask=4667.71
+[02:45:52] 🛑 KẾT THÚC 5 PHÚT GIÁM SÁT HẬU KỲ. ĐÓNG LOG.

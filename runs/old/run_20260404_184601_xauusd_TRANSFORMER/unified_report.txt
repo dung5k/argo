@@ -1,0 +1,16 @@
+Model: TRANSFORMER UNIFIED v4.0 (Phoenix Restart)
+--- DỮ LIỆU ROLLING WINDOW ---
+Train: 2025-12-31 → 2026-03-31 (~30 ngày)
+Test : 2026-03-31 → 2026-04-04 (4 ngày thực chiến)
+
+[Class Weight] SELL=1.057, BUY=0.949
+Phân phối Train: 5,798 Sell | 6,462 Buy
+Best Win Rate (L4): 60.20% @ ngưỡng >53%
+Phoenix Restarts: 0/40
+Tổng Epochs: 65
+
+--- 4 MỨC WIN-RATE THỰC CHIẾN ---
+L1 >50%: 52.99% (468 lệnh)
+L2 >51%: 53.07% (309 lệnh)
+L3 >52%: 58.17% (153 lệnh)
+L4 >53%: 63.04% (46 lệnh)

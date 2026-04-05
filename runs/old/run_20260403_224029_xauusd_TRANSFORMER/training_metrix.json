@@ -1,0 +1,26 @@
+{
+    "target": "xauusd",
+    "status": "STOPPED",
+    "epochs_trained": 44,
+    "best_winrate": 80.0,
+    "best_val_loss": 0.7131976996149335,
+    "best_max_thresh": 0.81,
+    "thresholds": [
+        0.5,
+        0.6033,
+        0.7067,
+        0.81
+    ],
+    "win_rates": [
+        50.748548732050104,
+        51.39664804469274,
+        51.931330472103,
+        80.0
+    ],
+    "totals": [
+        3273,
+        1074,
+        233,
+        35
+    ]
+}

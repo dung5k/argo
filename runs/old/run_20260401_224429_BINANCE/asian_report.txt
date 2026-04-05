@@ -1,0 +1,4 @@
+Phiên Giao Dịch: ASIAN
+Chiến thuật: HỌC TOÀN BỘ DATA NGUYÊN KHỐI T1-T2
+Tỷ lệ Win-Rate Kỷ lục (Đã qua bài thi OOS Tháng 3/2026): 51.06%
+Mô hình đã học trong 27 vòng (Epochs).

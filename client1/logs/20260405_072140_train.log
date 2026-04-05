@@ -1,0 +1,31 @@
+=== Task 20260405_072140_train | 2026-04-05T09:05:08.292770 ===
+CMD: C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\venv\Scripts\python.exe C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\src\train_unified.py C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config_xau.json
+
+📁 Tạo thư mục run: run_20260405_090525_xauusd_TRANSFORMER
+
+=======================================================
+🧠 TRANSFORMER UNIFIED MODEL v5.0 (Deep Phoenix)     
+=======================================================
+🤖 [V5 ARCHITECTURE] d_model=256, nhead=8, layers=3, window=60
+
+📅 [ROLLING WINDOW SPLIT]
+   Train : 2026-01-01 → 2026-04-01 (~90 ngày)
+   Test  : 2026-04-01 → 2026-04-05 (4 ngày thực chiến)
+   -> Train: 10,416 nến | Test thực chiến: 374 nến
+⚖️ [Class Weight] SELL=1.044, BUY=0.959
+   (4,987 Sell | 5,429 Buy trong 10,416 mẫu Train)
+-> [DATASET] Khởi tạo Cửa sổ Trượt: Tổng 10,356 Mẫu. Loại bỏ 0 Mẫu Rách (Nến Ma > 15%).
+-> [DATASET] Khởi tạo Cửa sổ Trượt: Tổng 314 Mẫu. Loại bỏ 0 Mẫu Rách (Nến Ma > 15%).
+🧬 [DUAL-STREAM] TARGET (xauusd): 18 | Macro: 68
+
+♻️  Tìm thấy checkpoint: C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260405_072101_xauusd_TRANSFORMER\xauusd_unified_weights.pth
+    ✅ TRANSFER LEARNING: Kế thừa Core Memory từ run_20260405_072101_xauusd_TRANSFORMER
+    🔄 Đang tính toán Win Rate Baseline trên bộ Validate hiện tại...
+    📊 Baseline Win Rate TÍNH LẠI: 61.2%
+    💾 Đã lưu bản đầu tiên (baseline 61.2%) vào run hiện tại.
+
+⚡ [KHẨN CẤP] Dừng khẩn cấp. Đang lưu Hộp đen...
+💾 Đã khôi phục và lưu bản tốt nhất an toàn.
+
+✅ HOÀN TẤT → Best WR: 61.2% | Lưu: C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260405_090525_xauusd_TRANSFORMER\xauusd_unified_weights.pth
+📊 Đã lưu báo cáo: C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260405_090525_xauusd_TRANSFORMER\unified_report.txt

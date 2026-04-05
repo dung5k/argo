@@ -1,0 +1,3 @@
+Phiên Giao Dịch: US
+Tỷ lệ Win-Rate Kỷ lục (Đã qua bài thi OOS Tháng 3/2026): 52.13%
+Mô hình đã học trong 43 vòng (Epochs).

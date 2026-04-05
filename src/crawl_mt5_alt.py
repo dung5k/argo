@@ -2,30 +2,39 @@ import MetaTrader5 as mt5
 import pandas as pd
 import os
 import sys
-from datetime import datetime
+import time
 
 # =========================================================================================
 # 🔴 [YÊU CẦU ĐIỀN THÔNG TIN] 🔴
 # SẾP HÃY THAY ĐỔI 2 BIẾN DƯỚI ĐÂY CHO ĐÚNG VỚI PHẦN MỀM MT5 THỨ 2 MÀ SẾP VỪA CÀI ĐẶT
 # =========================================================================================
 
-# 1. ĐƯỜNG DẪN TỚI FILE EXE CỦA SÀN MT5 THỨ 2 (Mặc định để Exness, Sếp trỏ đúng vào máy Sếp nhé)
+# 1. ĐƯỜNG DẪN TỚI FILE EXE CỦA SÀN MT5 THỨ 2 (EXNESS)
 MT5_ALT_PATH = r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe"
 
-# 2. CHỈNH SỬA TÊN MÃ (SYMBOL) ĐÚNG VỚI HẬU TỐ TRÊN TÀI KHOẢN CỦA SẾP (VÍ DỤ CÓ CHỮ 'm' HAY CHỮ 'c' Ở CUỐI)
 # Định dạng: "Tên_Symbol_Của_Sàn": "Tạo_Ra_File_Tên_Giống_Hệt_Binance"
 SYMBOL_MAP = {
-    # Nhóm Crypto
-    "BTCUSDm": "btc_usdt_1m_2025_2026",
-    "ETHUSDm": "eth_usdt_1m_2025_2026",
-    "SOLUSDm": "sol_usdt_1m_2025_2026",
-    "BNBUSDm": "bnb_usdt_1m_2025_2026",
-    "XRPUSDm": "xrp_usdt_1m_2025_2026",
-    "ADAUSDm": "ada_usdt_1m_2025_2026",
-    "DOGEUSDm": "doge_usdt_1m_2025_2026",
-    "LINKUSDm": "link_usdt_1m_2025_2026",
-    "DOTUSDm": "dot_usdt_1m_2025_2026",
+    # 1. Target Chính
+    "LTCUSDm": "ltc_usd_mt5_1m_2026",
+    "USOILm": "usoil_usd_mt5_1m_2026",
     
+    # 2. Crypto inputs
+    "BTCUSDm": "btc_usd_mt5_1m_2026",
+    "ETHUSDm": "eth_usd_mt5_1m_2026",
+    "SOLUSDm": "sol_usd_mt5_1m_2026",
+    "BNBUSDm": "bnb_usd_mt5_1m_2026",
+    "XRPUSDm": "xrp_usd_mt5_1m_2026",
+    "BCHUSDm": "bch_usd_mt5_1m_2026",
+    "ADAUSDm": "ada_usd_mt5_1m_2026",
+    
+    # 3. Macro inputs (Vĩ Mô)
+    "DXYm": "dxy_mt5_1m_2026",
+    "US30m": "us30_mt5_1m_2026",
+    "US500m": "us500_mt5_1m_2026",
+    "USTECm": "ustec_mt5_1m_2026",
+    "JP225m": "jp225_mt5_1m_2026",
+    
+    # (AVAX không có trên sàn này, bỏ qua)
 }
 
 # =========================================================================================
@@ -39,7 +48,6 @@ def fetch_historical_rates(symbol, timeframe, limit=1000):
     if rates is None or len(rates) == 0:
         return None
         
-    import time
     tick = mt5.symbol_info_tick(symbol)
     offset_sec = tick.time - int(time.time()) if tick else 0
     offset_hours = round(offset_sec / 3600)
@@ -58,48 +66,54 @@ def main():
     data_path = os.path.join(base_path, "data")
     os.makedirs(data_path, exist_ok=True)
     
-    is_live = (len(sys.argv) > 1 and sys.argv[1] == "live")
-    candles_count = 1000 if is_live else 500000
+    print_log(f"Đang khởi động kết nối vào MT5 EXNESS tại: {MT5_ALT_PATH}")
     
-    print_log(f"Đang kích hoạt Mạch Đọc RAM MT5 Thứ 2 (Alt Data)...")
-    
-    # Kết nối MT5 vào thư mục Chỉ định của Sàn Thứ 2
     if not mt5.initialize(path=MT5_ALT_PATH):
-        print_log(f"LỖI CHÍNH TỬ: Không thể khởi chạy MT5 tại đường dẫn: {MT5_ALT_PATH}")
-        print_log("Sếp vui lòng check lại Biến MT5_ALT_PATH trong Code nhé!")
-        mt5.shutdown()
+        print_log("Lỗi: Khởi tạo thư viện MetaTrader5 thất bại!")
+        print_log(f"Error code: {mt5.last_error()}")
         return
-
-    print_log(f"KẾT NỐI IPC THÀNH CÔNG VỚI MT5 THỨ 2! Phiên bản: {mt5.version()}")
-    
-    success_count = 0
-    fail_count = 0
-    
-    for mt5_symbol, binance_file_name in SYMBOL_MAP.items():
-        file_path = os.path.join(data_path, f"{binance_file_name}.parquet")
         
-        # Bỏ qua Bulk Download nếu file đã có sẵn ở chế độ khởi chạy lần đầu
-        if not is_live and os.path.exists(file_path):
-            success_count += 1
+    print_log("Khởi tạo MT5 thành công. Phiên bản Terminal: " + str(mt5.version()))
+    
+    is_live = (len(sys.argv) > 1 and sys.argv[1] == "live")
+    bars = 1440 if is_live else 500000 
+    
+    for mt5_symbol, file_suffix in SYMBOL_MAP.items():
+        print_log(f"\n=> 🔄 Kéo lệnh tải nến 1 phút (M1) cho {mt5_symbol}...")
+        
+        selected = mt5.symbol_select(mt5_symbol, True)
+        if not selected:
+            print_log(f" ⚠️ CẢNH BÁO: Không tìm thấy mã {mt5_symbol} trong MT5 Exness.")
+            print_log("  -> Bạn phải Bật mã này trong Market Watch (Ctrl+U) trước!")
             continue
             
-        print_log(f"Đang Vắt sữa (IPC): {mt5_symbol} -> {binance_file_name}.parquet")
+        df = fetch_historical_rates(mt5_symbol, mt5.TIMEFRAME_M1, bars)
         
-        # Xác định khung Thời gian (H1 cho DXY Vĩ mô, M1 cho Crypto)
-        timeframe = mt5.TIMEFRAME_H1 if "dxy" in binance_file_name else mt5.TIMEFRAME_M1
-        
-        df = fetch_historical_rates(mt5_symbol, timeframe, limit=candles_count)
-        
-        if df is not None and not df.empty:
-            df.to_parquet(file_path)
-            print_log(f" ✅ LƯU XONG: {mt5_symbol} ({len(df)} nến).")
-            success_count += 1
-        else:
-            print_log(f" ❌ MẤT TÍN HIỆU: Không tìm thấy Symbol {mt5_symbol} trên sàn. Sai hậu tố 'm'?")
-            fail_count += 1
+        if df is None:
+            print_log(f" ❌ Lỗi: Không tải được lịch sử giá cho {mt5_symbol}.")
+            continue
             
+        print_log(f" ✔️ Tải xong: {len(df):,} nến. Bắt đầu lưu trữ...")
+        
+        output_file = os.path.join(data_path, f"{file_suffix}.parquet")
+        
+        if is_live and os.path.exists(output_file):
+            try:
+                existing_df = pd.read_parquet(output_file)
+                combined_df = pd.concat([existing_df, df])
+                combined_df = combined_df[~combined_df.index.duplicated(keep='last')]
+                combined_df = combined_df.sort_index()
+                combined_df.to_parquet(output_file)
+                print_log(f" 💾 Đã ghép nối File: {output_file} (Tổng: {len(combined_df):,} nến)")
+            except:
+                df.to_parquet(output_file)
+                print_log(f" 💾 Đã lưu File Đè: {output_file}")
+        else:
+            df.to_parquet(output_file)
+            print_log(f" 💾 Đã lưu File Gốc: {output_file}")
+        
     mt5.shutdown()
-    print_log(f"HOÀN TẤT VÒNG CÀO IPC! Thành công: {success_count} | Thất bại: {fail_count}")
+    print_log("\n HOÀN TẤT SAO LƯU TOÀN BỘ 21 MÃ TỪ EXNESS!")
 
 if __name__ == "__main__":
     main()
