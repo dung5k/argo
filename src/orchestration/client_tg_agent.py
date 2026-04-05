@@ -136,7 +136,7 @@ class TrainingManager:
         log_file = log_dir / f"{task_id}.log"
 
         python       = self._python_exe()
-        train_script = str(self.base_dir / "src" / "train_unified.py")
+        train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
         config_abs   = (str(self.base_dir / config_path)
                         if not Path(config_path).is_absolute() else config_path)
 
