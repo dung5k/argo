@@ -135,7 +135,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     # === [RESUME] LOAD CHECKPOINT + ĐỌC WIN RATE TỪ LỊCH SỬ ===
     runs_base = str(Path(__file__).resolve().parent.parent / "runs")
     checkpoint_candidates = sorted(
-        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth")],
+        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth") if "old" not in p.parts],
         key=lambda p: p.parent.name,
         reverse=True
     ) if Path(runs_base).exists() else []
