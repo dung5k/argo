@@ -254,55 +254,69 @@ class TelegramAgent:
 
     def _handle_mqtt_cmd(self, payload: dict):
         action = payload.get("cmd", "")
+        # === LOG MỌI LỆNH NHẬN ĐƯỢC RA CONSOLE CLIENT ===
+        code_len = len(payload.get("code", ""))
+        if code_len:
+            self.logger.info(f"📥 [MQTT CMD] Nhận lệnh: '{action}' | Code payload: {code_len} ký tự")
+        else:
+            self.logger.info(f"📥 [MQTT CMD] Nhận lệnh: '{action}' | payload={payload}")
+
         if action == "train":
             symbol = payload.get("symbol", "xauusd")
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, config={config}")
             self.manager.start_train(config)
             if self.mqtt:
                 self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol}")
         elif action == "train_code":
             code = payload.get("code", "")
             if not code: return
+            self.logger.info(f"  ➜ [ZERO-GIT] Nhận Nhộng Code ({len(code)} ký tự) — Đang ghi file tạm và khởi chạy Train...")
             self.manager.start_train(config_path="", code=code)
             if self.mqtt:
                 self.mqtt.send_log("INFO", f"Khởi động tiến trình Bơm Code Train trực tiếp (Zero-Git)")
         elif action == "kill":
+            self.logger.info("  ➜ Nhận lệnh KILL — Đang dừng tiến trình train...")
             self.manager.kill()
             if self.mqtt:
                 self.mqtt.send_log("INFO", "Đã nhận lệnh Kill bằng MQTT")
         elif action == "run":
             script = payload.get("script", "")
             if not script: return
+            self.logger.info(f"  ➜ Nhận lệnh RUN script: {script}")
             def _run_script():
                 try:
-                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), capture_output=True, timeout=60)
                     python = self.manager._python_exe()
                     r = subprocess.run([python, str(self.base_dir / script)], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    out = r.stdout.strip() if r.stdout else r.stderr.strip()
+                    self.logger.info(f"  [RUN OUT] {script}:\n{out[:500]}")
                     if self.mqtt:
-                        out = r.stdout.strip() if r.stdout else r.stderr.strip()
                         self.mqtt.send_log("RUN_OUT", f"[{script}] {out}")
                 except Exception as e:
+                    self.logger.error(f"  [RUN ERR] {e}")
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy {script}: {e}")
             threading.Thread(target=_run_script, daemon=True).start()
             
         elif action == "run_code":
             code = payload.get("code", "")
             if not code: return
+            self.logger.info(f"  ➜ [RUN_CODE] Nhận code ({len(code)} ký tự) — Đang thực thi tức thời...")
             def _run_raw():
                 try:
                     import tempfile
-                    # Tạo file python tạm thời và chạy
                     fd, path = tempfile.mkstemp(suffix=".py", text=True)
                     with os.fdopen(fd, "w", encoding="utf-8") as f:
                         f.write(code)
                     python = self.manager._python_exe()
                     r = subprocess.run([python, path], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    out = r.stdout.strip() if r.stdout else r.stderr.strip()
+                    self.logger.info(f"  [RUN_CODE OUT]:\n{out[:1000]}")
                     if self.mqtt:
-                        out = r.stdout.strip() if r.stdout else r.stderr.strip()
                         self.mqtt.send_log("RUN_OUT", f"[RAW_CODE] \n{out}")
                     try: os.remove(path)
                     except: pass
                 except Exception as e:
+                    self.logger.error(f"  [RUN_CODE ERR] {e}")
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy RAW_CODE: {e}")
             threading.Thread(target=_run_raw, daemon=True).start()
         elif action == "update":
