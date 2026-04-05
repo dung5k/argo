@@ -57,7 +57,12 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     MIN_SIGNALS    = 30      # Số lệnh tối thiểu thống kê
 
     # === [ROLLING WINDOW] SPLIT ===
-    import pytz
+    import subprocess
+    try:
+        import pytz
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytz"])
+        import pytz
     now_utc = pd.Timestamp.now(tz='UTC')
     val_end   = now_utc
     val_start = val_end   - pd.Timedelta(days=4)
