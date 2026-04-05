@@ -283,6 +283,14 @@ class TelegramAgent:
                 except Exception as e:
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy {script}: {e}")
             threading.Thread(target=_run_script, daemon=True).start()
+        elif action == "update":
+            def _do_update():
+                try: subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+                except: pass
+                if self.mqtt: self.mqtt.send_log("INFO", "Tự động Khởi động lại theo lệnh Update...")
+                self.manager.kill()
+                os._exit(69)
+            threading.Thread(target=_do_update, daemon=True).start()
 
     def _send(self, chat_id: int, text: str):
         self.bot.send_message(chat_id, text)
@@ -370,6 +378,18 @@ class TelegramAgent:
                     self._send(chat_id, f"❌ <b>{self.client_id}</b> Lỗi chạy script: {e}")
             
             threading.Thread(target=_run_cmd_script, daemon=True).start()
+
+        # /update [client_id]
+        elif cmd == "update":
+            if target and target != self.client_id.lower():
+                return
+            self._send(chat_id, f"♻️ <b>{self.client_id}</b>: Đang kéo Code mới và Tự Khởi Động Lại...")
+            def _do_update_tg():
+                try: subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+                except: pass
+                self.manager.kill()
+                os._exit(69)
+            threading.Thread(target=_do_update_tg, daemon=True).start()
 
     def _poll_loop(self):
         self.logger.info(f"🔄 Bắt đầu poll Telegram mỗi {self.poll_sec}s (long-poll timeout=30s)")

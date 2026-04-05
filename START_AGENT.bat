@@ -137,6 +137,7 @@ echo.
 if not exist "!CLIENT_ID!\logs" mkdir "!CLIENT_ID!\logs"
 if not exist "!CLIENT_ID!\action_request" mkdir "!CLIENT_ID!\action_request"
 
+:run_agent
 echo ============================================================
 echo   [!CLIENT_ID!] DANG KET NOI LEN SERVER ARGO...
 echo   De dung hoat dong: Nhan Ctrl+C
@@ -146,6 +147,12 @@ echo.
 set PYTHONUTF8=1
 set PYTHONUNBUFFERED=1
 "venv\Scripts\python.exe" src\client_tg_agent.py --client-id !CLIENT_ID! --base-dir "%cd%"
+
+if !errorlevel! equ 69 (
+    echo [AUTO-UPDATE] He thong dang tu dong khoi dong lai Agent sau khi cap nhat...
+    timeout /t 3 /nobreak >nul
+    goto run_agent
+)
 
 echo.
 echo [INFO] Ket noi da ngat.
