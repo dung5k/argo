@@ -54,6 +54,8 @@ AGENT_VERSION = "1.3.0-SkyNet"
 CONFIG_MAP = {
     "xauusd": "data/bot_config_xau.json",
     "xau"   : "data/bot_config_xau.json",
+    "ltc"   : "data/bot_config_ltc.json",
+    "oil"   : "data/bot_config_oil.json",
 }
 
 
