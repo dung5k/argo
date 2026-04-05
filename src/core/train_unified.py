@@ -72,15 +72,45 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pytz"])
         import pytz
-    now_utc = pd.Timestamp.now(tz='UTC')
-    val_end   = now_utc
-    val_start = val_end   - pd.Timedelta(days=4)
-    train_end = val_start
-    train_start = train_end - pd.Timedelta(days=90)
 
-    print(f"\n📅 [ROLLING WINDOW SPLIT]")
-    print(f"   Train : {train_start.strftime('%Y-%m-%d')} → {train_end.strftime('%Y-%m-%d')} (~90 ngày)")
-    print(f"   Test  : {val_start.strftime('%Y-%m-%d')} → {val_end.strftime('%Y-%m-%d')} (4 ngày thực chiến)")
+    # Đọc khoảng thời gian từ config (nếu có), ngược lại dùng Rolling Window tự động
+    _cfg_path = None
+    import json as _json
+    _base_proj = str(Path(__file__).resolve().parent.parent.parent)
+    for _candidate in [os.path.join(_base_proj, "data", "bot_config_xau.json"),
+                       os.path.join(_base_proj, "data", "bot_config.json")]:
+        if os.path.exists(_candidate):
+            _cfg_path = _candidate
+            break
+
+    _date_override = {}
+    if _cfg_path:
+        try:
+            with open(_cfg_path, "r", encoding="utf-8") as _f:
+                _c = _json.load(_f)
+                for _k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO"]:
+                    if _k in _c:
+                        _date_override[_k] = _c[_k]
+        except: pass
+
+    if _date_override.get("TRAIN_FROM") and _date_override.get("TRAIN_TO") and _date_override.get("VAL_TO"):
+        # Dùng khoảng cố định từ config
+        train_start = pd.Timestamp(_date_override["TRAIN_FROM"], tz='UTC')
+        train_end   = pd.Timestamp(_date_override["TRAIN_TO"],   tz='UTC')
+        val_start   = train_end
+        val_end     = pd.Timestamp(_date_override["VAL_TO"],     tz='UTC') + pd.Timedelta(days=1)
+        print(f"\n📅 [DATE RANGE FROM CONFIG]")
+    else:
+        # Rolling Window tự động từ hôm nay
+        now_utc     = pd.Timestamp.now(tz='UTC')
+        val_end     = now_utc
+        val_start   = val_end   - pd.Timedelta(days=4)
+        train_end   = val_start
+        train_start = train_end - pd.Timedelta(days=90)
+        print(f"\n📅 [ROLLING WINDOW SPLIT]")
+
+    print(f"   Train : {train_start.strftime('%Y-%m-%d')} → {train_end.strftime('%Y-%m-%d')}")
+    print(f"   Test  : {val_start.strftime('%Y-%m-%d')} → {val_end.strftime('%Y-%m-%d')}")
 
     features_utc = features.tz_convert('UTC')
     targets_utc = targets.tz_convert('UTC')
@@ -98,6 +128,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     if len(train_features) <= window_size or len(val_features) <= window_size:
         print("⚠️ Dữ liệu quá cạn! Kiểm tra lại thời gian cào data.")
         return
+
 
     # === [CLASS WEIGHT] ===
     train_labels = train_targets['target'].values

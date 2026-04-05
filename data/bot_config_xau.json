@@ -12,5 +12,8 @@
     "tp_pips": 100,
     "SESSION_GUARD_ENABLED": true,
     "MARKET_OPEN": "01:05",
-    "MARKET_CLOSE": "23:55"
+    "MARKET_CLOSE": "23:55",
+    "TRAIN_FROM": "2026-03-01",
+    "TRAIN_TO":   "2026-03-29",
+    "VAL_TO":     "2026-04-04"
 }

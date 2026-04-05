@@ -1,8 +1,0 @@
-Model: TRANSFORMER UNIFIED v3.0 (5 Cải tiến)
-Kiến trúc: TRANSFORMER DUAL-STREAM (Self-Attention) + Cosine LR + BB Filter
-[Class Weight] SELL=1.031, BUY=0.971
-Phân phối Train: 17,702 Sell | 18,804 Buy
-Đáy Validation Loss: 0.6922
-Win-Rate >55%: 55.49% (1503 lệnh / 31658 tổng)
-Win-Rate >60%: 42.86% (7 lệnh / 31658 tổng)
-Số Epoch đã chạy: 55
