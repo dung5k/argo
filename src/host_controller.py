@@ -56,7 +56,7 @@ class HostController:
 
 def main():
     parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run"])
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update"])
     parser.add_argument("--client-id", "-c", required=True)
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")
@@ -68,7 +68,7 @@ def main():
     host.client.connect(BROKER, PORT, 60)
     host.client.loop_start()
     
-    if args.cmd in ["train", "kill", "run"]:
+    if args.cmd in ["train", "kill", "run", "update"]:
         host.send_command(args.cmd, args.symbol, args.script)
         # Lắng nghe 1 lúc để xem phản hồi
         host.listen_logs(args.time)
