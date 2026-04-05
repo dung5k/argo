@@ -309,6 +309,23 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 json.dump(data, bf, indent=4, ensure_ascii=False)
         except: pass
 
+        # AUTO SYNC TO GIT
+        def git_sync_runs():
+            import subprocess
+            base_dir = os.path.dirname(os.path.dirname(run_dir))
+            try:
+                subprocess.run(["git", "pull", "--rebase"], cwd=base_dir, capture_output=True, timeout=30)
+                subprocess.run(["git", "add", "runs/"], cwd=base_dir, capture_output=True)
+                subprocess.run(["git", "commit", "-m", f"Auto-Sync Best Weights: {target_name}"], cwd=base_dir, capture_output=True)
+                subprocess.run(["git", "push"], cwd=base_dir, capture_output=True, timeout=60)
+                print("    [GIT] Đã đồng bộ kết quả mới lên kho chứa Github.")
+            except Exception as e:
+                print(f"    [GIT LỖI] {e}")
+        
+        # Chạy đồng bộ ngầm
+        import threading
+        threading.Thread(target=git_sync_runs, daemon=True).start()
+
     # === [BƯỚC ĐẦU] Lưu bản đầu tiên nếu đã load được Win Rate ===
     if resumed and global_best_score > 0:
         torch.save(model.state_dict(), model_file)

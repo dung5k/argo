@@ -16,9 +16,8 @@ data/*.pkl
 .client_id
 .python_path
 
-# Runs va logs (lon, khong can sync qua git)
-
-runs/
+# Bỏ qua lịch sử model cũ, nhưng giữ lại các Thư mục Run mới
+runs/old/
 *.log
 
 # OneDrive placeholders
