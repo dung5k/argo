@@ -42,6 +42,10 @@ _SRC = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SRC))
 from tg_helper import TelegramBot
 try:
+    import hf_sync
+except ImportError:
+    hf_sync = None
+try:
     from mqtt_helper import MqttHelper
 except ImportError:
     MqttHelper = None
@@ -161,6 +165,13 @@ class TrainingManager:
                     self.logger.warning(f"  [GIT] ⚠ git pull thất bại (tiếp tục): {r.stderr.strip()}")
             except Exception as git_ex:
                 self.logger.warning(f"  [GIT] ⚠ Không thể git pull: {git_ex} (tiếp tục)")
+
+            # ── BƯỚC 1.5: Tải Data Khổng lồ từ HuggingFace (nếu có cấu hình) ──
+            if hf_sync:
+                try:
+                    hf_sync.pull_data(self.logger)
+                except Exception as hf_ex:
+                    self.logger.warning(f"  [HF] ⚠ Lỗi đồng bộ data từ HF: {hf_ex} (tiếp tục)")
 
             # ── BƯỚC 2: Chạy training ──
             try:

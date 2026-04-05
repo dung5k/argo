@@ -126,7 +126,7 @@ echo [INFO] Dang cai dat moi truong (chi mat vai phut lan dau)...
 echo [INFO] Dang cai dat cac thu vien can thiet...
 "venv\Scripts\python.exe" -m pip install -q -r requirements.txt 2>nul
 if !errorlevel! neq 0 (
-    "venv\Scripts\python.exe" -m pip install -q torch pandas numpy pyarrow scikit-learn paho-mqtt
+    "venv\Scripts\python.exe" -m pip install -q torch pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
 )
 echo [OK] Thu vien san sang.
 echo.
