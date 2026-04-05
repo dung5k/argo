@@ -269,6 +269,20 @@ class TelegramAgent:
             self.manager.kill()
             if self.mqtt:
                 self.mqtt.send_log("INFO", "Đã nhận lệnh Kill bằng MQTT")
+        elif action == "run":
+            script = payload.get("script", "")
+            if not script: return
+            def _run_script():
+                try:
+                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), capture_output=True, timeout=60)
+                    python = self.manager._python_exe()
+                    r = subprocess.run([python, str(self.base_dir / script)], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    if self.mqtt:
+                        out = r.stdout.strip() if r.stdout else r.stderr.strip()
+                        self.mqtt.send_log("RUN_OUT", f"[{script}] {out}")
+                except Exception as e:
+                    if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy {script}: {e}")
+            threading.Thread(target=_run_script, daemon=True).start()
 
     def _send(self, chat_id: int, text: str):
         self.bot.send_message(chat_id, text)
@@ -326,6 +340,36 @@ class TelegramAgent:
             n = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 20
             log_text = self.manager.last_log_lines(n)
             self._send(chat_id, f"📋 <b>{self.client_id}</b> — Log gần nhất:\n<pre>{log_text[:3000]}</pre>")
+
+        # /run [client_id] [script_path]
+        elif cmd == "run":
+            if target and target != self.client_id.lower():
+                return
+            script_path = parts[2] if len(parts) > 2 else ""
+            if not script_path:
+                self._send(chat_id, "❌ Thiếu tên file. Ví dụ: /run clientGH src/check_gpu.py")
+                return
+
+            self._send(chat_id, f"⚙️ <b>{self.client_id}</b>: Đang cập nhật code và thực thi <code>{script_path}</code>...")
+            
+            def _run_cmd_script():
+                try:
+                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), capture_output=True, timeout=60)
+                except: pass
+                
+                python = self.manager._python_exe()
+                abs_path = self.base_dir / script_path
+                if not abs_path.exists():
+                    self._send(chat_id, f"❌ <b>{self.client_id}</b>: Không tìm thấy file `{script_path}`")
+                    return
+                try:
+                    r = subprocess.run([python, str(abs_path)], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    out = r.stdout[-3000:] if r.stdout else (r.stderr[-3000:] if r.stderr else "(Không có output)")
+                    self._send(chat_id, f"✅ <b>{self.client_id}</b> chạy `{script_path}` thành công:\n<pre>{out}</pre>")
+                except Exception as e:
+                    self._send(chat_id, f"❌ <b>{self.client_id}</b> Lỗi chạy script: {e}")
+            
+            threading.Thread(target=_run_cmd_script, daemon=True).start()
 
     def _poll_loop(self):
         self.logger.info(f"🔄 Bắt đầu poll Telegram mỗi {self.poll_sec}s (long-poll timeout=30s)")

@@ -36,16 +36,16 @@ class HostController:
         except Exception:
             print(f"[RAW LOG] {msg.payload.decode('utf-8', errors='replace')}")
 
-    def send_command(self, cmd: str, symbol: str = "xauusd"):
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = ""):
         if not self.connected:
             print("[HOST] Đang đợi kết nối...")
             for _ in range(50):
                 if self.connected: break
                 time.sleep(0.1)
         
-        payload = json.dumps({"cmd": cmd, "symbol": symbol})
+        payload = json.dumps({"cmd": cmd, "symbol": symbol, "script": script})
         self.client.publish(self.cmd_topic, payload, qos=1)
-        print(f"[HOST] Lệnh '{cmd}' ({symbol}) đã được phát sóng lên kênh: {self.cmd_topic}")
+        print(f"[HOST] Lệnh '{cmd}' đã được phát sóng lên kênh: {self.cmd_topic}")
 
     def listen_logs(self, timeout: int = 15):
         print(f"[HOST] Đang lắng nghe log trực tiếp từ {self.client_id} (thời gian: {timeout}s)...")
@@ -56,9 +56,10 @@ class HostController:
 
 def main():
     parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen"])
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run"])
     parser.add_argument("--client-id", "-c", required=True)
     parser.add_argument("--symbol", "-s", default="xauusd")
+    parser.add_argument("--script", default="")
     parser.add_argument("--time", "-t", type=int, default=15, help="Thời gian nghe log (giây)")
     
     args = parser.parse_args()
@@ -67,8 +68,8 @@ def main():
     host.client.connect(BROKER, PORT, 60)
     host.client.loop_start()
     
-    if args.cmd in ["train", "kill"]:
-        host.send_command(args.cmd, args.symbol)
+    if args.cmd in ["train", "kill", "run"]:
+        host.send_command(args.cmd, args.symbol, args.script)
         # Lắng nghe 1 lúc để xem phản hồi
         host.listen_logs(args.time)
     elif args.cmd == "listen":
