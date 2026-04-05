@@ -32,8 +32,7 @@ def push_data():
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    base_dir = Path(__file__).resolve().parent.parent
-    data_dir = base_dir / "data"
+    data_dir = _project_root() / "data"
     
     if not data_dir.exists():
         print(f"[HF] Lỗi: Không tìm thấy thư mục {data_dir}")
@@ -88,8 +87,8 @@ def pull_data(logger: logging.Logger = None):
             repo_type="dataset",
             token=token,
             allow_patterns="data/*",
-            local_dir=str(base_dir), # Nó sẽ map thẳng vào thư mục data/
-            local_dir_use_symlinks=False, # Tránh lỗi symlink trên Windows
+            local_dir=str(_project_root()),
+            local_dir_use_symlinks=False,
             force_download=False
         )
         log("[HF] Tải Dữ Liệu Hoàn Tất! Sẵn sàng huấn luyện. ✅")
