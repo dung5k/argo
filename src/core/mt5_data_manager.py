@@ -22,20 +22,24 @@ class MT5DataManager:
         self.MT5_PATHS = self.config.get("DATA_SOURCE", {}).get("BROKERS", {
             "DEFAULT": r"C:\Program Files\MetaTrader 5\terminal64.exe"
         })
+        self.MT5_PATHS["LOCAL"] = "LOCAL" # Giữ nguyên nhãn cho data lấy từ LOCAL
         
-        # 2. Xây dựng DATA_SOURCES tự động từ Unified Config (không hardcode)
-        # Nếu Unified Config cung cấp DATA_SOURCE.SYMBOLS, đẩy hết vào "AUTO" broker
-        # Hoặc gán vào broker mặc định nếu có BROKER_ROUTING (nếu cần thiết sau này)
-        all_symbols = self.config.get("DATA_SOURCE", {}).get("SYMBOLS", [])
+        # 2. Xây dựng DATA_SOURCES tự động từ phần ROUTING của Unified Config
+        # ROUTING map "Mã" -> "Tên Broker" (VD: "XAUUSDm" -> "EXNESS")
+        routing_map = self.config.get("DATA_SOURCE", {}).get("ROUTING", {})
         
-        self.DATA_SOURCES = {
-            "AUTO": {} # AUTO broker: tự động tìm kiếm trên tất cả terminal
-        }
-        for sym in all_symbols:
-            # Tạo các prefix có thể map với Parquet name hoặc Scaler
+        self.DATA_SOURCES = {}
+        for sym, broker_key in routing_map.items():
+            if broker_key not in self.DATA_SOURCES:
+                self.DATA_SOURCES[broker_key] = {}
+            
+            # Khử tên đuôi .PARQUET của Local nếu có
             sym_clean = sym.replace("m", "").upper()
+            if ".PARQUET" in sym_clean:
+                sym_clean = sym_clean.replace(".PARQUET", "")
+                
             sym_uscore = sym_clean.replace("USD", "_USD")
-            self.DATA_SOURCES["AUTO"][sym] = [sym_clean, sym_uscore, sym]
+            self.DATA_SOURCES[broker_key][sym] = [sym_clean, sym_uscore, sym]
         
         self.MT5_FALLBACK_NAMES = {
             "XAUUSDm": ["XAUUSDm", "XAUUSD", "GOLD", "GOLDm", "XAUUSD.a", "XAUUSD_m", "XAUUSD+"],
@@ -58,6 +62,37 @@ class MT5DataManager:
         self._load_features()
         self._build_active_mappings()
 
+    def get_front_month_contract(self, continuous_config, target_time=None):
+        """Tính toán tên hợp đồng Tương lai đang Active dựa trên thời gian."""
+        if continuous_config.get("IS_CFD", False):
+            return continuous_config.get("PREFIX") # CFD ghép luôn liên tục không có tháng đáo hạn
+            
+        months = continuous_config.get("CONTRACT_MONTHS", ["H", "M", "U", "Z"])
+        prefix = continuous_config.get("PREFIX")
+        
+        now = target_time if target_time else datetime.now()
+        year = now.year % 100
+        month = now.month
+        
+        # Mapping letter to expiration: H=3, M=6, U=9, Z=12
+        # Rollover usually 2-3 weeks before start of expiration month
+        target_mcode = "Z"
+        target_year = year
+        
+        if month <= 2:
+            target_mcode = "H"
+        elif month <= 5:
+            target_mcode = "M"
+        elif month <= 8:
+            target_mcode = "U"
+        elif month <= 11:
+            target_mcode = "Z"
+        else: # month == 12, roll to H next year
+            target_mcode = "H"
+            target_year += 1
+            
+        return f"{prefix}{target_mcode}{target_year}"
+
     def _load_features(self):
         try:
             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -65,8 +100,8 @@ class MT5DataManager:
             scaler = joblib.load(scaler_path)
             self.features = list(scaler.feature_names_in_)
         except Exception as e:
-            self.log_message(f"⚠️ LỖI ĐỌC BỘ TRỌNG SỐ TỪ DATA MANAGER: {e}")
-            self.features = []
+            self.log_message(f"⚠️ Không tìm thấy biến từ Scaler. Đang nạp danh sách chuẩn EXACT_FEATURES từ cấu hình...")
+            self.features = self.config.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
 
     def _build_active_mappings(self):
         self.active_mappings = []
@@ -113,14 +148,22 @@ class MT5DataManager:
                     avail = {s.name for s in syms}
                     for req_m in syms_for_this_path:
                         if req_m not in self.GLOBAL_MT5_ROUTER_MAP:
-                            s_clean = req_m.replace("m", "")
+                            continuous_config = self.config.get("DATA_SOURCE", {}).get("CONTINUOUS_CONTRACTS", {}).get(req_m)
                             
-                            candidates = self.MT5_FALLBACK_NAMES.get(req_m, [req_m, s_clean])
-                            expanded_candidates = set(candidates)
-                            for c in candidates:
-                                expanded_candidates.add(c + "m")
-                                expanded_candidates.add(c + ".a")
-                                expanded_candidates.add(c + "+")
+                            expanded_candidates = set()
+                            if continuous_config:
+                                active_contract = self.get_front_month_contract(continuous_config)
+                                expanded_candidates.add(active_contract)
+                                expanded_candidates.add(active_contract + "m")
+                                expanded_candidates.add(active_contract + ".a")
+                            else:
+                                s_clean = req_m.replace("m", "")
+                                candidates = self.MT5_FALLBACK_NAMES.get(req_m, [req_m, s_clean])
+                                for c in candidates:
+                                    expanded_candidates.add(c)
+                                    expanded_candidates.add(c + "m")
+                                    expanded_candidates.add(c + ".a")
+                                    expanded_candidates.add(c + "+")
                             
                             found_sym = None
                             for c in expanded_candidates:
@@ -171,7 +214,30 @@ class MT5DataManager:
                             offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
                             offset_hours = round(offset_sec / 3600)
                             df['time'] = df['time'] - (offset_hours * 3600)
-                
+                elif p == "LOCAL" or source_name == "LOCAL":
+                    # Đọc parquet files với window lấy n nến cuối
+                    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                    clean_sym = sym_m.replace("m", "").lower()
+                    
+                    # Logic để tìm file local.
+                    sym_clean_upper = sym_m.replace("m", "").upper()
+                    # Mặc định lấy tên mã luôn, do routing JSON cấu hình chính xác: 'GOLD_1H_2025_2026.PARQUET'
+                    pq_name = sym_clean_upper
+                    pq_path = os.path.join(script_dir, "data", pq_name)
+                    if not os.path.exists(pq_path):
+                        pq_path_2 = os.path.join(script_dir, "data", f"{clean_sym}_mt5_1m_2026.parquet")
+                        if os.path.exists(pq_path_2): pq_path = pq_path_2
+                    
+                    if os.path.exists(pq_path):
+                        try:
+                            df = pd.read_parquet(pq_path)
+                            df = df.tail(window).copy()
+                            # Biến lại cột index thành chuỗi cột để chạy theo format chung (sau đó logic df['datetime'] sẽ build lại)
+                            if df.index.name == 'datetime' or isinstance(df.index, pd.DatetimeIndex):
+                                df['time'] = df.index.astype(int) / 10**9 # Convert index to unix timestamp
+                        except Exception as e:
+                            self.log_message(f"⚠️ Lỗi đọc LOCAL Parquet cho {sym_m}: {e}")
+
                 if df.empty: continue
                 
                 df['datetime'] = pd.to_datetime(df['time'], unit='s')

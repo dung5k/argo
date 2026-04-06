@@ -36,6 +36,14 @@ def load_and_align_data(data_path):
         
         # Nếu đang train/trade XAUUSD, dọn dẹp các mã gây nhiễu và ÉP NGHIÊM NGẶT dùng list của LIVE
         mt5_symbols = config.get("MT5_SYMBOLS", [])
+        if not mt5_symbols:
+            mt5_symbols = list(config.get("DATA_SOURCE", {}).get("ROUTING", {}).keys())
+            
+        dataset_suffix = config.get("DATA_SOURCE", {}).get("DATASET_SUFFIX", "")
+        if dataset_suffix:
+            print(f"🎯 Lọc chính xác file theo Date Suffix: {dataset_suffix}")
+            files = [f for f in files if dataset_suffix in f]
+
         if mt5_symbols:
             filtered_files = []
             print(f"🔄 Đang map danh sách LIVE MT5 ({len(mt5_symbols)} mã) vào Kho Dữ Liệu Lịch Sử...")
@@ -44,7 +52,10 @@ def load_and_align_data(data_path):
                 
                 matched = None
                 for f in files:
-                    f_clean = f.upper().replace('_MT5', '').replace('_1M', '').replace('_2025', '').replace('_2026', '').replace('.PARQUET', '').replace('_', '')
+                    if '_MT5_1M_' in f.upper():
+                        f_clean = f.upper().split('_MT5_1M_')[0].replace('_', '')
+                    else:
+                        f_clean = f.upper().replace('_MT5', '').replace('_1M', '').replace('_2025', '').replace('_2026', '').replace('.PARQUET', '').replace('_', '')
                     if sym_clean == f_clean or f_clean in sym_clean:
                         matched = f
                         break
@@ -75,7 +86,10 @@ def load_and_align_data(data_path):
         
     df_list = []
     for file in files:
-        symbol = file.replace('_1m_2025_2026.parquet', '').replace('_mt5_1m_2026.parquet', '').upper()
+        if '_mt5_1m_' in file.lower():
+            symbol = file.lower().split('_mt5_1m_')[0].upper()
+        else:
+            symbol = file.replace('_1m_2025_2026.parquet', '').upper()
         df = pd.read_parquet(os.path.join(data_path, file))
         
         # ĐỒNG BỘ MÚI GIỜ (Timezone Alignment) VỀ CHUẨN UTC TRƯỚC KHI GỘP
@@ -225,6 +239,22 @@ def create_stationary_features(df, is_live=False):
     # Loại bỏ các giá trị Inf do phép chia sinh ra và các hàng NaN
     feature_df.replace([np.inf, -np.inf], np.nan, inplace=True)
     feature_df.dropna(inplace=True)
+    
+    # --- [EXACT SHIELD] GỌT TENSOR ĐẦU VÀO Y NHƯ CẤU HÌNH ---
+    exact_features = config.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
+    if exact_features:
+        missing_cols = [c for c in exact_features if c not in feature_df.columns]
+        if missing_cols:
+            print(f"⚠️ [EXACT SHIELD] Cảnh báo: Thiếu {len(missing_cols)} Features từ danh sách yêu cầu (VD: {missing_cols[:5]}). Đang Zero-Pad...")
+            pad_df = pd.DataFrame(0.0, index=feature_df.index, columns=missing_cols)
+            feature_df = pd.concat([feature_df, pad_df], axis=1)
+            
+        extra_cols = [c for c in feature_df.columns if c not in exact_features]
+        if extra_cols:
+            print(f"🛡️ [EXACT SHIELD] Loại bỏ {len(extra_cols)} Features nhiễu không có trong cấu hình EXACT_FEATURES (VD: {extra_cols[:5]}).")
+            
+        # Sắp xếp và Gọt đúng kích thước Tensor
+        feature_df = feature_df[exact_features]
     
     # Scale tất cả thành Mean=0, Std=1 để đẩy lưới Nơ-ron chạy hội tụ siêu tốc
     # KHOÁ LÕI SCALER (TRÁNH LỆCH PHA GIỮA TRAIN VÀ LIVE)

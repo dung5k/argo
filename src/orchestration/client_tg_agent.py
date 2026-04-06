@@ -189,6 +189,8 @@ class TrainingManager:
                     for line in proc.stdout:
                         lf.write(line)
                         lf.flush()
+                        sys.stdout.write(line)
+                        sys.stdout.flush()
                         if self.mqtt_helper:
                             self.mqtt_helper.send_log("TRAIN", line.strip())
 
