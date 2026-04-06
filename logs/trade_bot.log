@@ -660,3 +660,27 @@ RuntimeError: mat1 and mat2 shapes cannot be multiplied (1x161 and 78x128)
 [2026-04-06 23:32:30] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
 [2026-04-06 23:32:30] [23:32:25] ⚠️ LỖI LẤY TICK GIÁ: mt5.symbol_info_tick('XAUUSDm') trả về None! Vui lòng kiểm tra lại Market Watch MT5 (Ctrl+M).
 [2026-04-06 23:32:40] [23:32:40] ⚠️ LỖI LẤY TICK GIÁ: mt5.symbol_info_tick('XAUUSDm') trả về None! Vui lòng kiểm tra lại Market Watch MT5 (Ctrl+M).
+[2026-04-06 23:34:05] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:34:05] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:34:05] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:34:05] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:34:05] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:34:05] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:34:05] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-06 23:34:07] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-06 23:34:07] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-06 23:34:07]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-06 23:34:07]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-06 23:34:07]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-06 23:34:07]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-06 23:34:07] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-06 23:34:07] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\093612ddbd2339f9a3e02f71689e408c0e5f67f0\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:34:07] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:34:07] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
+[2026-04-06 23:34:07] [23:34:05] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:34:17] [23:34:17] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:34:27] [23:34:27] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:34:37] [23:34:37] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:34:47] [23:34:47] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:34:57] [23:34:57] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:35:07] [23:35:07] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.

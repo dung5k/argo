@@ -643,13 +643,17 @@ def bot_background_loop():
             continue
             
         # --- 1. SESSION GUARD: STALE PRICE CHECK ---
+        mt5_manager.scan_terminals_and_map()
         actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
         target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
         
         if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
             mt5.shutdown()
-            mt5.initialize(path=target_path)
-            mt5_manager.current_connected_path = target_path
+            if mt5.initialize(path=target_path):
+                log_message(f"[{gui_time}] 🔌 Đã khởi tạo kết nối MT5 Terminal: {target_path}")
+                mt5_manager.current_connected_path = target_path
+            else:
+                log_message(f"[{gui_time}] ❌ LỖI: Không thể mở MT5 Terminal: {target_path}")
             
         # Ép đưa vào Market Watch để chắc chắn lấy được Tick (Nếu Lần đầu)
         mt5.symbol_select(actual_target_sym, True)
