@@ -18,6 +18,7 @@ if len(sys.argv) > 1:
         if arg.endswith('.json'):
             config_path = arg
 
+config = {}
 if os.path.exists(config_path):
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
@@ -33,8 +34,30 @@ def load_and_align_data(data_path):
         print(">> Chế độ: ĐANG ĐỌC NGUỒN DỮ LIỆU MT5 TỔNG HỢP <<")
         files = [f for f in os.listdir(data_path) if f.endswith('.parquet') and 'usdt' not in f.lower() and 'target_' not in f.lower() and 'final_' not in f.lower()]
         
-        # Nếu đang train/trade XAUUSD, dọn dẹp các mã gây nhiễu (Crypto, JPY, DXY...) theo như phân tích Feature Importance
-        if 'XAU' in TARGET_PREFIX.upper():
+        # Nếu đang train/trade XAUUSD, dọn dẹp các mã gây nhiễu và ÉP NGHIÊM NGẶT dùng list của LIVE
+        mt5_symbols = config.get("MT5_SYMBOLS", [])
+        if mt5_symbols:
+            filtered_files = []
+            print(f"🔄 Đang map danh sách LIVE MT5 ({len(mt5_symbols)} mã) vào Kho Dữ Liệu Lịch Sử...")
+            for sym in mt5_symbols:
+                sym_clean = sym.upper().replace('M', '').replace('_', '')
+                
+                matched = None
+                for f in files:
+                    f_clean = f.upper().replace('_MT5', '').replace('_1M', '').replace('_2025', '').replace('_2026', '').replace('.PARQUET', '').replace('_', '')
+                    if sym_clean == f_clean or f_clean in sym_clean:
+                        matched = f
+                        break
+                        
+                if matched and matched not in filtered_files:
+                    filtered_files.append(matched)
+                    print(f"  + Ánh xạ {sym} -> {matched}")
+                else:
+                    print(f"  ⚠️ CẢNH BÁO: Không có nguồn {sym} ở Local!")
+                    
+            files = filtered_files
+            print(f"✅ Đã Khớp Cấu Hình LIVE! Giữ lại {len(files)} files chuẩn MT5 để huấn luyện.")
+        elif 'XAU' in TARGET_PREFIX.upper():
             useless_features = ['btc', 'eth', 'sol', 'xrp', 'ada', 'bnb', 'bch', 'ltc', 'usdjpy', 'jp225', 'us30', 'dxy']
             filtered_files = []
             for f in files:
@@ -45,7 +68,7 @@ def load_and_align_data(data_path):
                 else:
                     print(f"🗑️ Đã gạt bỏ nhiễu {f}")
             files = filtered_files
-            print(f"✅ Số lượng Features (Files) được giữ lại cho Vàng: {len(files)}")
+            print(f"✅ Số lượng Features (Files) được giữ lại gốc cho Vàng: {len(files)}")
     else:
         print(">> Chế độ: ĐANG ĐỌC NGUỒN DỮ LIỆU BINANCE (CCXT) <<")
         files = [f for f in os.listdir(data_path) if f.endswith('_usdt_1m_2025_2026.parquet')]
