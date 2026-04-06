@@ -110,8 +110,8 @@ def load_and_align_data(data_path):
     # CHIẾN LƯỢC ĐIỀN KHUYẾT ĐA HỆ DANH (IMPUTATION)
     # -------------------------------------------------------------
     # 1. Với Giá trị (Price) và Macro 1H: Bơm kế thừa mốc giá gần nhất (ffill) với GIỚI HẠN chặt chẽ 120 phút.
-    # LƯU Ý: Phải ffill trước khi tính Tỷ lệ Thiếu (Missing Tolerance) vì Macro Data chỉ có nến 1H!
-    merged_df.ffill(limit=120, inplace=True)
+    fill_limit = config.get("FEATURE_ENGINEERING", {}).get("FILL_LIMIT", 120)
+    merged_df.ffill(limit=fill_limit, inplace=True)
 
     # 2. Với Cột Thanh Khoản (Volume/Tick_Volume): Lấp bằng 0 (Thị trường đóng băng/Khớp lệnh = 0)
     vol_cols = [c for c in merged_df.columns if 'volume' in c.lower()]
@@ -178,16 +178,20 @@ def create_stationary_features(df, is_live=False):
         
     # [GIÁC QUAN ĐẶC BIỆT]: Tính toán Chỉ báo Điểm chạm của XAUUSD
     if f'{TARGET_PREFIX}_close' in df.columns:
-        # 1. Đo lường sức mạnh giá (RSI 14)
+        # 1. Đo lường sức mạnh giá (RSI động từ Config)
+        rsi_periods = config.get("FEATURE_ENGINEERING", {}).get("RSI_PERIODS", [14])
         delta = df[f'{TARGET_PREFIX}_close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / (loss + 1e-9)
-        new_features[f'{TARGET_PREFIX}_RSI'] = 100 - (100 / (1 + rs))
+        for p in rsi_periods:
+            gain = (delta.where(delta > 0, 0)).rolling(window=p).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=p).mean()
+            rs = gain / (loss + 1e-9)
+            name = f'{TARGET_PREFIX}_RSI' if len(rsi_periods) == 1 and p == 14 else f'{TARGET_PREFIX}_RSI_{p}'
+            new_features[name] = 100 - (100 / (1 + rs))
         
-        # 2. Đo lường sức mạnh Xu Hướng mượt (Khoảng cách nến tới 2 đường EMA)
-        new_features[f'{TARGET_PREFIX}_EMA9_dist'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_close'].ewm(span=9, adjust=False).mean())
-        new_features[f'{TARGET_PREFIX}_EMA21_dist'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_close'].ewm(span=21, adjust=False).mean())
+        # 2. Đo lường sức mạnh Xu Hướng mượt (EMA động từ config)
+        ema_periods = config.get("FEATURE_ENGINEERING", {}).get("EMA_PERIODS", [9, 21])
+        for p in ema_periods:
+            new_features[f'{TARGET_PREFIX}_EMA{p}_dist'] = np.log(df[f'{TARGET_PREFIX}_close'] / df[f'{TARGET_PREFIX}_close'].ewm(span=p, adjust=False).mean())
         
         # 3. Phân tách Cấu trúc Râu Nến và Thân Nến Cổ Điển (Nhận diện PinBar, Doji)
         if all(k in df.columns for k in [f'{TARGET_PREFIX}_open', f'{TARGET_PREFIX}_high', f'{TARGET_PREFIX}_low']):

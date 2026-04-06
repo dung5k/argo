@@ -48,18 +48,54 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             print(f"🖥️ [HARDWARE] Máy này KHÔNG CÓ GPU (đang chạy bằng sức trâu CPU).")
     except: pass
 
-    # === CỐ ĐỊNH HYPERPARAMS V5 (Phá vỡ còng số 8 của genes cũ) ===
+    # Đọc siêu cấu hình từ Unified config (nếu có)
+    _cfg_path = None
+    import json as _json
+    _base_proj = str(Path(__file__).resolve().parent.parent.parent)
+    for _candidate in [os.path.join(_base_proj, "data", "bot_config_xau.json"),
+                       os.path.join(_base_proj, "data", "bot_config.json")]:
+        if os.path.exists(_candidate):
+            _cfg_path = _candidate
+            break
+
+    # === MACRO CHUẨN (Mặc định nếu thiếu config) ===
     window_size = 60
     d_model = 256
     nhead = 8
     num_attn_layers = 3
     dropout_rate = 0.2
-    lr_base = 0.0003
-    print(f"🤖 [V5 ARCHITECTURE] d_model={d_model}, nhead={nhead}, layers={num_attn_layers}, window={window_size}")
+    batch_size = 512
+    epochs = 10000
 
-    # === PHOENIX HYPERPARAMS ===
-    epochs         = 10000   # Vòng lặp tổng (Phoenix sẽ tự dừng trước)
-    batch_size     = 512
+    _date_override = {}
+    if _cfg_path:
+        try:
+            with open(_cfg_path, "r", encoding="utf-8") as _f:
+                _c = _json.load(_f)
+                
+                # Load ARCH
+                _t = _c.get("TRAINING", {})
+                if "ARCH" in _t:
+                    arch = _t["ARCH"]
+                    window_size = arch.get("win", window_size)
+                    d_model = arch.get("d_model", d_model)
+                    nhead = arch.get("heads", nhead)
+                    num_attn_layers = arch.get("layers", num_attn_layers)
+                    dropout_rate = arch.get("dropout", dropout_rate)
+                    
+                batch_size = _t.get("BATCH_SIZE", batch_size)
+                
+                for _k_new, _k_old in [("TRAIN_START", "TRAIN_FROM"), ("TRAIN_END", "TRAIN_TO"), ("VAL_END", "VAL_TO")]:
+                    if _k_new in _t:
+                        _date_override[_k_new] = _t[_k_new]
+                    elif _k_old in _c:
+                        _date_override[_k_new] = _c[_k_old]
+        except Exception as e: 
+            print(f"⚠️ Lỗi đọc config: {e}")
+
+    print(f"🤖 [UNIFIED ARCHITECTURE] d_model={d_model}, nhead={nhead}, layers={num_attn_layers}, window={window_size}, batch={batch_size}")
+
+    # === PHOENIX HYPERPARAMS (Cố định, ít thay đổi) ===
     BASE_LR        = 1e-4    # LR bình thường
     MAX_STAGNATE   = 10      # Epoch không cải thiện → Tái Nạp
     MAX_PHOENIX    = 40      # Tái sinh tối đa 40 lần → dừng hẳn
@@ -73,32 +109,12 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pytz"])
         import pytz
 
-    # Đọc khoảng thời gian từ config (nếu có), ngược lại dùng Rolling Window tự động
-    _cfg_path = None
-    import json as _json
-    _base_proj = str(Path(__file__).resolve().parent.parent.parent)
-    for _candidate in [os.path.join(_base_proj, "data", "bot_config_xau.json"),
-                       os.path.join(_base_proj, "data", "bot_config.json")]:
-        if os.path.exists(_candidate):
-            _cfg_path = _candidate
-            break
-
-    _date_override = {}
-    if _cfg_path:
-        try:
-            with open(_cfg_path, "r", encoding="utf-8") as _f:
-                _c = _json.load(_f)
-                for _k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO"]:
-                    if _k in _c:
-                        _date_override[_k] = _c[_k]
-        except: pass
-
-    if _date_override.get("TRAIN_FROM") and _date_override.get("TRAIN_TO") and _date_override.get("VAL_TO"):
+    if _date_override.get("TRAIN_START") and _date_override.get("TRAIN_END") and _date_override.get("VAL_END"):
         # Dùng khoảng cố định từ config
-        train_start = pd.Timestamp(_date_override["TRAIN_FROM"], tz='UTC')
-        train_end   = pd.Timestamp(_date_override["TRAIN_TO"],   tz='UTC')
+        train_start = pd.Timestamp(_date_override["TRAIN_START"], tz='UTC')
+        train_end   = pd.Timestamp(_date_override["TRAIN_END"],   tz='UTC')
         val_start   = train_end
-        val_end     = pd.Timestamp(_date_override["VAL_TO"],     tz='UTC') + pd.Timedelta(days=1)
+        val_end     = pd.Timestamp(_date_override["VAL_END"],     tz='UTC') + pd.Timedelta(days=1)
         print(f"\n📅 [DATE RANGE FROM CONFIG]")
     else:
         # Rolling Window tự động từ hôm nay

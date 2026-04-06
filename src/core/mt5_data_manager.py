@@ -11,44 +11,31 @@ class MT5DataManager:
         self.log_message = log_callback
         self.target_sym = target_sym
         
-        self.MT5_PATHS = {
-            "EXNESS": r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe",
-            "MTRADING": r"C:\Program Files\Mtrading MetaTrader 5\terminal64.exe",
-            "DEFAULT": r"C:\Program Files\MetaTrader 5\terminal64.exe",
-            "DEFAULT2": r"C:\Program Files\MetaTrader 5 - 2\terminal64.exe"
-        }
+        import json
+        config_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config_xau.json"
+        self.config = {}
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                self.config = json.load(f)
+                
+        # 1. Tự động load MT5 Brokers từ Unified Config
+        self.MT5_PATHS = self.config.get("DATA_SOURCE", {}).get("BROKERS", {
+            "DEFAULT": r"C:\Program Files\MetaTrader 5\terminal64.exe"
+        })
+        
+        # 2. Xây dựng DATA_SOURCES tự động từ Unified Config (không hardcode)
+        # Nếu Unified Config cung cấp DATA_SOURCE.SYMBOLS, đẩy hết vào "AUTO" broker
+        # Hoặc gán vào broker mặc định nếu có BROKER_ROUTING (nếu cần thiết sau này)
+        all_symbols = self.config.get("DATA_SOURCE", {}).get("SYMBOLS", [])
         
         self.DATA_SOURCES = {
-            "EXNESS": {
-                "XAUUSDm": ["XAUUSD", "GOLD_1H_2025_2026.PARQUET", "XAU_USD"], 
-                "EURUSDm": ["EURUSD", "EUR_USD"], 
-                "GBPUSDm": ["GBPUSD", "GBP_USD"], 
-                "USDCADm": ["USDCAD", "USD_CAD"], 
-                "AUDUSDm": ["AUDUSD", "AUD_USD"], 
-                "XAGUSDm": ["XAGUSD", "XAG_USD"],
-                "BTCUSDm": ["BTCUSD", "BTC_USD"], 
-                "ETHUSDm": ["ETHUSD", "ETH_USD"], 
-                "SOLUSDm": ["SOLUSD", "SOL_USD"], 
-                "XRPUSDm": ["XRPUSD", "XRP_USD"],
-                "ADAUSDm": ["ADAUSD", "ADA_USD"], 
-                "BNBUSDm": ["BNBUSD", "BNB_USD"], 
-                "BCHUSDm": ["BCHUSD", "BCH_USD"], 
-                "LTCUSDm": ["LTCUSD", "LTC_USD"],
-            },
-            "MTRADING": {
-                "US30m": ["US30", "DOWJONES_1H_2025_2026.PARQUET"], 
-                "US500m": ["US500", "S&P500_1H_2025_2026.PARQUET"], 
-                "USTECm": ["USTEC", "NASDAQ_100_1H_2025_2026.PARQUET"], 
-                "DXYm": ["DXY"],
-                "USDJPYm": ["USDJPY", "USD_JPY"],
-                "US10Ym": ["US10y", "US_10Y_YIELD_1H_2025_2026.PARQUET"],
-                "VIXYm": ["VIXY"],
-                "JP225m": ["JP225"]
-            },
-            "AUTO": {
-                # Khai báo các mã tự động tìm kiếm trên toàn bộ các sàn ở đây
-            }
+            "AUTO": {} # AUTO broker: tự động tìm kiếm trên tất cả terminal
         }
+        for sym in all_symbols:
+            # Tạo các prefix có thể map với Parquet name hoặc Scaler
+            sym_clean = sym.replace("m", "").upper()
+            sym_uscore = sym_clean.replace("USD", "_USD")
+            self.DATA_SOURCES["AUTO"][sym] = [sym_clean, sym_uscore, sym]
         
         self.MT5_FALLBACK_NAMES = {
             "XAUUSDm": ["XAUUSDm", "XAUUSD", "GOLD", "GOLDm", "XAUUSD.a", "XAUUSD_m", "XAUUSD+"],

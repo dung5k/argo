@@ -314,32 +314,16 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
     if mt5.symbol_info(symbol) is None:
         return
         
-    import json
-    import os
-    config_file = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config.json"
+    live_cfg = CONFIG.get("LIVE_TRADING", {})
+    BUY_ENTRY_THR  = live_cfg.get("BUY_ENTRY_THR", 0.60)
+    SELL_ENTRY_THR = live_cfg.get("SELL_ENTRY_THR", 0.40)
+    CLOSE_BUY_THR  = live_cfg.get("CLOSE_BUY_THR", 0.50)
+    CLOSE_SELL_THR = live_cfg.get("CLOSE_SELL_THR", 0.50)
     
-    BUY_ENTRY_THR  = 0.60
-    SELL_ENTRY_THR = 0.40
-    CLOSE_BUY_THR  = 0.50
-    CLOSE_SELL_THR = 0.50
-    # Cấu hình tĩnh ban đầu từ tham số hàm
-    cfg_lot_size = lot_size
-    cfg_sl_pips = sl_pips
-    cfg_tp_pips = tp_pips
-    
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, 'r', encoding='utf-8') as f:
-                cfg = json.load(f)
-                BUY_ENTRY_THR  = cfg.get("BUY_ENTRY_THR", BUY_ENTRY_THR)
-                SELL_ENTRY_THR = cfg.get("SELL_ENTRY_THR", SELL_ENTRY_THR)
-                CLOSE_BUY_THR  = cfg.get("CLOSE_BUY_THR", CLOSE_BUY_THR)
-                CLOSE_SELL_THR = cfg.get("CLOSE_SELL_THR", CLOSE_SELL_THR)
-                cfg_lot_size = cfg.get("lot_size", cfg_lot_size)
-                cfg_sl_pips = cfg.get("sl_pips", cfg_sl_pips)
-                cfg_tp_pips = cfg.get("tp_pips", cfg_tp_pips)
-    except Exception as e:
-        pass
+    # Ưu tiên lấy từ config, fallback về args
+    cfg_lot_size = live_cfg.get("lot_size", lot_size)
+    cfg_sl_pips = live_cfg.get("sl_pips", sl_pips)
+    cfg_tp_pips = live_cfg.get("tp_pips", tp_pips)
         
     gui_thr_text = f"⚖️ Ngưỡng: BUY>{int(BUY_ENTRY_THR*100)}% | SELL<{int(SELL_ENTRY_THR*100)}%"
     
@@ -422,13 +406,13 @@ def bot_background_loop():
             return
         
     # Load genes (hyperparams) from best_genes.json
-    import json
-    # Cố định kiến trúc v5.0 Deep Phoenix
-    window_size     = 60
-    d_model         = 256
-    nhead           = 8
-    num_attn_layers = 3
-    dropout_rate    = 0.2
+    # Đọc cấu hình Unified từ file CONFIG
+    arch = CONFIG.get("TRAINING", {}).get("ARCH", {})
+    window_size     = arch.get("win", 60)
+    d_model         = arch.get("d_model", 256)
+    nhead           = arch.get("heads", 8)
+    num_attn_layers = arch.get("layers", 3)
+    dropout_rate    = arch.get("dropout", 0.2)
     
     gui_status = f"V5 Mode: win={window_size}, d={d_model}"
     log_message(f"[BOT] Unified Transformer V5: {d_model}")
