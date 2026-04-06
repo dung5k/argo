@@ -696,6 +696,36 @@ if __name__ == "__main__":
                 pass
 
         train_unified_model(features, targets, num_features, run_dir, target_prefix=TARGET_PREFIX)
+
+        # === ĐẨY SCALER LÊN THƯ MỤC CẤU HÌNH TRÊN HF CHẠY LIVE ===
+        print("☁️ Đang đồng bộ scaler.pkl và trọng số lên Đám mây HuggingFace...")
+        try:
+            src_path = os.path.join(BASE_PROJ_DIR, "src")
+            if src_path not in sys.path:
+                sys.path.insert(0, src_path)
+            from orchestration.hf_sync import _load_config, push_runs
+            from huggingface_hub import HfApi
+            cfg = _load_config()
+            if cfg and "hf_token" in cfg and "hf_repo_id" in cfg:
+                api = HfApi(token=cfg["hf_token"])
+                # Đẩy scaler.pkl CHÍNH XÁC VÀO THƯ MỤC CỦA LẦN CHẠY ĐÓ
+                target_repo_path = f"runs/{run_name}/scaler.pkl"
+                api.upload_file(
+                    path_or_fileobj=os.path.join(run_dir, "scaler.pkl"),
+                    path_in_repo=target_repo_path,
+                    repo_id=cfg["hf_repo_id"],
+                    repo_type="dataset",
+                    commit_message=f"bot: Đẩy scaler.pkl lên thư mục trọng số của {run_name}"
+                )
+                print(f"✅ Đã đẩy scaler.pkl lên chính xác thư mục: '{target_repo_path}' trên HuggingFace!")
+                
+                # Push luôn toàn bộ runs/ fallback
+                push_runs()
+            else:
+                print("⚠️ Cảnh báo: Thiếu config HuggingFace (hf_token), bỏ qua upload.")
+        except Exception as e:
+            print(f"❌ Lỗi khi tải scaler.pkl lên HuggingFace: {e}")
+
     else:
         print(f"❌ Chưa có file features ({features_path})! Hãy chạy feature_engineering.py trước.")
 
