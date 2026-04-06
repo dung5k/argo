@@ -102,6 +102,20 @@ def sync_brain_from_cloud(
     
     if os.path.exists(runs_model_path):
         log_callback(f"[BOT] Đang ốp Ma trận trọng số (Local Cache): {runs_model_path}")
+        
+        # TỰ ĐỘNG ĐỌC KÍCH THƯỚC THỰC TẾ TỪ FILE WEIGHTS
+        try:
+            _state = torch.load(runs_model_path, map_location='cpu', weights_only=True)
+            _xau_w = _state.get('xau_input_proj.weight', None)
+            _macro_w = _state.get('macro_fc.0.weight', None)
+            if _xau_w is not None:
+                num_xau_features = _xau_w.shape[1]
+            if _xau_w is not None and _macro_w is not None:
+                num_features = num_xau_features + _macro_w.shape[1]
+            log_callback(f"[BOT] ✅ [AUTO-DETECT] XAU={num_xau_features} | MACRO={num_features - num_xau_features} | SUM={num_features}")
+        except Exception as ade:
+            log_callback(f"[BOT] ⚠️ Auto-detect thất bại: {ade}")
+        
         model = TransformerModel(
             num_features=num_features, d_model=d_model, nhead=nhead,
             num_layers=num_attn_layers, dropout_rate=dropout_rate,

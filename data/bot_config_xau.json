@@ -2,7 +2,7 @@
     "TARGET_SYMBOL": "XAUUSD",
     "TARGET_PREFIX": "XAUUSD",
     "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
-    "HF_RUN_ID": "run_20260406_000356_xauusd_TRANSFORMER",
+    "HF_RUN_ID": "run_20260406_145517_xauusd_TRANSFORMER",
     "BUY_ENTRY_THR": 0.57,
     "SELL_ENTRY_THR": 0.43,
     "CLOSE_BUY_THR": 0.46,
@@ -14,6 +14,6 @@
     "MARKET_OPEN": "01:05",
     "MARKET_CLOSE": "23:55",
     "TRAIN_FROM": "2026-03-01",
-    "TRAIN_TO":   "2026-03-29",
-    "VAL_TO":     "2026-04-04"
+    "TRAIN_TO": "2026-03-29",
+    "VAL_TO": "2026-04-04"
 }

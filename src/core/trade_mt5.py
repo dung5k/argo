@@ -396,6 +396,7 @@ def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text
     
     last_delayed_log_time = 0
+    inference_feats = []
     
     mt5_manager = MT5DataManager(log_callback=log_message, target_sym=TARGET_SYMBOL)
 
@@ -522,14 +523,21 @@ def bot_background_loop():
                             repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
                             filename=f"runs/{latest_run}/scaler.pkl"
                         )
-                        import shutil
-                        script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                        scaler_local = os.path.join(script_dir, "data", "scaler.pkl")
-                        shutil.copy(scaler_cloud_path, scaler_local)
-                        mt5_manager.reload_features() # Xây lại lưới ngay lập tức để hít đúng Data
-                        log_message(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
+                        import joblib
+                        _tmp_scaler = joblib.load(scaler_cloud_path)
+                        _tmp_feats = list(_tmp_scaler.feature_names_in_)
+                        
+                        if not any(TARGET_PREFIX in f for f in _tmp_feats):
+                            log_message(f" ├─ ⚠️ [SCALE SHIELD] Scaler Cloud KHÔNG HỢP LỆ (Lỗi chứa data mã khác). Sẽ dùng Scaler Local!")
+                        else:
+                            import shutil
+                            script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                            scaler_local = os.path.join(script_dir, "data", "scaler.pkl")
+                            shutil.copy(scaler_cloud_path, scaler_local)
+                            mt5_manager.reload_features() # Xây lại lưới ngay lập tức để hít đúng Data
+                            log_message(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
                     except Exception as sce:
-                        log_message(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
+                        log_message(f" ├─ ⚠️ Không thể tải đồng bộ scaler.pkl từ đám mây: {sce}")
                         
                     # PHÂN TÍCH METRIX (HIỂN THỊ LOG KIỂM KÊ FEATURES THEO YÊU CẦU CỦA USER)
                     try:
@@ -540,6 +548,7 @@ def bot_background_loop():
                         with open(metrix_path, "r", encoding='utf-8') as fm:
                             metrix = json.load(fm)
                         feats = metrix.get("training_metadata", {}).get("data_features", [])
+                        inference_feats = feats
                         
                         # TỰ ĐỘNG KHỚP BỘ NÃO VỚI ĐÁM MÂY (CHỐNG SIZE MISMATCH LÚC LOAD TRỌNG SỐ)
                         # Đọc num_xau_features từ file meta chuẩn (ví dụ 8 feature OHLVC) chứ không đếm mù nhòa
@@ -576,6 +585,33 @@ def bot_background_loop():
             
             if os.path.exists(runs_model_path):
                 log_message(f"[BOT] Đang ốp Ma trận trọng số (Local Cache): {runs_model_path}")
+                
+                try:
+                    local_metrix = os.path.join(os.path.dirname(runs_model_path), "training_metrix.json")
+                    with open(local_metrix, "r", encoding='utf-8') as fm:
+                        _metrix = json.load(fm)
+                    inference_feats = _metrix.get("training_metadata", {}).get("data_features", [])
+                    if inference_feats:
+                        log_message(f"[BOT] ✅ Đã cache đạn dược {len(inference_feats)} features từ metrix local.")
+                except:
+                    pass
+                
+                # TỰ ĐỘNG ĐỌC KÍCH THƯỚC THỰC TẾ TỪ FILE WEIGHTS (NGUỒN SỰ THẬT TUYỆT ĐỐI)
+                # Không tin vào metrix.json hay feature_meta.json vì chúng có thể bị stale
+                try:
+                    _state = torch.load(runs_model_path, map_location='cpu', weights_only=True)
+                    # xau_input_proj.weight shape: [d_model, num_xau_features]
+                    # macro_fc.0.weight shape: [hidden, num_macro_features]
+                    _xau_w = _state.get('xau_input_proj.weight', None)
+                    _macro_w = _state.get('macro_fc.0.weight', None)
+                    if _xau_w is not None:
+                        num_xau_features = _xau_w.shape[1]
+                    if _xau_w is not None and _macro_w is not None:
+                        num_macro_features = _macro_w.shape[1]
+                        num_features = num_xau_features + num_macro_features
+                    log_message(f"[BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU={num_xau_features} | MACRO={num_features - num_xau_features} | SUM={num_features}")
+                except Exception as ade:
+                    log_message(f"[BOT] ⚠️ Auto-detect thất bại, dùng giá trị hiện tại ({num_xau_features}/{num_features}): {ade}")
                 
                 # KHỞI TẠO LẠI NÃO BỘ ĐÚNG KÍCH THƯỚC TRƯỚC KHI LOAD STATE DICT
                 model = TransformerModel(
@@ -711,7 +747,18 @@ def bot_background_loop():
                 log_message(f" ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT ({dt_feat:.2f}s)")
                 log_message(f" 📊 KIỂM KÊ KHO: RAM Nạp thành công {len(df):,} nến.")
                 
-                last_60_candles = df.iloc[-window_size:].values
+                if inference_feats and len(inference_feats) <= len(df.columns):
+                    valid_cols = [c for c in inference_feats if c in df.columns]
+                    if len(valid_cols) == len(inference_feats):
+                        last_60_candles = df[valid_cols].iloc[-window_size:].values
+                    else:
+                        gui_status = "Lỗi: Sai lệch Features!"
+                        missing_feats = [c for c in inference_feats if c not in df.columns]
+                        print(f" ⚠️ CẢNH BÁO LỰC: Thiếu Features! Model cần {len(inference_feats)} nhưng data chỉ có {len(valid_cols)} khớp. (Thiếu: {missing_feats[:5]})", flush=True)
+                        time.sleep(2)
+                        continue
+                else:
+                    last_60_candles = df.iloc[-window_size:].values
                 
                 if len(last_60_candles) < window_size:
                     gui_status = "Mạng lag, đợi nến 1 phút sau..."
