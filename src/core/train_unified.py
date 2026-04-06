@@ -34,13 +34,11 @@ from legacy.train_ga import TransformerModel, TimeSeriesDataset, device
 def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
     """
     Train 1 model Transformer duy nhất trên toàn bộ data.
-    v4.0: Phoenix Restart - Load best → Tái nạp + thay đổi chiến lược khi kẹt.
     """
     print("=======================================================")
     print("🧠 TRANSFORMER UNIFIED MODEL v5.1 (Deep Phoenix)     ")
     print("=======================================================")
 
-    # === [HARDWARE CHECK] Tự động móc cấu hình GPU của Client ===
     try:
         if torch.cuda.is_available():
             print(f"🖥️ [HARDWARE] Phát hiện sư tử đá GPU: {torch.cuda.get_device_name(0)}")
@@ -48,7 +46,30 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             print(f"🖥️ [HARDWARE] Máy này KHÔNG CÓ GPU (đang chạy bằng sức trâu CPU).")
     except: pass
 
-    # Đọc siêu cấu hình từ Unified config (nếu có)
+    # CỐ ĐỊNH HYPERPARAMS V5
+    window_size = 60
+    d_model = 256
+    nhead = 8
+    num_attn_layers = 3
+    dropout_rate = 0.2
+    lr_base = 0.0003
+    print(f"🤖 [V5 ARCHITECTURE] d_model={d_model}, nhead={nhead}, layers={num_attn_layers}, window={window_size}")
+
+    # PHOENIX HYPERPARAMS
+    epochs         = 10000
+    batch_size     = 512
+    BASE_LR        = 1e-4
+    MAX_STAGNATE   = 10
+    MAX_PHOENIX    = 40
+    MIN_SIGNALS    = 30
+
+    import subprocess
+    try:
+        import pytz
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytz"])
+        import pytz
+
     _cfg_path = None
     import json as _json
     _base_proj = str(Path(__file__).resolve().parent.parent.parent)
@@ -58,68 +79,28 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             _cfg_path = _candidate
             break
 
-    # === MACRO CHUẨN (Mặc định nếu thiếu config) ===
-    window_size = 60
-    d_model = 256
-    nhead = 8
-    num_attn_layers = 3
-    dropout_rate = 0.2
-    batch_size = 512
-    epochs = 10000
-
     _date_override = {}
-    config_id = "DEFAULT"
     if _cfg_path:
         try:
             with open(_cfg_path, "r", encoding="utf-8") as _f:
                 _c = _json.load(_f)
-                config_id = _c.get("CONFIG_ID", "DEFAULT")
-                
-                # Load ARCH
-                _t = _c.get("TRAINING", {})
-                if "ARCH" in _t:
-                    arch = _t["ARCH"]
-                    window_size = arch.get("win", window_size)
-                    d_model = arch.get("d_model", d_model)
-                    nhead = arch.get("heads", nhead)
-                    num_attn_layers = arch.get("layers", num_attn_layers)
-                    dropout_rate = arch.get("dropout", dropout_rate)
-                    
-                batch_size = _t.get("BATCH_SIZE", batch_size)
-                
-                for _k_new, _k_old in [("TRAIN_START", "TRAIN_FROM"), ("TRAIN_END", "TRAIN_TO"), ("VAL_END", "VAL_TO")]:
-                    if _k_new in _t:
-                        _date_override[_k_new] = _t[_k_new]
-                    elif _k_old in _c:
-                        _date_override[_k_new] = _c[_k_old]
-        except Exception as e: 
-            print(f"⚠️ Lỗi đọc config: {e}")
+                for _k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END", "CONFIG_ID"]:
+                    if _k in _c:
+                        _date_override[_k] = _c[_k]
+        except: pass
 
-    print(f"🤖 [UNIFIED ARCHITECTURE] d_model={d_model}, nhead={nhead}, layers={num_attn_layers}, window={window_size}, batch={batch_size}")
+    # Hỗ trợ cả TRAIN_FROM và TRAIN_START cho tương thích với bộ config mới
+    t_start = _date_override.get("TRAIN_START") or _date_override.get("TRAIN_FROM")
+    t_end   = _date_override.get("TRAIN_END") or _date_override.get("TRAIN_TO")
+    v_end   = _date_override.get("VAL_END") or _date_override.get("VAL_TO")
 
-    # === PHOENIX HYPERPARAMS (Cố định, ít thay đổi) ===
-    BASE_LR        = 1e-4    # LR bình thường
-    MAX_STAGNATE   = 10      # Epoch không cải thiện → Tái Nạp
-    MAX_PHOENIX    = 40      # Tái sinh tối đa 40 lần → dừng hẳn
-    MIN_SIGNALS    = 30      # Số lệnh tối thiểu thống kê
-
-    # === [ROLLING WINDOW] SPLIT ===
-    import subprocess
-    try:
-        import pytz
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "pytz"])
-        import pytz
-
-    if _date_override.get("TRAIN_START") and _date_override.get("TRAIN_END") and _date_override.get("VAL_END"):
-        # Dùng khoảng cố định từ config
-        train_start = pd.Timestamp(_date_override["TRAIN_START"], tz='UTC')
-        train_end   = pd.Timestamp(_date_override["TRAIN_END"],   tz='UTC')
+    if t_start and t_end and v_end:
+        train_start = pd.Timestamp(t_start, tz='UTC')
+        train_end   = pd.Timestamp(t_end,   tz='UTC')
         val_start   = train_end
-        val_end     = pd.Timestamp(_date_override["VAL_END"],     tz='UTC') + pd.Timedelta(days=1)
+        val_end     = pd.Timestamp(v_end,     tz='UTC') + pd.Timedelta(days=1)
         print(f"\n📅 [DATE RANGE FROM CONFIG]")
     else:
-        # Rolling Window tự động từ hôm nay
         now_utc     = pd.Timestamp.now(tz='UTC')
         val_end     = now_utc
         val_start   = val_end   - pd.Timedelta(days=4)
@@ -148,7 +129,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         return
 
 
-    # === [CLASS WEIGHT] ===
     train_labels = train_targets['target'].values
     n_total = len(train_labels)
     n_buy  = (train_labels == 1).sum()
@@ -159,13 +139,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     print(f"⚖️ [Class Weight] SELL={weight_sell:.3f}, BUY={weight_buy:.3f}")
     print(f"   ({n_sell:,} Sell | {n_buy:,} Buy trong {n_total:,} mẫu Train)")
 
-    # === DATASET & LOADER ===
     train_dataset = TimeSeriesDataset(train_features, train_targets, window_size)
     val_dataset   = TimeSeriesDataset(val_features,   val_targets,   window_size)
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
-    # === MODEL ===
     meta_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\feature_meta_{target_prefix}.json"
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
@@ -182,10 +160,13 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         num_xau_features=num_xau_features
     ).to(device)
 
-    # === [RESUME] LOAD CHECKPOINT + ĐỌC WIN RATE TỪ LỊCH SỬ ===
+    # === [RESUME] LOAD CHECKPOINT ===
     runs_base = str(Path(__file__).resolve().parent.parent.parent / "runs")
+    
+    # Chỉ kế thừa checkpoint TỪ CÙNG MỘT CONFIG_ID
+    cfg_id = _date_override.get("CONFIG_ID", "DEFAULT")
     checkpoint_candidates = sorted(
-        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth") if "old" not in p.parts and config_id in p.parent.name],
+        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights*.pth") if "old" not in p.parts and cfg_id in str(p)],
         key=lambda p: p.parent.name,
         reverse=True
     ) if Path(runs_base).exists() else []
@@ -206,12 +187,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
     resumed = False
     if checkpoint_candidates:
-        latest_ckpt = checkpoint_candidates[0]
+        latest_ckpt = checkpoint_candidates[int(len(checkpoint_candidates)>1)] # Dùng ckpt tốt nhất hoặc bản baseline
         print(f"\n♻️  Tìm thấy checkpoint: {latest_ckpt}")
         try:
             state = torch.load(str(latest_ckpt), map_location=device, weights_only=True)
             
-            # === TRANSFER LEARNING LOGIC ===
             current_state = model.state_dict()
             matched_state = {}
             for k, v in state.items():
@@ -226,7 +206,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             resumed = True
             print(f"    ✅ TRANSFER LEARNING: Kế thừa Core Memory từ {latest_ckpt.parent.name}")
 
-            # ĐÁNH GIÁ NGAY LẬP TỨC ĐỂ LẤY BASELINE KHÔNG PHỤ THUỘC LỊCH SỬ
             print(f"    🔄 Đang tính toán Baseline trên dữ liệu Validate HIỆN TẠI...")
             model.eval()
             all_probs_up = []
@@ -282,7 +261,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                         "max_thresh": max_thresh
                     }
                 global_best_score = baseline_scores["L3_1.4_L4_1.0"]
-                global_best_val_loss = avg_base_val_loss  # Cập nhật VLoss baseline
+                global_best_val_loss = avg_base_val_loss
                 best_wrs = wrs
                 best_totals = totals_t
                 best_thresholds = thresholds
@@ -299,9 +278,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
     model_file = os.path.join(run_dir, f"{target_name}_unified_weights.pth")
 
-    # === RAM BUFFER: Lưu bản tốt nhất trong bộ nhớ ===
     best_state_dict = copy.deepcopy(model.state_dict())
-
 
     if 'top_configs' not in locals():
         top_configs = {
@@ -310,7 +287,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             "BEST_VLOSS": None
         }
 
-    # === OPTIMIZER & LOSS ===
     criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15)
 
     def make_optimizer(lr=BASE_LR):
@@ -322,7 +298,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     optimizer = make_optimizer()
     scheduler = make_scheduler(optimizer)
 
-    # === SAVE FUNCTIONS ===
     def save_blackbox(epoch_num, is_interrupted=False):
         top_configs_meta = []
         for s_name, cfg in top_configs.items():
@@ -347,31 +322,16 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             "thresholds": best_thresholds,
             "win_rates": [wr * 100 for wr in best_wrs],
             "totals": best_totals,
-            "top_configs_saved": top_configs_meta,
-            "training_metadata": {
-                "training_strategy": "Sử dụng mô hình Transformer v5.0 (Deep Phoenix), tự động tái nạp trọng số ngẫu nhiên từ Top 4 cấu hình tốt nhất nếu kẹt (Stagnation) sau 10 epoch. Dữ liệu Rolling Window: Train 90 ngày, Test thực chiến 4 ngày.",
-                "selection_strategy": "Sử dụng weighted score đánh giá tổng hợp thay vì chỉ Accuracy. Tập trung bắt chính xác tín hiệu tại mốc L3 (trọng số 1.4) và L4 (trọng số 1.0) trên tổng 2.4. Top 4 mô hình được lưu độc lập.",
-                "hyperparameters": {
-                    "window_size": window_size,
-                    "d_model": d_model,
-                    "nhead": nhead,
-                    "num_attn_layers": num_attn_layers,
-                    "dropout_rate": dropout_rate,
-                    "initial_learning_rate": BASE_LR
-                },
-                "data_features": features.columns.tolist() if 'features' in locals() and hasattr(features, 'columns') else "N/A"
-            }
+            "top_configs_saved": top_configs_meta
         }
         try:
             with open(blackbox_file, "w", encoding="utf-8") as bf:
                 json.dump(data, bf, indent=4, ensure_ascii=False)
         except: pass
 
-        # AUTO SYNC TO HF
         def hf_sync_best_weights():
             try:
-                import sys
-                import os
+                import sys, os
                 base_dir = os.path.dirname(os.path.dirname(run_dir))
                 orchestration_dir = os.path.join(base_dir, "src", "orchestration")
                 if orchestration_dir not in sys.path:
@@ -380,16 +340,12 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 ok = push_runs()
                 if ok:
                     print("    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.")
-                else:
-                    print("    [HF LỖI] Đồng bộ trọng số lên HF thất bại.")
             except Exception as e:
-                print(f"    [HF LỖI THỰC THI] {e}")
+                pass
         
-        # Chạy đồng bộ ngầm
         import threading
         threading.Thread(target=hf_sync_best_weights, daemon=True).start()
 
-    # === [BƯỚC ĐẦU] Lưu bản đầu tiên nếu đã load được Win Rate ===
     if resumed and global_best_score > 0:
         torch.save(model.state_dict(), model_file)
         for s_name in top_configs.keys():
@@ -397,22 +353,15 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         save_blackbox(0)
         print(f"    💾 Đã lưu các bản đầu tiên (baseline) vào run hiện tại.")
 
-    # === PHOENIX PERTURBATION STRATEGIES ===
     def apply_perturbation(phoenix_num):
-        """Áp dụng ngẫu nhiên 1 trong 4 chiến lược phá kẹt."""
         nonlocal optimizer, scheduler, batch_size
-
         strat = random.choice(['A', 'B', 'C', 'D'])
-
         if strat == 'A':
-            # Chiến lược A: LR Spike - nhảy vọt LR để thoát local minima
             spike_lr = random.uniform(2e-4, 8e-4)
             optimizer = make_optimizer(lr=spike_lr)
             scheduler = make_scheduler(optimizer)
             print(f"  🔥 Chiến lược A: LR Spike → LR={spike_lr:.1e} (thoát local minima)")
-
         elif strat == 'B':
-            # Chiến lược B: Noise Injection - cộng nhiễu Gaussian nhỏ vào weights
             noise_sigma = random.uniform(0.001, 0.005)
             with torch.no_grad():
                 for param in model.parameters():
@@ -420,25 +369,18 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             optimizer = make_optimizer(lr=BASE_LR)
             scheduler = make_scheduler(optimizer)
             print(f"  🌊 Chiến lược B: Noise Injection σ={noise_sigma:.4f} (khám phá vùng lân cận)")
-
         elif strat == 'C':
-            # Chiến lược C: LR thấp hơn + weight decay mạnh hơn để tinh chỉnh sâu
             fine_lr = random.uniform(5e-5, 2e-4)
             optimizer = optim.AdamW(model.parameters(), lr=fine_lr, weight_decay=random.uniform(1e-3, 5e-3))
             scheduler = make_scheduler(optimizer)
             print(f"  🎯 Chiến lược C: Fine-tune Sâu → LR={fine_lr:.1e}, WD tăng (tinh chỉnh precision)")
-
         elif strat == 'D':
-            # Chiến lược D: Đổi batch size để gradient có variance khác
             new_batch = random.choice([128, 256, 384])
             batch_size = new_batch
             print(f"  🎲 Chiến lược D: Batch Shuffle → batch_size={new_batch} (gradient đa dạng hơn)")
-            # Tạo lại loader với batch mới
-            return True  # signal cần tạo lại loader
-
+            return True
         return False
 
-    # === TRAINING LOOP CHÍNH ===
     epochs_no_improve = 0
     phoenix_count     = 0
     total_epoch       = 0
@@ -449,7 +391,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         while phoenix_count <= MAX_PHOENIX:
             epoch_start_time = time.time()
 
-            # Tạo lại loader nếu Chiến lược D thay đổi batch_size
             if need_reload_loader:
                 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
                 need_reload_loader = False
@@ -466,7 +407,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 optimizer.step()
                 train_loss += loss.item()
 
-            # === ĐÁNH GIÁ ===
             model.eval()
             correct, total = 0, 0
             val_loss = 0.0
@@ -489,7 +429,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             all_probs_up = torch.cat(all_probs_up)
             all_labels   = torch.cat(all_labels)
 
-            # Tìm max_thresh
             max_thresh = 0.50
             for t_int in range(99, 51, -1):
                 t = t_int / 100.0
@@ -517,25 +456,19 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             cur_lr       = optimizer.param_groups[0]['lr']
             total_epoch += 1
 
-            # In log
             phoenix_tag = f"[P{phoenix_count}]" if phoenix_count > 0 else ""
             epoch_time = time.time() - epoch_start_time
             print(f"Epoch {total_epoch:04d} {phoenix_tag}| VLoss: {avg_val_loss:.4f} | LR: {cur_lr:.2e} | WR: {val_acc*100:.1f}% | MaxTh: {max_thresh:.2f} | Time: {epoch_time:.1f}s")
             thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f}%({totals_t[i]}L)" for i, t in enumerate(thresholds))
             print(f"  {thr_str}")
 
-            # Cập nhật scheduler
             scheduler.step(wrs[3] if totals_t[3] > 0 else avg_val_loss)
 
             if avg_val_loss < global_best_val_loss:
                 global_best_val_loss = avg_val_loss
 
-            # === XÉT CẢI THIỆN ===
             is_statistically_valid = totals_t[3] >= MIN_SIGNALS
-            
-            # Tính điểm cho đa chiến thuật
             current_scores = calc_strats(wrs, avg_val_loss)
-            
             improved_strategies = []
 
             if is_statistically_valid:
@@ -556,8 +489,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
                 if improved_strategies:
                     epochs_no_improve = 0
-                    
-                    # Cập nhật parameters tổng quan đại diện
                     valid_cfgs = [c for c in top_configs.values() if c is not None]
                     best_cfg = max(valid_cfgs, key=lambda x: x["score"])
                     global_best_score = best_cfg["score"]
@@ -579,12 +510,10 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             else:
                 epochs_no_improve += 1
 
-            # === PHOENIX RESTART ===
             if epochs_no_improve >= MAX_STAGNATE:
                 phoenix_count += 1
                 if phoenix_count > MAX_PHOENIX:
                     print(f"\n🦅 [PHOENIX] Đã tái sinh {MAX_PHOENIX} lần mà không vượt đỉnh {global_best_score*100:.1f}%.")
-                    print(f"   → Khai thác cạn kiệt. Dừng huấn luyện, giữ nguyên bản tốt nhất.")
                     break
 
                 valid_cfgs = [c for c in top_configs.values() if c is not None]
@@ -599,28 +528,10 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     except KeyboardInterrupt:
         print("\n⚡ [KHẨN CẤP] Dừng khẩn cấp. Đang lưu Hộp đen...")
         save_blackbox(total_epoch, is_interrupted=True)
-        # Restore bản tốt nhất
         model.load_state_dict(best_state_dict)
         torch.save(best_state_dict, model_file)
-        print("💾 Đã khôi phục và lưu bản tốt nhất an toàn.")
 
-    print(f"\n✅ HOÀN TẤT → Best WR: {global_best_score*100:.1f}% | Lưu: {model_file}")
-
-    report_file = os.path.join(run_dir, "unified_report.txt")
-    with open(report_file, "w", encoding="utf-8") as f:
-        f.write(f"Model: TRANSFORMER UNIFIED v5.1 (Phoenix Restart)\n")
-        f.write(f"--- DỮ LIỆU ROLLING WINDOW ---\n")
-        f.write(f"Train: {train_start.strftime('%Y-%m-%d')} → {train_end.strftime('%Y-%m-%d')} (~30 ngày)\n")
-        f.write(f"Test : {val_start.strftime('%Y-%m-%d')} → {val_end.strftime('%Y-%m-%d')} (4 ngày thực chiến)\n\n")
-        f.write(f"[Class Weight] SELL={weight_sell:.3f}, BUY={weight_buy:.3f}\n")
-        f.write(f"Phân phối Train: {n_sell:,} Sell | {n_buy:,} Buy\n")
-        f.write(f"Best Win Rate (L4): {global_best_score*100:.2f}% @ ngưỡng >{best_max_thresh*100:.0f}%\n")
-        f.write(f"Phoenix Restarts: {phoenix_count}/{MAX_PHOENIX}\n")
-        f.write(f"Tổng Epochs: {total_epoch}\n\n")
-        f.write(f"--- 4 MỨC WIN-RATE THỰC CHIẾN ---\n")
-        for i, (t, wr, n) in enumerate(zip(best_thresholds, best_wrs, best_totals)):
-            f.write(f"L{i+1} >{t*100:.0f}%: {wr*100:.2f}% ({n:,} lệnh)\n")
-    print(f"📊 Đã lưu báo cáo: {report_file}")
+    print(f"\n✅ HOÀN TẤT → Best Score (L3/L4/Vloss): {global_best_score*100:.1f}% | Lưu: {model_file}")
 
 
 if __name__ == "__main__":
@@ -629,7 +540,6 @@ if __name__ == "__main__":
 
     BASE_PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    # Ưu tiên config truyền vào argv, fallback bot_config_xau.json → bot_config.json
     config_path = None
     for arg in sys.argv[1:]:
         if arg.endswith('.json'):
@@ -642,14 +552,13 @@ if __name__ == "__main__":
                 config_path = p
                 break
 
-    TARGET_PREFIX = "XAUUSD"  # mặc định hợp lệ
+    TARGET_PREFIX = "XAUUSD"
+    CONFIG_ID = "DEFAULT"
     if config_path and os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
             TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
             CONFIG_ID = cfg.get("CONFIG_ID", "DEFAULT")
-    else:
-        CONFIG_ID = "DEFAULT"
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
@@ -664,12 +573,12 @@ if __name__ == "__main__":
             target_path = fallback_target
 
     print(f"[INIT] Tìm file features: {features_path}")
-    
+
+    # === [DIAGNOSTIC] ===
     print("\n🔍 --- CHẨN ĐOÁN DỮ LIỆU ĐẦU VÀO TẠI CLIENT ---")
-    print(f"  [>] Config đang dùng: {os.path.basename(config_path) if config_path else 'None'}")
+    print(f"  [>] Config đang dùng: {os.path.basename(config_path) if config_path else 'None'} | CONFIG_ID: {CONFIG_ID}")
     if config_path:
         print(f"  [>] DATASET_SUFFIX: {cfg.get('DATA_SOURCE', {}).get('DATASET_SUFFIX', 'UNKNOWN')}")
-    
     import glob
     raw_files = glob.glob(os.path.join(data_path, "*_1m_*.parquet"))
     print(f"  [>] Tồn tại cục dữ liệu thô (Parquet) trong data/:")
@@ -679,11 +588,11 @@ if __name__ == "__main__":
         for f in raw_files:
             sz = os.path.getsize(f) / (1024*1024)
             print(f"     - {os.path.basename(f)} ({sz:.1f} MB)")
-            
     if os.path.exists(features_path):
         fsz = os.path.getsize(features_path) / (1024*1024)
         print(f"  [>] File Features đã gộp: {os.path.basename(features_path)} ({fsz:.1f} MB)")
     print("-------------------------------------------------\n")
+
 
     if os.path.exists(features_path):
         features = pd.read_parquet(features_path)
@@ -713,13 +622,10 @@ if __name__ == "__main__":
 
         import glob, shutil
         
-        # Bắt buộc đính kèm bộ đúc Dimension (scaler.pkl) vào thư mục phiên Train
         scaler_src = os.path.join(data_path, "scaler.pkl")
         if os.path.exists(scaler_src):
             shutil.copy(scaler_src, os.path.join(run_dir, "scaler.pkl"))
             print(f"📦 Đã đóng gói kèm scaler.pkl (Bộ Kính Data) vào thư mục Run.")
-            
-            # === ĐẨY SCALER LÊN THƯ MỤC CẤU HÌNH TRÊN HF NGAY TỪ ĐẦU ===
             print("☁️ Đang đồng bộ CẤP TỐC scaler.pkl lên Đám mây HuggingFace để mồi sẵn cho Live Bot...")
             try:
                 src_path = os.path.join(BASE_PROJ_DIR, "src")
@@ -727,14 +633,14 @@ if __name__ == "__main__":
                     sys.path.insert(0, src_path)
                 from orchestration.hf_sync import _load_config
                 from huggingface_hub import HfApi
-                cfg = _load_config()
-                if cfg and "hf_token" in cfg and "hf_repo_id" in cfg:
-                    api = HfApi(token=cfg["hf_token"])
+                hf_cfg = _load_config()
+                if hf_cfg and "hf_token" in hf_cfg and "hf_repo_id" in hf_cfg:
+                    api = HfApi(token=hf_cfg["hf_token"])
                     target_repo_path = f"runs/{run_name}/scaler.pkl"
                     api.upload_file(
                         path_or_fileobj=os.path.join(run_dir, "scaler.pkl"),
                         path_in_repo=target_repo_path,
-                        repo_id=cfg["hf_repo_id"],
+                        repo_id=hf_cfg["hf_repo_id"],
                         repo_type="dataset",
                         commit_message=f"bot: Đẩy NHANH scaler.pkl lên mồi trước phục vụ Live Bot ({run_name})"
                     )
@@ -743,16 +649,14 @@ if __name__ == "__main__":
                     print("⚠️ Cảnh báo: Thiếu config HuggingFace (hf_token), bỏ qua upload.")
             except Exception as e:
                 print(f"❌ Lỗi khi tải sơ khai scaler.pkl lên HuggingFace: {e}")
-
         else:
             print(f"⚠️ CẢNH BÁO MẤT ROOT SCALER: Không tìm thấy {scaler_src}")
 
         old_dir = os.path.join(base_runs_dir, "old")
         os.makedirs(old_dir, exist_ok=True)
-        # Lấy tất cả folder của riêng loại target_clean này
-        type_folders = [d for d in glob.glob(os.path.join(base_runs_dir, f"run_*_{target_clean}_{CONFIG_ID}_TRANSFORMER")) if os.path.isdir(d)]
-        type_folders.sort(reverse=True) # Sắp xếp giảm dần theo thời gian (tên)
-        move_folders = type_folders[3:] # Giữ lại 3 cái mới nhất
+        type_folders = [d for d in glob.glob(os.path.join(base_runs_dir, f"run_*_{target_clean}_*TRANSFORMER")) if os.path.isdir(d)]
+        type_folders.sort(reverse=True)
+        move_folders = type_folders[3:]
         for folder in move_folders:
             folder_name = os.path.basename(folder)
             dest = os.path.join(old_dir, folder_name)
@@ -764,7 +668,6 @@ if __name__ == "__main__":
 
         train_unified_model(features, targets, num_features, run_dir, target_prefix=TARGET_PREFIX)
 
-        # === KẾT THÚC RUN: PUSH TOÀN BỘ RUNS/ CÒN LẠI LÊN MÂY (dọn dẹp chốt sổ) ===
         print("☁️ KẾT THÚC TRAIN: Đang đồng bộ fallback toàn bộ phiên bản trọng số cuối cùng lên HuggingFace...")
         try:
             src_path = os.path.join(BASE_PROJ_DIR, "src")
@@ -777,4 +680,3 @@ if __name__ == "__main__":
 
     else:
         print(f"❌ Chưa có file features ({features_path})! Hãy chạy feature_engineering.py trước.")
-
