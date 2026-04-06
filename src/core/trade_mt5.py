@@ -75,6 +75,7 @@ gui_session = "Phiên: Chưa rõ"
 gui_thr_text = "⚖️ Ngưỡng L4: Đang Tải..."
 gui_market_data = []  # Lưu list của tuple (Symbol, Price, Change)
 last_mac_run = 0
+mt5_manager = None
 
 # --- THEO DÕI LOG TỪNG LỆNH ---
 active_trade_loggers = {}
@@ -379,7 +380,7 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
 
 
 def bot_background_loop():
-    global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text
+    global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text, mt5_manager
     
     last_delayed_log_time = 0
     last_tick_err_time = 0
