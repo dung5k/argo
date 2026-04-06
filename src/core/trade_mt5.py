@@ -527,8 +527,9 @@ def bot_background_loop():
                         _tmp_scaler = joblib.load(scaler_cloud_path)
                         _tmp_feats = list(_tmp_scaler.feature_names_in_)
                         
-                        if not any(TARGET_PREFIX in f for f in _tmp_feats):
-                            log_message(f" ├─ ⚠️ [SCALE SHIELD] Scaler Cloud KHÔNG HỢP LỆ (Lỗi chứa data mã khác). Sẽ dùng Scaler Local!")
+                        target_rsi = f"{TARGET_PREFIX}_RSI"
+                        if target_rsi not in _tmp_feats:
+                            log_message(f" ├─ ⚠️ [SCALE SHIELD] Scaler Cloud KHÔNG HỢP LỆ (Không tìm thấy {target_rsi}). Đang chạy bản Local!")
                         else:
                             import shutil
                             script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
