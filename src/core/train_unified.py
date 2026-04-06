@@ -36,8 +36,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     Train 1 model Transformer duy nhất trên toàn bộ data.
     v4.0: Phoenix Restart - Load best → Tái nạp + thay đổi chiến lược khi kẹt.
     """
-    print("\n=======================================================")
-    print("🧠 TRANSFORMER UNIFIED MODEL v5.0 (Deep Phoenix)     ")
+    print("=======================================================")
+    print("🧠 TRANSFORMER UNIFIED MODEL v5.1 (Deep Phoenix)     ")
     print("=======================================================")
 
     # === [HARDWARE CHECK] Tự động móc cấu hình GPU của Client ===
@@ -590,7 +590,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
     report_file = os.path.join(run_dir, "unified_report.txt")
     with open(report_file, "w", encoding="utf-8") as f:
-        f.write(f"Model: TRANSFORMER UNIFIED v4.0 (Phoenix Restart)\n")
+        f.write(f"Model: TRANSFORMER UNIFIED v5.1 (Phoenix Restart)\n")
         f.write(f"--- DỮ LIỆU ROLLING WINDOW ---\n")
         f.write(f"Train: {train_start.strftime('%Y-%m-%d')} → {train_end.strftime('%Y-%m-%d')} (~30 ngày)\n")
         f.write(f"Test : {val_start.strftime('%Y-%m-%d')} → {val_end.strftime('%Y-%m-%d')} (4 ngày thực chiến)\n\n")
