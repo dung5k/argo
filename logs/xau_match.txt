@@ -1,0 +1,3 @@
+run_20260405_100558_xauusd_TRANSFORMER: Met=86 | Scaler=0
+run_20260405_235958_xauusd_TRANSFORMER: Met=86 | Scaler=0
+run_20260406_000356_xauusd_TRANSFORMER: Met=86 | Scaler=0

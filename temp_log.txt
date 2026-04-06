@@ -1,0 +1,69 @@
+📁 Tạo thư mục run: run_20260406_141821_xauusd_TRANSFORMER
+🧹 Đã di chuyển bản cũ vào kho lưu trữ (Archive): run_20260406_131030_xauusd_TRANSFORMER
+🧹 Đã di chuyển bản cũ vào kho lưu trữ (Archive): run_20260405_235958_xauusd_TRANSFORMER
+
+=======================================================
+🧠 TRANSFORMER UNIFIED MODEL v5.0 (Deep Phoenix)     
+=======================================================
+🖥️ [HARDWARE] Máy này KHÔNG CÓ GPU (đang chạy bằng sức trâu CPU).
+🤖 [V5 ARCHITECTURE] d_model=256, nhead=8, layers=3, window=60
+
+📅 [DATE RANGE FROM CONFIG]
+   Train : 2026-03-01 → 2026-03-29
+   Test  : 2026-03-29 → 2026-04-05
+   -> Train: 3,779 nến | Test thực chiến: 563 nến
+⚖️ [Class Weight] SELL=1.020, BUY=0.981
+   (1,852 Sell | 1,927 Buy trong 3,779 mẫu Train)
+-> [DATASET] Khởi tạo Cửa sổ Trượt: Tổng 3,719 Mẫu. Loại bỏ 0 Mẫu Rách (Nến Ma > 15%).
+-> [DATASET] Khởi tạo Cửa sổ Trượt: Tổng 503 Mẫu. Loại bỏ 0 Mẫu Rách (Nến Ma > 15%).
+🧬 [DUAL-STREAM] TARGET (xauusd): 8 | Macro: 78
+
+♻️  Tìm thấy checkpoint: C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\runs\run_20260405_100558_xauusd_TRANSFORMER\xauusd_unified_weights.pth
+    ⚠️ Cắt bỏ trọng số layer: xau_input_proj.weight (Kích thước đổi do Data mới)
+    ⚠️ Cắt bỏ trọng số layer: macro_fc.0.weight (Kích thước đổi do Data mới)
+    ✅ TRANSFER LEARNING: Kế thừa Core Memory từ run_20260405_100558_xauusd_TRANSFORMER
+    🔄 Đang tính toán Baseline trên dữ liệu Validate HIỆN TẠI...
+    📊 Baseline WR: 50.1% | VLoss: 0.9870 | MaxTh: 0.93
+    >50%: 45.5%(503L) | >64%: 44.4%(405L) | >79%: 47.1%(240L) | >93%: 54.3%(35L)
+    💾 Đã lưu các bản đầu tiên (baseline) vào run hiện tại.
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0001 | VLoss: 0.7075 | LR: 1.00e-04 | WR: 54.5% | MaxTh: 0.69 | Time: 94.5s
+  >50%: 54.5%(503L) | >56%: 55.9%(295L) | >63%: 51.9%(133L) | >69%: 46.9%(32L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [BEST_VLOSS]. MaxTh=0.69 >50%: 54.5%(503L) | >56%: 55.9%(295L) | >63%: 51.9%(133L) | >69%: 46.9%(32L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0002 | VLoss: 0.7039 | LR: 1.00e-04 | WR: 47.9% | MaxTh: 0.63 | Time: 91.7s
+  >50%: 47.9%(503L) | >54%: 47.4%(268L) | >59%: 49.0%(102L) | >63%: 54.3%(35L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [L3_1.4_L4_1.0, L3_1.1_L4_1.0, BEST_VLOSS]. MaxTh=0.63 >50%: 47.9%(503L) | >54%: 47.4%(268L) | >59%: 49.0%(102L) | >63%: 54.3%(35L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0003 | VLoss: 0.7011 | LR: 1.00e-04 | WR: 50.3% | MaxTh: 0.63 | Time: 89.2s
+  >50%: 50.3%(503L) | >54%: 48.9%(307L) | >59%: 50.4%(127L) | >63%: 60.0%(35L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [L3_1.4_L4_1.0, L3_1.1_L4_1.0, BEST_VLOSS]. MaxTh=0.63 >50%: 50.3%(503L) | >54%: 48.9%(307L) | >59%: 50.4%(127L) | >63%: 60.0%(35L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0004 | VLoss: 0.6954 | LR: 1.00e-04 | WR: 52.1% | MaxTh: 0.62 | Time: 88.3s
+  >50%: 52.1%(503L) | >54%: 52.9%(276L) | >58%: 54.8%(115L) | >62%: 61.1%(36L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [L3_1.4_L4_1.0, L3_1.1_L4_1.0, BEST_VLOSS]. MaxTh=0.62 >50%: 52.1%(503L) | >54%: 52.9%(276L) | >58%: 54.8%(115L) | >62%: 61.1%(36L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0005 | VLoss: 0.6997 | LR: 1.00e-04 | WR: 53.3% | MaxTh: 0.65 | Time: 90.8s
+  >50%: 53.3%(503L) | >55%: 50.4%(262L) | >60%: 52.1%(117L) | >65%: 55.6%(36L)
+Epoch 0006 | VLoss: 0.7009 | LR: 1.00e-04 | WR: 51.3% | MaxTh: 0.66 | Time: 86.1s
+  >50%: 51.3%(503L) | >55%: 52.7%(258L) | >61%: 55.6%(117L) | >66%: 60.6%(33L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [L3_1.4_L4_1.0, L3_1.1_L4_1.0]. MaxTh=0.66 >50%: 51.3%(503L) | >55%: 52.7%(258L) | >61%: 55.6%(117L) | >66%: 60.6%(33L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...
+[HF] Đẩy 30 trọng số lên Đám mây thành công! 🚀
+    [HF] Đã đồng bộ trọng số mới lên kho dữ liệu HuggingFace.
+Epoch 0007 | VLoss: 0.7060 | LR: 1.00e-04 | WR: 52.7% | MaxTh: 0.68 | Time: 86.5s
+  >50%: 52.7%(503L) | >56%: 52.0%(275L) | >62%: 56.8%(132L) | >68%: 50.0%(42L)
+Epoch 0008 | VLoss: 0.6989 | LR: 1.00e-04 | WR: 52.5% | MaxTh: 0.67 | Time: 86.2s
+  >50%: 52.5%(503L) | >56%: 52.3%(260L) | >61%: 56.9%(116L) | >67%: 59.4%(32L)
+  🏆 ĐỈNH MỚI CHO CHIẾN THUẬT: [L3_1.4_L4_1.0, L3_1.1_L4_1.0]. MaxTh=0.67 >50%: 52.5%(503L) | >56%: 52.3%(260L) | >61%: 56.9%(116L) | >67%: 59.4%(32L)
+[HF] Đang đẩy 30 trọng số (.pth) lên dung5k/argo_data/runs/ ...

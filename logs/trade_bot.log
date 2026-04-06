@@ -587,3 +587,40 @@ RuntimeError: mat1 and mat2 shapes cannot be multiplied (1x161 and 78x128)
 [2026-04-06 23:01:55] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
 [2026-04-06 23:01:56] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
 [2026-04-06 23:01:56] [BOT] Nạp não bộ thành công: xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:06:40] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:06:40] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:06:40] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:06:40] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:06:40] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:06:40] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:06:42] [HF CLOUD] Không thể kết nối Đám mây hoặc Lỗi Tải: Không tìm thấy thư mục run_ tương thích trên Repo!. Chuyển qua lấy bộ nhớ Local.
+[2026-04-06 23:06:42] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:06:42] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:06:42] [BOT] Nạp não bộ thành công: xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:07:26] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:07:26] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:07:26] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:07:26] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:07:26] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:07:26] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:07:27] [HF CLOUD] Không thể kết nối Đám mây hoặc Lỗi Tải: Không tìm thấy thư mục run_ tương thích trên Repo!. Chuyển qua lấy bộ nhớ Local.
+[2026-04-06 23:07:27] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:07:27] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:07:27] [BOT] Nạp não bộ thành công: xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:09:52] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:09:52] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:09:52] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:09:52] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:09:52] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:09:52] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:09:53] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-06 23:09:54] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-06 23:09:54] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-06 23:09:54]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-06 23:09:54]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-06 23:09:54]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-06 23:09:54]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-06 23:09:54] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-06 23:09:54] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\7dc22b3d0d9d6f7dffdc49e5194514fb13b4ae3b\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:09:54] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:09:54] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER

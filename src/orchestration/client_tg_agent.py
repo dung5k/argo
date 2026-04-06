@@ -266,19 +266,29 @@ class TelegramAgent:
             self.logger.info(f"📥 [MQTT CMD] Nhận lệnh: '{action}' | payload={payload}")
 
         if action == "train":
-            symbol = payload.get("symbol", "xauusd")
+            symbol = payload.get("symbol", "xauusd").lower()
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
             self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, config={config}")
-            self.manager.start_train(config)
-            if self.mqtt:
-                self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol}")
+            res = self.manager.start_train(config)
+            if not res.get("ok"):
+                self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
+                if self.mqtt:
+                    self.mqtt.send_log("ERR", f"Lỗi khởi động train: {res.get('error')}")
+            else:
+                if self.mqtt:
+                    self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol}")
         elif action == "train_code":
             code = payload.get("code", "")
             if not code: return
             self.logger.info(f"  ➜ [ZERO-GIT] Nhận Nhộng Code ({len(code)} ký tự) — Đang ghi file tạm và khởi chạy Train...")
-            self.manager.start_train(config_path="", code=code)
-            if self.mqtt:
-                self.mqtt.send_log("INFO", f"Khởi động tiến trình Bơm Code Train trực tiếp (Zero-Git)")
+            res = self.manager.start_train(config_path="", code=code)
+            if not res.get("ok"):
+                self.logger.error(f"  [LỖI] Không thể khởi động Zero-Git train: {res.get('error')}")
+                if self.mqtt:
+                    self.mqtt.send_log("ERR", f"Lỗi khởi động Zero-Git train: {res.get('error')}")
+            else:
+                if self.mqtt:
+                    self.mqtt.send_log("INFO", f"Khởi động tiến trình Bơm Code Train trực tiếp (Zero-Git)")
         elif action == "kill":
             self.logger.info("  ➜ Nhận lệnh KILL — Đang dừng tiến trình train...")
             self.manager.kill()
