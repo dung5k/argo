@@ -66,6 +66,7 @@ class MT5DataManager:
         self.active_mappings = []
         self.features = []
         self.gui_symbols = {}
+        self.current_connected_path = None
         
         self._load_features()
         self._build_active_mappings()
@@ -145,6 +146,7 @@ class MT5DataManager:
                                 self.IN_MEMORY_SYMBOL_HINT[req_m] = found_sym
                                 self.log_message(f"   => Khớp Sensor [{req_m}] vào lưới [{path_alias}] qua mã [{found_sym}]")
         mt5.shutdown()
+        self.current_connected_path = None
         self.log_message(f" 🌐 [ROUTER-MANAGER] Quy hoạch xong {len(self.GLOBAL_MT5_ROUTER_MAP)} luồng tín hiệu!")
 
     def get_live_merged_data_in_memory(self, window=120):
@@ -162,8 +164,11 @@ class MT5DataManager:
             
         for p, group in path_groups.items():
             if "terminal64.exe" in p:
-                mt5.shutdown()
-                if not mt5.initialize(path=p): continue
+                if self.current_connected_path != p:
+                    mt5.shutdown()
+                    if not mt5.initialize(path=p): 
+                        continue
+                    self.current_connected_path = p
                     
             for source_name, sym_m, mapped_name in group:
                 df = pd.DataFrame()
@@ -270,18 +275,20 @@ class MT5DataManager:
                 p_curr = last_row[close_col]
                 p_prev = prev_row[close_col]
                 if pd.isna(p_curr) or pd.isna(p_prev):
-                    if not any(s[0] == sym_clean for s in sym_data):
-                        sym_data.append((sym_clean, 0.0, 0.0, "N/A", source_name, True))
-                    continue
+                    p_curr, p_prev = 0.0, 0.0
+            else:
+                p_curr, p_prev = 0.0, 0.0
                 
             change = p_curr - p_prev
-            dt = merged_df.index[-1]
             try:
+                dt = merged_df.index[-1]
                 diff_mins = (dt_utc_now - dt.tz_convert('UTC')).total_seconds() / 60.0
             except:
                 diff_mins = 0
                 
             is_delayed = diff_mins > 5
+            if p_curr == 0.0 and p_prev == 0.0:
+                is_delayed = True
             dt_vn = dt.tz_convert('Asia/Ho_Chi_Minh')
             time_str = dt_vn.strftime("%H:%M")
             

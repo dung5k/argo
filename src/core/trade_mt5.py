@@ -395,17 +395,30 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text
     
+    last_delayed_log_time = 0
+    
     mt5_manager = MT5DataManager(log_callback=log_message, target_sym=TARGET_SYMBOL)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    features_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\final_features_{TARGET_PREFIX}.parquet"
     
+    # Đọc num_features từ Scaler chứ không phải Parquet (Scaler là nguồn sự thật chính xác)
+    import joblib
+    scaler_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\scaler.pkl"
     try:
-        sample_df = pd.read_parquet(features_path)
-        num_features = sample_df.shape[1]
+        _scaler = joblib.load(scaler_path)
+        num_features = len(_scaler.feature_names_in_) + 1  # +1 for is_imputed_flag appended after scale
+        log_message(f"[BOT] Đọc num_features từ Scaler: {num_features} (bao gồm is_imputed_flag)")
     except Exception as e:
-        gui_status = "Lỗi đọc Parquet! Chạy file Lọc Data trước."
-        return
+        # Fallback: đọc từ parquet
+        features_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\final_features_{TARGET_PREFIX}.parquet"
+        try:
+            sample_df = pd.read_parquet(features_path)
+            num_features = sample_df.shape[1]
+            log_message(f"[BOT] Fallback: Đọc num_features từ Parquet: {num_features}")
+        except Exception as e2:
+            gui_status = "Lỗi đọc Scaler hoặc Parquet! Kiểm tra data/"
+            log_message(f"[BOT] FATAL: Không thể xác định num_features: {e2}")
+            return
         
     # Load genes (hyperparams) from best_genes.json
     import json
@@ -427,12 +440,8 @@ def bot_background_loop():
             meta = json.load(mf)
             num_xau_features = meta.get("num_xau_features", None)
 
-    model = TransformerModel(
-        num_features=num_features, d_model=d_model, nhead=nhead,
-        num_layers=num_attn_layers, dropout_rate=dropout_rate,
-        num_xau_features=num_xau_features
-    ).to(device)
-    log_message(f"[BOT] TransformerModel d={d_model}, heads={nhead}, layers={num_attn_layers}, win={window_size}")
+    model = None
+    log_message(f"[BOT] Ready to init TransformerModel d={d_model}, heads={nhead}, layers={num_attn_layers}, win={window_size}")
     
     log_message("[BOT] Bắt đầu kết nối MT5 initialization...")
     if not initialize_mt5():
@@ -531,6 +540,19 @@ def bot_background_loop():
                         with open(metrix_path, "r", encoding='utf-8') as fm:
                             metrix = json.load(fm)
                         feats = metrix.get("training_metadata", {}).get("data_features", [])
+                        
+                        # TỰ ĐỘNG KHỚP BỘ NÃO VỚI ĐÁM MÂY (CHỐNG SIZE MISMATCH LÚC LOAD TRỌNG SỐ)
+                        # Đọc num_xau_features từ file meta chuẩn (ví dụ 8 feature OHLVC) chứ không đếm mù nhòa
+                        safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                        meta_path_local = os.path.join(safe_script_dir, "data", f"feature_meta_{TARGET_PREFIX}.json")
+                        num_xau_features = 8 # Fallback gốc
+                        if os.path.exists(meta_path_local):
+                            with open(meta_path_local, "r", encoding='utf-8') as mf:
+                                num_xau_features = json.load(mf).get("num_xau_features", 8)
+                                
+                        num_features = len(feats)  # Khớp tổng số chiều của não bộ (VD: 86)
+                        log_message(f" ├─ 📐 Khớp Kích thước Mạng: {TARGET_PREFIX} ({num_xau_features}) | Macro ({num_features - num_xau_features}) | SUM ({num_features})")
+                            
                         log_message(f" ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG {len(feats)} Dimensions để nạp đạn!")
                         # Log snippet of features to terminal to inform user
                         sample_feats = [f for f in feats if 'close' in f.lower() or 'PARQUET' in f or 'volume' in f.lower()][:10]
@@ -554,6 +576,14 @@ def bot_background_loop():
             
             if os.path.exists(runs_model_path):
                 log_message(f"[BOT] Đang ốp Ma trận trọng số (Local Cache): {runs_model_path}")
+                
+                # KHỞI TẠO LẠI NÃO BỘ ĐÚNG KÍCH THƯỚC TRƯỚC KHI LOAD STATE DICT
+                model = TransformerModel(
+                    num_features=num_features, d_model=d_model, nhead=nhead,
+                    num_layers=num_attn_layers, dropout_rate=dropout_rate,
+                    num_xau_features=num_xau_features
+                ).to(device)
+                
                 model.load_state_dict(torch.load(runs_model_path, map_location=device, weights_only=True))
                 model.eval()
                 current_loaded_session = session_id
@@ -568,6 +598,13 @@ def bot_background_loop():
                     match = re.search(r'(run_\d{8}_\d{6}_[^/\\]+)', old_model_path)
                     if match: active_brain_name = match.group(1)
                 except: pass
+                
+                # KHỞI TẠO LẠI NÃO BỘ ĐÚNG KÍCH THƯỚC DỰ PHÒNG
+                model = TransformerModel(
+                    num_features=num_features, d_model=d_model, nhead=nhead,
+                    num_layers=num_attn_layers, dropout_rate=dropout_rate,
+                    num_xau_features=num_xau_features
+                ).to(device)
                 
                 model.load_state_dict(torch.load(old_model_path, map_location=device, weights_only=True))
                 model.eval()
@@ -660,6 +697,12 @@ def bot_background_loop():
                 global gui_market_data
                 gui_market_data = sorted(sym_data, key=lambda x: x[0])
                 
+                delayed_count = sum(1 for item in gui_market_data if item[5])
+                current_t = time.time()
+                if delayed_count > 0 and (current_t - last_delayed_log_time) > 180: # Báo mỗi 3 phút
+                    log_message(f" 🔌⚠️ [WIFI/BROKER ĐỨT MẠNG] Phát hiện {delayed_count}/{len(gui_market_data)} cặp tiền bị đứt luồng dữ liệu (Quá 5 phút không có giá mới). Bảng điện đồ sẽ hiển thị 'Lỗi MT5 (Mất Data)'. Vui lòng kiểm tra đường truyền MT5 Terminal!")
+                    last_delayed_log_time = current_t
+                
                 gui_status = "Ép Ma trận 3D Tensor Pytorch (In-Memory)..."
                 
                 df, _ = fe.create_stationary_features(merged_df, is_live=True)
@@ -667,10 +710,6 @@ def bot_background_loop():
                 dt_feat = time.time() - t0_feat
                 log_message(f" ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT ({dt_feat:.2f}s)")
                 log_message(f" 📊 KIỂM KÊ KHO: RAM Nạp thành công {len(df):,} nến.")
-                
-            except Exception as ex_feat:
-                log_message(f" ├─ Lõi Lượng Tử (RAM Mapped): ❌ LỖI VĂNG SÓNG {str(ex_feat)[:50]}")
-                raise ex_feat
                 
                 last_60_candles = df.iloc[-window_size:].values
                 
@@ -716,15 +755,17 @@ def bot_background_loop():
                 update_active_trade_loggers()
                 gui_status = "Đã Khóa Mốc & Trượt Dừng lỗ! Đang ngáy..."
                         
-            except Exception as e:
+            except Exception as ex_feat:
                 import traceback
-                log_message(f"FATAL EXCEPTION in Bot Loop: {e}\n{traceback.format_exc()}")
-                gui_status = "Lỗi Mạng/Khựng Phễu!"
+                log_message(f" ├─ Lõi Lượng Tử (RAM Mapped): ❌ LỖI NGHIÊM TRỌNG: {str(ex_feat)[:100]}")
+                log_message(traceback.format_exc())
+                gui_status = "Lỗi Xử Lý Dữ Liệu / Inference!"
                 
             # Đợi 3 giây trước ranh giới cào dữ liệu mới
             time.sleep(3)
             
         time.sleep(0.5)
+
 
 # --- LUỒNG CHÍNH: VẼ BẢNG ĐIỀU KHIỂN NỔI ĐA PHIÊN (MOE DASHBOARD) ---
 def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr):
