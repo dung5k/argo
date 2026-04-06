@@ -684,3 +684,76 @@ RuntimeError: mat1 and mat2 shapes cannot be multiplied (1x161 and 78x128)
 [2026-04-06 23:34:47] [23:34:47] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
 [2026-04-06 23:34:57] [23:34:57] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
 [2026-04-06 23:35:07] [23:35:07] ⚠️ LỖI TICK: 'XAUUSDm' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:37:16] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:37:16] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:37:16] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:37:16] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:37:16] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:37:16] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:37:16] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-06 23:37:17] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-06 23:37:17] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-06 23:37:17]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-06 23:37:18]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-06 23:37:18]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-06 23:37:18]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-06 23:37:18] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-06 23:37:18] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\093612ddbd2339f9a3e02f71689e408c0e5f67f0\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:37:18] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:37:18] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
+[2026-04-06 23:37:18]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-06 23:37:18]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-06 23:37:18]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-06 23:37:18]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-06 23:37:18]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-06 23:37:18]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-06 23:37:18]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-06 23:37:18]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-06 23:37:18]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-06 23:37:18] [23:37:16] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-06 23:37:18] 
+[23:37:16] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:37:18]  ├─ Lõi Lượng Tử (RAM Mapped): ❌ LỖI NGHIÊM TRỌNG: Columns must be same length as key
+[2026-04-06 23:37:18] Traceback (most recent call last):
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\src\core\trade_mt5.py", line 726, in bot_background_loop
+    merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\src\core\mt5_data_manager.py", line 280, in get_live_merged_data_in_memory
+    merged_df[vol_cols] = merged_df[vol_cols].fillna(0)
+    ~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4660, in __setitem__
+    self._setitem_array(key, value)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4701, in _setitem_array
+    self[k1] = value[k2]
+    ~~~~^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4662, in __setitem__
+    self._set_item_frame_value(key, value)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4786, in _set_item_frame_value
+    raise ValueError("Columns must be same length as key")
+ValueError: Columns must be same length as key
+
+[2026-04-06 23:37:22] 
+[23:37:22] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:37:22]  ├─ Lõi Lượng Tử (RAM Mapped): ❌ LỖI NGHIÊM TRỌNG: Columns must be same length as key
+[2026-04-06 23:37:22] Traceback (most recent call last):
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\src\core\trade_mt5.py", line 726, in bot_background_loop
+    merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\src\core\mt5_data_manager.py", line 280, in get_live_merged_data_in_memory
+    merged_df[vol_cols] = merged_df[vol_cols].fillna(0)
+    ~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4660, in __setitem__
+    self._setitem_array(key, value)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4701, in _setitem_array
+    self[k1] = value[k2]
+    ~~~~^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4662, in __setitem__
+    self._set_item_frame_value(key, value)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Le Anh Dung\OneDrive\Apps\ck\client1\venv\Lib\site-packages\pandas\core\frame.py", line 4786, in _set_item_frame_value
+    raise ValueError("Columns must be same length as key")
+ValueError: Columns must be same length as key
+

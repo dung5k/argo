@@ -273,6 +273,7 @@ class MT5DataManager:
         
         if df_list:
             merged_df = pd.concat(df_list, axis=1)
+            merged_df = merged_df.loc[:, ~merged_df.columns.duplicated()].copy()
             merged_df.sort_index(inplace=True)
             
             merged_df.ffill(limit=120, inplace=True)
