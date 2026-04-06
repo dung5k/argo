@@ -17,19 +17,25 @@ class HostController:
         self.log_topic = f"{PREFIX}/{client_id}/log"
         
         self.client = mqtt.Client()
-        self.client.on_connect = self._on_connect
-        self.client.on_message = self._on_message
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
         self.connected = False
         
-    def _on_connect(self, client, userdata, flags, rc):
-        if rc == 0:
-            print(f"[HOST] Đã kết nối với máy chủ vô tuyến ({BROKER})")
+    def on_connect(self, client, userdata, flags, rc, *args, **kwargs):
+        # Support both v1 and v2 paho-mqtt callbacks
+        if hasattr(rc, "value"):
+            rc_val = rc.value
+        else:
+            rc_val = rc
+        
+        if rc_val == 0:
             self.connected = True
+            print(f"[HOST] Đã kết nối với máy chủ vô tuyến ({BROKER})")
             self.client.subscribe(self.log_topic)
         else:
-            print(f"[HOST] Lỗi kết nối: code {rc}")
+            print(f"[LỖI] Kết nối MQTT thất bại với return code {rc_val}")
 
-    def _on_message(self, client, userdata, msg):
+    def on_message(self, client, userdata, msg, *args, **kwargs):
         try:
             payload = msg.payload.decode("utf-8")
             data = json.loads(payload)
