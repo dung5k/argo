@@ -68,10 +68,12 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     epochs = 10000
 
     _date_override = {}
+    config_id = "DEFAULT"
     if _cfg_path:
         try:
             with open(_cfg_path, "r", encoding="utf-8") as _f:
                 _c = _json.load(_f)
+                config_id = _c.get("CONFIG_ID", "DEFAULT")
                 
                 # Load ARCH
                 _t = _c.get("TRAINING", {})
@@ -183,7 +185,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     # === [RESUME] LOAD CHECKPOINT + ĐỌC WIN RATE TỪ LỊCH SỬ ===
     runs_base = str(Path(__file__).resolve().parent.parent.parent / "runs")
     checkpoint_candidates = sorted(
-        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth") if "old" not in p.parts],
+        [p for p in Path(runs_base).glob(f"**/{target_name}_unified_weights.pth") if "old" not in p.parts and config_id in p.parent.name],
         key=lambda p: p.parent.name,
         reverse=True
     ) if Path(runs_base).exists() else []
@@ -645,6 +647,9 @@ if __name__ == "__main__":
         with open(config_path, "r", encoding="utf-8") as f:
             cfg = json.load(f)
             TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
+            CONFIG_ID = cfg.get("CONFIG_ID", "DEFAULT")
+    else:
+        CONFIG_ID = "DEFAULT"
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
@@ -667,7 +672,7 @@ if __name__ == "__main__":
 
         run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         target_clean = TARGET_PREFIX.lower().replace("_", "")
-        run_name = f"run_{run_timestamp}_{target_clean}_TRANSFORMER"
+        run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER"
         base_runs_dir = os.path.join(BASE_PROJ_DIR, "runs")
         run_dir  = os.path.join(base_runs_dir, run_name)
         os.makedirs(run_dir, exist_ok=True)
@@ -725,7 +730,7 @@ if __name__ == "__main__":
         old_dir = os.path.join(base_runs_dir, "old")
         os.makedirs(old_dir, exist_ok=True)
         # Lấy tất cả folder của riêng loại target_clean này
-        type_folders = [d for d in glob.glob(os.path.join(base_runs_dir, f"run_*_{target_clean}_TRANSFORMER")) if os.path.isdir(d)]
+        type_folders = [d for d in glob.glob(os.path.join(base_runs_dir, f"run_*_{target_clean}_{CONFIG_ID}_TRANSFORMER")) if os.path.isdir(d)]
         type_folders.sort(reverse=True) # Sắp xếp giảm dần theo thời gian (tên)
         move_folders = type_folders[3:] # Giữ lại 3 cái mới nhất
         for folder in move_folders:

@@ -1,33 +1,150 @@
 {
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
+    "CONFIG_ID": "CFG_01",
     "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
     "HF_RUN_ID": "run_20260406_145517_xauusd_TRANSFORMER",
-    
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_data",
+        "MODEL_REPO": "dung5k/trading_models",
+        "SYNC_CHUNKS": true
+    },
     "DATA_SOURCE": {
-        "SYMBOLS": [
-            "XAUUSDm", "GBPUSDm", "AUDUSDm", "XAGUSDm", "USDCADm", 
-            "BTCUSDm", "XRPUSDm", "LTCUSDm", "BNBUSDm", "BCHUSDm", 
-            "EURUSDm", "ETHUSDm", "SOLUSDm", "ADAUSDm"
-        ],
+        "DATASET_SUFFIX": "20260101_to_20260406",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
             "MTRADING": "C:\\Program Files\\Mtrading MetaTrader 5\\terminal64.exe",
-            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
-            "DEFAULT2": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe"
+            "MT5_2": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAUUSDm": "EXNESS",
+            "AUDUSDm": "EXNESS",
+            "EURUSDm": "EXNESS",
+            "GBPUSDm": "EXNESS",
+            "USDCADm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "VIXYm": "MTRADING",
+            "NASDAQ_100": "EXNESS",
+            "US_10Y_YIELD": "MT5_2"
+        },
+        "CONTINUOUS_CONTRACTS": {
+            "NASDAQ_100": {
+                "PREFIX": "USTECm",
+                "BROKER": "EXNESS",
+                "IS_CFD": true
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "Z10Y",
+                "BROKER": "MT5_2",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": [
+                    "H",
+                    "M",
+                    "U",
+                    "Z"
+                ],
+                "INVERT_LOGIC": false
+            }
         }
     },
-    
     "FEATURE_ENGINEERING": {
-        "EMA_PERIODS": [9, 21],
-        "RSI_PERIODS": [14],
-        "FILL_LIMIT": 120
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
+        "FILL_LIMIT": 120,
+        "EXACT_FEATURES": [
+            "XAUUSD_RSI",
+            "XAUUSD_EMA9_dist",
+            "XAUUSD_EMA21_dist",
+            "XAUUSD_Body",
+            "XAUUSD_Upper_Shadow",
+            "XAUUSD_Lower_Shadow",
+            "XAUUSD_ret_5m",
+            "XAUUSD_ret_10m",
+            "XAUUSD_ret_30m",
+            "XAUUSD_ATR_ratio",
+            "XAUUSD_time_log_ret",
+            "XAUUSD_open_log_ret",
+            "XAUUSD_high_log_ret",
+            "XAUUSD_low_log_ret",
+            "XAUUSD_close_log_ret",
+            "XAUUSD_volume",
+            "XAUUSD_spread",
+            "XAUUSD_real_volume",
+            "AUDUSD_time_log_ret",
+            "AUDUSD_open_log_ret",
+            "AUDUSD_high_log_ret",
+            "AUDUSD_low_log_ret",
+            "AUDUSD_close_log_ret",
+            "AUDUSD_volume",
+            "AUDUSD_spread",
+            "AUDUSD_real_volume",
+            "EURUSD_time_log_ret",
+            "EURUSD_open_log_ret",
+            "EURUSD_high_log_ret",
+            "EURUSD_low_log_ret",
+            "EURUSD_close_log_ret",
+            "EURUSD_volume",
+            "EURUSD_spread",
+            "EURUSD_real_volume",
+            "GBPUSD_time_log_ret",
+            "GBPUSD_open_log_ret",
+            "GBPUSD_high_log_ret",
+            "GBPUSD_low_log_ret",
+            "GBPUSD_close_log_ret",
+            "GBPUSD_volume",
+            "GBPUSD_spread",
+            "GBPUSD_real_volume",
+            "NASDAQ_100_close_log_ret",
+            "NASDAQ_100_high_log_ret",
+            "NASDAQ_100_low_log_ret",
+            "NASDAQ_100_open_log_ret",
+            "NASDAQ_100_volume",
+            "NASDAQ_100_spread",
+            "NASDAQ_100_real_volume",
+            "NASDAQ_100_time_log_ret",
+            "USDCAD_time_log_ret",
+            "USDCAD_open_log_ret",
+            "USDCAD_high_log_ret",
+            "USDCAD_low_log_ret",
+            "USDCAD_close_log_ret",
+            "USDCAD_volume",
+            "USDCAD_spread",
+            "USDCAD_real_volume",
+            "US_10Y_YIELD_close_log_ret",
+            "US_10Y_YIELD_high_log_ret",
+            "US_10Y_YIELD_low_log_ret",
+            "US_10Y_YIELD_open_log_ret",
+            "US_10Y_YIELD_volume",
+            "US_10Y_YIELD_spread",
+            "US_10Y_YIELD_real_volume",
+            "US_10Y_YIELD_time_log_ret",
+            "VIXY_time_log_ret",
+            "VIXY_open_log_ret",
+            "VIXY_high_log_ret",
+            "VIXY_low_log_ret",
+            "VIXY_close_log_ret",
+            "VIXY_volume",
+            "VIXY_spread",
+            "VIXY_real_volume",
+            "XAGUSD_time_log_ret",
+            "XAGUSD_open_log_ret",
+            "XAGUSD_high_log_ret",
+            "XAGUSD_low_log_ret",
+            "XAGUSD_close_log_ret",
+            "XAGUSD_volume",
+            "XAGUSD_spread",
+            "XAGUSD_real_volume"
+        ]
     },
-
     "TRAINING": {
-        "TRAIN_START": "2025-01-01",
-        "TRAIN_END": "2026-03-29",
+        "TRAIN_START": "2026-01-01",
+        "TRAIN_END": "2026-03-23",
         "VAL_END": "2026-04-06",
         "BATCH_SIZE": 1024,
         "ARCH": {
@@ -38,7 +155,6 @@
             "dropout": 0.2
         }
     },
-    
     "LIVE_TRADING": {
         "BUY_ENTRY_THR": 0.57,
         "SELL_ENTRY_THR": 0.43,
