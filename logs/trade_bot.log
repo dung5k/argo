@@ -812,3 +812,87 @@ NameError: name 'mt5_manager' is not defined
                         ^^^^^^^^^^^
 NameError: name 'mt5_manager' is not defined
 
+[2026-04-06 23:40:51] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:40:51] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:40:51] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:40:51] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:40:51] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:40:51] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-06 23:40:52] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-06 23:40:56] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-06 23:40:56] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-06 23:40:56]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-06 23:40:57]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-06 23:40:57]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-06 23:40:57]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-06 23:40:57] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-06 23:40:57] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\a14d0305f86a5093a6cfcff0b52292f0af6dd7a2\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-06 23:40:57] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-06 23:40:57] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
+[2026-04-06 23:40:57]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-06 23:40:57]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-06 23:40:57]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-06 23:40:57]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-06 23:40:57]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-06 23:40:57]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-06 23:40:57]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-06 23:40:57]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-06 23:40:57]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-06 23:40:57] [23:40:51] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-06 23:40:57] 
+[23:40:51] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:40:57]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.11s)
+[2026-04-06 23:40:57]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:41:01] 
+[23:41:01] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:41:01]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-06 23:41:01]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:41:05] 
+[23:41:05] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:41:05]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-06 23:41:05]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:41:09] 
+[23:41:09] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:41:09]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-06 23:41:09]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:41:12] 
+[23:41:12] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:41:12]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-06 23:41:12]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:41:16] 
+[23:41:16] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-06 23:41:16]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-06 23:41:16]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-06 23:43:00] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-06 23:43:00] [BOT] Unified Transformer V5: 256
+[2026-04-06 23:43:00] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-06 23:43:00] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-06 23:43:00] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-06 23:43:00] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights.pth...
+[2026-04-06 23:43:02] [HF CLOUD] TỰ ĐỘNG DÒ TÌM NÃO BỘ MỚI NHẤT: run_20260406_232917_xauusd_CFG_01_TRANSFORMER
+[2026-04-06 23:43:09] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-06 23:43:09] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-06 23:43:09]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_232917_xauusd_CFG_01_TRANSFORMER!
+[2026-04-06 23:43:10]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-06 23:43:10]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-06 23:43:10]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-06 23:43:10] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-06 23:43:10] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\a14d0305f86a5093a6cfcff0b52292f0af6dd7a2\runs\run_20260406_232917_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights.pth
+[2026-04-06 23:43:10] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=23 | MACRO=48 | SUM=71
+[2026-04-06 23:43:10] [BOT] Nạp não bộ thành công: run_20260406_232917_xauusd_CFG_01_TRANSFORMER
+[2026-04-06 23:43:10]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-06 23:43:10]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-06 23:43:10]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-06 23:43:10]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-06 23:43:10]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-06 23:43:10]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-06 23:43:10]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-06 23:43:10]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-06 23:43:10]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-06 23:43:10] [23:43:00] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:43:20] [23:43:20] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:43:30] [23:43:30] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:43:40] [23:43:40] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:43:50] [23:43:50] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:44:00] [23:44:00] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-06 23:44:10] [23:44:10] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
