@@ -3,7 +3,7 @@
     "TARGET_PREFIX": "XAUUSD",
     "CONFIG_ID": "CFG_02",
     "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
-    "HF_RUN_ID": "run_20260406_223515_xauusd_CFG_01_TRANSFORMER",
+    "HF_RUN_ID": "run_20260407_062436_xauusd_CFG_02_TRANSFORMER",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_data",
         "MODEL_REPO": "dung5k/trading_models",
@@ -115,7 +115,6 @@
             "XAGUSD_close_log_ret",
             "XAGUSD_volume"
         ]
-
     },
     "TRAINING": {
         "TRAIN_START": "2026-02-01",
