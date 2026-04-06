@@ -664,6 +664,26 @@ if __name__ == "__main__":
             target_path = fallback_target
 
     print(f"[INIT] Tìm file features: {features_path}")
+    
+    print("\n🔍 --- CHẨN ĐOÁN DỮ LIỆU ĐẦU VÀO TẠI CLIENT ---")
+    print(f"  [>] Config đang dùng: {os.path.basename(config_path) if config_path else 'None'}")
+    if config_path:
+        print(f"  [>] DATASET_SUFFIX: {cfg.get('DATA_SOURCE', {}).get('DATASET_SUFFIX', 'UNKNOWN')}")
+    
+    import glob
+    raw_files = glob.glob(os.path.join(data_path, "*_1m_*.parquet"))
+    print(f"  [>] Tồn tại cục dữ liệu thô (Parquet) trong data/:")
+    if not len(raw_files):
+        print(f"     (Không có file dữ liệu gốc)")
+    else:
+        for f in raw_files:
+            sz = os.path.getsize(f) / (1024*1024)
+            print(f"     - {os.path.basename(f)} ({sz:.1f} MB)")
+            
+    if os.path.exists(features_path):
+        fsz = os.path.getsize(features_path) / (1024*1024)
+        print(f"  [>] File Features đã gộp: {os.path.basename(features_path)} ({fsz:.1f} MB)")
+    print("-------------------------------------------------\n")
 
     if os.path.exists(features_path):
         features = pd.read_parquet(features_path)
