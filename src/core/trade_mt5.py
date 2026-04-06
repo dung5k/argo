@@ -191,7 +191,7 @@ def update_active_trade_loggers():
     if not active_trade_loggers:
         return
         
-    actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL.lower(), TARGET_SYMBOL)
+    actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
     tick = mt5.symbol_info_tick(actual_target_sym)
     if tick is None: return
         
@@ -311,7 +311,7 @@ def open_new_mt5_trade(symbol, order_type, lot_size, sl_pips, tp_pips, predictio
 def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
     """Hệ thống Quản lý Vị thế Đa Ngưỡng (Threshold State Machine)"""
     global gui_action, gui_thr_text
-    actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL.lower(), TARGET_SYMBOL)
+    actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
     symbol = actual_target_sym
     if mt5.symbol_info(symbol) is None:
         return
@@ -382,6 +382,7 @@ def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text
     
     last_delayed_log_time = 0
+    last_tick_err_time = 0
     inference_feats = []
     
     mt5_manager = MT5DataManager(log_callback=log_message, target_sym=TARGET_SYMBOL)
@@ -642,9 +643,19 @@ def bot_background_loop():
             continue
             
         # --- 1. SESSION GUARD: STALE PRICE CHECK ---
-        actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL.lower(), TARGET_SYMBOL)
+        actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
+        target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
+        
+        if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
+            mt5.shutdown()
+            mt5.initialize(path=target_path)
+            mt5_manager.current_connected_path = target_path
+            
         tick = mt5.symbol_info_tick(actual_target_sym)
         if tick is None:
+            if time.time() - last_tick_err_time > 10:
+                log_message(f"[{gui_time}] ⚠️ LỖI LẤY TICK GIÁ: mt5.symbol_info_tick('{actual_target_sym}') trả về None! Vui lòng kiểm tra lại Market Watch MT5 (Ctrl+M).")
+                last_tick_err_time = time.time()
             time.sleep(1)
             continue
             
