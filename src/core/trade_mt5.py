@@ -451,8 +451,9 @@ def bot_background_loop():
             if os.path.exists(config_file):
                 with open(config_file, 'r', encoding='utf-8') as ft:
                     cfg_t = json.load(ft)
-                    b_th = int(cfg_t.get("BUY_ENTRY_THR", 0.60) * 100)
-                    s_th = int(cfg_t.get("SELL_ENTRY_THR", 0.40) * 100)
+                    live_cfg = cfg_t.get("LIVE_TRADING", cfg_t)
+                    b_th = int(live_cfg.get("BUY_ENTRY_THR", 0.60) * 100)
+                    s_th = int(live_cfg.get("SELL_ENTRY_THR", 0.40) * 100)
                     gui_thr_text = f"⚖️ Ngưỡng L4: BUY>{b_th}% | SELL<{s_th}%"
                     
                     weight_file_cfg = cfg_t.get("WEIGHT_FILE", weight_file_cfg)

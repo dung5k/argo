@@ -29,68 +29,67 @@ def sync_brain_from_cloud(
     hf_token = "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"
     
     try:
-        api = HfApi(token=hf_token)
-        files = api.list_repo_files("dung5k/argo_data", repo_type="dataset")
-        
-        run_dirs = [f.split('/')[1] for f in files if f.startswith('runs/') and f'_{target_symbol.lower()}_' in f and weight_file in f]
-        
-        if run_dirs:
-            if hf_run_cfg and hf_run_cfg in run_dirs:
-                latest_run = hf_run_cfg
-            else:
-                latest_run = max(run_dirs)
-                
-            active_brain_name = latest_run
-            gui_status = f"Đang kéo mây Không Gian {latest_run}..."
-            log_callback(f"[HF CLOUD] XÁC ĐỊNH NÃO BỘ TỐT NHẤT: {latest_run} (File: {weight_file})")
-            
-            runs_model_path = hf_hub_download(
-                repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
-                filename=f"runs/{latest_run}/{weight_file}"
-            )
-            
-            # Đồng bộ scaler
-            try:
-                scaler_cloud_path = hf_hub_download(
-                    repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
-                    filename=f"runs/{latest_run}/scaler.pkl"
-                )
-                safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                scaler_local = os.path.join(safe_script_dir, "data", "scaler.pkl")
-                shutil.copy(scaler_cloud_path, scaler_local)
-                mt5_manager.reload_features()
-                log_callback(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
-            except Exception as sce:
-                log_callback(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
-                
-            # Đọc Metrix để tái tạo Khuôn Shape Pytorch
-            try:
-                metrix_path = hf_hub_download(
-                    repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
-                    filename=f"runs/{latest_run}/training_metrix.json"
-                )
-                with open(metrix_path, "r", encoding='utf-8') as fm:
-                    metrix = json.load(fm)
-                feats = metrix.get("training_metadata", {}).get("data_features", [])
-                
-                safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                meta_path_local = os.path.join(safe_script_dir, "data", f"feature_meta_{target_prefix}.json")
-                if os.path.exists(meta_path_local):
-                    with open(meta_path_local, "r", encoding='utf-8') as mf:
-                        num_xau_features = json.load(mf).get("num_xau_features", 8)
-                        
-                num_features = len(feats)
-                log_callback(f" ├─ 📐 Khớp Kích thước Mạng: {target_prefix} ({num_xau_features}) | Macro ({num_features - num_xau_features}) | SUM ({num_features})")
-                log_callback(f" ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG {num_features} Dimensions để nạp đạn!")
-                
-                sample_feats = [f for f in feats if 'close' in f.lower() or 'PARQUET' in f or 'volume' in f.lower()][:10]
-                log_callback(f" ├─ Danh sách Features nhận diện mẫu: {', '.join(sample_feats)}...")
-            except Exception:
-                pass
-                
-            log_callback(f"[HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!")
+        if hf_run_cfg:
+            latest_run = hf_run_cfg
+            log_callback(f"[HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: {latest_run} (File: {weight_file})")
         else:
-            raise Exception("Không tìm thấy thư mục run_ tương thích trên Repo!")
+            api = HfApi(token=hf_token)
+            files = api.list_repo_files("dung5k/argo_data", repo_type="dataset")
+            run_dirs = [f.split('/')[1] for f in files if f.startswith('runs/') and f'_{target_symbol.lower()}_' in f and weight_file in f]
+            valid_runs = [r for r in run_dirs if r != 'old']
+            if not valid_runs:
+                raise Exception("Không tìm thấy thư mục run_ tương thích trên Repo!")
+            latest_run = max(valid_runs)
+            log_callback(f"[HF CLOUD] TỰ ĐỘNG DÒ TÌM NÃO BỘ MỚI NHẤT: {latest_run}")
+
+        active_brain_name = latest_run
+        gui_status = f"Đang kéo mây Không Gian {latest_run}..."
+        
+        runs_model_path = hf_hub_download(
+            repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+            filename=f"runs/{latest_run}/{weight_file}"
+        )
+        
+        # Đồng bộ scaler
+        try:
+            scaler_cloud_path = hf_hub_download(
+                repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                filename=f"runs/{latest_run}/scaler.pkl"
+            )
+            safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            scaler_local = os.path.join(safe_script_dir, "data", "scaler.pkl")
+            shutil.copy(scaler_cloud_path, scaler_local)
+            mt5_manager.reload_features()
+            log_callback(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
+        except Exception as sce:
+            log_callback(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
+            
+        # Đọc Metrix để tái tạo Khuôn Shape Pytorch
+        try:
+            metrix_path = hf_hub_download(
+                repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                filename=f"runs/{latest_run}/training_metrix.json"
+            )
+            with open(metrix_path, "r", encoding='utf-8') as fm:
+                metrix = json.load(fm)
+            feats = metrix.get("training_metadata", {}).get("data_features", [])
+            
+            safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            meta_path_local = os.path.join(safe_script_dir, "data", f"feature_meta_{target_prefix}.json")
+            if os.path.exists(meta_path_local):
+                with open(meta_path_local, "r", encoding='utf-8') as mf:
+                    num_xau_features = json.load(mf).get("num_xau_features", 8)
+                    
+            num_features = len(feats)
+            log_callback(f" ├─ 📐 Khớp Kích thước Mạng: {target_prefix} ({num_xau_features}) | Macro ({num_features - num_xau_features}) | SUM ({num_features})")
+            log_callback(f" ├─ 🧠 [METRIX DATA] Không gian yêu cầu TỔNG CỘNG {num_features} Dimensions để nạp đạn!")
+            
+            sample_feats = [f for f in feats if 'close' in f.lower() or 'PARQUET' in f or 'volume' in f.lower()][:10]
+            log_callback(f" ├─ Danh sách Features nhận diện mẫu: {', '.join(sample_feats)}...")
+        except Exception:
+            pass
+            
+        log_callback(f"[HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!")
     except Exception as e:
         log_callback(f"[HF CLOUD] Không thể kết nối Đám mây hoặc Lỗi Tải: {str(e)[:100]}. Chuyển qua lấy bộ nhớ Local.")
         from pathlib import Path
