@@ -1,0 +1,294 @@
+import os
+import time
+import pandas as pd
+import numpy as np
+import MetaTrader5 as mt5
+from datetime import datetime, timezone
+import joblib
+
+class MT5DataManager:
+    def __init__(self, log_callback=print, target_sym="XAUUSD"):
+        self.log_message = log_callback
+        self.target_sym = target_sym
+        
+        self.MT5_PATHS = {
+            "EXNESS": r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe",
+            "MTRADING": r"C:\Program Files\Mtrading MetaTrader 5\terminal64.exe",
+            "DEFAULT": r"C:\Program Files\MetaTrader 5\terminal64.exe",
+            "DEFAULT2": r"C:\Program Files\MetaTrader 5 - 2\terminal64.exe"
+        }
+        
+        self.DATA_SOURCES = {
+            "EXNESS": {
+                "XAUUSDm": ["XAUUSD", "GOLD_1H_2025_2026.PARQUET", "XAU_USD"], 
+                "EURUSDm": ["EURUSD", "EUR_USD"], 
+                "GBPUSDm": ["GBPUSD", "GBP_USD"], 
+                "USDCADm": ["USDCAD", "USD_CAD"], 
+                "AUDUSDm": ["AUDUSD", "AUD_USD"], 
+                "XAGUSDm": ["XAGUSD", "XAG_USD"],
+                "BTCUSDm": ["BTCUSD", "BTC_USD"], 
+                "ETHUSDm": ["ETHUSD", "ETH_USD"], 
+                "SOLUSDm": ["SOLUSD", "SOL_USD"], 
+                "XRPUSDm": ["XRPUSD", "XRP_USD"],
+                "ADAUSDm": ["ADAUSD", "ADA_USD"], 
+                "BNBUSDm": ["BNBUSD", "BNB_USD"], 
+                "BCHUSDm": ["BCHUSD", "BCH_USD"], 
+                "LTCUSDm": ["LTCUSD", "LTC_USD"],
+            },
+            "MTRADING": {
+                "US30m": ["US30", "DOWJONES_1H_2025_2026.PARQUET"], 
+                "US500m": ["US500", "S&P500_1H_2025_2026.PARQUET"], 
+                "USTECm": ["USTEC", "NASDAQ_100_1H_2025_2026.PARQUET"], 
+                "DXYm": ["DXY"],
+                "USDJPYm": ["USDJPY", "USD_JPY"],
+                "US10Ym": ["US10y", "US_10Y_YIELD_1H_2025_2026.PARQUET"],
+                "VIXYm": ["VIXY"],
+                "JP225m": ["JP225"]
+            },
+            "AUTO": {
+                # Khai báo các mã tự động tìm kiếm trên toàn bộ các sàn ở đây
+            }
+        }
+        
+        self.MT5_FALLBACK_NAMES = {
+            "XAUUSDm": ["XAUUSDm", "XAUUSD", "GOLD", "GOLDm", "XAUUSD.a", "XAUUSD_m", "XAUUSD+"],
+            "US30m": ["US30m", "US30", "DJ30", "WS30"],
+            "US500m": ["US500m", "US500", "SP500", "SPX500"],
+            "USTECm": ["USTECm", "USTEC", "NAS100", "US100", "NDX100"],
+            "JP225m": ["JP225m", "JP225", "JPN225", "NIY"],
+            "DXYm": ["DXYm", "DXY", "USDIDX"],
+            "BTCUSDm": ["BTCUSDm", "BTCUSD", "BTCUSD.a"],
+            "ETHUSDm": ["ETHUSDm", "ETHUSD", "ETHUSD.a"],
+        }
+        
+        self.GLOBAL_MT5_ROUTER_MAP = {}
+        self.IN_MEMORY_SYMBOL_HINT = {}
+        self.active_mappings = []
+        self.features = []
+        self.gui_symbols = {}
+        
+        self._load_features()
+        self._build_active_mappings()
+
+    def _load_features(self):
+        try:
+            script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            scaler_path = os.path.join(script_dir, "data", "scaler.pkl")
+            scaler = joblib.load(scaler_path)
+            self.features = list(scaler.feature_names_in_)
+        except Exception as e:
+            self.log_message(f"⚠️ LỖI ĐỌC BỘ TRỌNG SỐ TỪ DATA MANAGER: {e}")
+            self.features = []
+
+    def _build_active_mappings(self):
+        self.active_mappings = []
+        for source_name, symbol_dict in self.DATA_SOURCES.items():
+            for sym_m, mapped_list in symbol_dict.items():
+                for mapped_name in mapped_list:
+                    if any(f.startswith(f"{mapped_name}_") for f in self.features):
+                        self.active_mappings.append((source_name, sym_m, mapped_name))
+        
+        self.gui_symbols = {}
+        for _src, _s, _m in self.active_mappings:
+            self.gui_symbols[_s] = (_m, _src)
+
+    def reload_features(self):
+        self.log_message("[DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...")
+        self._load_features()
+        self._build_active_mappings()
+        self.GLOBAL_MT5_ROUTER_MAP.clear() # Bắt buộc quét lại vì mã mới có thể xuất hiện
+        self.log_message(f"[DATA MANAGER] Đã ánh xạ {len(self.active_mappings)} đường dẫn nội bộ.")
+
+    def scan_terminals_and_map(self):
+        if len(self.GLOBAL_MT5_ROUTER_MAP) > 0:
+            return # Already scanned
+
+        self.log_message(f" 🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...")
+        
+        # Chỉ quét list duy nhất
+        needed_syms = set((src, sym) for src, sym, _ in self.active_mappings)
+        
+        for path_alias, path in self.MT5_PATHS.items():
+            # Gom các mã yêu cầu quét trên Path này
+            syms_for_this_path = []
+            for src, sym in needed_syms:
+                if src == path_alias or src == "AUTO":
+                    syms_for_this_path.append(sym)
+                    
+            if not syms_for_this_path:
+                continue
+
+            mt5.shutdown()
+            if mt5.initialize(path=path):
+                syms = mt5.symbols_get()
+                if syms:
+                    avail = {s.name for s in syms}
+                    for req_m in syms_for_this_path:
+                        if req_m not in self.GLOBAL_MT5_ROUTER_MAP:
+                            s_clean = req_m.replace("m", "")
+                            
+                            candidates = self.MT5_FALLBACK_NAMES.get(req_m, [req_m, s_clean])
+                            expanded_candidates = set(candidates)
+                            for c in candidates:
+                                expanded_candidates.add(c + "m")
+                                expanded_candidates.add(c + ".a")
+                                expanded_candidates.add(c + "+")
+                            
+                            found_sym = None
+                            for c in expanded_candidates:
+                                if c in avail:
+                                    found_sym = c
+                                    break
+                                    
+                            if found_sym:
+                                self.GLOBAL_MT5_ROUTER_MAP[req_m] = path
+                                self.IN_MEMORY_SYMBOL_HINT[req_m] = found_sym
+                                self.log_message(f"   => Khớp Sensor [{req_m}] vào lưới [{path_alias}] qua mã [{found_sym}]")
+        mt5.shutdown()
+        self.log_message(f" 🌐 [ROUTER-MANAGER] Quy hoạch xong {len(self.GLOBAL_MT5_ROUTER_MAP)} luồng tín hiệu!")
+
+    def get_live_merged_data_in_memory(self, window=120):
+        # Scan if not scanned yet
+        self.scan_terminals_and_map()
+        
+        df_list = []
+        path_groups = {}
+        
+        # Gom nhóm MT5 Paths
+        for source_name, sym_m, mapped_name in self.active_mappings:
+            path = self.GLOBAL_MT5_ROUTER_MAP.get(sym_m, source_name)
+            if path not in path_groups: path_groups[path] = []
+            path_groups[path].append((source_name, sym_m, mapped_name))
+            
+        for p, group in path_groups.items():
+            if "terminal64.exe" in p:
+                mt5.shutdown()
+                if not mt5.initialize(path=p): continue
+                    
+            for source_name, sym_m, mapped_name in group:
+                df = pd.DataFrame()
+                if "terminal64.exe" in p:
+                    sym_clean = sym_m.replace("m", "")
+                    actual_sym = self.IN_MEMORY_SYMBOL_HINT.get(sym_m, sym_clean)
+                    
+                    if mt5.symbol_select(actual_sym, True):
+                        rates = mt5.copy_rates_from_pos(actual_sym, mt5.TIMEFRAME_M1, 0, window)
+                        if rates is not None and len(rates) > 0:
+                            df = pd.DataFrame(rates)
+                            tick = mt5.symbol_info_tick(actual_sym)
+                            offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
+                            offset_hours = round(offset_sec / 3600)
+                            df['time'] = df['time'] - (offset_hours * 3600)
+                
+                if df.empty: continue
+                
+                df['datetime'] = pd.to_datetime(df['time'], unit='s')
+                df.set_index('datetime', inplace=True)
+                if df.index.tz is None:
+                    df.index = df.index.tz_localize('UTC')
+                else:
+                    df.index = df.index.tz_convert('UTC')
+                    
+                df = df[~df.index.duplicated(keep='last')]
+                df.drop(columns=['spread', 'real_volume', 'time'], inplace=True, errors='ignore')
+                df.rename(columns={'tick_volume': 'volume'}, inplace=True)
+                
+                renamed_df = df.copy()
+                rename_map = {}
+                for col in renamed_df.columns:
+                    if col in ['open', 'high', 'low', 'close', 'volume', 'spread']:
+                        expected = None
+                        if f"{mapped_name}_{col}" in self.features or f"{mapped_name}_{col}_log_ret" in self.features:
+                            expected = f"{mapped_name}_{col}"
+                        elif f"{mapped_name}_{col.capitalize()}" in self.features or f"{mapped_name}_{col.capitalize()}_log_ret" in self.features:
+                            expected = f"{mapped_name}_{col.capitalize()}"
+                        elif f"{mapped_name}_{col.upper()}" in self.features or f"{mapped_name}_{col.upper()}_log_ret" in self.features:
+                            expected = f"{mapped_name}_{col.upper()}"
+                        
+                        rename_map[col] = expected if expected else f"{mapped_name}_{col}"
+                
+                renamed_df = renamed_df.rename(columns=rename_map)
+                df_list.append(renamed_df)
+                        
+        merged_df = None
+        error_msg = None
+        
+        if df_list:
+            merged_df = pd.concat(df_list, axis=1)
+            merged_df.sort_index(inplace=True)
+            
+            merged_df.ffill(limit=120, inplace=True)
+            vol_cols = [c for c in merged_df.columns if 'volume' in c.lower()]
+            merged_df[vol_cols] = merged_df[vol_cols].fillna(0)
+            
+            target_mapped = "XAU_USD"
+            for _src, _s, _m in self.active_mappings:
+                if self.target_sym in _s or _s.startswith(self.target_sym):
+                    target_mapped = _m
+                    break
+                    
+            target_close = f"{target_mapped}_close"
+            if target_close not in merged_df.columns:
+                target_close = f"{target_mapped}_Close"
+                
+            if target_close in merged_df.columns:
+                merged_df = merged_df.dropna(subset=[target_close])
+            else:
+                error_msg = f"❌ LỖI: KHÔNG TÌM THẤY MÃ PHÙ HỢP CHO BOT {self.target_sym} (MT5 MẤT KẾT NỐI)!"
+                self.log_message(f"[{datetime.now().strftime('%H:%M:%S')}] {error_msg}")
+                return None, [], error_msg
+                
+            if len(merged_df) > 0:
+                merged_df.index = merged_df.index.tz_convert('America/New_York')
+                hour = merged_df.index.hour
+                dayofweek = merged_df.index.dayofweek
+                merged_df['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
+                merged_df['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
+                merged_df['dow_sin'] = np.sin(2 * np.pi * dayofweek / 7.0)
+                merged_df['dow_cos'] = np.cos(2 * np.pi * dayofweek / 7.0)
+                merged_df.dropna(inplace=True)
+
+        sym_data = self._build_sym_data(merged_df)
+        
+        return merged_df, sym_data, error_msg
+
+    def _build_sym_data(self, merged_df):
+        sym_data = []
+        dt_utc_now = datetime.utcnow().replace(tzinfo=timezone.utc)
+        
+        for sym_m, (mapped_name, source_name) in self.gui_symbols.items():
+            sym_clean = mapped_name.replace(".PARQUET", "").replace("1H_2025_2026", "").replace("_", "")
+            close_col = f"{mapped_name}_close"
+            
+            if close_col not in (merged_df.columns if merged_df is not None else []):
+                close_col = f"{mapped_name}_Close"
+                
+            if merged_df is not None and len(merged_df) >= 2 and close_col in merged_df.columns:
+                last_row = merged_df.iloc[-1]
+                prev_row = merged_df.iloc[-2]
+                
+                p_curr = last_row[close_col]
+                p_prev = prev_row[close_col]
+                if pd.isna(p_curr) or pd.isna(p_prev):
+                    if not any(s[0] == sym_clean for s in sym_data):
+                        sym_data.append((sym_clean, 0.0, 0.0, "N/A", source_name, True))
+                    continue
+                
+            change = p_curr - p_prev
+            dt = merged_df.index[-1]
+            try:
+                diff_mins = (dt_utc_now - dt.tz_convert('UTC')).total_seconds() / 60.0
+            except:
+                diff_mins = 0
+                
+            is_delayed = diff_mins > 5
+            dt_vn = dt.tz_convert('Asia/Ho_Chi_Minh')
+            time_str = dt_vn.strftime("%H:%M")
+            
+            if not any(s[0] == sym_clean for s in sym_data):
+                sym_data.append((sym_clean, p_curr, change, time_str, source_name, is_delayed))
+        else:
+            if not any(s[0] == sym_clean for s in sym_data):
+                sym_data.append((sym_clean, 0.0, 0.0, "N/A", source_name, True))
+                    
+        return sym_data

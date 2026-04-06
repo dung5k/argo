@@ -201,17 +201,32 @@ def create_stationary_features(df, is_live=False):
     
     # Scale tất cả thành Mean=0, Std=1 để đẩy lưới Nơ-ron chạy hội tụ siêu tốc
     # KHOÁ LÕI SCALER (TRÁNH LỆCH PHA GIỮA TRAIN VÀ LIVE)
-    scaler_path = os.path.join(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data", "scaler.pkl")
+    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    data_path = os.path.join(script_dir, "data")
     
-    if is_live and os.path.exists(scaler_path):
-        print("-> [LIVE MODE] Đang dùng Khuôn Đúc Scaler.pkl từ Mốc Huấn Luyện...")
-        scaler = joblib.load(scaler_path)
+    if is_live:
+        scaler = joblib.load(os.path.join(data_path, 'scaler.pkl'))
+        
+        # --- [AUTO-ALIGN SHIELD] TỰ ĐỘNG CHUẨN HOÁ CỘT (CHỐNG CRASH) ---
+        expected_cols = list(scaler.feature_names_in_)
+        missing_cols = [c for c in expected_cols if c not in feature_df.columns]
+        if missing_cols:
+            print(f"⚠️ [SHIELD] Cảnh báo: Thiếu {len(missing_cols)} Features từ MT5 (vd: {missing_cols[:5]}). Đang Zero-Pad...")
+            pad_df = pd.DataFrame(0.0, index=feature_df.index, columns=missing_cols)
+            feature_df = pd.concat([feature_df, pad_df], axis=1)
+            
+        extra_cols = [c for c in feature_df.columns if c not in expected_cols]
+        if extra_cols:
+            print(f"⚠️ [SHIELD] Cảnh báo: Thừa {len(extra_cols)} Features rác từ MT5 (vd: {extra_cols[:5]}). Đang tự động ném bỏ...")
+            
+        feature_df = feature_df[expected_cols]
+        
         scaled_data = scaler.transform(feature_df)
     else:
         print("-> [TRAIN MODE] Đang tính toán Độ Lệch Chuẩn 15 Tháng và Đúc Scaler.pkl...")
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(feature_df)
-        joblib.dump(scaler, scaler_path)
+        joblib.dump(scaler, os.path.join(data_path, 'scaler.pkl'))
         
     scaled_df = pd.DataFrame(scaled_data, index=feature_df.index, columns=feature_df.columns)
     
@@ -319,7 +334,11 @@ if __name__ == "__main__":
         target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet"))
     
     print(f"-> Dữ liệu Input cuối cùng: {final_features.shape}")
-    final_features.to_parquet(os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet"))
-    print(f"\n[OK] Feature Engineering hoàn tất! Chuyển qua train.")
+    if is_live:
+        final_features.to_parquet(os.path.join(data_path, f"live_features_{TARGET_PREFIX}.parquet"))
+        print(f"\n[OK] Feature Engineering (LIVE) hoàn tất! Sẵn sàng báo tín hiệu.")
+    else:
+        final_features.to_parquet(os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet"))
+        print(f"\n[OK] Feature Engineering (TRAIN) hoàn tất! Chuyển qua huấn luyện.")
 
 

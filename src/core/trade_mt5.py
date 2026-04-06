@@ -10,13 +10,39 @@ import torch
 import MetaTrader5 as mt5
 from datetime import datetime, timezone
 
+import sys
+import os
+
+# Đẩy src lên đầu cờ để import được ở mọi cwd (dù khác ổ đĩa hay thư mục)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 # Import Mạng thần kinh từ file Train
 try:
-    from src.train_ga import TransformerModel
+    from src.legacy.train_ga import TransformerModel
 except ModuleNotFoundError:
-    from train_ga import TransformerModel
+    try:
+        from legacy.train_ga import TransformerModel
+    except ModuleNotFoundError:
+        import traceback
+        traceback.print_exc()
+        print("\n[LỖI] Không thể nạp mạng thần kinh (TransformerModel).")
+        input("Bấm Enter để thoát...")
+        sys.exit(1)
 
 import json
+
+# Import Feature Engineering logic for in-memory processing
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    import src.core.feature_engineering as fe
+except ModuleNotFoundError:
+    try:
+        import core.feature_engineering as fe
+    except ModuleNotFoundError:
+        import feature_engineering as fe
+from mt5_data_manager import MT5DataManager
 
 config_file = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config.json"
 if len(sys.argv) > 1:
@@ -363,9 +389,14 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
             print(f"⚖️ ACTION: KHÔNG VÀO LỆNH -> Tín hiệu kẹt trong Vùng Nhiễu ({SELL_ENTRY_THR*100}% < {prediction*100:.2f}% < {BUY_ENTRY_THR*100}%)")
 
 # --- LUỒNG BOT CHẠY NGẦM ---
+
+
+
 def bot_background_loop():
-    global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run
+    global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text
     
+    mt5_manager = MT5DataManager(log_callback=log_message, target_sym=TARGET_SYMBOL)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     features_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\final_features_{TARGET_PREFIX}.parquet"
     
@@ -378,18 +409,15 @@ def bot_background_loop():
         
     # Load genes (hyperparams) from best_genes.json
     import json
-    genes_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\best_genes.json"
-    genes = {"window_size": 30, "lstm_units": 128, "lstm_layers": 2, "dropout_rate": 0.25}
-    if os.path.exists(genes_path):
-        with open(genes_path, "r", encoding='utf-8') as f:
-            genes = json.load(f)
-    window_size     = genes.get("window_size", 30)
-    d_model         = genes.get("lstm_units", 128)
-    nhead           = 4
-    num_attn_layers = genes.get("lstm_layers", 2)
-    dropout_rate    = genes.get("dropout_rate", 0.25)
-    gui_status = f"Genes loaded: win={window_size}, d={d_model}"
-    log_message(f"[BOT] Genes: {genes}")
+    # Cố định kiến trúc v5.0 Deep Phoenix
+    window_size     = 60
+    d_model         = 256
+    nhead           = 8
+    num_attn_layers = 3
+    dropout_rate    = 0.2
+    
+    gui_status = f"V5 Mode: win={window_size}, d={d_model}"
+    log_message(f"[BOT] Unified Transformer V5: {d_model}")
 
     # Load num_xau_features if available
     meta_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\feature_meta.json"
@@ -420,28 +448,127 @@ def bot_background_loop():
         now = datetime.now()
         gui_time = now.strftime('%H:%M:%S')
         
+        # --- CẬP NHẬT NGƯỠNG HIỂN THỊ (UI) & CẤU HÌNH BOT LIÊN TỤC TRONG LÚC CHỜ ---
+        # Mặc định phòng hờ
+        weight_file_cfg = f"{TARGET_SYMBOL.lower()}_unified_weights.pth"
+        hf_run_cfg = None
+
+        try:
+            if os.path.exists(config_file):
+                with open(config_file, 'r', encoding='utf-8') as ft:
+                    cfg_t = json.load(ft)
+                    b_th = int(cfg_t.get("BUY_ENTRY_THR", 0.60) * 100)
+                    s_th = int(cfg_t.get("SELL_ENTRY_THR", 0.40) * 100)
+                    gui_thr_text = f"⚖️ Ngưỡng L4: BUY>{b_th}% | SELL<{s_th}%"
+                    
+                    weight_file_cfg = cfg_t.get("WEIGHT_FILE", weight_file_cfg)
+                    hf_run_cfg = cfg_t.get("HF_RUN_ID", None)
+        except: pass
+        
+        # Load from config instead of hardcoding
+        WEIGHT_FILE = weight_file_cfg
+        
         # --- HOT-SWAP MODULE: TỰ ĐỘNG THAY ĐỔI NÃO BỘ THEO MÚI GIỜ ---
         session_id, session_display = get_current_session()
-        gui_session = session_display
+        
+        # Xác định tên Não bộ từ Model đang chạy
+        global active_brain_name
+        if 'active_brain_name' not in globals():
+            active_brain_name = WEIGHT_FILE
+        
+        gui_session = f"{session_display}  [Não bộ: {active_brain_name}]"
         
         if session_id != current_loaded_session:
-            log_message(f"[BOT] Thay đổi Phiên: {session_id}. Đang load model...")
-            # Ưu tiên load WEIGHT_FILE từ folder runs, nếu không có thì tìm trong models, hoặc báo lỗi
-            from pathlib import Path
-            runs_dir = Path(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs")
-            found_models = list(runs_dir.rglob(WEIGHT_FILE))
-            runs_model_path = str(max(found_models, key=os.path.getctime)) if found_models else ""
+            log_message(f"[BOT] Thay đổi Phiên: {session_id}. Đang nạp {WEIGHT_FILE}...")
+            
+            runs_model_path = ""
+            # 1. Ưu tiên cao nhất: Tải Weights, Scaler, và Metrix xịn nhất từ Đám mây HuggingFace
+            hf_token = "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"
+            try:
+                from huggingface_hub import HfApi, hf_hub_download
+                api = HfApi(token=hf_token)
+                files = api.list_repo_files("dung5k/argo_data", repo_type="dataset")
+                
+                # Tìm tất cả thư mục run_ tương thích với TARGET_SYMBOL
+                run_dirs = [f.split('/')[1] for f in files if f.startswith('runs/') and f'_{TARGET_SYMBOL.lower()}_' in f and WEIGHT_FILE in f]
+                
+                if run_dirs:
+                    if hf_run_cfg and hf_run_cfg in run_dirs:
+                        latest_run = hf_run_cfg
+                    else:
+                        latest_run = max(run_dirs)
+                        
+                    active_brain_name = latest_run
+                    gui_status = f"Đang kéo mây Không Gian {latest_run}..."
+                    log_message(f"[HF CLOUD] XÁC ĐỊNH NÃO BỘ TỐT NHẤT: {latest_run} (File: {WEIGHT_FILE})")
+                    
+                    runs_model_path = hf_hub_download(
+                        repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                        filename=f"runs/{latest_run}/{WEIGHT_FILE}"
+                    )
+                    
+                    # ĐỒNG BỘ SCALER KHỚP VỚI TRỌNG SỐ (CỰC QUAN TRỌNG)
+                    try:
+                        scaler_cloud_path = hf_hub_download(
+                            repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                            filename=f"runs/{latest_run}/scaler.pkl"
+                        )
+                        import shutil
+                        script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                        scaler_local = os.path.join(script_dir, "data", "scaler.pkl")
+                        shutil.copy(scaler_cloud_path, scaler_local)
+                        mt5_manager.reload_features() # Xây lại lưới ngay lập tức để hít đúng Data
+                        log_message(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
+                    except Exception as sce:
+                        log_message(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
+                        
+                    # PHÂN TÍCH METRIX (HIỂN THỊ LOG KIỂM KÊ FEATURES THEO YÊU CẦU CỦA USER)
+                    try:
+                        metrix_path = hf_hub_download(
+                            repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                            filename=f"runs/{latest_run}/training_metrix.json"
+                        )
+                        with open(metrix_path, "r", encoding='utf-8') as fm:
+                            metrix = json.load(fm)
+                        feats = metrix.get("training_metadata", {}).get("data_features", [])
+                        log_message(f" ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG {len(feats)} Dimensions để nạp đạn!")
+                        # Log snippet of features to terminal to inform user
+                        sample_feats = [f for f in feats if 'close' in f.lower() or 'PARQUET' in f or 'volume' in f.lower()][:10]
+                        log_message(f" ├─ Danh sách Features nhận diện mẫu: {', '.join(sample_feats)}...")
+                    except Exception as me:
+                        pass
+                        
+                    log_message(f"[HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!")
+                else:
+                    raise Exception("Không tìm thấy thư mục run_ tương thích trên Repo!")
+            except Exception as e:
+                log_message(f"[HF CLOUD] Không thể kết nối Đám mây hoặc Lỗi Tải: {str(e)[:100]}. Chuyển qua lấy bộ nhớ Local.")
+                
+                # 2. Phương án dự phòng: Tìm trong Local
+                from pathlib import Path
+                runs_dir = Path(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\runs")
+                found_models = list(runs_dir.rglob(WEIGHT_FILE))
+                runs_model_path = str(max(found_models, key=os.path.getctime)) if found_models else ""
+            
             old_model_path = os.path.join(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\models", f"{TARGET_SYMBOL.lower()}_{session_id}_weights.pth")
             
             if os.path.exists(runs_model_path):
-                log_message(f"[BOT] Đang load model từ file {runs_model_path}")
+                log_message(f"[BOT] Đang ốp Ma trận trọng số (Local Cache): {runs_model_path}")
                 model.load_state_dict(torch.load(runs_model_path, map_location=device, weights_only=True))
                 model.eval()
                 current_loaded_session = session_id
-                gui_status = f"Đã Nạp Trọng Số Chung {WEIGHT_FILE}"
-                log_message(f"[BOT] Nạp thành công {WEIGHT_FILE}")
+                gui_status = f"Đã Nạp Trọng Số: {active_brain_name[:20]}..."
+                log_message(f"[BOT] Nạp não bộ thành công: {active_brain_name}")
             elif os.path.exists(old_model_path):
                 log_message(f"[BOT] Đang load model từ file {old_model_path}")
+                
+                # Fetch run name from local if needed
+                active_brain_name = WEIGHT_FILE
+                try:
+                    match = re.search(r'(run_\d{8}_\d{6}_[^/\\]+)', old_model_path)
+                    if match: active_brain_name = match.group(1)
+                except: pass
+                
                 model.load_state_dict(torch.load(old_model_path, map_location=device, weights_only=True))
                 model.eval()
                 current_loaded_session = session_id
@@ -510,60 +637,53 @@ def bot_background_loop():
             time.sleep(30)
             continue
             
-        gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
+        gui_status = "Đang Cào Dữ Liệu Thời Gian Thực (In-Memory)..."
         if True:
-            log_message(f"\n[{gui_time}] 🔄 BẮT ĐẦU VÒNG ĐỜI VẮT SỮA DỮ LIỆU TỪ 3 LỤC ĐỊA...")
-            script_dir = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor"
-            python_exe = sys.executable
+            log_message(f"\n[{gui_time}] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...")
+            
+            t0_feat = time.time()
             
             try:
-                my_env = os.environ.copy()
-                my_env["PYTHONIOENCODING"] = "utf-8"
-                my_env["PYTHONUTF8"] = "1"
+                merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
                 
-                # Trạm thu thập dữ liệu (Gọi file theo CRAWL_SCRIPT)
-                t0_alt = time.time()
-                res_alt = subprocess.run([python_exe, "-X", "utf8", rf"src\{CRAWL_SCRIPT}", "live"], cwd=script_dir, capture_output=True, text=True, encoding='utf-8', env=my_env, timeout=90)
-                dt_alt = time.time() - t0_alt
-                log_message(f" ├─ Trạm MT5 ({CRAWL_SCRIPT}): {'✅ TỐC ĐỘ RAM IPC (' + f'{dt_alt:.2f}s)' if res_alt.returncode == 0 else f'❌ LỖI RUN CRAWLER: {res_alt.stderr[:50]}'}")
+                if err_msg:
+                    gui_status = err_msg
+                    
+                if merged_df is None or len(merged_df) < window_size:
+                    if "KHÔNG TÌM THẤY MÃ" not in gui_status:
+                        gui_status = "❌ KHÔNG ĐỦ 120 NẾN HOẶC MẤT MẠNG MT5!"
+                        log_message(f" ├─ Trạm Lõi (In-Memory): {gui_status}")
+                    time.sleep(5)
+                    continue
                 
-                # --- Cập nhật Treeview Data ---
-                sym_data = []
-                from pathlib import Path
-                for pqt in Path(os.path.join(script_dir, "data")).glob("*mt5_1m_2026.parquet"):
-                    try:
-                        df_raw = pd.read_parquet(pqt)
-                        if len(df_raw) >= 2:
-                            sym = pqt.name.replace("_mt5_1m_2026.parquet", "").upper().replace("_USD", "")
-                            sym = sym.replace("M", "") # clean up
-                            p_curr = df_raw['close'].iloc[-1]
-                            p_prev = df_raw['close'].iloc[-2]
-                            change = p_curr - p_prev
-                            if isinstance(df_raw.index, pd.DatetimeIndex):
-                                dt = df_raw.index[-1]
-                                time_str = dt.strftime("%H:%M")
-                            else:
-                                time_str = "-"
-                                
-                            sym_data.append((sym, p_curr, change, time_str))
-                    except: pass
+                # Cập nhật GUI Treeview từ RAM siêu tốc
                 global gui_market_data
                 gui_market_data = sorted(sym_data, key=lambda x: x[0])
                 
-                gui_status = "Ép Ma trận 3D Tensor Pytorch..."
-                t0_feat = time.time()
-                res_feat = subprocess.run([python_exe, "-X", "utf8", r"src\feature_engineering.py", "live", config_file], cwd=script_dir, capture_output=True, text=True, encoding='utf-8', env=my_env, timeout=60)
+                gui_status = "Ép Ma trận 3D Tensor Pytorch (In-Memory)..."
+                
+                df, _ = fe.create_stationary_features(merged_df, is_live=True)
+                
                 dt_feat = time.time() - t0_feat
-                log_message(f" ├─ Lõi Lượng Tử Data (Feature Eng): {'✅ TỔNG HỢP XONG (' + f'{dt_feat:.2f}s)' if res_feat.returncode == 0 else f'❌ LỖI VĂNG SÓNG {res_feat.stderr[:50]}'}")
-
-                df = pd.read_parquet(features_path)
-                log_message(f" 📊 KIỂM KÊ KHO: Hầm chứa Parquet đang ngậm đủ {len(df):,} nến.")
+                log_message(f" ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT ({dt_feat:.2f}s)")
+                log_message(f" 📊 KIỂM KÊ KHO: RAM Nạp thành công {len(df):,} nến.")
+                
+            except Exception as ex_feat:
+                log_message(f" ├─ Lõi Lượng Tử (RAM Mapped): ❌ LỖI VĂNG SÓNG {str(ex_feat)[:50]}")
+                raise ex_feat
                 
                 last_60_candles = df.iloc[-window_size:].values
                 
                 if len(last_60_candles) < window_size:
                     gui_status = "Mạng lag, đợi nến 1 phút sau..."
                     print(f" ⚠️ CẢNH BÁO LỰC: Lượng Nến Cắt quá mỏng ({len(last_60_candles)}/{window_size}). AI từ chối uống dòng Máu này!", flush=True)
+                    time.sleep(2)
+                    continue
+                
+                # Vệ sinh dữ liệu: Chặn Model ăn Rác (NaN/Inf)
+                if np.isnan(last_60_candles).any() or np.isinf(last_60_candles).any():
+                    gui_status = "Data chứa Rác (NaN/Inf), Xả bỏ!"
+                    print(f" 🚨 LỖI TINH KHIẾT: Phát hiện dữ liệu lỗi (NaN hoặc Inf). Model từ chối tiêu thụ!", flush=True)
                     time.sleep(2)
                     continue
                     
@@ -617,11 +737,15 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
     # Update Market Data Treeview
     for item in tree.get_children():
         tree.delete(item)
-    for sym, price, change, t_str in gui_market_data:
-        color = "green" if change >= 0 else "red"
-        tree.insert("", "end", values=(sym, f"{price:,.2f}", f"{change:+.2f}", t_str), tags=(color,))
-    tree.tag_configure("green", foreground="#00ffcc")
-    tree.tag_configure("red", foreground="#ff3366")
+    for sym, price, change, t_str, source_name, is_delayed in gui_market_data:
+        change_text = f"🟢 {change:+.2f}" if change >= 0 else f"🔴 {change:+.2f}"
+        color = "delayed" if is_delayed else "normal"
+        # Since 100% is from MT5, we only show standard MT5 network error if delayed
+        source_display = f"Lỗi MT5 (Mất Data)" if is_delayed else "Mạng MT5"
+        tree.insert("", "end", values=(sym, f"{price:,.2f}", change_text, source_display, t_str), tags=(color,))
+        
+    tree.tag_configure("normal", foreground="white")
+    tree.tag_configure("delayed", foreground="#ffaa00") # Màu cam nếu giá bị chậm (delay)
     
     try:
         val = float(gui_prediction.replace('%', ''))
@@ -702,16 +826,19 @@ def start_overlay_dashboard():
     style.configure("Treeview", background="#1e1e1e", foreground="white", fieldbackground="#1e1e1e", borderwidth=0, font=("Courier", 9))
     style.configure("Treeview.Heading", background="#333333", foreground="white", font=("Helvetica", 9, "bold"))
     
-    cols = ("Symbol", "Price", "Change", "Time")
+    cols = ("Symbol", "Price", "Change", "Source", "Time")
     tree = ttk.Treeview(frame_data, columns=cols, show="headings", height=15)
     tree.heading("Symbol", text="Mã")
     tree.heading("Price", text="Giá")
     tree.heading("Change", text="Biến Động")
+    tree.heading("Source", text="Nguồn")
     tree.heading("Time", text="Giờ")
-    tree.column("Symbol", width=80, anchor=tk.W)
-    tree.column("Price", width=70, anchor=tk.E)
-    tree.column("Change", width=70, anchor=tk.E)
-    tree.column("Time", width=50, anchor=tk.E)
+    
+    tree.column("Symbol", width=70, anchor=tk.W)
+    tree.column("Price", width=65, anchor=tk.E)
+    tree.column("Change", width=65, anchor=tk.E)
+    tree.column("Source", width=80, anchor=tk.W)
+    tree.column("Time", width=45, anchor=tk.E)
     tree.pack(fill=tk.BOTH, expand=True)
     
     frame_bottom = tk.Frame(root, bg="#121212")

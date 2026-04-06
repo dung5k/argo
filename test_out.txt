@@ -1,0 +1,47 @@
+--- 1. ĐỌC CẤU HÌNH ---
+TARGET: XAUUSD
+HF_RUN_ID: run_20260406_000356_xauusd_TRANSFORMER
+WEIGHT_FILE: xauusd_unified_weights_BEST_VLOSS.pth
+
+--- 2. GIẢ LẬP TẢI RUN TỪ ĐÁM MÂY (HUGGINGFACE) ---
+
+--- 3. KHỞI TẠO MT5 DATA MANAGER & REBUILD ---
+[DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[DATA MANAGER] Đã ánh xạ 24 đường dẫn nội bộ.
+=> Lưới nhận dạng Sensor: 168 chiều (Dimesions).
+
+--- 4. THỬ NGHIỆM CÀO DỮ LIỆU MT5 THEO RUN ---
+ 🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+   => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+   => Khớp Sensor [ETHUSDm] vào lưới [EXNESS] qua mã [ETHUSDm]
+   => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+   => Khớp Sensor [BCHUSDm] vào lưới [EXNESS] qua mã [BCHUSDm]
+   => Khớp Sensor [BTCUSDm] vào lưới [EXNESS] qua mã [BTCUSDm]
+   => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+   => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+   => Khớp Sensor [SOLUSDm] vào lưới [EXNESS] qua mã [SOLUSDm]
+   => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+   => Khớp Sensor [LTCUSDm] vào lưới [EXNESS] qua mã [LTCUSDm]
+   => Khớp Sensor [ADAUSDm] vào lưới [EXNESS] qua mã [ADAUSDm]
+   => Khớp Sensor [BNBUSDm] vào lưới [EXNESS] qua mã [BNBUSDm]
+   => Khớp Sensor [XRPUSDm] vào lưới [EXNESS] qua mã [XRPUSDm]
+   => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+ 🌐 [ROUTER-MANAGER] Quy hoạch xong 14 luồng tín hiệu!
+💎 KẾT QUẢ: THÀNH CÔNG RỰC RỠ!
+Tổng số bản ghi (nến): 120
+Tổng số Sensor đã lấy được: 79
+
+--- 5. KIỂM THỬ TẠO FINAL FEATURES & ALIGN SCALER ---
+2. Chuyển đổi dữ liệu sang dạng dừng (Stationary) bằng Log Returns & Đúc T.A cho XAUUSD...
+⚠️ [SHIELD] Cảnh báo: Thiếu 89 Features từ MT5 (vd: ['LTC_USD_RSI', 'LTC_USD_EMA9_dist', 'LTC_USD_EMA21_dist', 'LTC_USD_Body', 'LTC_USD_Upper_Shadow']). Đang Zero-Pad...
+⚠️ [SHIELD] Cảnh báo: Thừa 10 Features rác từ MT5 (vd: ['XAUUSD_RSI', 'XAUUSD_EMA9_dist', 'XAUUSD_EMA21_dist', 'XAUUSD_Body', 'XAUUSD_Upper_Shadow']). Đang tự động ném bỏ...
+-> Hoàn tất Stationarity & Scaling. Kích thước Tensor: (61, 169)
+-> [DUAL-STREAM] XAU Features: 8 | Macro Features: 160
+✅ FE Thành Công! Số chiều Data cuối mảng: 169
+=> 💎 Mảng dữ liệu tương thích 100% với Trọng số đang thử nghiệm.
+
+--- 6. KIỂM TRA CHẶN DATA (INSUFFICIENT DATA) ---
+✅ PASSED chặn data: Dữ liệu có 61 nến (>= 60).
+
+--- 7. ĐƯA VÀO MẠNG NƠ RON THỬ NGHIỆM ---
+❌ LỖI TRONG QUÁ TRÌNH FE/AI: No module named 'torch'

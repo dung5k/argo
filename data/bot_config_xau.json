@@ -1,8 +1,8 @@
 {
     "TARGET_SYMBOL": "XAUUSD",
     "TARGET_PREFIX": "XAUUSD",
-    "WEIGHT_FILE": "xauusd_unified_weights.pth",
-    "CRAWL_SCRIPT": "crawl_mt5.py",
+    "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
+    "HF_RUN_ID": "run_20260406_000356_xauusd_TRANSFORMER",
     "BUY_ENTRY_THR": 0.57,
     "SELL_ENTRY_THR": 0.43,
     "CLOSE_BUY_THR": 0.46,

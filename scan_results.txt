@@ -1,0 +1,16 @@
+
+--- MetaTrader 5 ---
+Found: ['XAUUSD', 'VIXY']
+US10: []
+
+--- MetaTrader 5 - 2 ---
+Found: []
+US10: []
+
+--- MetaTrader 5 EXNESS ---
+Found: ['XAUUSD', 'XAUUSDm', 'BTCUSD', 'BTCUSDm', 'ADAUSD', 'ADAUSDm', 'BCHUSD', 'BCHUSDm', 'BNBUSD', 'ETHUSD', 'SOLUSD', 'JP225', 'JP225m']
+US10: []
+
+--- Mtrading MetaTrader 5 ---
+Found: ['BTCUSD', 'ADAUSD', 'BNBUSD', 'ETHUSD', 'SOLUSD']
+US10: []
