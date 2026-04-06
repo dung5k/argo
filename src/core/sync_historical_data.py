@@ -105,6 +105,11 @@ def sync_all_history():
         df['datetime'] = pd.to_datetime(df['time'], unit='s')
         df.set_index('datetime', inplace=True)
         df.rename(columns={'tick_volume': 'volume'}, inplace=True)
+        # === TRAINING-SERVING SYNC: Drop y hệt Live (mt5_data_manager.py) ===
+        # - 'time': đã chuyển thành Index, time_log_ret vô nghĩa
+        # - 'spread': không tin cậy trong parquet lịch sử, Live cũng không dùng
+        # - 'real_volume': luôn = 0 trong Forex, không có tín hiệu
+        df.drop(columns=['spread', 'real_volume', 'time'], inplace=True, errors='ignore')
         
         # Lọc bớt dư thừa nếu quá dài
         df = df[(df.index >= pd.to_datetime(t_start_str)) & (df.index <= pd.to_datetime(v_end_str) + pd.Timedelta(days=1))]
