@@ -671,6 +671,15 @@ if __name__ == "__main__":
         print(f"📁 Tạo thư mục run: {run_name}")
 
         import glob, shutil
+        
+        # Bắt buộc đính kèm bộ đúc Dimension (scaler.pkl) vào thư mục phiên Train
+        scaler_src = os.path.join(data_path, "scaler.pkl")
+        if os.path.exists(scaler_src):
+            shutil.copy(scaler_src, os.path.join(run_dir, "scaler.pkl"))
+            print(f"📦 Đã đóng gói kèm scaler.pkl (Bộ Kính Data) vào thư mục Run.")
+        else:
+            print(f"⚠️ CẢNH BÁO MẤT ROOT SCALER: Không tìm thấy {scaler_src}")
+
         old_dir = os.path.join(base_runs_dir, "old")
         os.makedirs(old_dir, exist_ok=True)
         # Lấy tất cả folder của riêng loại target_clean này
