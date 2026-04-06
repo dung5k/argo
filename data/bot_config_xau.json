@@ -1,7 +1,7 @@
 {
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
-    "CONFIG_ID": "CFG_01",
+    "CONFIG_ID": "CFG_02",
     "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
     "HF_RUN_ID": "run_20260406_223515_xauusd_CFG_01_TRANSFORMER",
     "HF_CLOUD": {
@@ -10,7 +10,7 @@
         "SYNC_CHUNKS": true
     },
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260101_to_20260406",
+        "DATASET_SUFFIX": "20260201_to_20260406",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
@@ -144,7 +144,7 @@
         ]
     },
     "TRAINING": {
-        "TRAIN_START": "2026-01-01",
+        "TRAIN_START": "2026-02-01",
         "TRAIN_END": "2026-03-23",
         "VAL_END": "2026-04-06",
         "BATCH_SIZE": 1024,
