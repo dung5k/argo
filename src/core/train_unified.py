@@ -84,9 +84,17 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         try:
             with open(_cfg_path, "r", encoding="utf-8") as _f:
                 _c = _json.load(_f)
+                
+                # Cố gắng lấy từ thư mục gốc
                 for _k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END", "CONFIG_ID"]:
                     if _k in _c:
                         _date_override[_k] = _c[_k]
+                        
+                # Lấy từ "TRAINING" block nếu có
+                if "TRAINING" in _c:
+                    for _k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END"]:
+                        if _k in _c["TRAINING"]:
+                            _date_override[_k] = _c["TRAINING"][_k]
         except: pass
 
     # Hỗ trợ cả TRAIN_FROM và TRAIN_START cho tương thích với bộ config mới
