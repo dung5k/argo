@@ -651,10 +651,14 @@ def bot_background_loop():
             mt5.initialize(path=target_path)
             mt5_manager.current_connected_path = target_path
             
+        # Ép đưa vào Market Watch để chắc chắn lấy được Tick (Nếu Lần đầu)
+        mt5.symbol_select(actual_target_sym, True)
         tick = mt5.symbol_info_tick(actual_target_sym)
         if tick is None:
             if time.time() - last_tick_err_time > 10:
-                log_message(f"[{gui_time}] ⚠️ LỖI LẤY TICK GIÁ: mt5.symbol_info_tick('{actual_target_sym}') trả về None! Vui lòng kiểm tra lại Market Watch MT5 (Ctrl+M).")
+                available = mt5.symbol_info(actual_target_sym)
+                info_text = "Hợp lệ" if available else "KHÔNG TỒN TẠI trên sàn này"
+                log_message(f"[{gui_time}] ⚠️ LỖI TICK: '{actual_target_sym}' ({info_text}) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.")
                 last_tick_err_time = time.time()
             time.sleep(1)
             continue
