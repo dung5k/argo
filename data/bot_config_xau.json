@@ -2,8 +2,8 @@
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
     "CONFIG_ID": "CFG_02",
-    "WEIGHT_FILE": "xauusd_unified_weights_BEST_VLOSS.pth",
-    "HF_RUN_ID": "run_20260407_062436_xauusd_CFG_02_TRANSFORMER",
+    "WEIGHT_FILE": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
+    "HF_RUN_ID": "run_20260407_091249_xauusd_CFG_02_TRANSFORMER",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_data",
         "MODEL_REPO": "dung5k/trading_models",
@@ -110,7 +110,7 @@
             "XAUUSD_low_log_ret",
             "XAUUSD_close_log_ret",
             "XAUUSD_volume",
-            "XAUUSD_real_volume",
+            "is_imputed_flag",
             "AUDUSD_open_log_ret",
             "AUDUSD_high_log_ret",
             "AUDUSD_low_log_ret",
@@ -167,6 +167,7 @@
         }
     },
     "LIVE_TRADING": {
+        "SYNC_SCALER": false,
         "BUY_ENTRY_THR": 0.57,
         "SELL_ENTRY_THR": 0.43,
         "CLOSE_BUY_THR": 0.46,

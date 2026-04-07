@@ -51,18 +51,30 @@ def sync_brain_from_cloud(
         )
         
         # Đồng bộ scaler
+        do_sync_scaler = True
         try:
-            scaler_cloud_path = hf_hub_download(
-                repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
-                filename=f"runs/{latest_run}/scaler.pkl"
-            )
             safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            scaler_local = os.path.join(safe_script_dir, "data", "scaler.pkl")
-            shutil.copy(scaler_cloud_path, scaler_local)
-            mt5_manager.reload_features()
-            log_callback(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
-        except Exception as sce:
-            log_callback(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
+            cfg_path = os.path.join(safe_script_dir, "data", f"bot_config_{target_prefix.lower()}.json")
+            if os.path.exists(cfg_path):
+                with open(cfg_path, 'r', encoding='utf-8') as cf:
+                    c = json.load(cf)
+                    do_sync_scaler = c.get("LIVE_TRADING", {}).get("SYNC_SCALER", True)
+        except: pass
+        if do_sync_scaler:
+            try:
+                scaler_cloud_path = hf_hub_download(
+                    repo_id="dung5k/argo_data", repo_type="dataset", token=hf_token,
+                    filename=f"runs/{latest_run}/scaler.pkl"
+                )
+                safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                scaler_local = os.path.join(safe_script_dir, "data", "scaler.pkl")
+                import shutil
+                shutil.copy2(scaler_cloud_path, scaler_local)
+                if 'mt5_manager' in globals() and mt5_manager:
+                    mt5_manager.reload_features()
+                log_callback(f" ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não {latest_run}!")
+            except Exception as sce:
+                log_callback(f" ├─ ⚠️ Không thể đồng bộ scaler.pkl từ đám mây: {sce}")
             
         # Đọc Metrix để tái tạo Khuôn Shape Pytorch
         try:
