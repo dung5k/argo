@@ -64,7 +64,7 @@ def push_data():
         return False
 
 def pull_data(logger: logging.Logger = None):
-    """Kéo thư mục data/ mới nhất từ HuggingFace về"""
+    """Kéo thư mục data/ mới nhất từ HuggingFace về (Cơ chế an toàn không dùng snapshot_download để tránh treo)"""
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         msg = "Chưa cấu hình 'hf_token' và 'hf_repo_id' trong tg_config.json. Bỏ qua kéo Data HF."
@@ -74,23 +74,33 @@ def pull_data(logger: logging.Logger = None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    base_dir = Path(__file__).resolve().parent.parent
+    base_dir = _project_root()
     data_dir = base_dir / "data"
     
     log = logger.info if logger else print
-    log(f"[HF] Bắt đầu tải Parquet data từ {repo_id}...")
+    log(f"[HF] Bắt đầu tải Parquet data từ {repo_id} (Safe HTTP Method)...")
     
     try:
-        # snapshot_download là siêu cấp thông minh, nó tải về cache sau đó tạo Symlink (hoặc copy) ra ngoài, chỉ tải file nào thay đổi!
-        snapshot_download(
-            repo_id=repo_id,
-            repo_type="dataset",
-            token=token,
-            allow_patterns="data/*.parquet",
-            local_dir=str(_project_root()),
-            local_dir_use_symlinks=False,
-            force_download=False
-        )
+        from huggingface_hub import HfApi
+        import requests
+        api = HfApi()
+        files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
+        parquet_files = [f for f in files if f.startswith("data/") and f.endswith(".parquet")]
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        for f in parquet_files:
+            url = f"https://huggingface.co/datasets/{repo_id}/resolve/main/{f}"
+            local_path = base_dir / f
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Streaming download
+            with requests.get(url, headers=headers, stream=True) as r:
+                r.raise_for_status()
+                with open(local_path, "wb") as file:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        file.write(chunk)
+            log(f"  + Đã lấy: {f}")
+            
         log("[HF] Tải Dữ Liệu Hoàn Tất! Sẵn sàng huấn luyện. ✅")
         return True
     except Exception as e:
