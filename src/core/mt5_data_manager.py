@@ -219,8 +219,11 @@ class MT5DataManager:
                         if rates is not None and len(rates) > 0:
                             df = pd.DataFrame(rates)
                             tick = mt5.symbol_info_tick(actual_sym)
-                            offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
-                            offset_hours = round(offset_sec / 3600)
+                            offset_hours = 3
+                            if tick and tick.time > 0:
+                                diff_h = round((tick.time - int(time.time())) / 3600)
+                                if abs(diff_h) <= 14:
+                                    offset_hours = diff_h
                             df['time'] = df['time'] - (offset_hours * 3600)
                 elif p == "LOCAL" or source_name == "LOCAL":
                     # Đọc parquet files với window lấy n nến cuối
@@ -313,7 +316,7 @@ class MT5DataManager:
                 merged_df['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
                 merged_df['dow_sin'] = np.sin(2 * np.pi * dayofweek / 7.0)
                 merged_df['dow_cos'] = np.cos(2 * np.pi * dayofweek / 7.0)
-                merged_df.dropna(inplace=True)
+                # ĐỂ LẠI NaNs cho FeatureEngineering tự lo (Zero-pad), không dropna() tránh mất trắng dữ liệu
 
         sym_data = self._build_sym_data(merged_df)
         
