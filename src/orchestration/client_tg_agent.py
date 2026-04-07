@@ -630,7 +630,13 @@ class TelegramAgent:
                         status += f" | CPU: {cpu}% RAM: {ram}%"
                     except ImportError:
                         pass
-                    self.mqtt.send_log("STATUS", status)
+                    
+                    # Bổ sung Timestamp lần cuối có mặt (Last Seen)
+                    import datetime
+                    ts = datetime.datetime.now().strftime("%H:%M:%S %d/%m")
+                    status += f" | Last Seen: {ts}"
+                    
+                    self.mqtt.send_log("STATUS", status, retain=True)
 
             if not self.manager.is_busy():
                 last_sent_epoch = 0

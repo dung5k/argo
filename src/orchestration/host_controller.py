@@ -37,13 +37,15 @@ class HostController:
 
     def on_message(self, client, userdata, msg, *args, **kwargs):
         try:
+            topic_parts = msg.topic.split('/')
+            sender = topic_parts[1] if len(topic_parts) >= 2 else "Unknown"
             payload = msg.payload.decode("utf-8")
             data = json.loads(payload)
             level = data.get("level", "INFO")
             text = data.get("message", "")
-            print(f"[{level}] {text}")
+            print(f"[{sender}][{level}] {text}")
         except Exception:
-            print(f"[RAW LOG] {msg.payload.decode('utf-8', errors='replace')}")
+            print(f"[RAW LOG][{msg.topic}] {msg.payload.decode('utf-8', errors='replace')}")
 
     def _wait_connected(self):
         if not self.connected:
@@ -228,7 +230,7 @@ class HostController:
 
 def main():
     parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data", "deploy_agent", "save_version"])
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data", "deploy_agent", "save_version", "status"])
     parser.add_argument("--client-id", "-c", default="")
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")
@@ -244,6 +246,17 @@ def main():
     # Các lệnh không cần kết nối MQTT
     if args.cmd == "save_version":
         HostController.save_version(args.tag)
+        return
+
+    # Lệnh STATUS truy vết toàn mạng
+    if args.cmd == "status":
+        print("[HOST] 📡 Đang dò quét thiết bị trên diện rộng (Mạng LWT/Retain)...")
+        host = HostController("+")
+        host.client.connect(BROKER, PORT, 60)
+        host.client.loop_start()
+        host.listen_logs(4)
+        host.client.loop_stop()
+        host.client.disconnect()
         return
 
     if not args.client_id:

@@ -38,6 +38,14 @@ class MqttHelper:
 
     def start(self):
         self._running = True
+        
+        # Thiết lập Di chúc điện tử (LWT) trước khi kết nối
+        lwt_payload = json.dumps({
+            "level": "STATUS",
+            "message": "💀 OFFLINE (Bị sập đột ngột)"
+        })
+        self.client.will_set(self.log_topic, payload=lwt_payload, qos=1, retain=True)
+        
         self.client.connect(BROKER, PORT, 60)
         self._thread = threading.Thread(target=self.client.loop_forever, daemon=True)
         self._thread.start()
@@ -47,11 +55,11 @@ class MqttHelper:
         self.client.loop_stop()
         self.client.disconnect()
 
-    def send_log(self, level: str, message: str):
+    def send_log(self, level: str, message: str, retain: bool = False):
         if not self._running:
             return
         payload = json.dumps({
             "level": level,
             "message": message
         })
-        self.client.publish(self.log_topic, payload, qos=0)
+        self.client.publish(self.log_topic, payload, qos=0, retain=retain)
