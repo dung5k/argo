@@ -255,8 +255,18 @@ def create_stationary_features(df, is_live=False):
             
     # Loại bỏ các giá trị Inf do phép chia sinh ra và các hàng NaN
     feature_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    feature_df.dropna(inplace=True)
-    
+
+    # 🛡️ CHỈ DROPNA THEO TARGET: Cắt bỏ phần đầu NaN do EMA/RSI rolling của XAUUSD
+    # Không cho phép 1 mã Macro thiếu nến kéo sập toàn bộ Cây XAUUSD!
+    target_cols = [c for c in feature_df.columns if c.startswith(TARGET_PREFIX)]
+    if target_cols:
+        feature_df.dropna(subset=target_cols, inplace=True)
+    else:
+        feature_df.dropna(inplace=True)
+        
+    # Lấp toàn bộ NaNs còn sót lại của Macro bằng 0.0 (Zero-Pad các mã thiếu nến cục bộ)
+    feature_df.fillna(0.0, inplace=True)
+
     # --- [EXACT SHIELD] GỌT TENSOR ĐẦU VÀO Y NHƯ CẤU HÌNH ---
     exact_features = config.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
     if exact_features:
