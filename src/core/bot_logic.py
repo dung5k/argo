@@ -162,7 +162,16 @@ def check_session_guard(
     staleness_seconds = time.time() - tick.time
     if staleness_seconds > 300: # 5 minutes
         gui_status = f"Giá ngưng đọng ({int(staleness_seconds/60)}p). Chờ..."
+        try:
+            dt_tick = datetime.utcfromtimestamp(tick.time).strftime('%H:%M:%S %d/%m')
+            dt_sys = datetime.utcfromtimestamp(time.time()).strftime('%H:%M:%S %d/%m')
+        except:
+            dt_tick, dt_sys = "N/A", "N/A"
         log_callback(f"[{gui_time}] 🔴 [SESSION GUARD] Giá bị Frozen/Stale. Từ chối Crawl/Trade.")
+        log_callback(f" ├─ Mã ngưng đọng (Symbol): {target_symbol}")
+        log_callback(f" ├─ Tick cuối MT5 trả về: {dt_tick} (Hệ quy chiếu MT5)")
+        log_callback(f" ├─ Thời điểm kiểm tra: {dt_sys} (Hệ quy chiếu PC)")
+        log_callback(f" └─ Tổng chênh lệch: {staleness_seconds:.0f} giây (~{int(staleness_seconds/60)} phút) > Ngưỡng 5 phút.")
         return True, False, gui_status
         
     session_guard_enabled = config.get("SESSION_GUARD_ENABLED", False)
