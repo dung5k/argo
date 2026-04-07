@@ -312,9 +312,19 @@ def open_new_mt5_trade(symbol, order_type, lot_size, sl_pips, tp_pips, predictio
 def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
     """Hệ thống Quản lý Vị thế Đa Ngưỡng (Threshold State Machine)"""
     global gui_action, gui_thr_text
+    
+    # CHỐT CHẶN: Đưa họng súng (Luồng MT5 API) quay về đúng Sàn của Mã Giao Dịch chính
+    target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
+    if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
+        mt5.shutdown()
+        if mt5.initialize(path=target_path):
+            mt5_manager.current_connected_path = target_path
+            
     actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
     symbol = actual_target_sym
+    
     if mt5.symbol_info(symbol) is None:
+        print(f"⚠️ [Sniper Abort] Không tìm thấy mã {symbol} trên Terminal {target_path}!")
         return
         
     live_cfg = CONFIG.get("LIVE_TRADING", {})
@@ -454,13 +464,14 @@ def bot_background_loop():
         try:
             if os.path.exists(config_file):
                 with open(config_file, 'r', encoding='utf-8') as ft:
-                    cfg_t = json.load(ft)
-                    live_cfg = cfg_t.get("LIVE_TRADING", cfg_t)
+                    global CONFIG
+                    CONFIG = json.load(ft)
+                    live_cfg = CONFIG.get("LIVE_TRADING", CONFIG)
                     b_th = int(live_cfg.get("BUY_ENTRY_THR", 0.60) * 100)
                     s_th = int(live_cfg.get("SELL_ENTRY_THR", 0.40) * 100)
                     gui_thr_text = f"⚖️ Ngưỡng L4: BUY>{b_th}% | SELL<{s_th}%"
                     
-                    weight_file_cfg = cfg_t.get("WEIGHT_FILE", weight_file_cfg)
+                    weight_file_cfg = CONFIG.get("WEIGHT_FILE", weight_file_cfg)
                     hf_run_cfg = cfg_t.get("HF_RUN_ID", None)
         except: pass
         
