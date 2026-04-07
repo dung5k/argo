@@ -612,8 +612,26 @@ class TelegramAgent:
         """Theo dõi log và tự động gửi cập nhật mỗi N epoch HOẶC khi có đỉnh mới."""
         last_sent_epoch = 0
         last_peak_line = ""
+        last_heartbeat = 0
+        import time
         while True:
             time.sleep(5)  # Poll nhanh hơn để bắt đỉnh mới kịp thời
+            
+            # --- HEARTBEAT STATUS 30s ---
+            now = time.time()
+            if now - last_heartbeat > 30:
+                last_heartbeat = now
+                if getattr(self, "mqtt", None):
+                    status = self.manager.status_text()
+                    try:
+                        import psutil
+                        cpu = psutil.cpu_percent()
+                        ram = psutil.virtual_memory().percent
+                        status += f" | CPU: {cpu}% RAM: {ram}%"
+                    except ImportError:
+                        pass
+                    self.mqtt.send_log("STATUS", status)
+
             if not self.manager.is_busy():
                 last_sent_epoch = 0
                 last_peak_line = ""
