@@ -775,14 +775,19 @@ def bot_background_loop():
                 log_message(f" ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT ({dt_feat:.2f}s)")
                 log_message(f" 📊 KIỂM KÊ KHO: RAM Nạp thành công {len(df):,} nến.")
                 
-                if inference_feats and len(inference_feats) <= len(df.columns):
-                    valid_cols = [c for c in inference_feats if c in df.columns]
-                    if len(valid_cols) == len(inference_feats):
+                active_inference_feats = inference_feats
+                if not active_inference_feats:
+                    # Bật Shield cứu thương: Khi Cloud tải về Metrix rỗng, ta cưỡng chế ép lấy theo EXACT_FEATURES config
+                    active_inference_feats = CONFIG.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
+                    
+                if active_inference_feats and len(active_inference_feats) <= len(df.columns):
+                    valid_cols = [c for c in active_inference_feats if c in df.columns]
+                    if len(valid_cols) == len(active_inference_feats):
                         last_60_candles = df[valid_cols].iloc[-window_size:].values
                     else:
                         gui_status = "Lỗi: Sai lệch Features!"
-                        missing_feats = [c for c in inference_feats if c not in df.columns]
-                        print(f" ⚠️ CẢNH BÁO LỰC: Thiếu Features! Model cần {len(inference_feats)} nhưng data chỉ có {len(valid_cols)} khớp. (Thiếu: {missing_feats[:5]})", flush=True)
+                        missing_feats = [c for c in active_inference_feats if c not in df.columns]
+                        print(f" ⚠️ CẢNH BÁO LỰC: Thiếu Features! Model cần {len(active_inference_feats)} nhưng data chỉ có {len(valid_cols)} khớp. (Thiếu: {missing_feats[:5]})", flush=True)
                         time.sleep(2)
                         continue
                 else:
