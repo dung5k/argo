@@ -87,9 +87,26 @@ def load_and_align_data(data_path):
     df_list = []
     for file in files:
         if '_mt5_1m_' in file.lower():
-            symbol = file.lower().split('_mt5_1m_')[0].upper()
+            raw_sym = file.lower().split('_mt5_1m_')[0].upper()
         else:
-            symbol = file.replace('_1m_2025_2026.parquet', '').upper()
+            raw_sym = file.replace('_1m_2025_2026.parquet', '').upper()
+            
+        symbol = raw_sym    
+        if raw_sym == TARGET_PREFIX.replace('_', ''):
+            symbol = TARGET_PREFIX
+        else:
+            exacts = config.get('FEATURE_ENGINEERING', {}).get('EXACT_FEATURES', [])
+            for f in exacts:
+                if f.startswith(raw_sym + '_USD_'):
+                    symbol = raw_sym + '_USD'
+                    break
+                elif f.startswith(raw_sym.replace('USD', '_USD') + '_'):
+                    symbol = raw_sym.replace('USD', '_USD')
+                    break
+        if 'YIELD' in raw_sym: symbol = 'US_10Y_YIELD'
+        elif 'NASDAQ' in raw_sym: symbol = 'NASDAQ_100'
+        elif 'USTEC' in raw_sym: symbol = 'USTEC'
+
         df = pd.read_parquet(os.path.join(data_path, file))
         
         # ĐỒNG BỘ MÚI GIỜ (Timezone Alignment) VỀ CHUẨN UTC TRƯỚC KHI GỘP
