@@ -7,12 +7,18 @@ from datetime import datetime, timezone
 import joblib
 
 class MT5DataManager:
-    def __init__(self, log_callback=print, target_sym="XAUUSD"):
+    def __init__(self, log_callback=print, target_sym="XAUUSD", config_path=None):
         self.log_message = log_callback
         self.target_sym = target_sym
         
         import json
-        config_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config_xau.json"
+        if config_path is None:
+            config_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config_xau.json"
+        
+        # Absolute path validation
+        if not os.path.isabs(config_path):
+            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), config_path)
+
         self.config = {}
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
@@ -94,14 +100,16 @@ class MT5DataManager:
 
 
     def _load_features(self):
-        try:
-            script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            scaler_path = os.path.join(script_dir, "data", "scaler.pkl")
-            scaler = joblib.load(scaler_path)
-            self.features = list(scaler.feature_names_in_)
-        except Exception as e:
-            self.log_message(f"⚠️ Không tìm thấy biến từ Scaler. Đang nạp danh sách chuẩn EXACT_FEATURES từ cấu hình...")
-            self.features = self.config.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
+        # LUÔN LUÔN ưu tiên load EXACT_FEATURES từ file cấu hình! Vì Scaler có thể bị chèn ép của Model khác!
+        self.features = self.config.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
+        if not self.features:
+            try:
+                script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                scaler_path = os.path.join(script_dir, "data", "scaler.pkl")
+                scaler = joblib.load(scaler_path)
+                self.features = list(scaler.feature_names_in_)
+            except Exception as e:
+                self.log_message(f"⚠️ Không tìm thấy biến từ Scaler.")
 
     def _build_active_mappings(self):
         self.active_mappings = []
@@ -337,14 +345,15 @@ class MT5DataManager:
             try:
                 dt = merged_df.index[-1]
                 diff_mins = (dt_utc_now - dt.tz_convert('UTC')).total_seconds() / 60.0
+                dt_vn = dt.tz_convert('Asia/Ho_Chi_Minh')
+                time_str = dt_vn.strftime("%H:%M")
             except:
                 diff_mins = 0
+                time_str = "N/A"
                 
             is_delayed = diff_mins > 5
             if p_curr == 0.0 and p_prev == 0.0:
                 is_delayed = True
-            dt_vn = dt.tz_convert('Asia/Ho_Chi_Minh')
-            time_str = dt_vn.strftime("%H:%M")
             
             if not any(s[0] == sym_clean for s in sym_data):
                 sym_data.append((sym_clean, p_curr, change, time_str, source_name, is_delayed))
