@@ -139,6 +139,69 @@ def sync_all_history():
         print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' vào bot_config_xau.json")
 
     print("\n🎉 HOÀN TẤT ĐỒNG BỘ TOÀN BỘ KHO LỊCH SỬ LOCAL.")
+
+    # ============================================================
+    # BÁO CÁO KIỂM TRA CHẤT LƯỢNG DỮ LIỆU SAU ĐỒNG BỘ
+    # ============================================================
+    print("\n" + "="*60)
+    print("📊 BÁO CÁO KIỂM TRA CHẤT LƯỢNG DỮ LIỆU")
+    print("="*60)
+    
+    all_ok = True
+    for fp in generated_files:
+        sym_name = os.path.basename(fp).split("_mt5_")[0].upper()
+        try:
+            check_df = pd.read_parquet(fp)
+            rows = len(check_df)
+            cols = list(check_df.columns)
+            
+            # Kiểm tra khoảng thời gian
+            t_min = check_df.index.min()
+            t_max = check_df.index.max()
+            
+            # Kiểm tra giá trị NaN
+            null_pct = check_df.isnull().mean().max() * 100
+            
+            # Kiểm tra real_volume
+            rv_col = 'real_volume'
+            has_real_vol = rv_col in cols
+            real_vol_sum = check_df[rv_col].sum() if has_real_vol else 0
+            real_vol_status = (
+                f"✅ {int(real_vol_sum):,}" if (has_real_vol and real_vol_sum > 0)
+                else (f"⚠️  =0 (Forex CFD - bình thường)" if has_real_vol else "❌ Không có cột")
+            )
+            
+            # Kiểm tra gap lớn (nhiều hơn 60 phút liên tiếp không có nến)
+            if len(check_df) > 1:
+                time_diffs = check_df.index.to_series().diff().dt.total_seconds() / 60
+                max_gap_min = time_diffs.max()
+                gap_status = f"⚠️  {max_gap_min:.0f} phút" if max_gap_min > 120 else f"✅ {max_gap_min:.0f} phút"
+            else:
+                max_gap_min = 0
+                gap_status = "❓ Không đủ dữ liệu"
+            
+            # Tổng trạng thái
+            status = "✅ OK" if (rows >= 10000 and null_pct < 20 and max_gap_min < 1440) else "⚠️  CẦN KIỂM TRA"
+            if rows < 1000:
+                status = "❌ THIẾU DỮ LIỆU NGHIÊM TRỌNG"
+                all_ok = False
+            
+            print(f"\n[{sym_name}] {status}")
+            print(f"  📅 Từ: {t_min} → {t_max}")
+            print(f"  📈 Số nến M1: {rows:,}")
+            print(f"  📊 Cột dữ liệu: {cols}")
+            print(f"  🔢 real_volume tổng: {real_vol_status}")
+            print(f"  ⏱️  Gap lớn nhất: {gap_status}")
+            print(f"  🚫 NaN tối đa: {null_pct:.1f}%")
+            
+        except Exception as e:
+            print(f"\n[{sym_name}] ❌ LỖI ĐỌC FILE: {e}")
+            all_ok = False
+    
+    print("\n" + "="*60)
+    print(f"📝 TỔNG KẾT: {'✅ TẤT CẢ DỮ LIỆU HỢP LỆ' if all_ok else '⚠️  CÓ VẤN ĐỀ CẦN XEM XÉT'}")
+    print(f"   Tổng số file đã đồng bộ: {len(generated_files)}")
+    print("="*60)
     
     # --- BƯỚC UPLOAD LÊN HUGGING FACE ---
     import json
