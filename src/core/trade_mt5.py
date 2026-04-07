@@ -391,6 +391,7 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
 
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_action, gui_session, gui_forex_time, gui_crypto_time, last_mac_run, gui_thr_text, mt5_manager
+    global CONFIG
     
     last_delayed_log_time = 0
     last_tick_err_time = 0
@@ -464,7 +465,6 @@ def bot_background_loop():
         try:
             if os.path.exists(config_file):
                 with open(config_file, 'r', encoding='utf-8') as ft:
-                    global CONFIG
                     CONFIG = json.load(ft)
                     live_cfg = CONFIG.get("LIVE_TRADING", CONFIG)
                     b_th = int(live_cfg.get("BUY_ENTRY_THR", 0.60) * 100)
