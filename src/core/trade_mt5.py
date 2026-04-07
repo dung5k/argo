@@ -30,6 +30,28 @@ except ModuleNotFoundError:
         input("Bấm Enter để thoát...")
         sys.exit(1)
 
+# ----- THIẾT LẬP TELEGRAM BOT NOTIFIER -----
+try:
+    from src.orchestration.tg_helper import TelegramBot
+    import json
+    with open("tg_config.json", "r", encoding='utf-8') as f:
+        tg_cfg = json.load(f)
+    tg_bot_token = tg_cfg.get("bot_token", "")
+    tg_chat_id = tg_cfg.get("allowed_chat_ids", [])[0] if tg_cfg.get("allowed_chat_ids") else None
+    tg_bot = TelegramBot(tg_bot_token) if tg_bot_token else None
+except Exception as e:
+    print(f"Cảnh báo: Không nạp được cấu hình Telegram Notifier: {e}")
+    tg_bot = None
+    tg_chat_id = None
+
+def tg_notify(msg):
+    """Gửi bắn sóng Tín hiệu Lệnh Trade Lên Telegram"""
+    if tg_bot and tg_chat_id:
+        try:
+            tg_bot.send_message(tg_chat_id, msg)
+        except: pass
+# -------------------------------------------
+
 import json
 
 # Import Feature Engineering logic for in-memory processing
@@ -139,6 +161,14 @@ def close_mt5_position(position):
     result = mt5.order_send(request)
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         return False
+        
+    try:
+        o_type = "MUA" if position.type == mt5.ORDER_TYPE_BUY else "BÁN"
+        pnl = position.profit
+        icon = "💰" if pnl > 0 else "🩸"
+        tg_notify(f"🔴 [ĐÓNG LỆNH] AI vừa chốt lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {position.ticket}\n* Lợi nhuận: {icon} {pnl:.2f} USD")
+    except: pass
+    
     return True
 
 def modify_mt5_position(position, sl_pips=50, tp_pips=100):
@@ -276,6 +306,11 @@ def open_new_mt5_trade(symbol, order_type, lot_size, sl_pips, tp_pips, predictio
     if result is not None and result.retcode == mt5.TRADE_RETCODE_DONE:
         ticket = result.order
         
+        try:
+            o_type = "MUA (BUY)" if order_type == mt5.ORDER_TYPE_BUY else "BÁN (SELL)"
+            tg_notify(f"🟢 [VÀO LỆNH] AI Đã thực hiện lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {ticket}\n* Giá: {price}\n* Volume: {lot_size}\n* Tỉ lệ Vượt Cản: {prediction*100:.2f}%\n* SL: {sl}\n* TP: {tp}")
+        except: pass
+
         # Tạo file log theo dõi lệnh này
         log_dir = os.path.join(os.getcwd(), "logs", "trades")
         os.makedirs(log_dir, exist_ok=True)
