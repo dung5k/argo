@@ -40,10 +40,12 @@
                 "BROKER": "MT5_2",
                 "IS_CFD": false,
                 "CONTRACT_MONTHS": [
-                    "H",
+                    "J",
+                    "K",
                     "M",
                     "U",
-                    "Z"
+                    "Z",
+                    "H"
                 ],
                 "INVERT_LOGIC": false
             }

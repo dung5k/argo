@@ -67,31 +67,31 @@ class MT5DataManager:
         if continuous_config.get("IS_CFD", False):
             return continuous_config.get("PREFIX") # CFD ghép luôn liên tục không có tháng đáo hạn
             
-        months = continuous_config.get("CONTRACT_MONTHS", ["H", "M", "U", "Z"])
+        months_allowed = continuous_config.get("CONTRACT_MONTHS", ["H", "M", "U", "Z"])
         prefix = continuous_config.get("PREFIX")
         
         now = target_time if target_time else datetime.now()
         year = now.year % 100
         month = now.month
         
-        # Mapping letter to expiration: H=3, M=6, U=9, Z=12
-        # Rollover usually 2-3 weeks before start of expiration month
-        target_mcode = "Z"
-        target_year = year
+        # Chuẩn CME Futures: F=1, G=2, H=3, J=4, K=5, M=6, N=7, Q=8, U=9, V=10, X=11, Z=12
+        CME_MONTH_CODES = {
+            1: "F", 2: "G", 3: "H", 4: "J", 5: "K", 6: "M",
+            7: "N", 8: "Q", 9: "U", 10: "V", 11: "X", 12: "Z"
+        }
         
-        if month <= 2:
-            target_mcode = "H"
-        elif month <= 5:
-            target_mcode = "M"
-        elif month <= 8:
-            target_mcode = "U"
-        elif month <= 11:
-            target_mcode = "Z"
-        else: # month == 12, roll to H next year
-            target_mcode = "H"
-            target_year += 1
-            
-        return f"{prefix}{target_mcode}{target_year}"
+        # Tìm hợp đồng front-month trong danh sách cho phép
+        # Duyệt từ tháng hiện tại trở đi, chọn tháng đầu tiên có trong CONTRACT_MONTHS
+        for offset in range(12):
+            check_month = ((month - 1 + offset) % 12) + 1
+            check_year = year + ((month - 1 + offset) // 12)
+            check_code = CME_MONTH_CODES.get(check_month, "M")
+            if check_code in months_allowed:
+                return f"{prefix}{check_code}{check_year:02d}"
+        
+        # Fallback
+        return f"{prefix}{CME_MONTH_CODES.get(month, 'M')}{year:02d}"
+
 
     def _load_features(self):
         try:
