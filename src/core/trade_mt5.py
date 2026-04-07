@@ -671,7 +671,17 @@ def bot_background_loop():
         staleness_seconds = time.time() - tick.time
         if staleness_seconds > 300: # 5 minutes
             gui_status = f"Giá ngưng đọng ({int(staleness_seconds/60)}p). Chờ..."
+            try:
+                dt_tick = datetime.utcfromtimestamp(tick.time).strftime('%H:%M:%S %d/%m')
+                dt_sys = datetime.utcfromtimestamp(time.time()).strftime('%H:%M:%S %d/%m')
+            except:
+                dt_tick, dt_sys = "N/A", "N/A"
             log_message(f"[{gui_time}] 🔴 [SESSION GUARD] Giá bị Frozen/Stale. Từ chối Crawl/Trade.")
+            log_message(f" ├─ Mã ngưng đọng: {actual_target_sym} (Trên terminal: {target_path})")
+            log_message(f" ├─ Tick cuối MT5 trả về: {dt_tick} (Hệ quy chiếu MT5)")
+            log_message(f" ├─ Thời điểm kiểm tra: {dt_sys} (Hệ quy chiếu PC)")
+            log_message(f" └─ Tổng chênh lệch: {staleness_seconds:.0f} giây (~{int(staleness_seconds/60)} phút) > Ngưỡng 5 phút.")
+
             time.sleep(10)
             continue
             
