@@ -158,23 +158,23 @@ class MT5DataManager:
                         if req_m not in self.GLOBAL_MT5_ROUTER_MAP:
                             continuous_config = self.config.get("DATA_SOURCE", {}).get("CONTINUOUS_CONTRACTS", {}).get(req_m)
                             
-                            expanded_candidates = set()
+                            expanded_candidates = {} # Dùng dict để bảo toàn thứ tự add vào (thay cho set)
                             if continuous_config:
                                 active_contract = self.get_front_month_contract(continuous_config)
-                                expanded_candidates.add(active_contract)
-                                expanded_candidates.add(active_contract + "m")
-                                expanded_candidates.add(active_contract + ".a")
+                                expanded_candidates[active_contract] = True
+                                expanded_candidates[active_contract + "m"] = True
+                                expanded_candidates[active_contract + ".a"] = True
                             else:
                                 s_clean = req_m.replace("m", "")
                                 candidates = self.MT5_FALLBACK_NAMES.get(req_m, [req_m, s_clean])
                                 for c in candidates:
-                                    expanded_candidates.add(c)
-                                    expanded_candidates.add(c + "m")
-                                    expanded_candidates.add(c + ".a")
-                                    expanded_candidates.add(c + "+")
+                                    expanded_candidates[c] = True
+                                    expanded_candidates[c + "m"] = True
+                                    expanded_candidates[c + ".a"] = True
+                                    expanded_candidates[c + "+"] = True
                             
                             found_sym = None
-                            for c in expanded_candidates:
+                            for c in expanded_candidates.keys():
                                 if c in avail:
                                     found_sym = c
                                     break
