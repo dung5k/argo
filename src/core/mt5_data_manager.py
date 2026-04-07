@@ -248,13 +248,13 @@ class MT5DataManager:
                     df.index = df.index.tz_convert('UTC')
                     
                 df = df[~df.index.duplicated(keep='last')]
-                df.drop(columns=['spread', 'real_volume', 'time'], inplace=True, errors='ignore')
+                df.drop(columns=['spread', 'time'], inplace=True, errors='ignore')
                 df.rename(columns={'tick_volume': 'volume'}, inplace=True)
                 
                 renamed_df = df.copy()
                 rename_map = {}
                 for col in renamed_df.columns:
-                    if col in ['open', 'high', 'low', 'close', 'volume', 'spread']:
+                    if col in ['open', 'high', 'low', 'close', 'volume', 'real_volume', 'spread']:
                         expected = None
                         if f"{mapped_name}_{col}" in self.features or f"{mapped_name}_{col}_log_ret" in self.features:
                             expected = f"{mapped_name}_{col}"

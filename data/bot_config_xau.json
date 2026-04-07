@@ -19,7 +19,7 @@
             "MT5_2": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe"
         },
         "ROUTING": {
-            "XAUUSDm": "EXNESS",
+            "XAUUSDm": "DEFAULT",
             "AUDUSDm": "EXNESS",
             "EURUSDm": "EXNESS",
             "GBPUSDm": "EXNESS",
@@ -76,6 +76,7 @@
             "XAUUSD_low_log_ret",
             "XAUUSD_close_log_ret",
             "XAUUSD_volume",
+            "XAUUSD_real_volume",
             "AUDUSD_open_log_ret",
             "AUDUSD_high_log_ret",
             "AUDUSD_low_log_ret",
