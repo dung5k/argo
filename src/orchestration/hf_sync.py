@@ -63,7 +63,7 @@ def push_data():
         print(f"[HF] Lỗi khi đẩy lên HF: {e}")
         return False
 
-def pull_data(logger: logging.Logger = None):
+def pull_data(logger: logging.Logger = None, config_path: str = None):
     """Kéo thư mục data/ mới nhất từ HuggingFace về (Cơ chế an toàn không dùng snapshot_download để tránh treo)"""
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
@@ -77,6 +77,18 @@ def pull_data(logger: logging.Logger = None):
     base_dir = _project_root()
     data_dir = base_dir / "data"
     
+    # Read OPTIONAL REQUIRED PARQUETS list from config
+    required_parquets = None
+    if config_path:
+        import json
+        from pathlib import Path
+        try:
+            with open(config_path, 'r', encoding='utf-8') as cf:
+                bot_cfg = json.load(cf)
+                required_parquets = bot_cfg.get("HF_CLOUD", {}).get("REQUIRED_PARQUETS", None)
+        except Exception as e:
+            pass
+            
     log = logger.info if logger else print
     log(f"[HF] Bắt đầu tải Parquet data từ {repo_id} (Safe HTTP Method)...")
     
@@ -86,6 +98,9 @@ def pull_data(logger: logging.Logger = None):
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
         parquet_files = [f for f in files if f.startswith("data/") and f.endswith(".parquet")]
+        if required_parquets:
+            parquet_files = [f for f in parquet_files if f.replace("data/", "") in required_parquets]
+            log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
         
         headers = {"Authorization": f"Bearer {token}"}
         for f in parquet_files:

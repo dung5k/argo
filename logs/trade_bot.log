@@ -896,3 +896,921 @@ NameError: name 'mt5_manager' is not defined
 [2026-04-06 23:43:50] [23:43:50] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
 [2026-04-06 23:44:00] [23:44:00] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
 [2026-04-06 23:44:10] [23:44:10] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-07 00:04:48] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-07 00:04:48] [BOT] Unified Transformer V5: 256
+[2026-04-07 00:04:48] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-07 00:04:48] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-07 00:04:48] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-07 00:04:48] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights.pth...
+[2026-04-07 00:04:50] [HF CLOUD] TỰ ĐỘNG DÒ TÌM NÃO BỘ MỚI NHẤT: run_20260407_000115_xauusd_CFG_01_TRANSFORMER
+[2026-04-07 00:04:54] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-07 00:04:54] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-07 00:04:54]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260407_000115_xauusd_CFG_01_TRANSFORMER!
+[2026-04-07 00:04:54]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-07 00:04:54]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-07 00:04:54]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-07 00:04:54] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-07 00:04:54] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\e90378a79467fe2cac6d1a3a41220274054dc0d1\runs\run_20260407_000115_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights.pth
+[2026-04-07 00:04:54] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=23 | MACRO=48 | SUM=71
+[2026-04-07 00:04:54] [BOT] Nạp não bộ thành công: run_20260407_000115_xauusd_CFG_01_TRANSFORMER
+[2026-04-07 00:04:54]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-07 00:04:54]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-07 00:04:54]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-07 00:04:54]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-07 00:04:54]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-07 00:04:54]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-07 00:04:54]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-07 00:04:54]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-07 00:04:54]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-07 00:04:54] [00:04:48] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-07 00:05:04] [00:05:04] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-07 00:05:14] [00:05:14] ⚠️ LỖI TICK: 'XAUUSD' (KHÔNG TỒN TẠI trên sàn này) trả về None! Vui lòng mở bảng Market Watch (Ctrl+M) và gõ tìm tay mã này.
+[2026-04-07 00:06:10] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-07 00:06:10] [BOT] Unified Transformer V5: 256
+[2026-04-07 00:06:10] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-07 00:06:10] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-07 00:06:10] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-07 00:06:10] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-07 00:06:11] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-07 00:06:15] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-07 00:06:15] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-07 00:06:15]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-07 00:06:16]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-07 00:06:16]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-07 00:06:16]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-07 00:06:16] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-07 00:06:16] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\e90378a79467fe2cac6d1a3a41220274054dc0d1\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-07 00:06:16] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-07 00:06:16] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
+[2026-04-07 00:06:16]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-07 00:06:16]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-07 00:06:16]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-07 00:06:16]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-07 00:06:16]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-07 00:06:16]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-07 00:06:16]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-07 00:06:16]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-07 00:06:16]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-07 00:06:16] [00:06:10] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 00:06:16] 
+[00:06:10] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:16]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:06:16]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:19] 
+[00:06:19] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:20]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.12s)
+[2026-04-07 00:06:20]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:23] 
+[00:06:23] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:23]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.13s)
+[2026-04-07 00:06:23]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:27] 
+[00:06:27] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:27]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.10s)
+[2026-04-07 00:06:27]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:31] 
+[00:06:31] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:31]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.12s)
+[2026-04-07 00:06:31]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:34] 
+[00:06:34] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.10s)
+[2026-04-07 00:06:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:38] 
+[00:06:38] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:38]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.13s)
+[2026-04-07 00:06:38]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:42] 
+[00:06:42] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:42]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:06:42]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:46] 
+[00:06:46] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:46]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:06:46]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:49] 
+[00:06:49] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:50]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 00:06:50]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:53] 
+[00:06:53] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:53]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:06:53]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:06:57] 
+[00:06:57] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:06:57]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.25s)
+[2026-04-07 00:06:57]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:07:01] 
+[00:07:01] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:07:01]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 00:07:01]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:14] [BOT] Đọc num_features từ Scaler: 71 (bao gồm is_imputed_flag)
+[2026-04-07 00:09:14] [BOT] Unified Transformer V5: 256
+[2026-04-07 00:09:14] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-07 00:09:14] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-07 00:09:14] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-07 00:09:14] [BOT] Thay đổi Phiên: us. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-07 00:09:15] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260406_223515_xauusd_CFG_01_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-07 00:09:16] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-07 00:09:16] [DATA MANAGER] Đã ánh xạ 9 đường dẫn nội bộ.
+[2026-04-07 00:09:16]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260406_223515_xauusd_CFG_01_TRANSFORMER!
+[2026-04-07 00:09:16]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (18) | Macro (-18) | SUM (0)
+[2026-04-07 00:09:16]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-07 00:09:16]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-07 00:09:16] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-07 00:09:16] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\e90378a79467fe2cac6d1a3a41220274054dc0d1\runs\run_20260406_223515_xauusd_CFG_01_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-07 00:09:16] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=18 | MACRO=53 | SUM=71
+[2026-04-07 00:09:17] [BOT] Nạp não bộ thành công: run_20260406_223515_xauusd_CFG_01_TRANSFORMER
+[2026-04-07 00:09:17]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-07 00:09:17]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-07 00:09:17]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-07 00:09:17]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-07 00:09:17]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-07 00:09:17]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-07 00:09:17]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-07 00:09:17]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-07 00:09:17]  🌐 [ROUTER-MANAGER] Quy hoạch xong 7 luồng tín hiệu!
+[2026-04-07 00:09:17] [00:09:14] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 00:09:17] 
+[00:09:14] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:17]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:09:17]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:20] 
+[00:09:20] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:21]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.12s)
+[2026-04-07 00:09:21]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:24] 
+[00:09:24] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:24]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:09:24]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:28] 
+[00:09:28] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:28]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.25s)
+[2026-04-07 00:09:28]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:32] 
+[00:09:32] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:32]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:09:32]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:35] 
+[00:09:35] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:35]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:09:35]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:39] 
+[00:09:39] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:39]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:09:39]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:43] 
+[00:09:43] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:43]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:09:43]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:47] 
+[00:09:47] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:47]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 00:09:47]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:50] 
+[00:09:50] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:50]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:09:50]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:54] 
+[00:09:54] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:55]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.78s)
+[2026-04-07 00:09:55]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:09:59] 
+[00:09:59] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:09:59]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:09:59]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:02] 
+[00:10:02] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:03]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:10:03]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:06] 
+[00:10:06] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:06]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 00:10:06]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:10] 
+[00:10:10] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:10]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 00:10:10]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:14] 
+[00:10:14] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:14]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:10:14]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:17] 
+[00:10:17] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:18]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:10:18]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:21] 
+[00:10:21] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:21]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:10:21]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:25] 
+[00:10:25] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:25]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:10:25]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:29] 
+[00:10:29] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:29]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:10:29]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:32] 
+[00:10:32] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:33]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 00:10:33]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:36] 
+[00:10:36] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:36]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:10:36]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:40] 
+[00:10:40] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:40]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:10:40]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:44] 
+[00:10:44] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:44]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.26s)
+[2026-04-07 00:10:44]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:47] 
+[00:10:47] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:48]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:10:48]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:51] 
+[00:10:51] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:51]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:10:51]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:55] 
+[00:10:55] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:55]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:10:55]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:10:58] 
+[00:10:58] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:10:59]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:10:59]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:02] 
+[00:11:02] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:02]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:11:02]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:06] 
+[00:11:06] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:06]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:11:06]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:10] 
+[00:11:10] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:10]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:11:10]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:13] 
+[00:11:13] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:14]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 00:11:14]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:17] 
+[00:11:17] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:17]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:11:17]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:21] 
+[00:11:21] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:21]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.29s)
+[2026-04-07 00:11:21]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:25] 
+[00:11:25] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:25]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.30s)
+[2026-04-07 00:11:25]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:29] 
+[00:11:29] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:29]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:11:29]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:32] 
+[00:11:32] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:33]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:11:33]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:36] 
+[00:11:36] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:36]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.26s)
+[2026-04-07 00:11:36]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:40] 
+[00:11:40] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:40]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:11:40]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:44] 
+[00:11:44] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:44]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:11:44]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:47] 
+[00:11:47] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:47]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:11:47]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:51] 
+[00:11:51] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:51]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:11:51]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:55] 
+[00:11:55] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:55]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:11:55]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:11:58] 
+[00:11:58] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:11:59]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.26s)
+[2026-04-07 00:11:59]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:02] 
+[00:12:02] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:02]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.28s)
+[2026-04-07 00:12:02]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:06] 
+[00:12:06] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:06]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:12:06]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:10] 
+[00:12:10] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:10]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:12:10]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:13] 
+[00:12:13] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:14]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:12:14]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:17] 
+[00:12:17] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:17]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:12:17]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:21] 
+[00:12:21] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:21]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:12:21]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:24] 
+[00:12:24] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:25]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:12:25]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:28] 
+[00:12:28] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:28]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:12:28]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:32] 
+[00:12:32] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:32]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:12:32]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:36] 
+[00:12:36] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:36]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:12:36]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:39] 
+[00:12:39] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:40]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.38s)
+[2026-04-07 00:12:40]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:43] 
+[00:12:43] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:43]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:12:43]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:47] 
+[00:12:47] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:47]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:12:47]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:51] 
+[00:12:51] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:51]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.28s)
+[2026-04-07 00:12:51]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:55] 
+[00:12:55] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:55]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:12:55]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:12:58] 
+[00:12:58] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:12:58]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:12:58]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:02] 
+[00:13:02] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:02]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:13:02]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:06] 
+[00:13:06] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:06]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.29s)
+[2026-04-07 00:13:06]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:10] 
+[00:13:10] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:10]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.29s)
+[2026-04-07 00:13:10]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:13] 
+[00:13:13] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:14]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.36s)
+[2026-04-07 00:13:14]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:18] 
+[00:13:18] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:18]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:13:18]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:22] 
+[00:13:22] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:22]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.13s)
+[2026-04-07 00:13:22]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:26] 
+[00:13:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:26]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 00:13:26]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:30] 
+[00:13:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:13:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:33] 
+[00:13:33] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.35s)
+[2026-04-07 00:13:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:37] 
+[00:13:37] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:37]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:13:37]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:41] 
+[00:13:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:41]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:13:41]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:45] 
+[00:13:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:13:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:48] 
+[00:13:48] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:49]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:13:49]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:52] 
+[00:13:52] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:52]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-07 00:13:52]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:13:56] 
+[00:13:56] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:13:56]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 00:13:56]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:00] 
+[00:14:00] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:00]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:14:00]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:03] 
+[00:14:03] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:04]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:14:04]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:07] 
+[00:14:07] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:08]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:14:08]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:11] 
+[00:14:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:11]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:14:11]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:15] 
+[00:14:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:15]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:14:15]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:19] 
+[00:14:19] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:19]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:14:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:22] 
+[00:14:22] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:23]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:14:23]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:26] 
+[00:14:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:26]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 00:14:26]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:30] 
+[00:14:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:14:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:34] 
+[00:14:34] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:14:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:37] 
+[00:14:37] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:38]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:14:38]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:41] 
+[00:14:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:41]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:14:41]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:45] 
+[00:14:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:14:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:49] 
+[00:14:49] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:49]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:14:49]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:52] 
+[00:14:52] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:53]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:14:53]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:14:56] 
+[00:14:56] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:14:56]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:14:56]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:00] 
+[00:15:00] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:00]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:15:00]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:04] 
+[00:15:04] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:04]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:15:04]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:07] 
+[00:15:07] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:07]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:15:07]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:11] 
+[00:15:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:12]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.67s)
+[2026-04-07 00:15:12]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:15] 
+[00:15:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:16]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:15:16]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:19] 
+[00:15:19] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:19]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:15:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:23] 
+[00:15:23] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:23]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:15:23]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:27] 
+[00:15:27] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:27]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:15:27]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:30] 
+[00:15:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:15:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:34] 
+[00:15:34] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:15:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:38] 
+[00:15:38] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:38]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:15:38]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:41] 
+[00:15:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:42]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 00:15:42]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:45] 
+[00:15:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 00:15:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:49] 
+[00:15:49] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:49]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 00:15:49]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:53] 
+[00:15:53] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:53]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-07 00:15:53]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:15:56] 
+[00:15:56] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:15:56]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 00:15:56]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:00] 
+[00:16:00] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:00]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 00:16:00]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:04] 
+[00:16:04] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:04]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:16:04]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:07] 
+[00:16:07] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:07]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-07 00:16:07]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:11] 
+[00:16:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:11]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.11s)
+[2026-04-07 00:16:11]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:15] 
+[00:16:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:15]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:16:15]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:18] 
+[00:16:18] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:18]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 00:16:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:22] 
+[00:16:22] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:22]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 00:16:22]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:26] 
+[00:16:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:26]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.13s)
+[2026-04-07 00:16:26]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 00:16:29] 
+[00:16:29] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 00:16:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 00:16:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:53:54] [BOT] Đọc num_features từ Scaler: 56 (bao gồm is_imputed_flag)
+[2026-04-07 06:53:54] [BOT] Unified Transformer V5: 256
+[2026-04-07 06:53:54] [BOT] Ready to init TransformerModel d=256, heads=8, layers=3, win=60
+[2026-04-07 06:53:54] [BOT] Bắt đầu kết nối MT5 initialization...
+[2026-04-07 06:53:54] [BOT] ✅ Kết nối MT5 thành công!
+[2026-04-07 06:53:54] [BOT] Thay đổi Phiên: asian. Đang nạp xauusd_unified_weights_BEST_VLOSS.pth...
+[2026-04-07 06:53:55] [HF CLOUD] XÁC ĐỊNH NÃO BỘ CHỈ ĐỊNH: run_20260407_062436_xauusd_CFG_02_TRANSFORMER (File: xauusd_unified_weights_BEST_VLOSS.pth)
+[2026-04-07 06:54:06] [DATA MANAGER] Đang tải lại File Trọng số (Scaler) và Xây dựng lại lưới dữ liệu...
+[2026-04-07 06:54:06] [DATA MANAGER] Đã ánh xạ 14 đường dẫn nội bộ.
+[2026-04-07 06:54:06]  ├─ ✅ [SCALE SHIELD] Đã đồng bộ Scaler Local về đúng định dạng của não run_20260407_062436_xauusd_CFG_02_TRANSFORMER!
+[2026-04-07 06:54:06]  ├─ 📐 Khớp Kích thước Mạng: XAUUSD (15) | Macro (-15) | SUM (0)
+[2026-04-07 06:54:06]  ├─ 🧠 [METRIX DATA] Não bộ yêu cầu TỔNG CỘNG 0 Dimensions để nạp đạn!
+[2026-04-07 06:54:06]  ├─ Danh sách Features nhận diện mẫu: ...
+[2026-04-07 06:54:06] [HF CLOUD] Đã tải thành công HỆ TƯ TƯỞNG từ Đám mây!
+[2026-04-07 06:54:06] [BOT] Đang ốp Ma trận trọng số (Local Cache): C:\Users\Le Anh Dung\.cache\huggingface\hub\datasets--dung5k--argo_data\snapshots\e0bea7871e8308e3decf8c01763dfeba2a59b764\runs\run_20260407_062436_xauusd_CFG_02_TRANSFORMER\xauusd_unified_weights_BEST_VLOSS.pth
+[2026-04-07 06:54:06] [BOT] ✅ [AUTO-DETECT] Đọc từ Weights: XAU=15 | MACRO=41 | SUM=56
+[2026-04-07 06:54:06] [BOT] Nạp não bộ thành công: run_20260407_062436_xauusd_CFG_02_TRANSFORMER
+[2026-04-07 06:54:06]  🌐 [ROUTER-MANAGER] Bắt đầu Định tuyến Đa-Sàn MT5 cho các Sensor Mạng Nơ-ron...
+[2026-04-07 06:54:07]    => Khớp Sensor [VIXYm] vào lưới [DEFAULT] qua mã [VIXY]
+[2026-04-07 06:54:07]    => Khớp Sensor [EURUSDm] vào lưới [EXNESS] qua mã [EURUSDm]
+[2026-04-07 06:54:07]    => Khớp Sensor [GBPUSDm] vào lưới [EXNESS] qua mã [GBPUSDm]
+[2026-04-07 06:54:07]    => Khớp Sensor [AUDUSDm] vào lưới [EXNESS] qua mã [AUDUSDm]
+[2026-04-07 06:54:07]    => Khớp Sensor [NASDAQ_100] vào lưới [EXNESS] qua mã [USTECm]
+[2026-04-07 06:54:07]    => Khớp Sensor [XAUUSDm] vào lưới [EXNESS] qua mã [XAUUSDm]
+[2026-04-07 06:54:07]    => Khớp Sensor [XAGUSDm] vào lưới [EXNESS] qua mã [XAGUSDm]
+[2026-04-07 06:54:07]    => Khớp Sensor [USDCADm] vào lưới [EXNESS] qua mã [USDCADm]
+[2026-04-07 06:54:08]  🌐 [ROUTER-MANAGER] Quy hoạch xong 8 luồng tín hiệu!
+[2026-04-07 06:54:08] [06:53:54] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:08] 
+[06:53:54] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:09]  🔌⚠️ [WIFI/BROKER ĐỨT MẠNG] Phát hiện 9/9 cặp tiền bị đứt luồng dữ liệu (Quá 5 phút không có giá mới). Bảng điện đồ sẽ hiển thị 'Lỗi MT5 (Mất Data)'. Vui lòng kiểm tra đường truyền MT5 Terminal!
+[2026-04-07 06:54:09]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (1.44s)
+[2026-04-07 06:54:09]  📊 KIỂM KÊ KHO: RAM Nạp thành công 29 nến.
+[2026-04-07 06:54:11] [06:54:11] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:11] 
+[06:54:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:12]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.37s)
+[2026-04-07 06:54:12]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:15] [06:54:15] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:15] 
+[06:54:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:15]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 06:54:15]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:19] [06:54:19] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:19] 
+[06:54:19] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:19]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 06:54:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:23] [06:54:23] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:23] 
+[06:54:23] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:23]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.20s)
+[2026-04-07 06:54:23]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:26] [06:54:26] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:26] 
+[06:54:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:27]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 06:54:27]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:30] [06:54:30] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:30] 
+[06:54:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-07 06:54:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:34] [06:54:34] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:34] 
+[06:54:34] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 06:54:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:38] [06:54:37] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:38] 
+[06:54:37] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:38]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 06:54:38]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:41] [06:54:41] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:41] 
+[06:54:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:41]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 06:54:41]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:45] [06:54:45] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:45] 
+[06:54:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.26s)
+[2026-04-07 06:54:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:49] [06:54:49] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:49] 
+[06:54:49] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:49]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 06:54:49]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:53] [06:54:53] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:53] 
+[06:54:53] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:53]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:54:53]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:54:56] [06:54:56] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:54:56] 
+[06:54:56] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:54:56]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 06:54:56]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:00] [06:55:00] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:00] 
+[06:55:00] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:00]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.22s)
+[2026-04-07 06:55:00]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:04] [06:55:04] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:04] 
+[06:55:04] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:04]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.38s)
+[2026-04-07 06:55:04]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:08] [06:55:08] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:08] 
+[06:55:08] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:08]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:55:08]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:11] [06:55:11] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:11] 
+[06:55:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:12]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:55:12]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:15] [06:55:15] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:15] 
+[06:55:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:15]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 06:55:15]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:19] [06:55:19] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:19] 
+[06:55:19] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:19]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:55:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:23] [06:55:23] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:23] 
+[06:55:23] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:23]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 06:55:23]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:26] [06:55:26] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:26] 
+[06:55:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:26]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.14s)
+[2026-04-07 06:55:26]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:30] [06:55:30] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:30] 
+[06:55:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.23s)
+[2026-04-07 06:55:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:34] [06:55:34] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:34] 
+[06:55:34] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 06:55:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:38] [06:55:38] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:38] 
+[06:55:38] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:38]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 06:55:38]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:41] [06:55:41] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:41] 
+[06:55:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:41]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.19s)
+[2026-04-07 06:55:41]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:45] [06:55:45] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:45] 
+[06:55:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.24s)
+[2026-04-07 06:55:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:49] [06:55:49] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:49] 
+[06:55:49] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:49]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 06:55:49]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:52] [06:55:52] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:52] 
+[06:55:52] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:53]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.12s)
+[2026-04-07 06:55:53]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:55:56] [06:55:56] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:55:56] 
+[06:55:56] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:55:56]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 06:55:56]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:00] [06:56:00] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:00] 
+[06:56:00] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:00]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 06:56:00]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:03] [06:56:03] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:03] 
+[06:56:03] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:04]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.25s)
+[2026-04-07 06:56:04]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:07] [06:56:07] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:07] 
+[06:56:07] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:07]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:56:07]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:11] [06:56:11] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:11] 
+[06:56:11] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:11]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.16s)
+[2026-04-07 06:56:11]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:15] [06:56:15] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:15] 
+[06:56:15] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:15]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.17s)
+[2026-04-07 06:56:15]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:18] [06:56:18] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:18] 
+[06:56:18] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:19]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.18s)
+[2026-04-07 06:56:19]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:22] [06:56:22] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:22] 
+[06:56:22] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:22]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 06:56:22]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:26] [06:56:26] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:26] 
+[06:56:26] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:26]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.15s)
+[2026-04-07 06:56:26]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:30] [06:56:30] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:30] 
+[06:56:30] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:30]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.21s)
+[2026-04-07 06:56:30]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:33] [06:56:33] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:33] 
+[06:56:33] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:34]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.26s)
+[2026-04-07 06:56:34]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:37] [06:56:37] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:37] 
+[06:56:37] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:37]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.39s)
+[2026-04-07 06:56:37]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:41] [06:56:41] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:41] 
+[06:56:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:42]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.76s)
+[2026-04-07 06:56:42]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:46] [06:56:46] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:46] 
+[06:56:46] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:46]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.37s)
+[2026-04-07 06:56:46]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:50] [06:56:50] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:50] 
+[06:56:50] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:50]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.41s)
+[2026-04-07 06:56:50]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:53] [06:56:53] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:53] 
+[06:56:53] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:54]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.31s)
+[2026-04-07 06:56:54]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:56:57] [06:56:57] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:56:57] 
+[06:56:57] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:56:58]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.27s)
+[2026-04-07 06:56:58]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:01] [06:57:01] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:01] 
+[06:57:01] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:02]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.55s)
+[2026-04-07 06:57:02]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:05] [06:57:05] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:05] 
+[06:57:05] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:06]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.31s)
+[2026-04-07 06:57:06]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:09] [06:57:09] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:09] 
+[06:57:09] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:09]  🔌⚠️ [WIFI/BROKER ĐỨT MẠNG] Phát hiện 1/9 cặp tiền bị đứt luồng dữ liệu (Quá 5 phút không có giá mới). Bảng điện đồ sẽ hiển thị 'Lỗi MT5 (Mất Data)'. Vui lòng kiểm tra đường truyền MT5 Terminal!
+[2026-04-07 06:57:10]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.50s)
+[2026-04-07 06:57:10]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:13] [06:57:13] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:13] 
+[06:57:13] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:14]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.28s)
+[2026-04-07 06:57:14]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:17] [06:57:17] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:17] 
+[06:57:17] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:17]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.29s)
+[2026-04-07 06:57:17]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:21] [06:57:21] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:21] 
+[06:57:21] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:21]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.45s)
+[2026-04-07 06:57:21]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:25] [06:57:25] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:25] 
+[06:57:25] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:25]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.34s)
+[2026-04-07 06:57:25]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:29] [06:57:29] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:29] 
+[06:57:29] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:29]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.34s)
+[2026-04-07 06:57:29]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:33] [06:57:33] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:33] 
+[06:57:33] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:33]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.46s)
+[2026-04-07 06:57:33]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:37] [06:57:37] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:37] 
+[06:57:37] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:37]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.45s)
+[2026-04-07 06:57:37]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:41] [06:57:41] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:41] 
+[06:57:41] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:41]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.46s)
+[2026-04-07 06:57:41]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
+[2026-04-07 06:57:45] [06:57:45] 🔌 Đã khởi tạo kết nối MT5 Terminal: C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe
+[2026-04-07 06:57:45] 
+[06:57:45] 🔄 BẮT ĐẦU VẬN CÔNG HÍT THỞ (TRỰC TIẾP TỪ RAM)...
+[2026-04-07 06:57:45]  ├─ Trạm Lõi lượng tử (RAM Mapped): ✅ HOÀN TẤT (0.43s)
+[2026-04-07 06:57:45]  📊 KIỂM KÊ KHO: RAM Nạp thành công 61 nến.
