@@ -92,6 +92,13 @@ class TimeSeriesDatasetV2(Dataset):
             f"Loại {n_dropped:,} cửa sổ Nến Ma > 15%."
         )
 
+        # Tính toán danh mục phiên (Session Routing ID)
+        # Giả định features.index là mốc thời gian UTC (DatetimeIndex)
+        hours = features.index.hour.values
+        session_arr = np.zeros_like(hours, dtype=np.int64) # Mặc định 0: Phiên Á (0-7h)
+        session_arr[(hours >= 8) & (hours < 13)] = 1       # 1: Phiên Âu (8-12h)
+        session_arr[(hours >= 13)] = 2                     # 2: Phiên Mỹ (13-23h)
+
         # Đẩy lên GPU nếu có
         self.features_tensor = torch.tensor(
             features.values, dtype=torch.float32
@@ -102,6 +109,9 @@ class TimeSeriesDatasetV2(Dataset):
         self.returns_tensor = torch.tensor(
             log_returns.values, dtype=torch.float32
         ).to(device)
+        self.session_tensor = torch.tensor(
+            session_arr, dtype=torch.long
+        ).to(device)
 
     def __len__(self) -> int:
         return len(self.valid_indices)
@@ -109,9 +119,11 @@ class TimeSeriesDatasetV2(Dataset):
     def __getitem__(self, raw_idx: int):
         idx = self.valid_indices[raw_idx]
         x = self.features_tensor[idx: idx + self.window_size]
-        y = self.labels_tensor[idx + self.window_size - 1]
-        r = self.returns_tensor[idx + self.window_size - 1]
-        return x, y, r
+        target_idx = idx + self.window_size - 1
+        y = self.labels_tensor[target_idx]
+        r = self.returns_tensor[target_idx]
+        s = self.session_tensor[target_idx]
+        return x, y, r, s
 
 
 # ============================================================
@@ -403,15 +415,35 @@ def train_v2(
             # TRAIN
             model.train()
             train_loss = 0.0
-            for batch_x, batch_y, _ in train_loader:
+            for batch_x, batch_y, _, batch_s in train_loader:
                 batch_y = batch_y.view(-1)
+                batch_s = batch_s.view(-1)
                 phoenix.optimizer.zero_grad()
-                outputs = model(batch_x)
-                loss = criterion(outputs, batch_y)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                phoenix.optimizer.step()
-                train_loss += loss.item()
+                
+                outputs = model(batch_x, session_ids=batch_s)
+                
+                mask_0 = (batch_s == 0)
+                mask_1 = (batch_s == 1)
+                mask_2 = (batch_s == 2)
+                
+                loss_val = 0.0
+                valid_heads = 0
+                if mask_0.any():
+                    loss_val += criterion(outputs[mask_0], batch_y[mask_0])
+                    valid_heads += 1
+                if mask_1.any():
+                    loss_val += criterion(outputs[mask_1], batch_y[mask_1])
+                    valid_heads += 1
+                if mask_2.any():
+                    loss_val += criterion(outputs[mask_2], batch_y[mask_2])
+                    valid_heads += 1
+
+                if valid_heads > 0:
+                    loss_val = loss_val / valid_heads
+                    loss_val.backward()
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    phoenix.optimizer.step()
+                    train_loss += loss_val.item()
 
             avg_train_loss = train_loss / max(len(train_loader), 1)
 
@@ -421,15 +453,32 @@ def train_v2(
             all_probs_up   = []
             all_hard_labels = []
             all_log_returns = []
+            all_session_ids = []
 
             with torch.no_grad():
-                for batch_x, batch_y, batch_r in val_loader:
+                for batch_x, batch_y, batch_r, batch_s in val_loader:
                     batch_y = batch_y.view(-1)
-                    outputs = model(batch_x)
+                    batch_s = batch_s.view(-1)
+                    outputs = model(batch_x, session_ids=batch_s)
 
-                    # Loss: dùng FocalLoss với soft labels
-                    loss = criterion(outputs, batch_y)
-                    val_loss_total += loss.item()
+                    mask_0 = (batch_s == 0)
+                    mask_1 = (batch_s == 1)
+                    mask_2 = (batch_s == 2)
+                    
+                    loss_val = 0.0
+                    valid_heads = 0
+                    if mask_0.any():
+                        loss_val += criterion(outputs[mask_0], batch_y[mask_0])
+                        valid_heads += 1
+                    if mask_1.any():
+                        loss_val += criterion(outputs[mask_1], batch_y[mask_1])
+                        valid_heads += 1
+                    if mask_2.any():
+                        loss_val += criterion(outputs[mask_2], batch_y[mask_2])
+                        valid_heads += 1
+                        
+                    if valid_heads > 0:
+                        val_loss_total += (loss_val / valid_heads).item()
 
                     probs = F.softmax(outputs, dim=1)
                     all_probs_up.append(probs[:, 1].cpu())
@@ -438,10 +487,12 @@ def train_v2(
                     hard = (batch_y >= 0.5).long().cpu()
                     all_hard_labels.append(hard)
                     all_log_returns.append(batch_r.cpu())
+                    all_session_ids.append(batch_s.cpu())
 
             all_probs_up    = torch.cat(all_probs_up)
             all_hard_labels = torch.cat(all_hard_labels)
             all_log_returns = torch.cat(all_log_returns)
+            all_session_ids = torch.cat(all_session_ids)
             avg_val_loss    = val_loss_total / max(len(val_loader), 1)
 
             # Evaluate EV
@@ -450,6 +501,7 @@ def train_v2(
                 hard_labels=all_hard_labels,
                 log_returns=all_log_returns,
                 val_loss=avg_val_loss,
+                session_ids=all_session_ids,
             )
 
             total_epoch += 1

@@ -55,6 +55,7 @@ class EpochEvalResult:
     max_threshold: float = 0.50
     best_ev: float = 0.0
     val_loss: float = float("inf")
+    session_evs: Dict[int, float] = field(default_factory=dict)
 
     def composite_score(
         self,
@@ -172,6 +173,7 @@ class EVEvaluator:
         hard_labels: torch.Tensor,
         log_returns: torch.Tensor,
         val_loss: float,
+        session_ids: Optional[torch.Tensor] = None,
     ) -> EpochEvalResult:
         """
         Đánh giá toàn bộ một epoch.
@@ -182,6 +184,8 @@ class EVEvaluator:
         hard_labels : (N,) nhãn thực (long) 0 = SELL, 1 = BUY.
         log_returns : (N,) log return thực tế T+5.
         val_loss    : float, giá trị validation loss trung bình epoch này.
+        session_ids : (N,) ID của phiên giao dịch (0: Á, 1: Âu, 2: Mỹ).
+
 
         Returns
         -------
@@ -199,11 +203,23 @@ class EVEvaluator:
 
         best_ev = max((m.ev_score for m in metrics_list), default=0.0)
 
+        # Tính EV riêng từng phiên
+        s_evs = {}
+        if session_ids is not None:
+            max_t = max_thresh
+            if len(thresholds) > 2: max_t = thresholds[2] # Chọn ngưỡng L3 để test nhánh
+            for s_id in range(3):
+                mask = (session_ids == s_id)
+                if mask.sum() > 0:
+                    sm = self._compute_threshold_metrics(probs_up[mask], hard_labels[mask], log_returns[mask], max_t)
+                    s_evs[s_id] = sm.ev_score
+
         return EpochEvalResult(
             threshold_metrics=metrics_list,
             max_threshold=max_thresh,
             best_ev=best_ev,
             val_loss=val_loss,
+            session_evs=s_evs,
         )
 
     def is_statistically_valid(self, result: EpochEvalResult) -> bool:
@@ -216,7 +232,14 @@ class EVEvaluator:
         """Tạo chuỗi log tóm tắt kết quả evaluation."""
         parts = [str(m) for m in result.threshold_metrics]
         composite = result.composite_score()
+        
+        session_str = ""
+        if result.session_evs:
+            s_map = {0: "Á", 1: "Âu", 2: "Mỹ"}
+            session_str = " | ".join([f"EV_{s_map.get(k, k)}={v*10000:.1f}p" for k, v in result.session_evs.items()])
+            session_str = f"  ↪ [Breakdown] {session_str}\n"
+
         return (
             f"MaxTh={result.max_threshold:.2f} | EV_composite={composite*10000:.2f}pip\n"
-            + "  " + " | ".join(parts)
+            + "  " + " | ".join(parts) + "\n" + session_str
         )

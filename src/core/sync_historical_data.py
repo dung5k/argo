@@ -8,8 +8,12 @@ from mt5_data_manager import MT5DataManager
 def sync_all_history():
     print("🚀 BẮT ĐẦU ĐỒNG BỘ DỮ LIỆU LỊCH SỬ TỪ CẤU HÌNH LIVE (UNIFIED CONFIG) 🚀")
     
+    config_file = "data/bot_config_xau.json"
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+        
     # 1. Khởi tạo Data Manager để lấy Router Map chuẩn gốc
-    manager = MT5DataManager(log_callback=print, target_sym="XAUUSD")
+    manager = MT5DataManager(log_callback=print, target_sym="XAUUSD", config_path=config_file)
     manager.scan_terminals_and_map()
     
     if not manager.GLOBAL_MT5_ROUTER_MAP:
@@ -123,8 +127,8 @@ def sync_all_history():
         
     mt5.shutdown()
     
-    # Ghi đè cấu hình Dataset Suffix vào bot_config_xau.json để module Train dùng
-    config_path = os.path.join(data_path, "bot_config_xau.json")
+    # Ghi đè cấu hình Dataset Suffix vào bot_config tương ứng để module Train dùng
+    config_path = os.path.join(base_path, config_file)
     if os.path.exists(config_path):
         import json
         with open(config_path, "r", encoding="utf-8") as f:
@@ -136,7 +140,7 @@ def sync_all_history():
         
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(cfg_data, f, indent=4, ensure_ascii=False)
-        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' vào bot_config_xau.json")
+        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' vào {config_file}")
 
     print("\n🎉 HOÀN TẤT ĐỒNG BỘ TOÀN BỘ KHO LỊCH SỬ LOCAL.")
 
@@ -264,4 +268,6 @@ def sync_all_history():
         print("Trạng thái: Hoạt động chế độ OFFLINE. (Không upload HF).")
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        sys.argv[1] = sys.argv[1] # Keep it intact for sync_all_history to read
     sync_all_history()

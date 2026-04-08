@@ -1,0 +1,3 @@
+[RAW_CODE] 
+=== SOURCE ===
+Line 268: symbol = payload.get("symbol", "xauusd").lower()

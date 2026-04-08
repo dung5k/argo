@@ -1,0 +1,103 @@
+{
+    "target": "xauusd",
+    "version": "V2",
+    "status": "RUNNING_OR_DONE",
+    "epochs_trained": 5,
+    "best_ev_composite_pip": 0.24690520703988997,
+    "best_val_loss": 0.17331129028683617,
+    "top_configs_saved": [
+        {
+            "strategy": "EV_L3_1.4_L4_1.0",
+            "ev_composite_pip": 0.24690520703988997,
+            "max_thresh": 0.5,
+            "threshold_metrics": [
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                }
+            ]
+        },
+        {
+            "strategy": "EV_L3_1.1_L4_1.0",
+            "ev_composite_pip": 0.24690520703988997,
+            "max_thresh": 0.5,
+            "threshold_metrics": [
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.5077218225419664,
+                    "ev_score_pip": 0.24690520703988997,
+                    "total_signals": 10425
+                }
+            ]
+        },
+        {
+            "strategy": "BEST_VLOSS",
+            "ev_composite_pip": -0.2620953173159985,
+            "max_thresh": 0.5,
+            "threshold_metrics": [
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.4994724220623501,
+                    "ev_score_pip": -0.2620953173159985,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.4994724220623501,
+                    "ev_score_pip": -0.2620953173159985,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.4994724220623501,
+                    "ev_score_pip": -0.2620953173159985,
+                    "total_signals": 10425
+                },
+                {
+                    "threshold": 0.5,
+                    "win_rate": 0.4994724220623501,
+                    "ev_score_pip": -0.2620953173159985,
+                    "total_signals": 10425
+                }
+            ]
+        }
+    ]
+}

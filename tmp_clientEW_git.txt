@@ -1,0 +1,152 @@
+[RAW_CODE] 
+=== TG AGENT LOG ===
+  >50%: 48.7%(503L) | >59%: 48.1%(395L) | >68%: 50.4%(228L) | >77%: 63.3%(30L)
+Epoch 0159 [P15]| VLoss: 0.7834 | LR: 1.00e-04 | WR: 48.5% | MaxTh: 0.78 | Time: 57.9s
+  >50%: 48.5%(503L) | >59%: 47.6%(416L) | >69%: 50.2%(259L) | >78%: 60.0%(30L)
+Epoch 0160 [P15]| VLoss: 0.7948 | LR: 1.00e-04 | WR: 49.9% | MaxTh: 0.83 | Time: 56.7s
+  >50%: 49.9%(503L) | >61%: 49.0%(384L) | >72%: 49.2%(183L) | >83%: 64.5%(31L)
+Epoch 0161 [P15]| VLoss: 0.8285 | LR: 
+09:04:20 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 324 ký tự
+09:04:20 [INFO]   ➜ [RUN_CODE] Nhận code (324 ký tự) — Đang thực thi tức thời...
+09:04:21 [INFO]   [RUN_CODE OUT]:
+=== GIT STATUS ===
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+=== GIT LOG ===
+commit 9c46bf45d633525b185d927602ab394a76abb07c
+Author: Lê Anh Dũng <dung5k@gmail.com>
+Date:   Tue Apr 7 08:27:46 2026 +0700
+
+    Fix: Replace huggingface snapshot_download with safe requests in pull_data to prevent infinite lock hang on clients
+
+commit af780c78939227dfd69a7d608ab1990a10808ebb
+Author: Lê Anh Dũng <dung5k@gmail.com>
+Date:   Tue Apr 7 07:59:37 2026 +0700
+
+    Improve: Add data quality validation report to sync_historical_data - shows rows, real_volume, gaps, NaN per symbol
+09:06:20 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 391 ký tự
+09:06:20 [INFO]   ➜ [RUN_CODE] Nhận code (391 ký tự) — Đang thực thi tức thời...
+09:06:20 [INFO]   [RUN_CODE OUT]:
+=== TG AGENT LOG ===
+  >50%: 49.1%(503L) | >59%: 49.7%(386L) | >68%: 53.1%(224L) | >77%: 69.7%(33L)
+Epoch 0158 [P15]| VLoss: 0.7642 | LR: 1.00e-04 | WR: 48.7% | MaxTh: 0.77 | Time: 57.3s
+  >50%: 48.7%(503L) | >59%: 48.1%(395L) | >68%: 50.4%(228L) | >77%: 63.3%(30L)
+Epoch 0159 [P15]| VLoss: 0.7834 | LR: 1.00e-04 | WR: 48.5% | MaxTh: 0.78 | Time: 57.9s
+  >50%: 48.5%(503L) | >59%: 47.6%(416L) | >69%: 50.2%(259L) | >78%: 60.0%(30L)
+Epoch 0160 [P15]| VLoss: 0.7948 | LR: 1.00e-04 | WR: 49.9% | MaxTh: 0.83 | Time: 56.7s
+  >50%: 49.9%(503L) | >61%: 49.0%(384L) | >72%: 49.2%(183L) | >83%: 64.5%(31L)
+Epoch 0161 [P15]| VLoss: 0.8285 | LR: 
+08:18:42 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 941 ký tự
+08:18:42 [INFO]   ➜ [RUN_CODE] Nhận code (941 ký tự) — Đang thực thi tức thời...
+08:18:42 [INFO]   [RUN_CODE OUT]:
+=== LOG: clientEW/logs\20260406_151911_train.log ===
+  >50%: 48.7%(503L) | >57%: 49.4%(330L) | >64%: 54.1%(157L) | >71%: 74.3%(35L)
+Epoch 0156 [P15]| VLoss: 0.7418 | LR: 1
+09:08:03 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 336 ký tự
+09:08:03 [INFO]   ➜ [RUN_CODE] Nhận code (336 ký tự) — Đang thực thi tức thời...
+09:08:04 [INFO]   [RUN_CODE OUT]:
+=== SOURCE ===
+Line 268: symbol = payload.get("symbol", "xauusd").lower()
+09:09:19 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 488 ký tự
+09:09:19 [INFO]   ➜ [RUN_CODE] Nhận code (488 ký tự) — Đang thực thi tức thời...
+09:09:24 [INFO]   [RUN_CODE OUT]:
+Installing requests to C:\clientEW\forex_predictor\venv\Scripts\python.exe...
+pip install stdout:
+Collecting requests
+  Downloading requests-2.33.1-py3-none-any.whl.metadata (4.8 kB)
+Collecting charset_normalizer<4,>=2 (from requests)
+  Downloading charset_normalizer-3.4.7-cp314-cp314-win_amd64.whl.metadata (41 kB)
+Requirement already satisfied: idna<4,>=2.5 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (3.11)
+Collecting urllib3<3,>=1.26 (from requests)
+  Using cached urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+Requirement already satisfied: certifi>=2023.5.7 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (2026.2.25)
+Downloading requests-2.33.1-py3-none-any.whl (64 kB)
+Downloading charset_normalizer-3.4.7-cp314-cp314-win_amd64.whl (159 kB)
+Using cached urllib3-2.6.3-py3-none-any.whl (131 kB)
+Installing collected packages: urllib3, charset_normalizer, requests
+
+Successfully installed charset_normalizer-3.4.7 requests-2.33.1 urllib3-2.6
+09:09:54 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'update' | payload={'cmd': 'update', 'symbol': 'xauusd', 'script': ''}
+09:10:08 [INFO] ╔══════════════════════════════════════════
+09:10:08 [INFO] ║ TG AGENT v1.3.0-SkyNet — CLIENTEW
+09:10:08 [INFO] ║ Base  : C:\clientEW\forex_predictor
+09:10:08 [INFO] ║ Broker: Telegram Bot API
+09:10:08 [INFO] ╚══════════════════════════════════════════
+09:10:11 [INFO] 📡 Chế độ Đa Client: Đã TẮT Telegram Long-Polling để tránh đụng độ (HTTP 409).
+09:10:11 [INFO] 📡 (Luồng lệnh bây giờ sẽ đi hoàn toàn qua MQTT từ Host Orchestrator).
+09:10:22 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'train' | payload={'cmd': 'train', 'symbol': 'xauusd', 'script': ''}
+09:10:22 [INFO]   ➜ Khởi động TRAIN cục bộ, symbol=xauusd, config=data/bot_config_xau.json
+09:10:22 [INFO] ▶ START TRAIN task=20260407_091022_train
+09:10:22 [INFO] [HF] Bắt đầu tải Parquet data từ dung5k/argo_data (Safe HTTP Method)...
+09:10:26 [INFO]   + Đã lấy: data/ada_usd_mt5_1m_2026.parquet
+09:10:29 [INFO]   + Đã lấy: data/audusd_1m_2025_2026.parquet
+09:10:32 [INFO]   + Đã lấy: data/audusd_mt5_1m_20250101_to_20260406.parquet
+09:10:34 [INFO]   + Đã lấy: data/audusd_mt5_1m_20260101_to_20260406.parquet
+09:10:36 [INFO]   + Đã lấy: data/audusd_mt5_1m_20260201_to_20260406.parquet
+09:10:39 [INFO]   + Đã lấy: data/bch_usd_mt5_1m_2026.parquet
+09:10:41 [INFO]   + Đã lấy: data/bnb_usd_mt5_1m_2026.parquet
+09:10:45 [INFO]   + Đã lấy: data/btc_usd_mt5_1m_2026.parquet
+09:10:47 [INFO]   + Đã lấy: data/dxy_mt5_1m_2026.parquet
+09:10:48 [INFO]   + Đã lấy: data/dxy_usd_index_1h_2025_2026.parquet
+09:10:52 [INFO]   + Đã lấy: data/eth_usd_mt5_1m_2026.parquet
+09:10:54 [INFO]   + Đã lấy: data/eurusd_1m_2025_2026.parquet
+09:10:57 [INFO]   + Đã lấy: data/eurusd_mt5_1m_20250101_to_20260406.parquet
+09:10:59 [INFO]   + Đã lấy: data/eurusd_mt5_1m_20260101_to_20260406.parquet
+09:11:01 [INFO]   + Đã lấy: data/eurusd_mt5_1m_20260201_to_20260406.parquet
+09:11:09 [INFO]   + Đã lấy: data/final_features_2d.parquet
+09:11:12 [INFO]   + Đã lấy: data/final_features_LTC_USD.parquet
+09:11:19 [INFO]   + Đã lấy: data/final_features_USOIL_USD.parquet
+09:11:24 [INFO]   + Đã lấy: data/final_features_XAUUSD.parquet
+09:11:26 [INFO]   + Đã lấy: data/gbpusd_1m_2025_2026.parquet
+09:11:29 [INFO]   + Đã lấy: data/gbpusd_mt5_1m_20250101_to_20260406.parquet
+09:11:30 [INFO]   + Đã lấy: data/gbpusd_mt5_1m_20260101_to_20260406.parquet
+09:11:32 [INFO]   + Đã lấy: data/gbpusd_mt5_1m_20260201_to_20260406.parquet
+09:11:34 [INFO]   + Đã lấy: data/gold_1h_2025_2026.parquet
+09:11:36 [INFO]   + Đã lấy: data/jp225_mt5_1m_2026.parquet
+09:11:38 [INFO]   + Đã lấy: data/ltc_usd_mt5_1m_2026.parquet
+09:11:39 [INFO]   + Đã lấy: data/nasdaq_100_1h_2025_2026.parquet
+09:11:41 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 488 ký tự
+09:11:41 [INFO]   ➜ [RUN_CODE] Nhận code (488 ký tự) — Đang thực thi tức thời...
+09:11:42 [INFO]   [RUN_CODE OUT]:
+Installing requests to C:\clientEW\forex_predictor\venv\Scripts\python.exe...
+pip install stdout:
+Requirement already satisfied: requests in c:\clientew\forex_predictor\venv\lib\site-packages (2.33.1)
+Requirement already satisfied: charset_normalizer<4,>=2 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (3.4.7)
+Requirement already satisfied: idna<4,>=2.5 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (3.11)
+Requirement already satisfied: urllib3<3,>=1.26 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (2.6.3)
+Requirement already satisfied: certifi>=2023.5.7 in c:\clientew\forex_predictor\venv\lib\site-packages (from requests) (2026.2.25)
+
+pip install stderr:
+
+[notice] A new release of pip is available: 25.3 -> 26.0.1
+[notice] To update, run: C:\clientEW\forex_predictor\venv\Scripts\python.exe -m pip install --upgrade pip
+
+Test import requests:
+Import SUCCESS
+09:11:42 [INFO]   + Đã lấy: data/nasdaq_100_mt5_1m_20250101_to_20260406.parquet
+09:11:44 [INFO]   + Đã lấy: data/nasdaq_100_mt5_1m_20260101_to_20260406.parquet
+09:11:46 [INFO]   + Đã lấy: data/nasdaq_100_mt5_1m_20260201_to_20260406.parquet
+09:11:48 [INFO]   + Đã lấy: data/sol_usd_mt5_1m_2026.parquet
+09:11:50 [INFO]   + Đã lấy: data/target_direction.parquet
+09:11:51 [INFO]   + Đã lấy: data/target_direction_LTC_USD.parquet
+09:11:52 [INFO]   + Đã lấy: data/target_direction_XAUUSD.parquet
+09:11:54 [INFO]   + Đã lấy: data/us30_mt5_1m_2026.parquet
+09:11:57 [INFO]   + Đã lấy: data/us500_mt5_1m_2026.parquet
+09:11:58 [INFO]   + Đã lấy: data/us_10y_yield_1h_2025_2026.parquet
+09:11:59 [INFO]   + Đã lấy: data/us_10y_yield_mt5_1m_20260201_to_20260406.parquet
+09:12:01 [INFO]   + Đã lấy: data/usdcad_1m_2025_2026.parquet
+09:12:04 [INFO]   + Đã lấy: data/usdcad_mt5_1m_20250101_to_20260406.parquet
+09:12:06 [INFO]   + Đã lấy: data/usdcad_mt5_1m_20260101_to_20260406.parquet
+09:12:08 [INFO]   + Đã lấy: data/usdcad_mt5_1m_20260201_to_20260406.parquet
+09:12:10 [INFO]   + Đã lấy: data/usdjpy_1m_2025_2026.parquet
+09:12:12 [INFO]   + Đã lấy: data/usoil_usd_mt5_1m_2026.parquet
+09:12:15 [INFO]   + Đã lấy: data/ustec_mt5_1m_2026.parquet
+09:12:17 [INFO]   + Đã lấy: data/vixy_1m_2025_2026.parquet
+09:12:18 [INFO]   + Đã lấy: data/vixy_mt5_1m_20260201_to_20260406.parquet
+09:12:21 [INFO]   + Đã lấy: data/xagusd_1m_2025_2026.parquet
+09:12:24 [INFO]   + Đã lấy: data/xagusd_mt5_1m_20250101_to_20260406.parquet
+09:12:26 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'run_code' | Code payload: 391 ký tự
+09:12:26 [INFO]   ➜ [RUN_CODE] Nhận code (391 ký tự) — Đang thực thi tức thời...

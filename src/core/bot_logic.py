@@ -265,8 +265,20 @@ def extract_quantum_signals(
     t0_infer = time.time()
     log_callback(f" ├─ [DEBUG] Bắt đầu Inference (model forward)...")
     try:
+        from datetime import datetime as dt_sys
+        current_utc_hour = dt_sys.utcnow().hour
+        session_id_val = 0
+        if 8 <= current_utc_hour < 13:
+            session_id_val = 1
+        elif current_utc_hour >= 13:
+            session_id_val = 2
+            
+        session_tensor = torch.tensor([session_id_val], dtype=torch.long).to(device)
+        session_name = {0: "Á", 1: "Âu", 2: "Mỹ"}.get(session_id_val, "?")
+        log_callback(f" ├─ 🕒 Tự động định tuyến (Routing) sang Head chuyên gia Phiên {session_name} (Ca {session_id_val})")
+
         with torch.no_grad():
-            output = model(X_tensor)
+            output = model(X_tensor, session_ids=session_tensor)
             probs = torch.softmax(output.data, dim=1).squeeze()
             prob_down, prob_up = probs[0].item(), probs[1].item()
             prediction = prob_up 
