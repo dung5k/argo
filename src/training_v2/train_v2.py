@@ -557,7 +557,12 @@ def train_v2(
                         _f = os.path.join(run_dir, f"{target_name}_{s_name}_weights_{cfg_name}.pth")
                         torch.save(models[s_id].state_dict(), _f)
                         improved.append(cfg_name)
-                        print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {cfg_name} (Điểm EV=L3:{result.best_ev:.4f}) - Cải tiến Mạng Nơ-ron thành công!")
+                        
+                        l3 = result.threshold_metrics[2] if len(result.threshold_metrics) > 2 else None
+                        l4 = result.threshold_metrics[3] if len(result.threshold_metrics) > 3 else None
+                        l3_str = f"L3(>55): WR {l3.win_rate*100:.1f}% ({l3.total_signals} lệnh) EV {l3.ev_score:.5f}" if l3 else ""
+                        l4_str = f"L4(>57): WR {l4.win_rate*100:.1f}% ({l4.total_signals} lệnh) EV {l4.ev_score:.5f}" if l4 else ""
+                        print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {cfg_name} | {l3_str} | {l4_str} | VLoss: {avg_val_loss[s_id]:.5f}")
 
                 phx = phoenixes[s_id]
                 action_str = ""
