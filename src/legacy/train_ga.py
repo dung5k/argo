@@ -219,25 +219,17 @@ class TransformerModel(nn.Module):
             nn.GELU()
         )
         
-        # === MERGE + DECISION HEADS (MULTI-SESSION ROUTING) ===
+        # === MERGE + DECISION HEAD ===
         merged_size = d_model + macro_hidden
-        
-        def _build_head():
-            return nn.Sequential(
-                nn.LayerNorm(merged_size),
-                nn.Linear(merged_size, d_model),
-                nn.GELU(),
-                nn.Dropout(dropout_rate),
-                nn.Linear(d_model, 2)  # Output: 2 class logits
-            )
-            
-        # '0': Asia, '1': London, '2': NY
-        self.decision_heads = nn.ModuleDict({
-            '0': _build_head(),
-            '1': _build_head(),
-            '2': _build_head()
-        })
-    def forward(self, x, session_ids=None):
+        self.decision_head = nn.Sequential(
+            nn.LayerNorm(merged_size),
+            nn.Linear(merged_size, d_model),
+            nn.GELU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(d_model, 2)
+        )
+
+    def forward(self, x):
         xau_feats = x[:, :, :self.num_xau_features]
         macro_feats = x[:, -1, self.num_xau_features:]
         
@@ -252,25 +244,7 @@ class TransformerModel(nn.Module):
         
         # MERGE
         merged = torch.cat([xau_signal, macro_signal], dim=1)
-        
-        # === MULTI-SESSION ROUTING ===
-        if session_ids is None:
-            # Fallback nếu gọi từ inference V1 (trung bình cộng 3 chuyên gia)
-            out0 = self.decision_heads['0'](merged)
-            out1 = self.decision_heads['1'](merged)
-            out2 = self.decision_heads['2'](merged)
-            return (out0 + out1 + out2) / 3.0
-            
-        out = torch.zeros(merged.size(0), 2, device=merged.device, dtype=merged.dtype)
-        mask_0 = (session_ids == 0)
-        mask_1 = (session_ids == 1)
-        mask_2 = (session_ids == 2)
-        
-        if mask_0.any(): out[mask_0] = self.decision_heads['0'](merged[mask_0])
-        if mask_1.any(): out[mask_1] = self.decision_heads['1'](merged[mask_1])
-        if mask_2.any(): out[mask_2] = self.decision_heads['2'](merged[mask_2])
-        
-        return out
+        return self.decision_head(merged)
 
 # ---------------------------------------------------------
 def evaluate_fitness(chromosome, train_loader, val_loader, num_features):

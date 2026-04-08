@@ -311,6 +311,24 @@ class TelegramAgent:
                     if self.mqtt: self.mqtt.send_log("RUN_ERR", f"Lỗi chạy {script}: {e}")
             threading.Thread(target=_run_script, daemon=True).start()
             
+        elif action == "update":
+            self.logger.info("  ➜ Nhận lệnh UPDATE (Git Hard Pull)")
+            def _git_pull():
+                try:
+                    self.logger.info("  [GIT] Đang fetch --all và reset --hard origin/main...")
+                    if self.mqtt: self.mqtt.send_log("INFO", "Bắt đầu cập nhật mã nguồn (Hard Pull)...")
+                    
+                    r1 = subprocess.run(["git", "fetch", "--all"], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    r2 = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
+                    
+                    out_msg = (r1.stdout + r2.stdout).strip()
+                    self.logger.info(f"  [GIT OUT]:\n{out_msg}")
+                    if self.mqtt: self.mqtt.send_log("INFO", f"Git Pull thành công:\n{r2.stdout.strip()}")
+                except Exception as e:
+                    self.logger.error(f"  [GIT ERR] {e}")
+                    if self.mqtt: self.mqtt.send_log("ERR", f"Lỗi cập nhật Git: {e}")
+            threading.Thread(target=_git_pull, daemon=True).start()
+
         elif action == "run_code":
             code = payload.get("code", "")
             if not code: return

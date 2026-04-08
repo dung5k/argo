@@ -358,7 +358,7 @@ def train_v2(
         gamma=2.0, use_soft_labels=True, device=device
     )
 
-    # ── Build model ────────────────────────────────────────────
+    # ── Build 3 Independent Models ─────────────────────────────
     meta_path = os.path.join(
         _ROOT, "data", f"feature_meta_{target_prefix}.json"
     )
@@ -369,33 +369,36 @@ def train_v2(
             num_target_features = meta.get("num_xau_features") or meta.get("num_target_features")
 
     target_name = target_prefix.lower().replace("_", "")
-    model = TransformerModel(
+    
+    # Session ID maps: 0: Asia, 1: London, 2: NY
+    SESSIONS = {0: "asia", 1: "london", 2: "ny"}
+    
+    # 1. Models
+    models = {s_id: TransformerModel(
         num_features, d_model=D_MODEL, nhead=NHEAD,
         num_layers=NUM_ATTN_LAYERS, dropout_rate=DROPOUT_RATE,
         num_xau_features=num_target_features,
-    ).to(device)
+    ).to(device) for s_id in SESSIONS}
 
-    # ── Phoenix restart engine ─────────────────────────────────
-    phoenix = PhoenixRestartV2(
-        model=model,
+    # 2. Phoenix Restarters
+    phoenixes = {s_id: PhoenixRestartV2(
+        model=models[s_id],
         base_lr=BASE_LR,
         weight_decay=1e-3,
         max_phoenix=MAX_PHOENIX,
         max_stagnate=MAX_STAGNATE,
         min_signals=MIN_SIGNALS,
-    )
+    ) for s_id in SESSIONS}
 
-    # ── Evaluator ──────────────────────────────────────────────
-    evaluator = EVEvaluator(min_signals=MIN_SIGNALS, n_thresholds=4)
+    # 3. Evaluators
+    evaluators = {s_id: EVEvaluator(min_signals=MIN_SIGNALS, n_thresholds=4) for s_id in SESSIONS}
 
-    # ── Top configs tracking ───────────────────────────────────
+    # 4. Top configs tracking per session
     CONFIG_NAMES = ["EV_L3_1.4_L4_1.0", "EV_L3_1.1_L4_1.0", "BEST_VLOSS"]
-    top_configs: dict = {k: None for k in CONFIG_NAMES}
+    top_configs = {s_id: {k: None for k in CONFIG_NAMES} for s_id in SESSIONS}
 
-    model_file = os.path.join(run_dir, f"{target_name}_v2_weights.pth")
-    best_state_dict  = copy.deepcopy(model.state_dict())
-    global_best_ev   = 0.0
-    global_best_vloss = float('inf')
+    global_best_ev   = {s_id: 0.0 for s_id in SESSIONS}
+    global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
     total_epoch = 0
 
     def _get_score(result: EpochEvalResult, strategy: str) -> float:
@@ -409,197 +412,155 @@ def train_v2(
 
     # ── Training loop ──────────────────────────────────────────
     try:
-        while not phoenix.exhausted and total_epoch < EPOCHS:
+        while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < EPOCHS:
             epoch_t0 = time.time()
 
             # TRAIN
-            model.train()
-            train_loss = 0.0
+            for m in models.values(): m.train()
+            train_loss = {s_id: 0.0 for s_id in SESSIONS}
+            valid_train_batches = {s_id: 0 for s_id in SESSIONS}
+            
             for batch_x, batch_y, _, batch_s in train_loader:
                 batch_y = batch_y.view(-1)
                 batch_s = batch_s.view(-1)
-                phoenix.optimizer.zero_grad()
                 
-                outputs = model(batch_x, session_ids=batch_s)
-                
-                mask_0 = (batch_s == 0)
-                mask_1 = (batch_s == 1)
-                mask_2 = (batch_s == 2)
-                
-                loss_val = 0.0
-                valid_heads = 0
-                if mask_0.any():
-                    loss_val += criterion(outputs[mask_0], batch_y[mask_0])
-                    valid_heads += 1
-                if mask_1.any():
-                    loss_val += criterion(outputs[mask_1], batch_y[mask_1])
-                    valid_heads += 1
-                if mask_2.any():
-                    loss_val += criterion(outputs[mask_2], batch_y[mask_2])
-                    valid_heads += 1
+                for s_id in SESSIONS:
+                    if phoenixes[s_id].exhausted: continue
+                    mask = (batch_s == s_id)
+                    if not mask.any(): continue
+                        
+                    phoenixes[s_id].optimizer.zero_grad()
+                    outputs = models[s_id](batch_x[mask])
+                    loss = criterion(outputs, batch_y[mask])
+                    loss.backward()
+                    torch.nn.utils.clip_grad_norm_(models[s_id].parameters(), max_norm=1.0)
+                    phoenixes[s_id].optimizer.step()
+                    
+                    train_loss[s_id] += loss.item()
+                    valid_train_batches[s_id] += 1
 
-                if valid_heads > 0:
-                    loss_val = loss_val / valid_heads
-                    loss_val.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                    phoenix.optimizer.step()
-                    train_loss += loss_val.item()
-
-            avg_train_loss = train_loss / max(len(train_loader), 1)
+            avg_train_loss = {s_id: train_loss[s_id] / max(valid_train_batches[s_id], 1) for s_id in SESSIONS}
 
             # VAL
-            model.eval()
-            val_loss_total = 0.0
-            all_probs_up   = []
-            all_hard_labels = []
-            all_log_returns = []
-            all_session_ids = []
+            for m in models.values(): m.eval()
+            val_loss_total = {s_id: 0.0 for s_id in SESSIONS}
+            all_probs_up = {s_id: [] for s_id in SESSIONS}
+            all_hard_labels = {s_id: [] for s_id in SESSIONS}
+            all_log_returns = {s_id: [] for s_id in SESSIONS}
+            valid_val_batches = {s_id: 0 for s_id in SESSIONS}
 
             with torch.no_grad():
                 for batch_x, batch_y, batch_r, batch_s in val_loader:
                     batch_y = batch_y.view(-1)
                     batch_s = batch_s.view(-1)
-                    outputs = model(batch_x, session_ids=batch_s)
-
-                    mask_0 = (batch_s == 0)
-                    mask_1 = (batch_s == 1)
-                    mask_2 = (batch_s == 2)
-                    
-                    loss_val = 0.0
-                    valid_heads = 0
-                    if mask_0.any():
-                        loss_val += criterion(outputs[mask_0], batch_y[mask_0])
-                        valid_heads += 1
-                    if mask_1.any():
-                        loss_val += criterion(outputs[mask_1], batch_y[mask_1])
-                        valid_heads += 1
-                    if mask_2.any():
-                        loss_val += criterion(outputs[mask_2], batch_y[mask_2])
-                        valid_heads += 1
+                    for s_id in SESSIONS:
+                        if phoenixes[s_id].exhausted: continue
+                        mask = (batch_s == s_id)
+                        if not mask.any(): continue
                         
-                    if valid_heads > 0:
-                        val_loss_total += (loss_val / valid_heads).item()
+                        outputs = models[s_id](batch_x[mask])
+                        loss_v = criterion(outputs, batch_y[mask])
+                        val_loss_total[s_id] += loss_v.item()
+                        valid_val_batches[s_id] += 1
+                        
+                        probs = F.softmax(outputs, dim=1)
+                        all_probs_up[s_id].append(probs[:, 1].cpu())
+                        all_hard_labels[s_id].append((batch_y[mask] >= 0.5).long().cpu())
+                        all_log_returns[s_id].append(batch_r[mask].cpu())
 
-                    probs = F.softmax(outputs, dim=1)
-                    all_probs_up.append(probs[:, 1].cpu())
+            avg_val_loss = {s_id: val_loss_total[s_id] / max(valid_val_batches[s_id], 1) for s_id in SESSIONS}
 
-                    # Hard label để đánh giá WR và EV
-                    hard = (batch_y >= 0.5).long().cpu()
-                    all_hard_labels.append(hard)
-                    all_log_returns.append(batch_r.cpu())
-                    all_session_ids.append(batch_s.cpu())
+            for s_id in SESSIONS:
+                s_name = SESSIONS[s_id]
+                if phoenixes[s_id].exhausted or len(all_probs_up[s_id]) == 0: 
+                    continue
 
-            all_probs_up    = torch.cat(all_probs_up)
-            all_hard_labels = torch.cat(all_hard_labels)
-            all_log_returns = torch.cat(all_log_returns)
-            all_session_ids = torch.cat(all_session_ids)
-            avg_val_loss    = val_loss_total / max(len(val_loader), 1)
+                probs_t = torch.cat(all_probs_up[s_id])
+                hard_t = torch.cat(all_hard_labels[s_id])
+                ret_t = torch.cat(all_log_returns[s_id])
+                
+                # Evaluate EV separate per session
+                result = evaluators[s_id].evaluate(
+                    probs_up=probs_t,
+                    hard_labels=hard_t,
+                    log_returns=ret_t,
+                    val_loss=avg_val_loss[s_id],
+                )
 
-            # Evaluate EV
-            result = evaluator.evaluate(
-                probs_up=all_probs_up,
-                hard_labels=all_hard_labels,
-                log_returns=all_log_returns,
-                val_loss=avg_val_loss,
-                session_ids=all_session_ids,
-            )
+                # Check L4 valid
+                valid = evaluators[s_id].is_statistically_valid(result)
 
-            total_epoch += 1
-            epoch_time = time.time() - epoch_t0
-            cur_lr = phoenix.optimizer.param_groups[0]['lr']
-            phoenix_tag = f"[P{phoenix.phoenix_count}]" if phoenix.phoenix_count > 0 else ""
+                # Step Phoenix per session
+                phx = phoenixes[s_id]
+                status_phx, action_str = phx.step(
+                    val_loss=avg_val_loss[s_id],
+                    current_ev=result.best_ev,
+                    epoch=total_epoch,
+                )
 
-            print(
-                f"Epoch {total_epoch:04d} {phoenix_tag}| "
-                f"TrainLoss: {avg_train_loss:.4f} | "
-                f"ValLoss: {avg_val_loss:.4f} | "
-                f"LR: {cur_lr:.2e} | Time: {epoch_time:.1f}s"
-            )
-            print("  " + evaluator.format_summary(result))
+                # Track and save Models
+                global_best_ev[s_id] = max(global_best_ev[s_id], result.best_ev)
+                global_best_vloss[s_id] = min(global_best_vloss[s_id], avg_val_loss[s_id])
 
-            # Cập nhật LR scheduler dùng EV composite score
-            ev_composite = result.composite_score()
-            phoenix.scheduler.step(ev_composite if ev_composite != 0 else -avg_val_loss)
-
-            if avg_val_loss < global_best_vloss:
-                global_best_vloss = avg_val_loss
-
-            # ── Cập nhật top_configs ───────────────────────────
-            is_valid = evaluator.is_statistically_valid(result)
-            improved = []
-
-            if is_valid:
-                for s_name in CONFIG_NAMES:
-                    cur_score = _get_score(result, s_name)
-                    prev_score = top_configs[s_name]["score"] if top_configs[s_name] else None
-
-                    if prev_score is None or cur_score > prev_score:
-                        top_configs[s_name] = {
-                            "score": cur_score,
-                            "state_dict": copy.deepcopy(model.state_dict()),
+                improved = []
+                for cfg_name in CONFIG_NAMES:
+                    score = _get_score(result, cfg_name)
+                    if top_configs[s_id][cfg_name] is None or score > top_configs[s_id][cfg_name]["score"]:
+                        top_configs[s_id][cfg_name] = {
+                            "score": score,
+                            "epoch": total_epoch,
+                            "state_dict": {k: v.cpu() for k, v in models[s_id].state_dict().items()},
                             "eval_result": result,
-                            "max_thresh": result.max_threshold,
                         }
-                        rank_file = os.path.join(
-                            run_dir, f"{target_name}_v2_weights_{s_name}.pth"
-                        )
-                        torch.save(top_configs[s_name]["state_dict"], rank_file)
-                        improved.append(s_name)
+                        # LƯU CHÍNH THỨC XUỐNG ĐỊA ĐĨA THEO PHIÊN
+                        _f = os.path.join(run_dir, f"{target_name}_{s_name}_weights_{cfg_name}.pth")
+                        torch.save(models[s_id].state_dict(), _f)
+                        improved.append(cfg_name)
 
                 if improved:
-                    phoenix.notify_improved()
-                    valid_cfgs = [c for c in top_configs.values() if c is not None]
-                    best_cfg = max(valid_cfgs, key=lambda c: c["score"])
-                    global_best_ev = best_cfg["score"]
-                    best_state_dict = copy.deepcopy(best_cfg["state_dict"])
-                    torch.save(best_state_dict, model_file)
-                    _save_blackbox(
-                        run_dir, target_name, top_configs,
-                        total_epoch, global_best_ev, global_best_vloss
-                    )
-                    print(
-                        f"  ★ ĐỈNH MỚI cho: [{', '.join(improved)}] "
-                        f"EV_composite={global_best_ev*10000:.2f}pip"
-                    )
-                else:
-                    need_phoenix = phoenix.notify_no_improve()
-                    if need_phoenix:
-                        _trigger_phoenix(
-                            phoenix, top_configs, best_state_dict,
-                            train_dataset, BATCH_SIZE
-                        )
-                        train_loader = DataLoader(
-                            train_dataset, batch_size=BATCH_SIZE, shuffle=True
-                        )
-            else:
-                need_phoenix = phoenix.notify_no_improve()
-                if need_phoenix:
-                    _trigger_phoenix(
-                        phoenix, top_configs, best_state_dict,
-                        train_dataset, BATCH_SIZE
-                    )
-                    train_loader = DataLoader(
-                        train_dataset, batch_size=BATCH_SIZE, shuffle=True
-                    )
+                    phx.notify_improved()
+                    
+                if total_epoch % 10 == 0:
+                    dt = time.time() - epoch_t0
+                    print(f"\n[Phiên {s_name.upper()} | Mạng {s_id}] Ep {total_epoch} ({dt:.1f}s) — TrLoss: {avg_train_loss[s_id]:.4f} | VLoss: {avg_val_loss[s_id]:.4f}")
+                    if action_str:
+                        print(f"  ↪ {action_str}")
+                    print(evaluators[s_id].format_summary(result))
 
-            if phoenix.exhausted:
-                print(
-                    f"\n[PHOENIX] Đã tái sinh {MAX_PHOENIX} lần. "
-                    f"Best EV composite: {global_best_ev*10000:.2f}pip."
-                )
-                break
+            total_epoch += 1
 
+            # Save Blackbox metrics combined
+            _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features, num_features)
+            
     except KeyboardInterrupt:
         print("\n[EMERGENCY] Dừng khẩn cấp. Đang lưu blackbox...")
-        _save_blackbox(
-            run_dir, target_name, top_configs,
-            total_epoch, global_best_ev, global_best_vloss,
-            is_interrupted=True
-        )
-        model.load_state_dict(best_state_dict)
-        torch.save(best_state_dict, model_file)
+        _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features, num_features)
 
-    print(f"\n[DONE] Best EV composite: {global_best_ev*10000:.2f}pip | Saved: {model_file}")
+    print(f"\n[DONE] Hoàn tất quá trình Train 3 Mô Hình Độc Lập cho Phiên Á/Âu/Mỹ. | Saved to: {run_dir}")
+
+def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features, num_features):
+    """Lưu trữ metadata tổng hợp chung cho 3 Networks"""
+    meta_file = os.path.join(run_dir, "training_metrix_v2.json")
+    out = {
+        "architecture_v2": {
+            "version": "Independent_Multi_Session_v2.0",
+            "dimensions": {
+                "num_features_xau": num_target_features,
+                "num_features_macro": num_features - num_target_features,
+            }
+        },
+        "sessions": {}
+    }
+    
+    for s_id, s_name in {0: "asia", 1: "london", 2: "ny"}.items():
+        sess_data = {}
+        for k, v in top_configs[s_id].items():
+            if v is not None:
+                sess_data[k] = {"score": v["score"], "epoch": v["epoch"]}
+        out["sessions"][s_name] = sess_data
+
+    with open(meta_file, 'w', encoding='utf-8') as f:
+        json.dump(out, f, indent=4, ensure_ascii=False)
 
 
 def _trigger_phoenix(phoenix, top_configs, best_state_dict, train_dataset, batch_size):

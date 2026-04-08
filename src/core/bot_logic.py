@@ -9,12 +9,21 @@ import numpy as np
 from huggingface_hub import HfApi, hf_hub_download
 
 def sync_brain_from_cloud(
-    target_symbol, target_prefix, weight_file, hf_run_cfg,
+    target_symbol, target_prefix, base_weight_name, hf_run_cfg,
     current_loaded_session, session_id,
     num_features, d_model, nhead, num_attn_layers, dropout_rate, device,
     log_callback, mt5_manager, TransformerModel
 ):
-    """Tải và đồng bộ Weights từ HF hoặc Local Cache. Tự động khớp Data Scalers."""
+    """Tải và đồng bộ Weights từ HF hoặc Local Cache. Hỗ trợ Đa Lõi (Từng Phiên Độc Lập)."""
+    
+    # Dịch session_id (0,1,2) -> 'asia', 'london', 'ny'
+    s_map = {0: "asia", 1: "london", 2: "ny"}
+    session_str = s_map.get(session_id, "unified")
+    
+    # v2_weights_EV_L3... -> asia_weights_EV_L3...
+    weight_file = base_weight_name
+    if "v2_weights_" in base_weight_name:
+        weight_file = base_weight_name.replace("v2_weights_", f"{session_str}_weights_")
     
     active_brain_name = weight_file
     gui_status = ""
@@ -275,10 +284,9 @@ def extract_quantum_signals(
             
         session_tensor = torch.tensor([session_id_val], dtype=torch.long).to(device)
         session_name = {0: "Á", 1: "Âu", 2: "Mỹ"}.get(session_id_val, "?")
-        log_callback(f" ├─ 🕒 Tự động định tuyến (Routing) sang Head chuyên gia Phiên {session_name} (Ca {session_id_val})")
 
         with torch.no_grad():
-            output = model(X_tensor, session_ids=session_tensor)
+            output = model(X_tensor)
             probs = torch.softmax(output.data, dim=1).squeeze()
             prob_down, prob_up = probs[0].item(), probs[1].item()
             prediction = prob_up 
