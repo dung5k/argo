@@ -45,6 +45,7 @@ if len(sys.argv) > 1:
 TARGET_SYMBOL = "XAUUSD"
 TARGET_PREFIX = "XAU_USD"
 WEIGHT_FILE = "xauusd_unified_weights.pth"
+WEIGHT_FILES = {}
 CONFIG = {}
 
 if os.path.exists(config_file):
@@ -54,6 +55,7 @@ if os.path.exists(config_file):
             TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
             TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAU_USD")
             WEIGHT_FILE = CONFIG.get("WEIGHT_FILE", "xauusd_unified_weights.pth")
+            WEIGHT_FILES = CONFIG.get("WEIGHT_FILES", {})
     except: pass
 
 # --- LÕI GIAO DIỆN KIỂM SOÁT TỔNG ---
@@ -110,7 +112,11 @@ def bot_background_loop():
             # Đồng bộ não bộ phiên mới
             try:
                 gui_session = f"{session_display} [Đang kéo Cloud...]"
-                m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(WEIGHT_FILE, session_id)
+                
+                # Ưu tiên lấy cấu hình chỉ định rõ ràng của từng Phiên, nếu không có thì xài cấu hình chung (WEIGHT_FILE)
+                actual_weight_file = WEIGHT_FILES.get(session_id, WEIGHT_FILE)
+                
+                m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(actual_weight_file, session_id)
                 gui_session = f"{session_display} [{a_name[:20]}]"
                 
                 # Nạp Động Cơ Suy Diễn
