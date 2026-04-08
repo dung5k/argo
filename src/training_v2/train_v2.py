@@ -612,8 +612,8 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
         "target": target_name,
         "version": "Independent_Multi_Session_v2.0",
         "dimensions": {
-            "num_features_xau": num_target_features,
-            "num_features_macro": num_features - num_target_features,
+            "num_features_target": num_target_features or 0,
+            "num_features_macro": (num_features - num_target_features) if num_target_features is not None else num_features,
         },
         "sessions": {}
     }
