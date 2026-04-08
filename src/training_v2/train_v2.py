@@ -589,12 +589,11 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
     """Lưu trữ metadata tổng hợp chung cho 3 Networks"""
     meta_file = os.path.join(run_dir, "training_metrix_v2.json")
     out = {
-        "architecture_v2": {
-            "version": "Independent_Multi_Session_v2.0",
-            "dimensions": {
-                "num_features_xau": num_target_features,
-                "num_features_macro": num_features - num_target_features,
-            }
+        "target": target_name,
+        "version": "Independent_Multi_Session_v2.0",
+        "dimensions": {
+            "num_features_xau": num_target_features,
+            "num_features_macro": num_features - num_target_features,
         },
         "sessions": {}
     }
@@ -603,7 +602,31 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
         sess_data = {}
         for k, v in top_configs[s_id].items():
             if v is not None:
-                sess_data[k] = {"score": v["score"], "epoch": v["epoch"]}
+                eval_res = v.get("eval_result")
+                if eval_res:
+                    metrics_list = []
+                    for m in eval_res.threshold_metrics:
+                        metrics_list.append({
+                            "threshold": m.threshold,
+                            "total_signals": m.total_signals,
+                            "win_rate": m.win_rate * 100,
+                            "avg_win_return": m.avg_win_return,
+                            "avg_loss_return": m.avg_loss_return,
+                            "ev_score": m.ev_score,
+                            "sharpe_score": getattr(m, 'sharpe_score', 0.0)
+                        })
+                    
+                    sess_data[k] = {
+                        "epoch": v["epoch"],
+                        "max_threshold": eval_res.max_threshold,
+                        "composite_score": v["score"],
+                        "session_evs": eval_res.session_evs,
+                        "best_ev": eval_res.best_ev,
+                        "val_loss": eval_res.val_loss,
+                        "threshold_metrics": metrics_list
+                    }
+                else:
+                    sess_data[k] = {"score": v["score"], "epoch": v["epoch"]}
         out["sessions"][s_name] = sess_data
 
     with open(meta_file, 'w', encoding='utf-8') as f:
