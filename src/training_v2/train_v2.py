@@ -189,17 +189,11 @@ def _save_blackbox(
             ev_composite = m_list.composite_score() if m_list else 0.0
             top_meta.append({
                 "strategy": s_name,
-                "ev_composite_pip": ev_composite * 10000,
+                "score": ev_composite * 10000,
                 "max_thresh": cfg.get("max_thresh", 0.5),
-                "threshold_metrics": [
-                    {
-                        "threshold": m.threshold,
-                        "win_rate": m.win_rate,
-                        "ev_score_pip": m.ev_score * 10000,
-                        "total_signals": m.total_signals,
-                    }
-                    for m in (m_list.threshold_metrics if m_list else [])
-                ],
+                "thresholds": [m.threshold for m in (m_list.threshold_metrics if m_list else [])],
+                "win_rates": [m.win_rate * 100 for m in (m_list.threshold_metrics if m_list else [])],
+                "totals": [m.total_signals for m in (m_list.threshold_metrics if m_list else [])]
             })
 
     data = {
