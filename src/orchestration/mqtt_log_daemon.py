@@ -38,10 +38,10 @@ def on_message(client, userdata, msg):
             LOG_DIR.mkdir(parents=True, exist_ok=True)
             log_file = LOG_DIR / f"{client_id}.log"
             
-            MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
+            MAX_LOG_SIZE = 300 * 1024  # 300 KB
             if log_file.exists() and log_file.stat().st_size > MAX_LOG_SIZE:
                 with open(log_file, "w", encoding="utf-8") as f:
-                    f.write(f"[{datetime.datetime.now().isoformat()}] [SYSTEM] Log file vượt quá 5MB. Đã tự động xoá (Clear log) để giảm tải.\n")
+                    f.write(f"[{datetime.datetime.now().isoformat()}] [SYSTEM] Log file vượt quá 300KB. Đã tự động xoá (Clear log) để giảm tải.\n")
                     
             # Ghi log realtime vào file
             with open(log_file, "a", encoding="utf-8") as f:
