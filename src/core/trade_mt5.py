@@ -124,10 +124,21 @@ def get_current_session():
     else: 
         return "asian", "Á (TOKYO/SYDNEY)"
 
+def _safe_mt5_init(path):
+    if mt5.initialize(path=path):
+        return True
+    print(f"🔄 Đang đánh thức và kích hoạt MT5 từ ổ đĩa: {path}...")
+    try:
+        subprocess.Popen([path])
+        time.sleep(5) # Đợi 5 giây cho MT5 tải dữ liệu xong
+    except Exception as e:
+        print(f"⚠️ Không thể ép bật MT5 qua subprocess: {e}")
+    return mt5.initialize(path=path)
+
 def initialize_mt5():
     # Sử dụng Đường dẫn MT5 từ config truyền vào, mặc định là MT5 Chính
     MT5_MAIN_PATH = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-    if not mt5.initialize(path=MT5_MAIN_PATH):
+    if not _safe_mt5_init(MT5_MAIN_PATH):
         print("❌ LỖI: Không thể khởi tạo Giao diện MetaTrader 5.")
         return False
     return True
@@ -352,7 +363,7 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
     target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
     if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
         mt5.shutdown()
-        if mt5.initialize(path=target_path):
+        if _safe_mt5_init(target_path):
             mt5_manager.current_connected_path = target_path
             
     actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
@@ -696,7 +707,7 @@ def bot_background_loop():
         
         if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
             mt5.shutdown()
-            if mt5.initialize(path=target_path):
+            if _safe_mt5_init(target_path):
                 log_message(f"[{gui_time}] 🔌 Đã khởi tạo kết nối MT5 Terminal: {target_path}")
                 mt5_manager.current_connected_path = target_path
             else:
@@ -925,13 +936,16 @@ def start_overlay_dashboard():
     root.attributes('-alpha', 0.90) 
     
     screen_w = root.winfo_screenwidth()
-    x_pos = screen_w - 380 
+    screen_h = root.winfo_screenheight()
+    
+    # Góc dưới cùng bên trái 
+    x_pos = 10
     
     # Đặt lệch Layout để không chèn lên nhau
     if "XAU" in TARGET_SYMBOL.upper():
-        y_pos = 50
+        y_pos = screen_h - 560
     else:
-        y_pos = 250
+        y_pos = screen_h - 560 - 200 # Lên cao tí nữa nếu chạy XAG
         
     root.geometry(f"360x500+{x_pos}+{y_pos}")
     root.configure(bg='#121212') 
@@ -958,7 +972,7 @@ def start_overlay_dashboard():
     root.bind("<ButtonRelease-1>", stop_move)
     root.bind("<B1-Motion>", do_move)
     
-    tk.Label(root, text=f"🔥 {TARGET_SYMBOL} MOE TERMINATOR 🔥", fg="#ffcc00", bg="#121212", font=("Helvetica", 11, "bold")).pack(pady=2)
+    tk.Label(root, text=f"🔥 {TARGET_SYMBOL} MOE TERMINATOR (V1) 🔥", fg="#ffcc00", bg="#121212", font=("Helvetica", 11, "bold")).pack(pady=2)
     
     lbl_session = tk.Label(root, text="🌐 Phiên: Đang đo Đạc...", fg="#cc88ff", bg="#121212", font=("Helvetica", 9, "bold"))
     lbl_session.pack()
