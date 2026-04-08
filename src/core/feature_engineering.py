@@ -12,7 +12,8 @@ USE_MT5_DATA = True  # (False = Binance | True = MT5)
 # Đọc config để lấy target
 import sys
 import json
-config_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\bot_config.json"
+_root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+config_path = os.path.join(_root_dir, "data", "bot_config.json")
 if len(sys.argv) > 1:
     for arg in sys.argv:
         if arg.endswith('.json'):
@@ -332,7 +333,7 @@ def create_stationary_features(df, is_live=False):
     
     # Lưu metadata ra JSON để train_final.py đọc
     import json
-    meta_path = os.path.join(r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data", f"feature_meta_{TARGET_PREFIX}.json")
+    meta_path = os.path.join(data_path, f"feature_meta_{TARGET_PREFIX}.json")
     with open(meta_path, "w") as f:
         json.dump({
             "num_xau_features": num_xau_features, 
@@ -377,7 +378,8 @@ if __name__ == "__main__":
     import sys
     is_live = len(sys.argv) > 1 and sys.argv[1] == "live"
     
-    data_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data"
+    _root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    data_path = os.path.join(_root_dir, "data")
     
     # 1. Gộp toàn bộ Data
     merged_df = load_and_align_data(data_path)
