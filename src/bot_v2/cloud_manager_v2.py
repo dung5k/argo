@@ -32,8 +32,8 @@ class V2CloudManager:
 
     def get_latest_run_id(self, api: HfApi, weight_file: str) -> str:
         files = api.list_repo_files("dung5k/argo_data", repo_type="dataset")
-        # Ensure target_symbol matches like _xauusd_
-        run_dirs = [f.split('/')[1] for f in files if f.startswith('runs/') and f'_{self.target_symbol}_' in f and weight_file in f]
+        # Ensure target_prefix matches like _xauusd_
+        run_dirs = [f.split('/')[1] for f in files if f.startswith('runs/') and f'_{self.target_prefix.lower()}_' in f and weight_file in f]
         valid_runs = [r for r in run_dirs if r != 'old']
         if not valid_runs:
             raise FileNotFoundError("Không tìm thấy thư mục run_ tương thích trên Repo!")
@@ -87,6 +87,12 @@ class V2CloudManager:
                 inference_feats = metrix.get("data_features", [])
                 if inference_feats:
                     num_features = len(inference_feats)
+                # Override via dimensions if present (tương thích training_metrix cập nhật)
+                dims = metrix.get("dimensions", {})
+                if dims:
+                    num_xau_features = dims.get("num_features_xau", num_xau_features)
+                    num_macro = dims.get("num_features_macro", num_features - num_xau_features)
+                    num_features = num_xau_features + num_macro
             except Exception as e:
                 self.log_callback(f" ├─ ⚠️ Lỗi tải Metrix V2: {e}")
                 
@@ -105,11 +111,14 @@ class V2CloudManager:
         if not model_path or not os.path.exists(model_path):
             raise FileNotFoundError(f"[CloudManager] Lỗi Trầm Trọng: Không tìm thấy {weight_file} ở Mây lẫn Đĩa!")
             
-        # Tìm chuẩn metadata cục bộ
+        # Tìm chuẩn metadata cục bộ (Chỉ dùng làm Fallback nếu Cloud không khai báo Dimensions)
         meta_path_local = os.path.join(self.data_dir, f"feature_meta_{self.target_prefix}.json")
         if os.path.exists(meta_path_local):
             with open(meta_path_local, "r", encoding='utf-8') as mf:
-                num_xau_features = json.load(mf).get("num_xau_features", 8)
+                local_xau = json.load(mf).get("num_xau_features", 8)
+                # Nếu giá trị đựơc giữ nguyên ở mặc định (8) thì mới lấy Cache ở Đĩa!
+                if num_xau_features == 8:
+                    num_xau_features = local_xau
                 
         self.log_callback(f"[CloudManager] Nạp thành công: {model_path}")
         return model_path, active_brain_name, num_xau_features, num_features, inference_feats

@@ -58,7 +58,7 @@
             "LOCAL": "LOCAL"
         },
         "ROUTING": {
-            "XAUUSDm": "DEFAULT",
+            "XAUUSDm": "EXNESS",
             "AUDUSDm": "EXNESS",
             "EURUSDm": "EXNESS",
             "GBPUSDm": "EXNESS",
