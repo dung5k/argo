@@ -215,6 +215,8 @@ class TrainingManager:
                     self._on_done_cb(task_id, exit_code)
             except Exception as ex:
                 self.logger.error(f"✗ Task lỗi: {ex}")
+                if self.mqtt_helper:
+                    self.mqtt_helper.send_log("ERR", f"✗ Task lỗi: {ex}")
             finally:
                 with self._lock:
                     self._proc    = None

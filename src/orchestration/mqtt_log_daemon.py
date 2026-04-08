@@ -18,8 +18,8 @@ def on_connect(client, userdata, flags, rc):
         print("[DAEMON] Đã kết nối MQTT Broker thành công!")
         # Lắng nghe hệ thống log của TẤT CẢ các client
         topic = f"{BASE_TOPIC}/+/log"
-        client.subscribe(topic)
-        print(f"[DAEMON] Đang theo dõi Realtime Topic: {topic}")
+        client.subscribe(topic, qos=1)
+        print(f"[DAEMON] Đang theo dõi Realtime Topic: {topic} (QoS=1)")
     else:
         print(f"[DAEMON] Lỗi kết nối MQTT, mã lỗi: {rc}")
 

@@ -262,7 +262,7 @@ def train_v2(
         pass
 
     # ── Chế độ Hiệu suất (Performance Mode) ────────────────────
-    perf_mode = cfg.get("TRAINING", {}).get("PERFORMANCE_MODE", "MAX").upper()
+    perf_mode = os.environ.get("PERFORMANCE_MODE", cfg.get("TRAINING", {}).get("PERFORMANCE_MODE", "MAX")).upper()
     if perf_mode == "LIGHT":
         import multiprocessing
         cores = multiprocessing.cpu_count()
