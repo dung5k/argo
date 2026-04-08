@@ -32,6 +32,17 @@ from legacy.train_ga import TransformerModel, TimeSeriesDataset, device
 
 
 def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
+    # ── Chế độ Hiệu suất (Performance Mode) ────────────────────
+    perf_mode = os.environ.get("PERFORMANCE_MODE", "MAX").upper()
+    if perf_mode == "LIGHT":
+        import multiprocessing
+        cores = multiprocessing.cpu_count()
+        threads = max(1, cores // 2)
+        torch.set_num_threads(threads)
+        print(f"[{perf_mode} MODE] 🌿 Chế độ nhẹ nhàng: Giới hạn PyTorch dùng {threads}/{cores} CPU luồng để chạy ẩn.")
+    else:
+        print(f"[{perf_mode} MODE] 🚀 Chế độ Tối đa: Mở khóa hiệu suất chiếm dụng toàn bộ thiết bị.")
+
     """
     Train 1 model Transformer duy nhất trên toàn bộ data.
     """

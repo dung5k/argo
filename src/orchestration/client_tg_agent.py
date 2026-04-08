@@ -128,7 +128,7 @@ class TrainingManager:
             return f"🔄 BUSY — task: <code>{self._task_id}</code>{elapsed}"
         return "💤 IDLE"
 
-    def start_train(self, config_path: str, code: str = None, script: str = "", on_done=None) -> dict:
+    def start_train(self, config_path: str, code: str = None, script: str = "", on_done=None, **kwargs) -> dict:
         if self.is_busy():
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
@@ -158,6 +158,19 @@ class TrainingManager:
             cmd.append(config_abs)
 
         env = os.environ.copy()
+        perf_mode = kwargs.get("perf_mode", "MAX").upper()
+        if perf_mode == "LIGHT":
+            import multiprocessing
+            cores = multiprocessing.cpu_count()
+            threads = str(max(1, cores // 2))
+            env["OMP_NUM_THREADS"] = threads
+            env["OPENBLAS_NUM_THREADS"] = threads
+            env["MKL_NUM_THREADS"] = threads
+            env["VECLIB_MAXIMUM_THREADS"] = threads
+            env["NUMEXPR_NUM_THREADS"] = threads
+            env["PERFORMANCE_MODE"] = "LIGHT"
+        else:
+            env["PERFORMANCE_MODE"] = "MAX"
         env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"})
 
         self.logger.info(f"▶ START TRAIN task={task_id}")
@@ -270,16 +283,17 @@ class TelegramAgent:
         if action == "train":
             symbol = payload.get("symbol", "xauusd").lower()
             script = payload.get("script", "")
+            perf_mode = payload.get("perf_mode", "MAX")
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
-            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, script={script}, config={config}")
-            res = self.manager.start_train(config, script=script)
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, script={script}, config={config}, mode={perf_mode}")
+            res = self.manager.start_train(config, script=script, perf_mode=perf_mode)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:
                     self.mqtt.send_log("ERR", f"Lỗi khởi động train: {res.get('error')}")
             else:
                 if self.mqtt:
-                    self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol}")
+                    self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol} ({perf_mode} mode)")
         elif action == "train_code":
             code = payload.get("code", "")
             if not code: return

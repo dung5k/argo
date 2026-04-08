@@ -54,7 +54,7 @@ class HostController:
                 if self.connected: break
                 time.sleep(0.1)
 
-    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False):
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False, mode: str = "MAX"):
         self._wait_connected()
         
         if cmd == "run" and raw and script:
@@ -67,10 +67,15 @@ class HostController:
                 print(f"[LỖI] Đọc file raw_code thất bại: {e}")
                 return
         else:
-            payload = json.dumps({"cmd": cmd, "symbol": symbol, "script": script})
+            payload = json.dumps({
+                "cmd": cmd, 
+                "symbol": symbol, 
+                "script": script,
+                "perf_mode": mode.upper()
+            })
             
         self.client.publish(self.cmd_topic, payload, qos=1)
-        print(f"[HOST] Lệnh '{cmd}{' (RAW)' if raw else ''}' đã được phát sóng lên kênh: {self.cmd_topic}")
+        print(f"[HOST] Lệnh '{cmd}{' (RAW)' if raw else ''}' [Mode: {mode.upper()}] đã được phát sóng lên kênh: {self.cmd_topic}")
 
     def send_file(self, local_path: str, remote_dest: str):
         """
@@ -239,6 +244,7 @@ def main():
     parser.add_argument("--dest", default="")
     parser.add_argument("--version", "-v", default="latest", help="Version agent cần deploy (VD: v1.3.5 hoặc latest)")
     parser.add_argument("--tag", default="", help="Tag version khi lưu (VD: v1.3.5). Mặc định: timestamp")
+    parser.add_argument("--mode", "-m", default="MAX", choices=["MAX", "LIGHT", "max", "light"], help="Chế độ hiệu suất khi train (Tối đa hoặc Nhẹ nhàng)")
     parser.add_argument("--time", "-t", type=int, default=15)
     
     args = parser.parse_args()
@@ -280,7 +286,8 @@ def main():
         host.deploy_agent(args.version)
         host.listen_logs(args.time)
     elif args.cmd in ["train", "kill", "run", "update"]:
-        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False))
+        mode_val = getattr(args, 'mode', 'MAX')
+        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val)
         host.listen_logs(args.time)
     elif args.cmd == "listen":
         host.listen_logs(args.time)

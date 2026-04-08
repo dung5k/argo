@@ -261,6 +261,17 @@ def train_v2(
     except Exception:
         pass
 
+    # ── Chế độ Hiệu suất (Performance Mode) ────────────────────
+    perf_mode = cfg.get("TRAINING", {}).get("PERFORMANCE_MODE", "MAX").upper()
+    if perf_mode == "LIGHT":
+        import multiprocessing
+        cores = multiprocessing.cpu_count()
+        threads = max(1, cores // 2)
+        torch.set_num_threads(threads)
+        print(f"[{perf_mode} MODE] 🌿 Chế độ nhẹ nhàng: Giới hạn PyTorch dùng {threads}/{cores} CPU luồng để chạy ẩn.")
+    else:
+        print(f"[{perf_mode} MODE] 🚀 Chế độ Tối đa: Mở khóa hiệu suất chiếm dụng toàn bộ thiết bị.")
+
     # ── Hyperparameters ────────────────────────────────────────
     WINDOW_SIZE      = 60
     D_MODEL          = 256
