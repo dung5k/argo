@@ -8,6 +8,7 @@
         "DATASET_REPO": "dung5k/argo_data",
         "MODEL_REPO": "dung5k/trading_models",
         "SYNC_CHUNKS": true,
+        "KEEP_LOCAL_PARQUET": false,
         "REQUIRED_PARQUETS": [
             "xagusd_mt5_1m_20260201_to_20260406.parquet",
             "xauusd_mt5_1m_20260201_to_20260406.parquet",

@@ -49,11 +49,22 @@ class MT5DataManager:
         
         self.MT5_FALLBACK_NAMES = {
             "XAUUSDm": ["XAUUSDm", "XAUUSD", "GOLD", "GOLDm", "XAUUSD.a", "XAUUSD_m", "XAUUSD+"],
+            "XAGUSDm": ["XAGUSDm", "XAGUSD", "SILVER", "SILVERm", "XAGUSD.a", "XAGUSD+"],
+            "XPTUSDm": ["XPTUSDm", "XPTUSD", "PLATINUM", "PLATINUMm", "XPTUSD.a"],
+            "XCUUSDm": ["XCUUSDm", "XCUUSD", "COPPER", "COPPERm", "XCUUSD.a"],
+            "XALUSDm": ["XALUSDm", "XALUSD", "ALUMINIUM", "ALUMINIUMm"],
+            "XNIUSDm": ["XNIUSDm", "XNIUSD", "NICKEL", "NICKELm"],
+            "XPDUSDm": ["XPDUSDm", "XPDUSD", "PALLADIUM", "PALLADIUMm"],
+            "XPBUSDm": ["XPBUSDm", "XPBUSD", "LEAD", "LEADm"],
             "US30m": ["US30m", "US30", "DJ30", "WS30"],
             "US500m": ["US500m", "US500", "SP500", "SPX500"],
             "USTECm": ["USTECm", "USTEC", "NAS100", "US100", "NDX100"],
             "JP225m": ["JP225m", "JP225", "JPN225", "NIY"],
             "DXYm": ["DXYm", "DXY", "USDIDX"],
+            "USOILm": ["USOILm", "USOIL", "WTI", "WTIm", "WTICRUDEm", "OIL"],
+            "UKOILm": ["UKOILm", "UKOIL", "BRENT", "BRENTm", "UKOILm"],
+            "XNGUSDm": ["XNGUSDm", "XNGUSD", "NATGAS", "NATGASm", "NG"],
+            "VIXYm": ["VIXYm", "VIXY", "VIX"],
             "BTCUSDm": ["BTCUSDm", "BTCUSD", "BTCUSD.a"],
             "ETHUSDm": ["ETHUSDm", "ETHUSD", "ETHUSD.a"],
         }
