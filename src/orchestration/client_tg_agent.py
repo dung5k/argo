@@ -246,7 +246,7 @@ class TrainingManager:
             lines = self._log_file.read_text(encoding="utf-8", errors="replace").splitlines()
             # Lọc các dòng có nội dung quan trọng
             important = [l for l in lines if any(kw in l for kw in
-                         ["Epoch", "WR:", "VLoss:", "ĐỈNH", "PHOENIX", "LOI", "Error"])]
+                         ["Epoch", "WR:", "VLoss:", "ĐỈNH", "PHOENIX", "LOI", "Error", "mẫu tốt hơn"])]
             shown = important[-n:] if important else lines[-n:]
             return "\n".join(shown) or "(log trống)"
         except Exception as e:
@@ -688,8 +688,11 @@ class TelegramAgent:
                 last_line = epoch_lines[-1] if epoch_lines else ""
                 epoch_num = int(last_line.split()[1]) if last_line and len(last_line.split()) > 1 else 0
 
-                peak_lines = [l for l in lines if "ĐỈNH MỚI" in l]
+                peak_lines = [l for l in lines if "ĐỈNH MỚI" in l or "mẫu tốt hơn" in l]
                 current_peak = peak_lines[-1] if peak_lines else ""
+
+                event_lines = [l for l in lines if "[PHOENIX" in l or "Tái sinh!" in l]
+                current_event = event_lines[-1] if event_lines else ""
 
                 git_err_lines = [l for l in lines if "[GIT LỖI PUSH]" in l or "[GIT LỖI THỰC THI THÊM]" in l]
                 current_git_err = git_err_lines[-1] if git_err_lines else ""
@@ -701,6 +704,11 @@ class TelegramAgent:
                     self._last_git_err = current_git_err
                     send_msg = f"🚨 <b>{self.client_id}</b> GẶP LỖI ĐẨY GIT!\n"
                     send_msg += f"<pre>{html.escape(current_git_err.strip())}</pre>"
+                elif current_event and current_event != getattr(self, "_last_tg_event", ""):
+                    self._last_tg_event = current_event
+                    send_msg = f"🔥 <b>{self.client_id}</b> PHÁT HIỆN SỰ KIỆN MỚI!\n"
+                    if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
+                    send_msg += f"<pre>{html.escape(current_event.strip())}</pre>"
                 elif current_peak and current_peak != last_peak_line:
                     last_peak_line = current_peak
                     send_msg = f"🏆 <b>{self.client_id}</b> TÌM THẤY MẪU MỚI!\n"
