@@ -227,6 +227,7 @@ def train_v2(
     target_prefix: str = "XAUUSD",
     config: dict | None = None,
     max_epoch_override: int | None = None,
+    config_path: str | None = None,
 ):
     """
     Huấn luyện Transformer V2 với 5 cải tiến toán học.
@@ -432,9 +433,28 @@ def train_v2(
             return -result.val_loss
         return 0.0
 
+    current_active_mode = perf_mode
+    
     # ── Training loop ──────────────────────────────────────────
     try:
         while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < EPOCHS:
+            # ── [HOT-SWAP] Đọc lại config mỗi epoch ──
+            if config_path and os.path.exists(config_path):
+                try:
+                    import multiprocessing
+                    with open(config_path, "r", encoding="utf-8") as _fc:
+                        _hcfg = json.load(_fc)
+                    new_mode = _hcfg.get("TRAINING", {}).get("PERFORMANCE_MODE", current_active_mode).upper()
+                    if new_mode in ["MAX", "LIGHT"] and new_mode != current_active_mode:
+                        print(f"\n[HOT-SWAP] Chuyển đổi Performance Mode on-the-fly: {current_active_mode} ➜ {new_mode}")
+                        current_active_mode = new_mode
+                        if new_mode == "LIGHT":
+                            torch.set_num_threads(max(1, multiprocessing.cpu_count() // 2))
+                        else:
+                            torch.set_num_threads(multiprocessing.cpu_count())
+                except Exception:
+                    pass
+
             epoch_t0 = time.time()
             epoch_has_improvement = False
 
@@ -803,6 +823,7 @@ if __name__ == "__main__":
             target_prefix=TARGET_PREFIX,
             config=cfg,
             max_epoch_override=args.max_epoch,
+            config_path=args.config,
         )
     except Exception as e:
         print(f"\n[CRITICAL ERROR] Quá trình train sụp đổ: {type(e).__name__} - {e}")
