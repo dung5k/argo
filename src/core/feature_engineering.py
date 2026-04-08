@@ -26,6 +26,19 @@ if os.path.exists(config_path):
 else:
     TARGET_PREFIX = "XAU_USD"
 
+def add_time_embeddings(df):
+    """
+    Thêm đặc tính lượng giác (sin/cos) của Giờ và Ngày vào DataFrame.
+    Giúp Neural Network hiểu Khái niệm vòng lặp (vd: 23h và 00h liền kề nhau).
+    """
+    hour = df.index.hour
+    dayofweek = df.index.dayofweek
+    
+    df['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
+    df['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
+    df['dow_sin'] = np.sin(2 * np.pi * dayofweek / 7.0)
+    df['dow_cos'] = np.cos(2 * np.pi * dayofweek / 7.0)
+    return df
 
 def load_and_align_data(data_path):
     print("1. Đang gộp toàn bộ dữ liệu & CHUẨN HOÁ MÚI GIỜ (Timezone Alignment)...")
@@ -180,15 +193,7 @@ def load_and_align_data(data_path):
     print("-> Data Unlocked: Gộp Trọn Vẹn Giai Đoạn 2025-2026 (Full History)...")
     
     # --- THỦ TỤC TIME EMBEDDING (Học Hành Vi Múi Giờ Châu Lục) ---
-    # Phân tích đặc tính Thời Gian giúp AI phân loại Ranh Giới Giao Dịch (Phiên Á / Âu / Mỹ)
-    hour = merged_df.index.hour
-    dayofweek = merged_df.index.dayofweek
-    
-    # Vector hóa Hình Lượng giác (Sin/Cos) để AI hiểu Khái niệm vòng lặp (23h và 00h kề nhau 1 góc tròn)
-    merged_df['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
-    merged_df['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
-    merged_df['dow_sin'] = np.sin(2 * np.pi * dayofweek / 7.0)
-    merged_df['dow_cos'] = np.cos(2 * np.pi * dayofweek / 7.0)
+    merged_df = add_time_embeddings(merged_df)
     
     # Rụng bỏ những ngày đầu tiên bị NaN do các mã lệch ngày xuất phát (MT5 vs Binance)
     merged_df.dropna(inplace=True)

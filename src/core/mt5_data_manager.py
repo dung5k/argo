@@ -310,13 +310,9 @@ class MT5DataManager:
                 
             if len(merged_df) > 0:
                 merged_df.index = merged_df.index.tz_convert('America/New_York')
-                hour = merged_df.index.hour
-                dayofweek = merged_df.index.dayofweek
-                merged_df['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
-                merged_df['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
-                merged_df['dow_sin'] = np.sin(2 * np.pi * dayofweek / 7.0)
-                merged_df['dow_cos'] = np.cos(2 * np.pi * dayofweek / 7.0)
-                # ĐỂ LẠI NaNs cho FeatureEngineering tự lo (Zero-pad), không dropna() tránh mất trắng dữ liệu
+                from src.core.feature_engineering import add_time_embeddings
+                merged_df = add_time_embeddings(merged_df)
+                # ĐỂ LẠI NaNs cho FeatureEngineering tự lo (Zero-pad hoặc Drop)), không dropna() tránh mất trắng dữ liệu
 
         sym_data = self._build_sym_data(merged_df)
         
