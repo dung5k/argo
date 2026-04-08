@@ -1,5 +1,5 @@
 """
-client_tg_agent.py - Telegram Agent cho Client Machine v1.0
+client_tg_agent.py - Telegram Agent cho Client Machine v2.0
 ============================================================
 Thay thế cơ chế polling OneDrive bằng Telegram Bot API.
 - Cross-network: hoạt động khác mạng hoàn toàn
