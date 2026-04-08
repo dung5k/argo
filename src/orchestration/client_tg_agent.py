@@ -50,7 +50,7 @@ try:
 except ImportError:
     MqttHelper = None
 
-AGENT_VERSION = "1.3.0-SkyNet"
+AGENT_VERSION = "2.0.0-SkyNet"
 CONFIG_MAP = {
     "xauusd": "data/bot_config_xau.json",
     "xau"   : "data/bot_config_xau.json",
