@@ -557,6 +557,7 @@ def train_v2(
                         _f = os.path.join(run_dir, f"{target_name}_{s_name}_weights_{cfg_name}.pth")
                         torch.save(models[s_id].state_dict(), _f)
                         improved.append(cfg_name)
+                        print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {cfg_name} (Điểm EV=L3:{result.best_ev:.4f}) - Cải tiến Mạng Nơ-ron thành công!")
 
                 phx = phoenixes[s_id]
                 action_str = ""
