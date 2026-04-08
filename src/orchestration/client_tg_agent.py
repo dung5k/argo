@@ -296,6 +296,7 @@ class TelegramAgent:
             else:
                 if self.mqtt:
                     self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol} ({perf_mode} mode)")
+                self._notify_all(f"✅ <b>{self.client_id}</b>: Training bắt đầu (MQTT)!\nTask: <code>{res.get('task_id')}</code>")
         elif action == "train_code":
             code = payload.get("code", "")
             if not code: return
@@ -313,6 +314,7 @@ class TelegramAgent:
             self.manager.kill()
             if self.mqtt:
                 self.mqtt.send_log("INFO", "Đã nhận lệnh Kill bằng MQTT")
+            self._notify_all(f"🛑 <b>{self.client_id}</b>: Đã dừng tiến trình theo lệnh MQTT!")
         elif action == "run":
             script = payload.get("script", "")
             if not script: return
@@ -336,6 +338,7 @@ class TelegramAgent:
                 try:
                     self.logger.info("  [GIT] Đang fetch --all và reset --hard origin/main...")
                     if self.mqtt: self.mqtt.send_log("INFO", "Bắt đầu cập nhật mã nguồn (Hard Pull)...")
+                    self._notify_all(f"♻️ <b>{self.client_id}</b>: Đang kéo Code mới qua MQTT và tự khởi động lại...")
                     
                     r1 = subprocess.run(["git", "fetch", "--all"], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
                     r2 = subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(self.base_dir), capture_output=True, text=True, timeout=60)
