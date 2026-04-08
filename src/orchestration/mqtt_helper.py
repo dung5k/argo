@@ -62,4 +62,4 @@ class MqttHelper:
             "level": level,
             "message": message
         })
-        self.client.publish(self.log_topic, payload, qos=0, retain=retain)
+        self.client.publish(self.log_topic, payload, qos=1, retain=retain)

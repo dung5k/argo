@@ -145,22 +145,29 @@ def push_runs(logger=None):
     pth_files = [os.path.join(r,f) for r,d,files in os.walk(runs_dir) for f in files if f.endswith('.pth')]
     log(f"[HF] Đang đẩy {len(pth_files)} trọng số (.pth) lên {repo_id}/runs/ ...")
 
-    try:
-        api = HfApi()
-        api.create_repo(repo_id=repo_id, token=token, repo_type="dataset", private=True, exist_ok=True)
-        api.upload_folder(
-            folder_path=str(runs_dir),
-            path_in_repo="runs",
-            repo_id=repo_id,
-            repo_type="dataset",
-            token=token,
-            commit_message="Auto-sync training weights to HuggingFace"
-        )
-        log(f"[HF] Đẩy {len(pth_files)} trọng số lên Đám mây thành công! 🚀")
-        return True
-    except Exception as e:
-        print(f"[HF] Lỗi khi đẩy runs lên HF: {e}")
-        return False
+    import time
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            api = HfApi()
+            api.create_repo(repo_id=repo_id, token=token, repo_type="dataset", private=True, exist_ok=True)
+            api.upload_folder(
+                folder_path=str(runs_dir),
+                path_in_repo="runs",
+                repo_id=repo_id,
+                repo_type="dataset",
+                token=token,
+                commit_message=f"Auto-sync training weights to HuggingFace (Attempt {attempt+1})"
+            )
+            log(f"[HF] Đẩy {len(pth_files)} trọng số lên Đám mây thành công! 🚀")
+            return True
+        except Exception as e:
+            if attempt < max_retries - 1:
+                log(f"[HF] Cảnh báo: Lỗi đẩy runs lên HF (thử lại {attempt+2}/{max_retries}). Chi tiết mã lỗi: {e}")
+                time.sleep(10)
+            else:
+                log(f"[HF] Lỗi khi đẩy runs lên HF sau {max_retries} lần thử: {e}")
+                return False
 
 
 def pull_runs(logger=None):
