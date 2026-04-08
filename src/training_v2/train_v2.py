@@ -1,0 +1,729 @@
+"""
+train_v2.py — Training Entry Point V2
+=======================================
+Tích hợp 5 cải tiến toán học so với train_unified.py (V1):
+
+    1. Soft Labels        : y = sigmoid(k · log_return_T+5)
+    2. QuantileTransformer: kháng Fat-tails, giới hạn outlier
+    3. FocalLoss V2       : tập trung gradient vào mẫu khó
+    4. Phoenix V2         : Magnitude-aware Noise (Δw ~ N(0,(α·|w|)²))
+    5. EV Evaluation      : Expected Value thay Win Rate thuần túy
+
+Tương thích hoàn toàn với bot_config_xau.json.
+Output lưu vào runs/ với suffix _V2 để phân biệt với V1.
+"""
+
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+import os
+import copy
+import json
+import time
+import random
+import datetime
+import threading
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+
+# ── Thêm thư mục gốc vào sys.path để import legacy model ──────────────────
+_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from src.legacy.train_ga import TransformerModel, device
+from src.training_v2.label_generator import SoftLabelGenerator
+from src.training_v2.feature_pipeline_v2 import FeaturePipelineV2
+from src.training_v2.focal_loss import build_focal_loss
+from src.training_v2.phoenix_v2 import PhoenixRestartV2
+from src.training_v2.evaluator_v2 import EVEvaluator, EpochEvalResult
+
+
+# ============================================================
+# Dataset V2: hỗ trợ soft labels + log_returns cho EV
+# ============================================================
+class TimeSeriesDatasetV2(Dataset):
+    """
+    Dataset kế thừa TimeSeriesDataset nhưng trả về thêm log_return thực tế.
+
+    Parameters
+    ----------
+    features : pd.DataFrame
+        Features đã scaled.
+    soft_labels : pd.Series (float)
+        Soft labels ∈ (0,1).
+    log_returns : pd.Series (float)
+        Log return T+5 thực tế (dùng cho EV evaluation).
+    window_size : int
+        Số nến trong mỗi cửa sổ trượt.
+    """
+
+    def __init__(
+        self,
+        features: pd.DataFrame,
+        soft_labels: pd.Series,
+        log_returns: pd.Series,
+        window_size: int = 60,
+    ):
+        self.window_size = window_size
+
+        # Lọc cửa sổ có quá nhiều Nến Ma (> 15%)
+        self.valid_indices = []
+        if 'is_imputed_flag' in features.columns:
+            flags = features['is_imputed_flag'].values
+            for i in range(len(features) - window_size):
+                if flags[i: i + window_size].sum() <= 0.15 * window_size:
+                    self.valid_indices.append(i)
+        else:
+            self.valid_indices = list(range(len(features) - window_size))
+
+        n_dropped = (len(features) - window_size) - len(self.valid_indices)
+        print(
+            f"[DatasetV2] Tổng {len(features)-window_size:,} cửa sổ. "
+            f"Loại {n_dropped:,} cửa sổ Nến Ma > 15%."
+        )
+
+        # Đẩy lên GPU nếu có
+        self.features_tensor = torch.tensor(
+            features.values, dtype=torch.float32
+        ).to(device)
+        self.labels_tensor = torch.tensor(
+            soft_labels.values, dtype=torch.float32
+        ).to(device)
+        self.returns_tensor = torch.tensor(
+            log_returns.values, dtype=torch.float32
+        ).to(device)
+
+    def __len__(self) -> int:
+        return len(self.valid_indices)
+
+    def __getitem__(self, raw_idx: int):
+        idx = self.valid_indices[raw_idx]
+        x = self.features_tensor[idx: idx + self.window_size]
+        y = self.labels_tensor[idx + self.window_size - 1]
+        r = self.returns_tensor[idx + self.window_size - 1]
+        return x, y, r
+
+
+# ============================================================
+# Utility: đọc config từ bot_config_*.json
+# ============================================================
+def _load_config(config_path: str) -> dict:
+    if not config_path or not os.path.exists(config_path):
+        return {}
+    with open(config_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _parse_date_range(cfg: dict):
+    """Đọc khoảng thời gian train/val từ config."""
+    date_keys = {}
+    for k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END"]:
+        if k in cfg:
+            date_keys[k] = cfg[k]
+    if "TRAINING" in cfg:
+        for k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END"]:
+            if k in cfg["TRAINING"]:
+                date_keys[k] = cfg["TRAINING"][k]
+
+    t_start = date_keys.get("TRAIN_START") or date_keys.get("TRAIN_FROM")
+    t_end   = date_keys.get("TRAIN_END")   or date_keys.get("TRAIN_TO")
+    v_end   = date_keys.get("VAL_END")     or date_keys.get("VAL_TO")
+    return t_start, t_end, v_end
+
+
+# ============================================================
+# HuggingFace sync (non-blocking)
+# ============================================================
+def _hf_sync_async(run_dir: str):
+    def _worker():
+        try:
+            src_path = os.path.join(_ROOT, "src")
+            if src_path not in sys.path:
+                sys.path.insert(0, src_path)
+            from orchestration.hf_sync import push_runs
+            if push_runs():
+                print("    [HF] Đã đồng bộ trọng số V2 lên HuggingFace.")
+        except Exception:
+            pass
+    threading.Thread(target=_worker, daemon=True).start()
+
+
+# ============================================================
+# Hàm lưu blackbox metrics
+# ============================================================
+def _save_blackbox(
+    run_dir: str,
+    target_name: str,
+    top_configs: dict,
+    current_epoch: int,
+    best_ev: float,
+    best_val_loss: float,
+    is_interrupted: bool = False,
+):
+    top_meta = []
+    for s_name, cfg in top_configs.items():
+        if cfg is not None:
+            m_list = cfg.get("eval_result")
+            ev_composite = m_list.composite_score() if m_list else 0.0
+            top_meta.append({
+                "strategy": s_name,
+                "ev_composite_pip": ev_composite * 10000,
+                "max_thresh": cfg.get("max_thresh", 0.5),
+                "threshold_metrics": [
+                    {
+                        "threshold": m.threshold,
+                        "win_rate": m.win_rate,
+                        "ev_score_pip": m.ev_score * 10000,
+                        "total_signals": m.total_signals,
+                    }
+                    for m in (m_list.threshold_metrics if m_list else [])
+                ],
+            })
+
+    data = {
+        "target": target_name,
+        "version": "V2",
+        "status": "STOPPED" if is_interrupted else "RUNNING_OR_DONE",
+        "epochs_trained": current_epoch,
+        "best_ev_composite_pip": best_ev * 10000,
+        "best_val_loss": best_val_loss,
+        "top_configs_saved": top_meta,
+    }
+    path = os.path.join(run_dir, "training_metrix_v2.json")
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception:
+        pass
+
+    _hf_sync_async(run_dir)
+
+
+# ============================================================
+# MAIN TRAINING FUNCTION
+# ============================================================
+def train_v2(
+    features: pd.DataFrame,
+    soft_labels: pd.Series,
+    log_returns: pd.Series,
+    num_features: int,
+    run_dir: str,
+    target_prefix: str = "XAUUSD",
+    config: dict | None = None,
+    max_epoch_override: int | None = None,
+):
+    """
+    Huấn luyện Transformer V2 với 5 cải tiến toán học.
+
+    Parameters
+    ----------
+    features : pd.DataFrame
+        Features đã qua QuantileTransform (scaler_v2.pkl).
+    soft_labels : pd.Series
+        Soft labels float ∈ (0,1) từ SoftLabelGenerator.
+    log_returns : pd.Series
+        Log return T+5 thực tế, aligned với soft_labels.index.
+    num_features : int
+        Số lượng features (chiều input model).
+    run_dir : str
+        Thư mục lưu trọng số và metadata.
+    target_prefix : str
+        Tiền tố mã giao dịch.
+    config : dict
+        Config từ bot_config_*.json.
+    max_epoch_override : int | None
+        Nếu không None, dừng sau số epoch này (dùng để smoke test).
+    """
+    cfg = config or {}
+    print("=" * 60)
+    print("  TRANSFORMER V2 — 5 cải tiến toán học (EV + FocalLoss)")
+    print("=" * 60)
+
+    try:
+        gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+        print(f"[HARDWARE] {gpu_name}")
+    except Exception:
+        pass
+
+    # ── Hyperparameters ────────────────────────────────────────
+    WINDOW_SIZE      = 60
+    D_MODEL          = 256
+    NHEAD            = 8
+    NUM_ATTN_LAYERS  = 3
+    DROPOUT_RATE     = 0.2
+    BASE_LR          = 1e-4
+    BATCH_SIZE       = 512
+    MAX_STAGNATE     = 10
+    MAX_PHOENIX      = 40
+    MIN_SIGNALS      = 30
+    EPOCHS           = max_epoch_override or 10000
+
+    print(
+        f"[V2 ARCH] d_model={D_MODEL}, nhead={NHEAD}, "
+        f"layers={NUM_ATTN_LAYERS}, window={WINDOW_SIZE}"
+    )
+
+    # ── Khoảng thời gian train/val ─────────────────────────────
+    t_start, t_end, v_end = _parse_date_range(cfg)
+    if t_start and t_end and v_end:
+        train_start = pd.Timestamp(t_start, tz='UTC')
+        train_end   = pd.Timestamp(t_end,   tz='UTC')
+        val_start   = train_end
+        val_end     = pd.Timestamp(v_end,   tz='UTC') + pd.Timedelta(days=1)
+        print("[DATE RANGE FROM CONFIG]")
+    else:
+        now_utc     = pd.Timestamp.now(tz='UTC')
+        val_end     = now_utc
+        val_start   = val_end   - pd.Timedelta(days=4)
+        train_end   = val_start
+        train_start = train_end - pd.Timedelta(days=90)
+        print("[ROLLING WINDOW SPLIT]")
+
+    print(f"  Train : {train_start.date()} → {train_end.date()}")
+    print(f"  Val   : {val_start.date()} → {val_end.date()}")
+
+    # ── Align features/labels về UTC ──────────────────────────
+    feat_utc = features.copy()
+    if feat_utc.index.tz is None:
+        feat_utc.index = feat_utc.index.tz_localize('UTC')
+    else:
+        feat_utc.index = feat_utc.index.tz_convert('UTC')
+
+    labels_utc = soft_labels.copy()
+    if labels_utc.index.tz is None:
+        labels_utc.index = labels_utc.index.tz_localize('UTC')
+    else:
+        labels_utc.index = labels_utc.index.tz_convert('UTC')
+
+    rets_utc = log_returns.copy()
+    if rets_utc.index.tz is None:
+        rets_utc.index = rets_utc.index.tz_localize('UTC')
+    else:
+        rets_utc.index = rets_utc.index.tz_convert('UTC')
+
+    # Đảm bảo 3 series cùng index
+    common_idx = feat_utc.index.intersection(labels_utc.index).intersection(rets_utc.index)
+    feat_utc    = feat_utc.loc[common_idx]
+    labels_utc  = labels_utc.loc[common_idx]
+    rets_utc    = rets_utc.loc[common_idx]
+
+    train_mask = (feat_utc.index >= train_start) & (feat_utc.index < train_end)
+    val_mask   = (feat_utc.index >= val_start)   & (feat_utc.index < val_end)
+
+    tr_feat  = feat_utc[train_mask];   tr_lbl = labels_utc[train_mask];  tr_ret = rets_utc[train_mask]
+    val_feat = feat_utc[val_mask];     val_lbl = labels_utc[val_mask];   val_ret = rets_utc[val_mask]
+
+    print(f"  → Train: {len(tr_feat):,} nến | Val: {len(val_feat):,} nến")
+
+    if len(tr_feat) <= WINDOW_SIZE or len(val_feat) <= WINDOW_SIZE:
+        print("[ERROR] Dữ liệu quá ít. Kiểm tra lại phạm vi thời gian.")
+        return
+
+    # ── Build datasets ─────────────────────────────────────────
+    train_dataset = TimeSeriesDatasetV2(tr_feat, tr_lbl, tr_ret, WINDOW_SIZE)
+    val_dataset   = TimeSeriesDatasetV2(val_feat, val_lbl, val_ret, WINDOW_SIZE)
+    train_loader  = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    val_loader    = DataLoader(val_dataset,   batch_size=BATCH_SIZE, shuffle=False)
+
+    # ── Class balance cho FocalLoss ────────────────────────────
+    hard_train = (tr_lbl >= 0.5).values
+    n_buy  = int(hard_train.sum())
+    n_sell = int(len(hard_train) - n_buy)
+    print(f"[Class Balance] BUY={n_buy:,} | SELL={n_sell:,}")
+
+    criterion = build_focal_loss(
+        n_buy=n_buy, n_sell=n_sell,
+        gamma=2.0, use_soft_labels=True, device=device
+    )
+
+    # ── Build model ────────────────────────────────────────────
+    meta_path = os.path.join(
+        _ROOT, "data", f"feature_meta_{target_prefix}.json"
+    )
+    num_target_features = None
+    if os.path.exists(meta_path):
+        with open(meta_path) as f:
+            meta = json.load(f)
+            num_target_features = meta.get("num_xau_features") or meta.get("num_target_features")
+
+    target_name = target_prefix.lower().replace("_", "")
+    model = TransformerModel(
+        num_features, d_model=D_MODEL, nhead=NHEAD,
+        num_layers=NUM_ATTN_LAYERS, dropout_rate=DROPOUT_RATE,
+        num_xau_features=num_target_features,
+    ).to(device)
+
+    # ── Phoenix restart engine ─────────────────────────────────
+    phoenix = PhoenixRestartV2(
+        model=model,
+        base_lr=BASE_LR,
+        weight_decay=1e-3,
+        max_phoenix=MAX_PHOENIX,
+        max_stagnate=MAX_STAGNATE,
+        min_signals=MIN_SIGNALS,
+    )
+
+    # ── Evaluator ──────────────────────────────────────────────
+    evaluator = EVEvaluator(min_signals=MIN_SIGNALS, n_thresholds=4)
+
+    # ── Top configs tracking ───────────────────────────────────
+    CONFIG_NAMES = ["EV_L3_1.4_L4_1.0", "EV_L3_1.1_L4_1.0", "BEST_VLOSS"]
+    top_configs: dict = {k: None for k in CONFIG_NAMES}
+
+    model_file = os.path.join(run_dir, f"{target_name}_v2_weights.pth")
+    best_state_dict  = copy.deepcopy(model.state_dict())
+    global_best_ev   = 0.0
+    global_best_vloss = float('inf')
+    total_epoch = 0
+
+    def _get_score(result: EpochEvalResult, strategy: str) -> float:
+        if strategy == "EV_L3_1.4_L4_1.0":
+            return result.composite_score(w_l3=1.4, w_l4=1.0, weight_sum=2.4)
+        elif strategy == "EV_L3_1.1_L4_1.0":
+            return result.composite_score(w_l3=1.1, w_l4=1.0, weight_sum=2.1)
+        elif strategy == "BEST_VLOSS":
+            return -result.val_loss
+        return 0.0
+
+    # ── Training loop ──────────────────────────────────────────
+    try:
+        while not phoenix.exhausted and total_epoch < EPOCHS:
+            epoch_t0 = time.time()
+
+            # TRAIN
+            model.train()
+            train_loss = 0.0
+            for batch_x, batch_y, _ in train_loader:
+                batch_y = batch_y.view(-1)
+                phoenix.optimizer.zero_grad()
+                outputs = model(batch_x)
+                loss = criterion(outputs, batch_y)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                phoenix.optimizer.step()
+                train_loss += loss.item()
+
+            avg_train_loss = train_loss / max(len(train_loader), 1)
+
+            # VAL
+            model.eval()
+            val_loss_total = 0.0
+            all_probs_up   = []
+            all_hard_labels = []
+            all_log_returns = []
+
+            with torch.no_grad():
+                for batch_x, batch_y, batch_r in val_loader:
+                    batch_y = batch_y.view(-1)
+                    outputs = model(batch_x)
+
+                    # Loss: dùng FocalLoss với soft labels
+                    loss = criterion(outputs, batch_y)
+                    val_loss_total += loss.item()
+
+                    probs = F.softmax(outputs, dim=1)
+                    all_probs_up.append(probs[:, 1].cpu())
+
+                    # Hard label để đánh giá WR và EV
+                    hard = (batch_y >= 0.5).long().cpu()
+                    all_hard_labels.append(hard)
+                    all_log_returns.append(batch_r.cpu())
+
+            all_probs_up    = torch.cat(all_probs_up)
+            all_hard_labels = torch.cat(all_hard_labels)
+            all_log_returns = torch.cat(all_log_returns)
+            avg_val_loss    = val_loss_total / max(len(val_loader), 1)
+
+            # Evaluate EV
+            result = evaluator.evaluate(
+                probs_up=all_probs_up,
+                hard_labels=all_hard_labels,
+                log_returns=all_log_returns,
+                val_loss=avg_val_loss,
+            )
+
+            total_epoch += 1
+            epoch_time = time.time() - epoch_t0
+            cur_lr = phoenix.optimizer.param_groups[0]['lr']
+            phoenix_tag = f"[P{phoenix.phoenix_count}]" if phoenix.phoenix_count > 0 else ""
+
+            print(
+                f"Epoch {total_epoch:04d} {phoenix_tag}| "
+                f"TrainLoss: {avg_train_loss:.4f} | "
+                f"ValLoss: {avg_val_loss:.4f} | "
+                f"LR: {cur_lr:.2e} | Time: {epoch_time:.1f}s"
+            )
+            print("  " + evaluator.format_summary(result))
+
+            # Cập nhật LR scheduler dùng EV composite score
+            ev_composite = result.composite_score()
+            phoenix.scheduler.step(ev_composite if ev_composite != 0 else -avg_val_loss)
+
+            if avg_val_loss < global_best_vloss:
+                global_best_vloss = avg_val_loss
+
+            # ── Cập nhật top_configs ───────────────────────────
+            is_valid = evaluator.is_statistically_valid(result)
+            improved = []
+
+            if is_valid:
+                for s_name in CONFIG_NAMES:
+                    cur_score = _get_score(result, s_name)
+                    prev_score = top_configs[s_name]["score"] if top_configs[s_name] else None
+
+                    if prev_score is None or cur_score > prev_score:
+                        top_configs[s_name] = {
+                            "score": cur_score,
+                            "state_dict": copy.deepcopy(model.state_dict()),
+                            "eval_result": result,
+                            "max_thresh": result.max_threshold,
+                        }
+                        rank_file = os.path.join(
+                            run_dir, f"{target_name}_v2_weights_{s_name}.pth"
+                        )
+                        torch.save(top_configs[s_name]["state_dict"], rank_file)
+                        improved.append(s_name)
+
+                if improved:
+                    phoenix.notify_improved()
+                    valid_cfgs = [c for c in top_configs.values() if c is not None]
+                    best_cfg = max(valid_cfgs, key=lambda c: c["score"])
+                    global_best_ev = best_cfg["score"]
+                    best_state_dict = copy.deepcopy(best_cfg["state_dict"])
+                    torch.save(best_state_dict, model_file)
+                    _save_blackbox(
+                        run_dir, target_name, top_configs,
+                        total_epoch, global_best_ev, global_best_vloss
+                    )
+                    print(
+                        f"  ★ ĐỈNH MỚI cho: [{', '.join(improved)}] "
+                        f"EV_composite={global_best_ev*10000:.2f}pip"
+                    )
+                else:
+                    need_phoenix = phoenix.notify_no_improve()
+                    if need_phoenix:
+                        _trigger_phoenix(
+                            phoenix, top_configs, best_state_dict,
+                            train_dataset, BATCH_SIZE
+                        )
+                        train_loader = DataLoader(
+                            train_dataset, batch_size=BATCH_SIZE, shuffle=True
+                        )
+            else:
+                need_phoenix = phoenix.notify_no_improve()
+                if need_phoenix:
+                    _trigger_phoenix(
+                        phoenix, top_configs, best_state_dict,
+                        train_dataset, BATCH_SIZE
+                    )
+                    train_loader = DataLoader(
+                        train_dataset, batch_size=BATCH_SIZE, shuffle=True
+                    )
+
+            if phoenix.exhausted:
+                print(
+                    f"\n[PHOENIX] Đã tái sinh {MAX_PHOENIX} lần. "
+                    f"Best EV composite: {global_best_ev*10000:.2f}pip."
+                )
+                break
+
+    except KeyboardInterrupt:
+        print("\n[EMERGENCY] Dừng khẩn cấp. Đang lưu blackbox...")
+        _save_blackbox(
+            run_dir, target_name, top_configs,
+            total_epoch, global_best_ev, global_best_vloss,
+            is_interrupted=True
+        )
+        model.load_state_dict(best_state_dict)
+        torch.save(best_state_dict, model_file)
+
+    print(f"\n[DONE] Best EV composite: {global_best_ev*10000:.2f}pip | Saved: {model_file}")
+
+
+def _trigger_phoenix(phoenix, top_configs, best_state_dict, train_dataset, batch_size):
+    """Helper: chọn config tốt nhất rồi trigger phoenix perturbation."""
+    valid = [c for c in top_configs.values() if c is not None]
+    chosen = random.choice(valid)["state_dict"] if valid else best_state_dict
+    print(
+        f"\n[PHOENIX #{phoenix.phoenix_count}] "
+        f"Kẹt {phoenix.max_stagnate} epoch. Tái sinh... "
+        f"(còn {phoenix.remaining} lần)"
+    )
+    need_reload, new_batch = phoenix.apply_perturbation(chosen)
+
+
+# ============================================================
+# ENTRY POINT
+# ============================================================
+if __name__ == "__main__":
+    import argparse
+
+    BASE_PROJ = _ROOT
+
+    parser = argparse.ArgumentParser(description="Training V2 — 5 Math Improvements")
+    parser.add_argument("config", nargs="?", help="Đường dẫn bot_config_*.json")
+    parser.add_argument(
+        "--max-epoch", type=int, default=None,
+        help="Giới hạn số epoch (dùng để smoke test)"
+    )
+    args = parser.parse_args()
+
+    # ── Tìm config ────────────────────────────────────────────
+    config_path = args.config
+    if not config_path:
+        for candidate in ["data/bot_config_xau.json", "data/bot_config.json"]:
+            p = os.path.join(BASE_PROJ, candidate)
+            if os.path.exists(p):
+                config_path = p
+                break
+
+    cfg = _load_config(config_path) if config_path else {}
+    TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
+    CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
+    DATA_PATH     = os.path.join(BASE_PROJ, "data")
+
+    print(f"[INIT] Config: {config_path}")
+    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
+
+    # ── Đọc features đã có (từ feature_engineering.py V1) ─────
+    features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")
+    raw_price_path = None  # giá thô để tính label
+
+    # Tìm file parquet chứa giá Close gốc (trước khi log-return transform)
+    for candidate in [
+        f"{TARGET_PREFIX}_MT5_1M_*.parquet",
+        f"{TARGET_PREFIX.replace('_','')}_MT5_1M_*.parquet",
+    ]:
+        import glob
+        matches = glob.glob(os.path.join(DATA_PATH, candidate))
+        if matches:
+            raw_price_path = matches[0]
+            break
+
+    if not os.path.exists(features_path):
+        print(f"[ERROR] Chưa có file features: {features_path}")
+        print("Hãy chạy feature_engineering.py trước để tạo dữ liệu.")
+        sys.exit(1)
+
+    print(f"\n[LOAD] Đang đọc features: {os.path.basename(features_path)}")
+    features_raw = pd.read_parquet(features_path)
+
+    # ── Áp QuantileTransformer V2 ──────────────────────────────
+    pipeline = FeaturePipelineV2(
+        target_prefix=TARGET_PREFIX,
+        data_dir=DATA_PATH,
+    )
+
+    # Tách is_imputed_flag trước khi scale
+    imputed_flag_col = None
+    if 'is_imputed_flag' in features_raw.columns:
+        imputed_flag_col = features_raw['is_imputed_flag'].copy()
+        features_to_scale = features_raw.drop(columns=['is_imputed_flag'])
+    else:
+        features_to_scale = features_raw
+
+    features_scaled = pipeline.fit_transform(features_to_scale)
+
+    # Gắn lại is_imputed_flag
+    if imputed_flag_col is not None:
+        features_scaled['is_imputed_flag'] = imputed_flag_col.loc[features_scaled.index]
+
+    num_features = features_scaled.shape[1]
+
+    # ── Tạo Soft Labels từ giá thô ────────────────────────────
+    print("\n[LABEL] Tạo Soft Labels (sigmoid return)...")
+    target_path = os.path.join(DATA_PATH, f"target_direction_{TARGET_PREFIX}.parquet")
+
+    if raw_price_path and os.path.exists(raw_price_path):
+        raw_df = pd.read_parquet(raw_price_path)
+        if raw_df.index.tz is None:
+            raw_df.index = raw_df.index.tz_localize('UTC')
+        close_col = [c for c in raw_df.columns if 'close' in c.lower()]
+        close_series = raw_df[close_col[0]] if close_col else raw_df.iloc[:, 3]
+
+        label_gen = SoftLabelGenerator(k=50.0, min_move_pct=0.0002, forecast_horizon=5)
+        soft_labels, log_returns = label_gen.generate(close_series)
+    elif os.path.exists(target_path):
+        # Fallback: đọc target cũ, convert sang soft labels đọc từ parquet
+        print("[LABEL] Fallback: Đọc binary labels V1, convert sang soft labels...")
+        target_df = pd.read_parquet(target_path)
+        hard_labels = target_df['target']
+        # Chuyển hard → soft: BUY=0.85, SELL=0.15 (xấp xỉ)
+        soft_labels = hard_labels.map({1: 0.85, 0: 0.15}).astype(np.float32)
+        soft_labels.name = "soft_label"
+        log_returns = pd.Series(
+            np.where(hard_labels == 1, 0.001, -0.001),
+            index=hard_labels.index, dtype=np.float32
+        )
+        print("[WARN] Đang dùng log_returns ước tính từ hard labels. EV sẽ không chính xác.")
+    else:
+        print("[ERROR] Không tìm thấy dữ liệu giá thô hoặc target. Dừng.")
+        sys.exit(1)
+
+    # ── Align features và labels ───────────────────────────────
+    common_idx = features_scaled.index.intersection(soft_labels.index)
+    features_aligned = features_scaled.loc[common_idx]
+    soft_labels_aligned = soft_labels.loc[common_idx]
+    log_returns_aligned = log_returns.loc[common_idx]
+
+    print(f"[ALIGN] Dữ liệu cuối: {len(features_aligned):,} nến")
+
+    # ── Tạo thư mục run ────────────────────────────────────────
+    run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    target_clean  = TARGET_PREFIX.lower().replace("_", "")
+    run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V2"
+    run_dir  = os.path.join(BASE_PROJ, "runs", run_name)
+    os.makedirs(run_dir, exist_ok=True)
+
+    # Logger
+    class _TeeLogger:
+        def __init__(self, filename):
+            self.terminal = sys.stdout
+            self.log = open(filename, "w", encoding="utf-8", buffering=1)
+        def write(self, msg):
+            self.terminal.write(msg)
+            self.log.write(msg)
+        def flush(self):
+            self.terminal.flush()
+            self.log.flush()
+
+    sys.stdout = _TeeLogger(os.path.join(run_dir, "train_v2.log"))
+
+    # Lưu scaler_v2.pkl vào run_dir
+    import shutil
+    scaler_src = os.path.join(DATA_PATH, "scaler_v2.pkl")
+    if os.path.exists(scaler_src):
+        shutil.copy(scaler_src, os.path.join(run_dir, "scaler_v2.pkl"))
+        print(f"[PACK] scaler_v2.pkl → {run_dir}")
+
+    print(f"[RUN] {run_name}")
+
+    # ── Chạy training ──────────────────────────────────────────
+    train_v2(
+        features=features_aligned,
+        soft_labels=soft_labels_aligned,
+        log_returns=log_returns_aligned,
+        num_features=num_features,
+        run_dir=run_dir,
+        target_prefix=TARGET_PREFIX,
+        config=cfg,
+        max_epoch_override=args.max_epoch,
+    )
+
+    # ── Sync lên HuggingFace ───────────────────────────────────
+    print("\n[HF] Đồng bộ cuối phiên lên HuggingFace...")
+    try:
+        from src.orchestration.hf_sync import push_runs
+        push_runs()
+    except Exception as e:
+        print(f"[HF] Bỏ qua sync: {e}")
