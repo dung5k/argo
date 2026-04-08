@@ -704,6 +704,8 @@ def bot_background_loop():
         mt5_manager.scan_terminals_and_map()
         actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
         target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
+        global gui_target_text
+        gui_target_text = f'🎯 Cặp: {actual_target_sym} | Sàn: {str(target_path).split(chr(92))[-2] if target_path else \"Local\"}'
         
         if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
             mt5.shutdown()
@@ -831,11 +833,13 @@ def bot_background_loop():
                     if len(valid_cols) == len(active_inference_feats):
                         last_60_candles = df[valid_cols].iloc[-window_size:].values
                     else:
-                        gui_status = "Lỗi: Sai lệch Features!"
+                        gui_status = "Đã bù 0 cho Sàn"
                         missing_feats = [c for c in active_inference_feats if c not in df.columns]
-                        print(f" ⚠️ CẢNH BÁO LỰC: Thiếu Features! Model cần {len(active_inference_feats)} nhưng data chỉ có {len(valid_cols)} khớp. (Thiếu: {missing_feats[:5]})", flush=True)
-                        time.sleep(2)
-                        continue
+                        for c in missing_feats:
+                            df[c] = 0.0
+                        if 'is_imputed_flag' in df.columns:
+                            df['is_imputed_flag'] = 1.0
+                        last_60_candles = df[active_inference_feats].iloc[-window_size:].values
                 else:
                     last_60_candles = df.iloc[-window_size:].values
                 
@@ -894,7 +898,8 @@ def bot_background_loop():
 
 
 # --- LUỒNG CHÍNH: VẼ BẢNG ĐIỀU KHIỂN NỔI ĐA PHIÊN (MOE DASHBOARD) ---
-def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr):
+def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
+    if lbl_target: lbl_target.config(text=gui_target_text)
     lbl_time.config(text=f"🕒 {gui_time}")
     lbl_session.config(text=f"🌐 {gui_session}")
     lbl_action.config(text=f"🎯 Hành động: {gui_action}")
@@ -925,7 +930,7 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
     except:
         lbl_pred.config(text=f"🧠 THỜI CƠ (Lực): {gui_prediction}", fg="#cccccc")
         
-    root.after(500, update_ui, root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr)
+    root.after(500, update_ui, root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
 
 def start_overlay_dashboard():
     root = tk.Tk()

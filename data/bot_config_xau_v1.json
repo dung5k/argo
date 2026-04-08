@@ -2,7 +2,7 @@
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
     "CONFIG_ID": "XAU_CFG_V1",
-    "WEIGHT_FILE": "xauusd_v1_weights_EV_L3_1.4_L4_1.0.pth",
+    "WEIGHT_FILE": "xauusd_unified_weights.pth",
     "HF_RUN_ID": "",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_data",
@@ -41,7 +41,7 @@
         },
         "ROUTING": {
             "XAUUSDm": "EXNESS",
-            "XAGUSDm": "DEFAULT",
+            "XAGUSDm": "EXNESS",
             "AUDUSDm": "EXNESS",
             "EURUSDm": "EXNESS",
             "GBPUSDm": "EXNESS",
@@ -52,7 +52,7 @@
             "UKOILm": "EXNESS",
             "VIXYm": "DEFAULT",
             "NASDAQ_100": "EXNESS",
-            "US_10Y_YIELD": "MT5_2",
+            "US_10Y_YIELD": "EXNESS",
             "XPTUSDm": "EXNESS",
             "XCUUSDm": "EXNESS"
         },
@@ -63,18 +63,9 @@
                 "IS_CFD": true
             },
             "US_10Y_YIELD": {
-                "PREFIX": "Z10Y",
-                "BROKER": "MT5_2",
-                "IS_CFD": false,
-                "CONTRACT_MONTHS": [
-                    "J",
-                    "K",
-                    "M",
-                    "U",
-                    "Z",
-                    "H"
-                ],
-                "INVERT_LOGIC": false
+                "PREFIX": "US10m",
+                "BROKER": "EXNESS",
+                "IS_CFD": true
             }
         }
     },
@@ -104,11 +95,6 @@
             "XAUUSD_close_log_ret",
             "XAUUSD_volume",
             "is_imputed_flag",
-            "XAGUSD_open_log_ret",
-            "XAGUSD_high_log_ret",
-            "XAGUSD_low_log_ret",
-            "XAGUSD_close_log_ret",
-            "XAGUSD_volume",
             "AUDUSD_open_log_ret",
             "AUDUSD_high_log_ret",
             "AUDUSD_low_log_ret",
@@ -124,16 +110,16 @@
             "GBPUSD_low_log_ret",
             "GBPUSD_close_log_ret",
             "GBPUSD_volume",
-            "USDCAD_open_log_ret",
-            "USDCAD_high_log_ret",
-            "USDCAD_low_log_ret",
-            "USDCAD_close_log_ret",
-            "USDCAD_volume",
             "NASDAQ_100_close_log_ret",
             "NASDAQ_100_high_log_ret",
             "NASDAQ_100_low_log_ret",
             "NASDAQ_100_open_log_ret",
             "NASDAQ_100_volume",
+            "USDCAD_open_log_ret",
+            "USDCAD_high_log_ret",
+            "USDCAD_low_log_ret",
+            "USDCAD_close_log_ret",
+            "USDCAD_volume",
             "US_10Y_YIELD_close_log_ret",
             "US_10Y_YIELD_high_log_ret",
             "US_10Y_YIELD_low_log_ret",
@@ -144,21 +130,11 @@
             "VIXY_low_log_ret",
             "VIXY_close_log_ret",
             "VIXY_volume",
-            "USOIL_USD_close_log_ret",
-            "USOIL_USD_high_log_ret",
-            "USOIL_USD_low_log_ret",
-            "USOIL_USD_open_log_ret",
-            "USOIL_USD_volume",
-            "XPTUSD_open_log_ret",
-            "XPTUSD_high_log_ret",
-            "XPTUSD_low_log_ret",
-            "XPTUSD_close_log_ret",
-            "XPTUSD_volume",
-            "XCUUSD_open_log_ret",
-            "XCUUSD_high_log_ret",
-            "XCUUSD_low_log_ret",
-            "XCUUSD_close_log_ret",
-            "XCUUSD_volume"
+            "XAGUSD_open_log_ret",
+            "XAGUSD_high_log_ret",
+            "XAGUSD_low_log_ret",
+            "XAGUSD_close_log_ret",
+            "XAGUSD_volume"
         ]
     },
     "TRAINING": {
@@ -176,8 +152,8 @@
     },
     "LIVE_TRADING": {
         "SYNC_SCALER": false,
-        "BUY_ENTRY_THR": 0.62,
-        "SELL_ENTRY_THR": 0.38,
+        "BUY_ENTRY_THR": 0.6,
+        "SELL_ENTRY_THR": 0.4,
         "CLOSE_BUY_THR": 0.45,
         "CLOSE_SELL_THR": 0.55,
         "lot_size": 0.01,

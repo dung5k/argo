@@ -1,0 +1,461 @@
+"""
+train_v1_5.py - Version 1.5: V1 Core (Binary CrossEntropy) + V2 Framework (MOE Sessions)
+========================================================================================
+- Data Pipeline & Models: TransformerModel (V1)
+- Loss & Evaluation: CrossEntropyLoss (V1) + L3/L4 Win Rate Calculations
+- Architecture: 100% MOE v2 (chia dữ liệu ra 3 Sessions: Asia, London, NY)
+"""
+import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+import os
+import copy
+import json
+import random
+import datetime
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+
+# Import Core Model V1
+_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from src.legacy.train_ga import TransformerModel, device
+
+# ============================================================
+# Dataset V1.5: Lấy Labels V1 x Tách Phiên V2
+# ============================================================
+class TimeSeriesDatasetV1_5(Dataset):
+    def __init__(self, features: pd.DataFrame, targets: pd.DataFrame, window_size: int = 60):
+        self.window_size = window_size
+        
+        # Mapping Sessions
+        hours = features.index.tz_convert('UTC').hour.values
+        session_arr = np.zeros_like(hours, dtype=np.int64) # 0: Asia (0-7h)
+        session_arr[(hours >= 8) & (hours < 13)] = 1       # 1: London (8-12h)
+        session_arr[(hours >= 13)] = 2                     # 2: NY (13-23h)
+        
+        # Data tensors
+        self.features_tensor = torch.tensor(features.values, dtype=torch.float32).to(device)
+        self.labels_tensor = torch.tensor(targets['target'].values, dtype=torch.long).to(device)
+        self.session_tensor = torch.tensor(session_arr, dtype=torch.long).to(device)
+        
+    def __len__(self):
+        return len(self.features_tensor) - self.window_size
+        
+    def __getitem__(self, idx):
+        x = self.features_tensor[idx : idx + self.window_size]
+        target_idx = idx + self.window_size - 1
+        y = self.labels_tensor[target_idx]
+        s = self.session_tensor[target_idx]
+        return x, y, s
+
+# ============================================================
+# Phoenix Restarter (Modified for V1.5)
+# ============================================================
+class PhoenixRestartV1_5:
+    def __init__(self, model, base_lr, max_phoenix, max_stagnate):
+        self.model = model
+        self.base_lr = base_lr
+        self.max_phoenix = max_phoenix
+        self.max_stagnate = max_stagnate
+        
+        self.optimizer = optim.AdamW(self.model.parameters(), lr=base_lr, weight_decay=1e-3)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', patience=10, factor=0.5, min_lr=1e-6)
+        
+        self.epochs_no_improve = 0
+        self.phoenix_count = 0
+        self.exhausted = False
+
+    @property
+    def remaining(self):
+        return self.max_phoenix - self.phoenix_count
+
+    def notify_no_improve(self):
+        self.epochs_no_improve += 1
+        if self.epochs_no_improve >= self.max_stagnate:
+            self.phoenix_count += 1
+            if self.phoenix_count > self.max_phoenix:
+                self.exhausted = True
+                return False
+            return True
+        return False
+
+    def reset_stagnation(self):
+        self.epochs_no_improve = 0
+        
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
+
+    def apply_perturbation(self, fallback_state_dict):
+        self.model.load_state_dict(copy.deepcopy(fallback_state_dict))
+        self.reset_stagnation()
+        
+        strat = random.choice(['A', 'B', 'C', 'D'])
+        action = ""
+        if strat == 'A':
+            spike_lr = random.uniform(2e-4, 8e-4)
+            self.optimizer = optim.AdamW(self.model.parameters(), lr=spike_lr, weight_decay=1e-3)
+            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', patience=10, factor=0.5, min_lr=1e-6)
+            action = f"🔥 Spike LR={spike_lr:.1e}"
+        elif strat == 'B':
+            noise_sigma = random.uniform(0.001, 0.005)
+            with torch.no_grad():
+                for param in self.model.parameters():
+                    param.add_(torch.randn_like(param) * noise_sigma)
+            self.optimizer = optim.AdamW(self.model.parameters(), lr=self.base_lr, weight_decay=1e-3)
+            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', patience=10, factor=0.5, min_lr=1e-6)
+            action = f"🌊 Noise σ={noise_sigma:.4f}"
+        elif strat == 'C':
+            fine_lr = random.uniform(5e-5, 2e-4)
+            self.optimizer = optim.AdamW(self.model.parameters(), lr=fine_lr, weight_decay=random.uniform(1e-3, 5e-3))
+            self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', patience=10, factor=0.5, min_lr=1e-6)
+            action = f"🎯 Fine-Tune LR={fine_lr:.1e}"
+        elif strat == 'D':
+            action = "🎲 Batch Shuffle (Logic retained upstream)"
+        return action
+
+# ============================================================
+# Main Training Function V1.5
+# ============================================================
+def train_unified_v1_5(features, targets, num_features, run_dir, config=None, target_prefix="XAU_USD"):
+    print("=======================================================")
+    print("🧠 TRANSFORMER V1.5: V1 CORE + V2 MULTI-SESSION MOE  ")
+    print("=======================================================")
+    
+    cfg = config or {}
+    epochs         = 10000
+    batch_size     = 512
+    window_size    = 60
+    d_model        = 256
+    nhead          = 8
+    num_attn_layers = 3
+    dropout_rate   = 0.2
+    BASE_LR        = 0.0003
+    MAX_STAGNATE   = 10
+    MAX_PHOENIX    = 40
+    MIN_SIGNALS    = 30
+
+    import pytz
+    def parse_dates():
+        dates = {}
+        for k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END"]:
+            if k in cfg: dates[k] = cfg[k]
+        if "TRAINING" in cfg:
+            for k in ["TRAIN_FROM", "TRAIN_TO", "VAL_TO", "TRAIN_START", "TRAIN_END", "VAL_END"]:
+                if k in cfg["TRAINING"]: dates[k] = cfg["TRAINING"][k]
+        return dates.get("TRAIN_START") or dates.get("TRAIN_FROM"), dates.get("TRAIN_END") or dates.get("TRAIN_TO"), dates.get("VAL_END") or dates.get("VAL_TO")
+
+    t_start, t_end, v_end = parse_dates()
+    if t_start and t_end and v_end:
+        train_start = pd.Timestamp(t_start, tz='UTC')
+        train_end   = pd.Timestamp(t_end,   tz='UTC')
+        val_start   = train_end
+        val_end     = pd.Timestamp(v_end,   tz='UTC') + pd.Timedelta(days=1)
+        print("[DATE RANGE FROM CONFIG]")
+    else:
+        now_utc     = pd.Timestamp.now(tz='UTC')
+        val_end     = now_utc
+        val_start   = val_end   - pd.Timedelta(days=4)
+        train_end   = val_start
+        train_start = train_end - pd.Timedelta(days=90)
+        print("[ROLLING WINDOW SPLIT]")
+
+    features_utc = features.tz_convert('UTC')
+    targets_utc = targets.tz_convert('UTC')
+
+    train_mask = (features_utc.index >= train_start) & (features_utc.index < train_end)
+    val_mask   = (features_utc.index >= val_start)   & (features_utc.index < val_end)
+
+    tr_feat  = features_utc[train_mask]
+    tr_targ  = targets_utc[train_mask]
+    val_feat = features_utc[val_mask]
+    val_targ = targets_utc[val_mask]
+
+    print(f"-> Train: {len(tr_feat):,} nến | Val: {len(val_feat):,} nến")
+
+    train_dataset = TimeSeriesDatasetV1_5(tr_feat, tr_targ, window_size)
+    val_dataset   = TimeSeriesDatasetV1_5(val_feat, val_targ, window_size)
+    train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
+
+    train_labels = tr_targ['target'].values
+    n_total = len(train_labels)
+    n_buy  = (train_labels == 1).sum()
+    n_sell = (train_labels == 0).sum()
+    weight_sell = n_total / (2.0 * n_sell) if n_sell > 0 else 1.0
+    weight_buy  = n_total / (2.0 * n_buy)  if n_buy  > 0 else 1.0
+    class_weights = torch.tensor([weight_sell, weight_buy], dtype=torch.float32).to(device)
+    print(f"⚖️ [Class Balance] BUY={n_buy:,} (W:{weight_buy:.2f}) | SELL={n_sell:,} (W:{weight_sell:.2f})")
+
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15).to(device)
+
+    # Khởi tạo Hệ thống Đa não bộ
+    SESSIONS = {0: "asia", 1: "london", 2: "ny"}
+    meta_path = os.path.join(_ROOT, "data", f"feature_meta_{target_prefix}.json")
+    num_xau_features = None
+    target_name = target_prefix.lower().replace("_", "")
+    if os.path.exists(meta_path):
+        with open(meta_path, "r") as f:
+            meta = json.load(f)
+            num_xau_features = meta.get("num_xau_features") or meta.get("num_target_features")
+            target_name = meta.get("target_prefix", target_prefix).lower().replace("_", "")
+
+    models = {s_id: TransformerModel(
+        num_features, d_model=d_model, nhead=nhead,
+        num_layers=num_attn_layers, dropout_rate=dropout_rate,
+        num_xau_features=num_xau_features,
+    ).to(device) for s_id in SESSIONS}
+
+    phoenixes = {s_id: PhoenixRestartV1_5(
+        models[s_id], base_lr=BASE_LR, max_phoenix=MAX_PHOENIX, max_stagnate=MAX_STAGNATE
+    ) for s_id in SESSIONS}
+
+    CONFIG_NAMES = ["L3_1.4_L4_1.0", "L3_1.1_L4_1.0", "BEST_VLOSS"]
+    top_configs = {s_id: {k: None for k in CONFIG_NAMES} for s_id in SESSIONS}
+
+    global_best_score = {s_id: 0.0 for s_id in SESSIONS}
+    global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
+
+    def calc_strats(wrs_arr, avg_v_loss):
+        return {
+            "L3_1.4_L4_1.0": (1.4 * wrs_arr[2] + 1.0 * wrs_arr[3]) / 2.4,
+            "L3_1.1_L4_1.0": (1.1 * wrs_arr[2] + 1.0 * wrs_arr[3]) / 2.1,
+            "BEST_VLOSS": -avg_v_loss
+        }
+
+    total_epoch = 0
+    while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < epochs:
+        # TRAIN
+        for m in models.values(): m.train()
+        train_loss = {s_id: 0.0 for s_id in SESSIONS}
+        valid_train_batches = {s_id: 0 for s_id in SESSIONS}
+        
+        for batch_x, batch_y, batch_s in train_loader:
+            batch_y = batch_y.view(-1)
+            batch_s = batch_s.view(-1)
+            
+            for s_id in SESSIONS:
+                if phoenixes[s_id].exhausted: continue
+                mask = (batch_s == s_id)
+                if not mask.any(): continue
+                    
+                phoenixes[s_id].optimizer.zero_grad()
+                outputs = models[s_id](batch_x[mask])
+                loss = criterion(outputs, batch_y[mask])
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(models[s_id].parameters(), max_norm=1.0)
+                phoenixes[s_id].optimizer.step()
+                
+                train_loss[s_id] += loss.item()
+                valid_train_batches[s_id] += 1
+
+        avg_train_loss = {s_id: train_loss[s_id] / max(valid_train_batches[s_id], 1) for s_id in SESSIONS}
+
+        # VAL
+        for m in models.values(): m.eval()
+        val_loss_total = {s_id: 0.0 for s_id in SESSIONS}
+        all_probs_up = {s_id: [] for s_id in SESSIONS}
+        all_labels = {s_id: [] for s_id in SESSIONS}
+        valid_val_batches = {s_id: 0 for s_id in SESSIONS}
+
+        with torch.no_grad():
+            for batch_x, batch_y, batch_s in val_loader:
+                batch_y = batch_y.view(-1)
+                batch_s = batch_s.view(-1)
+                for s_id in SESSIONS:
+                    if phoenixes[s_id].exhausted: continue
+                    mask = (batch_s == s_id)
+                    if not mask.any(): continue
+                    
+                    outputs = models[s_id](batch_x[mask])
+                    loss_v = criterion(outputs, batch_y[mask])
+                    val_loss_total[s_id] += loss_v.item()
+                    valid_val_batches[s_id] += 1
+                    
+                    probs = F.softmax(outputs, dim=1)
+                    all_probs_up[s_id].append(probs[:, 1].cpu())
+                    all_labels[s_id].append(batch_y[mask].cpu())
+
+        avg_val_loss = {s_id: val_loss_total[s_id] / max(valid_val_batches[s_id], 1) for s_id in SESSIONS}
+
+        epoch_has_improvement = False
+        
+        for s_id in SESSIONS:
+            s_name = SESSIONS[s_id]
+            if phoenixes[s_id].exhausted or len(all_probs_up[s_id]) == 0: 
+                continue
+
+            probs_t = torch.cat(all_probs_up[s_id])
+            labels_t = torch.cat(all_labels[s_id])
+            
+            # Tính max_thresh V1 logic
+            max_thresh = 0.50
+            for t_int in range(99, 51, -1):
+                t = t_int / 100.0
+                n_buy_sig  = (probs_t > t).sum().item()
+                n_sell_sig = (probs_t < (1.0 - t)).sum().item()
+                if (n_buy_sig + n_sell_sig) >= MIN_SIGNALS:
+                    max_thresh = t
+                    break
+
+            step = (max_thresh - 0.50) / 3 if max_thresh > 0.50 else 0
+            thresholds = [round(0.50 + step * i, 4) for i in range(4)]
+
+            wrs, totals_t = [], []
+            for t in thresholds:
+                lo = 1.0 - t
+                b = probs_t > t
+                s = probs_t < lo
+                n = b.sum().item() + s.sum().item()
+                c = (labels_t[b] == 1).sum().item() + (labels_t[s] == 0).sum().item()
+                wrs.append(c / n if n > 0 else 0.0)
+                totals_t.append(n)
+
+            # L4 Statistically Valid
+            is_valid = totals_t[3] >= MIN_SIGNALS
+            current_scores = calc_strats(wrs, avg_val_loss[s_id])
+            
+            improved_strategies = []
+            if is_valid:
+                for cfg_name, s_val in current_scores.items():
+                    if top_configs[s_id][cfg_name] is None or s_val > top_configs[s_id][cfg_name]["score"]:
+                        top_configs[s_id][cfg_name] = {
+                            "score": s_val,
+                            "epoch": total_epoch,
+                            "state_dict": copy.deepcopy(models[s_id].state_dict()),
+                            "thresholds": thresholds[:],
+                            "wrs": wrs[:],
+                            "totals": totals_t[:],
+                            "max_thresh": max_thresh
+                        }
+                        
+                        _f = os.path.join(run_dir, f"{target_name}_{s_name}_weights_{cfg_name}.pth")
+                        torch.save(models[s_id].state_dict(), _f)
+                        improved_strategies.append(cfg_name)
+
+            if avg_val_loss[s_id] < global_best_vloss[s_id]:
+                global_best_vloss[s_id] = avg_val_loss[s_id]
+
+            action_str = ""
+            if improved_strategies:
+                phoenixes[s_id].reset_stagnation()
+                epoch_has_improvement = True
+                
+                valid_cfgs = [c for c in top_configs[s_id].values() if c is not None]
+                if valid_cfgs:
+                    best_cfg = max(valid_cfgs, key=lambda x: x["score"])
+                    global_best_score[s_id] = best_cfg["score"]
+
+                thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f} ({totals_t[i]}L)" for i, t in enumerate(thresholds[-2:]))
+                print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {','.join(improved_strategies)} | Th>={max_thresh:.2f} | {thr_str} | VLoss: {avg_val_loss[s_id]:.4f}")
+            else:
+                should_restart = phoenixes[s_id].notify_no_improve()
+                if should_restart:
+                    valid = [c for c in top_configs[s_id].values() if c is not None]
+                    chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
+                    print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mạng {s_id} kẹt {phoenixes[s_id].max_stagnate} epoch. Tái sinh!")
+                    action_str = phoenixes[s_id].apply_perturbation(chosen)
+
+            if str(total_epoch).endswith("0") or total_epoch == -1:
+                cur_lr = phoenixes[s_id].get_lr()
+                acc_total = sum([c for w, c in zip(wrs, totals_t)]) / sum(totals_t) if sum(totals_t) > 0 else 0
+                print(f"  [Phiên {s_name.upper()}] Ep {total_epoch} | TLoss: {avg_train_loss[s_id]:.4f} | VLoss: {avg_val_loss[s_id]:.4f} | LR: {cur_lr:.1e}")
+                if action_str: print(f"  ↪ {action_str}")
+                
+            phoenixes[s_id].scheduler.step(wrs[3] if totals_t[3] > 0 else avg_val_loss[s_id])
+
+        total_epoch += 1
+        
+        # Ghi log json (Blackbox)
+        _save_blackbox_multi(run_dir, target_name, top_configs, num_xau_features, num_features, total_epoch)
+
+    print(f"\n✅ KẾT THÚC V1.5 Train. Dữ liệu chạy đã lưu vào {run_dir}")
+
+def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features, num_features, epoch):
+    meta_file = os.path.join(run_dir, "training_metrix_v1_5.json")
+    out = {
+        "target": target_name,
+        "version": "Independent_Multi_Session_v1.5",
+        "epochs_trained": epoch,
+        "dimensions": {
+            "num_features_target": num_target_features or 0,
+            "num_features_macro": (num_features - num_target_features) if num_target_features is not None else num_features,
+        },
+        "sessions": {}
+    }
+    
+    for s_id, s_name in {0: "asia", 1: "london", 2: "ny"}.items():
+        sess_data = {}
+        for k, v in top_configs[s_id].items():
+            if v is not None:
+                sess_data[k] = {
+                    "epoch": v["epoch"],
+                    "composite_score": v["score"],
+                    "max_thresh": v["max_thresh"],
+                    "thresholds": v["thresholds"],
+                    "win_rates": [wr * 100 for wr in v["wrs"]],
+                    "totals": v["totals"]
+                }
+        out["sessions"][s_name] = sess_data
+
+    with open(meta_file, 'w', encoding='utf-8') as f:
+        json.dump(out, f, indent=4, ensure_ascii=False)
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", nargs="?", help="Đường dẫn bot_config_*.json")
+    args = parser.parse_args()
+
+    config_path = args.config
+    if not config_path:
+        for candidate in ["data/bot_config_xau.json", "data/bot_config.json"]:
+            p = os.path.join(_ROOT, candidate)
+            if os.path.exists(p):
+                config_path = p
+                break
+
+    cfg = {}
+    if config_path and os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+
+    TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
+    CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
+    DATA_PATH     = os.path.join(_ROOT, "data")
+
+    features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")
+    target_path   = os.path.join(DATA_PATH, f"target_direction_{TARGET_PREFIX}.parquet")
+
+    if not os.path.exists(features_path) or not os.path.exists(target_path):
+        print(f"❌ Không tìm thấy dữ liệu {features_path} hoặc target {target_path}")
+        sys.exit(1)
+
+    features = pd.read_parquet(features_path)
+    targets  = pd.read_parquet(target_path)
+    
+    run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    target_clean = TARGET_PREFIX.lower().replace("_", "")
+    run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V1_5"
+    run_dir  = os.path.join(_ROOT, "runs", run_name)
+    os.makedirs(run_dir, exist_ok=True)
+    
+    # Copy scaler
+    import shutil
+    scaler_src = os.path.join(DATA_PATH, "scaler.pkl")
+    if os.path.exists(scaler_src):
+        shutil.copy(scaler_src, os.path.join(run_dir, "scaler.pkl"))
+
+    train_unified_v1_5(features, targets, features.shape[1], run_dir, config=cfg, target_prefix=TARGET_PREFIX)

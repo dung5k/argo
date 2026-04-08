@@ -203,7 +203,8 @@ def bot_background_loop():
         
         time.sleep(3)
 
-def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr):
+def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
+    if lbl_target: lbl_target.config(text=gui_target_text)
     lbl_time.config(text=f"🕒 {gui_time}")
     lbl_session.config(text=f"🌐 {gui_session}")
     lbl_action.config(text=f"🎯 Hành động: {trade_manager.gui_action}")
@@ -229,7 +230,7 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
     except:
         pass
         
-    root.after(500, update_ui, root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr)
+    root.after(500, update_ui, root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
 
 def start_overlay_dashboard():
     root = tk.Tk()
