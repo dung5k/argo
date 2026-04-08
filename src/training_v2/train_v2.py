@@ -399,7 +399,24 @@ def train_v2(
 
     global_best_ev   = {s_id: 0.0 for s_id in SESSIONS}
     global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
-    total_epoch = 0
+    
+    # 5. Kế thừa trọng số cũ
+    import glob
+    print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa...")
+    for s_id, s_name in SESSIONS.items():
+        pattern = os.path.join(_ROOT, "runs", "**", f"{target_name}_{s_name}_weights_*.pth")
+        all_files = glob.glob(pattern, recursive=True)
+        if all_files:
+            latest_file = max(all_files, key=os.path.getmtime)
+            try:
+                models[s_id].load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
+                print(f"  ↪ Mạng {s_id} ({s_name.upper()}): {os.path.basename(latest_file)}")
+            except Exception as e:
+                print(f"  ↪ Lỗi kế thừa Mạng {s_id}: {e}")
+        else:
+            print(f"  ↪ Mạng {s_id} ({s_name.upper()}): Khởi tạo ngẫu nhiên từ đầu")
+
+    total_epoch = -1  # Epoch -1 dùng để Evaluate cấu hình kế thừa ban đầu
 
     def _get_score(result: EpochEvalResult, strategy: str) -> float:
         if strategy == "EV_L3_1.4_L4_1.0":
@@ -414,30 +431,37 @@ def train_v2(
     try:
         while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < EPOCHS:
             epoch_t0 = time.time()
+            epoch_has_improvement = False
 
             # TRAIN
             for m in models.values(): m.train()
             train_loss = {s_id: 0.0 for s_id in SESSIONS}
             valid_train_batches = {s_id: 0 for s_id in SESSIONS}
             
-            for batch_x, batch_y, _, batch_s in train_loader:
-                batch_y = batch_y.view(-1)
-                batch_s = batch_s.view(-1)
-                
-                for s_id in SESSIONS:
-                    if phoenixes[s_id].exhausted: continue
-                    mask = (batch_s == s_id)
-                    if not mask.any(): continue
-                        
-                    phoenixes[s_id].optimizer.zero_grad()
-                    outputs = models[s_id](batch_x[mask])
-                    loss = criterion(outputs, batch_y[mask])
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(models[s_id].parameters(), max_norm=1.0)
-                    phoenixes[s_id].optimizer.step()
+            if total_epoch >= 0:
+                total_batches = 0
+                for batch_x, batch_y, _, batch_s in train_loader:
+                    batch_y = batch_y.view(-1)
+                    batch_s = batch_s.view(-1)
                     
-                    train_loss[s_id] += loss.item()
-                    valid_train_batches[s_id] += 1
+                    for s_id in SESSIONS:
+                        if phoenixes[s_id].exhausted: continue
+                        mask = (batch_s == s_id)
+                        if not mask.any(): continue
+                            
+                        phoenixes[s_id].optimizer.zero_grad()
+                        outputs = models[s_id](batch_x[mask])
+                        loss = criterion(outputs, batch_y[mask])
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(models[s_id].parameters(), max_norm=1.0)
+                        phoenixes[s_id].optimizer.step()
+                        
+                        train_loss[s_id] += loss.item()
+                        valid_train_batches[s_id] += 1
+                    
+                    total_batches += 1
+                    if total_batches % 15 == 0:
+                        print(f"  [TRAIN] Đang xử lý... ({total_batches} batches)")
 
             avg_train_loss = {s_id: train_loss[s_id] / max(valid_train_batches[s_id], 1) for s_id in SESSIONS}
 
@@ -490,14 +514,6 @@ def train_v2(
                 # Check L4 valid
                 valid = evaluators[s_id].is_statistically_valid(result)
 
-                # Step Phoenix per session
-                phx = phoenixes[s_id]
-                status_phx, action_str = phx.step(
-                    val_loss=avg_val_loss[s_id],
-                    current_ev=result.best_ev,
-                    epoch=total_epoch,
-                )
-
                 # Track and save Models
                 global_best_ev[s_id] = max(global_best_ev[s_id], result.best_ev)
                 global_best_vloss[s_id] = min(global_best_vloss[s_id], avg_val_loss[s_id])
@@ -517,12 +533,29 @@ def train_v2(
                         torch.save(models[s_id].state_dict(), _f)
                         improved.append(cfg_name)
 
+                phx = phoenixes[s_id]
+                action_str = ""
+                
+                # Cập nhật Scheduler
+                phx.scheduler.step(result.best_ev)
+
                 if improved:
                     phx.notify_improved()
+                    epoch_has_improvement = True
+                else:
+                    should_restart = phx.notify_no_improve()
+                    if should_restart:
+                        valid = [c for c in top_configs[s_id].values() if c is not None]
+                        import random
+                        chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
+                        print(f"\n[PHOENIX #{phx.phoenix_count}] Mạng {s_id} kẹt {phx.max_stagnate} epoch. Tái sinh! (còn {phx.remaining} lần)")
+                        phx.apply_perturbation(chosen)
+                        action_str = "PERTURB TRIGGERED"
                     
-                if total_epoch % 10 == 0:
+                if str(total_epoch).endswith("0") or total_epoch == -1:
                     dt = time.time() - epoch_t0
-                    print(f"\n[Phiên {s_name.upper()} | Mạng {s_id}] Ep {total_epoch} ({dt:.1f}s) — TrLoss: {avg_train_loss[s_id]:.4f} | VLoss: {avg_val_loss[s_id]:.4f}")
+                    ep_str = f"Ep {total_epoch}" if total_epoch >= 0 else "Ep Kế Thừa (-1)"
+                    print(f"\n[Phiên {s_name.upper()} | Mạng {s_id}] {ep_str} ({dt:.1f}s) — TrLoss: {avg_train_loss[s_id]:.4f} | VLoss: {avg_val_loss[s_id]:.4f}")
                     if action_str:
                         print(f"  ↪ {action_str}")
                     print(evaluators[s_id].format_summary(result))
@@ -531,6 +564,15 @@ def train_v2(
 
             # Save Blackbox metrics combined
             _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features, num_features)
+            
+            # Đồng bộ lên HuggingFace nếu có bất kỳ mô hình nào được cải thiện
+            if epoch_has_improvement:
+                print(f"\n[HF] Phát hiện mẫu tốt hơn. Kích hoạt đồng bộ HF...")
+                try:
+                    from src.orchestration.hf_sync import push_runs
+                    push_runs()
+                except Exception as e:
+                    print(f"[HF] Lỗi sync định kỳ: {e}")
             
     except KeyboardInterrupt:
         print("\n[EMERGENCY] Dừng khẩn cấp. Đang lưu blackbox...")
@@ -706,6 +748,7 @@ if __name__ == "__main__":
         def write(self, msg):
             self.terminal.write(msg)
             self.log.write(msg)
+            self.flush()
         def flush(self):
             self.terminal.flush()
             self.log.flush()
@@ -722,16 +765,22 @@ if __name__ == "__main__":
     print(f"[RUN] {run_name}")
 
     # ── Chạy training ──────────────────────────────────────────
-    train_v2(
-        features=features_aligned,
-        soft_labels=soft_labels_aligned,
-        log_returns=log_returns_aligned,
-        num_features=num_features,
-        run_dir=run_dir,
-        target_prefix=TARGET_PREFIX,
-        config=cfg,
-        max_epoch_override=args.max_epoch,
-    )
+    try:
+        train_v2(
+            features=features_aligned,
+            soft_labels=soft_labels_aligned,
+            log_returns=log_returns_aligned,
+            num_features=num_features,
+            run_dir=run_dir,
+            target_prefix=TARGET_PREFIX,
+            config=cfg,
+            max_epoch_override=args.max_epoch,
+        )
+    except Exception as e:
+        print(f"\n[CRITICAL ERROR] Quá trình train sụp đổ: {type(e).__name__} - {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
     # ── Sync lên HuggingFace ───────────────────────────────────
     print("\n[HF] Đồng bộ cuối phiên lên HuggingFace...")
