@@ -66,14 +66,26 @@
                 "PREFIX": "Z10Y",
                 "BROKER": "MT5_2",
                 "IS_CFD": false,
-                "CONTRACT_MONTHS": ["J", "K", "M", "U", "Z", "H"],
+                "CONTRACT_MONTHS": [
+                    "J",
+                    "K",
+                    "M",
+                    "U",
+                    "Z",
+                    "H"
+                ],
                 "INVERT_LOGIC": false
             }
         }
     },
     "FEATURE_ENGINEERING": {
-        "EMA_PERIODS": [9, 21],
-        "RSI_PERIODS": [14],
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
         "FILL_LIMIT": 120,
         "EXACT_FEATURES": [
             "XAGUSD_RSI",
