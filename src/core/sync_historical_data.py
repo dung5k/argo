@@ -255,7 +255,7 @@ def sync_all_history():
                     )
                     
                     # (Optional) Xoá file Local sau khi up
-                    if not hf_config.get("KEEP_LOCAL_PARQUET", True):
+                    if not hf_config.get("KEEP_LOCAL_PARQUET", False):
                         os.remove(f_path)
                         print(f"    🗑️ Đã xoá file tạm local: {f_name}")
                         
