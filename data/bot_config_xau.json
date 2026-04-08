@@ -2,6 +2,7 @@
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
     "CONFIG_ID": "CFG_02",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "WEIGHT_FILE": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
     "WEIGHT_FILES": {
         "asian": "xauusd_asia_weights_EV_L3_1.4_L4_1.0.pth",

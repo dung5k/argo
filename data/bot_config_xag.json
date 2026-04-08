@@ -2,6 +2,7 @@
     "TARGET_SYMBOL": "XAGUSDm",
     "TARGET_PREFIX": "XAGUSD",
     "CONFIG_ID": "XAG_CFG_01",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "WEIGHT_FILE": "xagusd_v2_weights_EV_L3_1.4_L4_1.0.pth",
     "WEIGHT_FILES": {
         "asian": "xagusd_asia_weights_BEST_VLOSS.pth",
