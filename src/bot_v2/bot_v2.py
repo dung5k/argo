@@ -135,6 +135,14 @@ def bot_background_loop():
                 
         # 2. Rà Soát Máy Chủ (Session Guards)
         mt5_manager.scan_terminals_and_map()
+        
+        # Luôn đảm bảo kết nối toàn cục MT5 đang hướng về Sàn Giao Dịch thực thi (Vì mt5_manager có thể đã nhảy sàn)
+        trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        if mt5_manager.current_connected_path != trading_path:
+            trade_manager.mt5.shutdown()
+            trade_manager.mt5.initialize(path=trading_path)
+            mt5_manager.current_connected_path = trading_path
+
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
         trade_manager.mt5.symbol_select(actual_sym, True)
         
@@ -184,6 +192,12 @@ def bot_background_loop():
         print(f"[{gui_time}] 🧠 LOGITS: {logits}. Lực Bò: {gui_prediction}")
         
         # 6. Mở Van Bắn Lệnh (Trade Sniper)
+        trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        if mt5_manager.current_connected_path != trading_path:
+            trade_manager.mt5.shutdown()
+            trade_manager.mt5.initialize(path=trading_path)
+            mt5_manager.current_connected_path = trading_path
+            
         trade_manager.manage_mt5_positions(pred, actual_target_sym=actual_sym)
         gui_status = "Khóa Mốc. Hoàn tất chu kỳ."
         
@@ -224,9 +238,9 @@ def start_overlay_dashboard():
     root.attributes('-topmost', True)
     root.attributes('-alpha', 0.90) 
     
-    screen_w = root.winfo_screenwidth()
-    x_pos = screen_w - 380 
-    y_pos = 50 if "XAU" in TARGET_SYMBOL.upper() else 250
+    screen_h = root.winfo_screenheight()
+    x_pos = 10 
+    y_pos = screen_h - 550
         
     root.geometry(f"360x500+{x_pos}+{y_pos}")
     root.configure(bg='#121212') 

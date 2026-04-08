@@ -22,7 +22,9 @@ class V2DataProcessor:
             
         try:
             from src.training_v2.feature_pipeline_v2 import FeaturePipelineV2
-            self.pipeline = FeaturePipelineV2(scaler_path=self.scaler_path)
+            data_dir = os.path.dirname(self.scaler_path)
+            self.pipeline = FeaturePipelineV2(target_prefix="INFERENCE", data_dir=data_dir)
+            self.pipeline._scaler_path = self.scaler_path
             self.pipeline.load_scaler()
             return True
         except Exception as e:
@@ -39,10 +41,10 @@ class V2DataProcessor:
                 return None, "Pipeline V2 Init Failed"
                 
         try:
-            # 1. Feature Engineering
+            # 1. Feature Engineering (Kế thừa Scaling từ V1, yêu cầu is_live=True để dùng chung scaler.pkl)
             try:
                 from src.core import feature_engineering as fe
-                fe_raw_df = fe.create_stationary_features(raw_df.copy(), is_live=False)
+                fe_raw_df, _ = fe.create_stationary_features(raw_df.copy(), is_live=True)
             except ImportError:
                 return None, "Import feature_engineering failed"
                 
@@ -54,15 +56,25 @@ class V2DataProcessor:
             # 3. Scale Data theo Pipeline V2
             scaled_df = self.pipeline.transform(fe_raw_df)
             
+            # Reattach is_imputed_flag because PipelineV2 drops it during transform (matching train_v2 logic)
+            if 'is_imputed_flag' in fe_raw_df.columns:
+                scaled_df['is_imputed_flag'] = fe_raw_df['is_imputed_flag'].loc[scaled_df.index]
+            else:
+                scaled_df['is_imputed_flag'] = 0.0
+            
             # 4. Filter features khớp với Mạng
-            missing_cols = [c for c in self.inference_feats if c not in scaled_df.columns]
-            if missing_cols:
-                # Fill missing macro data with 0 (Giả lập padding)
-                self.log_callback(f"[DataProcessor] Cảnh báo: Thiếu {len(missing_cols)} cột macro. Auto fill zeros.")
-                for col in missing_cols:
-                    scaled_df[col] = 0.0
-                    
-            final_df = scaled_df[self.inference_feats].copy()
+            if self.inference_feats:
+                missing_cols = [c for c in self.inference_feats if c not in scaled_df.columns]
+                if missing_cols:
+                    # Fill missing macro data with 0 (Giả lập padding)
+                    self.log_callback(f"[DataProcessor] Cảnh báo: Thiếu {len(missing_cols)} cột macro. Auto fill zeros.")
+                    for col in missing_cols:
+                        scaled_df[col] = 0.0
+                        
+                final_df = scaled_df[self.inference_feats].copy()
+            else:
+                # Nếu Mây không cung cấp List, mặc định dùng trọn vẹn kết quả do PipelineV2 định tuyến (luôn chuẩn xác)
+                final_df = scaled_df.copy()
             final_df = final_df.replace([np.inf, -np.inf], 0).fillna(0)
             
             # 5. Extract the window
