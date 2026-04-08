@@ -256,9 +256,11 @@ def sync_all_history():
                     
                     # (Optional) Xoá file Local sau khi up
                     if not hf_config.get("KEEP_LOCAL_PARQUET", False):
-                        os.remove(f_path)
-                        print(f"    🗑️ Đã xoá file tạm local: {f_name}")
-                        
+                        try:
+                            os.remove(f_path)
+                            print(f"    🗑️ Đã xoá file tạm local: {f_name}")
+                        except Exception as rm_err:
+                            print(f"    ⚠️ Lỗi khi xoá file {f_name}: {rm_err}")
                 print("🌟 SUCCESS: Đã đẩy toàn bộ Dataset M1 lên Hugging Face Cloud thành công!")
             except ImportError:
                 print("Lỗi: Không tìm thấy thư viện `huggingface_hub`. Vui lòng pip install huggingface-hub")
