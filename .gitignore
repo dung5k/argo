@@ -8,9 +8,10 @@ __pycache__/
 # Cau hinh bi mat - Hien tai push theo yeu cau cua chu repo
 # tg_config.json
 
-# Data nang > 100MB khong day len Git (dung OneDrive ngam)
-data/*.parquet
-data/*.pkl
+# Data nang > 100MB khong day len Git (dung OneDrive ngam hoac HuggingFace)
+*.parquet
+*.pkl
+*.pth
 
 # File nhan dien tung may khach
 .client_id
