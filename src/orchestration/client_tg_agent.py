@@ -128,7 +128,7 @@ class TrainingManager:
             return f"🔄 BUSY — task: <code>{self._task_id}</code>{elapsed}"
         return "💤 IDLE"
 
-    def start_train(self, config_path: str, code: str = None, on_done=None) -> dict:
+    def start_train(self, config_path: str, code: str = None, script: str = "", on_done=None) -> dict:
         if self.is_busy():
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
@@ -143,8 +143,10 @@ class TrainingManager:
             train_script = str(self.base_dir / f"train_temp_{self.client_id}.py")
             with open(train_script, "w", encoding="utf-8") as f:
                 f.write(code)
+        elif script:
+            train_script = str(self.base_dir / script)
         else:
-            train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
+            train_script = str(self.base_dir / "src" / "legacy" / "train_ga.py")
 
         cmd = [python, train_script]
         
@@ -267,9 +269,10 @@ class TelegramAgent:
 
         if action == "train":
             symbol = payload.get("symbol", "xauusd").lower()
+            script = payload.get("script", "")
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
-            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, config={config}")
-            res = self.manager.start_train(config)
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, script={script}, config={config}")
+            res = self.manager.start_train(config, script=script)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:
