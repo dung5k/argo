@@ -54,6 +54,7 @@ AGENT_VERSION = "2.0.0-SkyNet"
 CONFIG_MAP = {
     "xauusd": "data/bot_config_xau.json",
     "xau"   : "data/bot_config_xau.json",
+    "xau_v1_5": "data/bot_config_xau_v1_5.json",
     "ltc"   : "data/bot_config_ltc.json",
     "oil"   : "data/bot_config_oil.json",
 }
@@ -146,7 +147,10 @@ class TrainingManager:
         elif script:
             train_script = str(self.base_dir / script)
         else:
-            train_script = str(self.base_dir / "src" / "legacy" / "train_ga.py")
+            if config_path and "v1_5" in config_path:
+                train_script = str(self.base_dir / "src" / "training_v1_5" / "train_v1_5.py")
+            else:
+                train_script = str(self.base_dir / "src" / "legacy" / "train_ga.py")
 
         cmd = [python, train_script]
         
