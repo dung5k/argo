@@ -481,6 +481,10 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         
                         if s_id not in phoenixes: continue
                         
+                        eval_msg = act.get("session_evaluation", "")
+                        if eval_msg:
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Nghĩ: {eval_msg}")
+                        
                         action_type = act.get("action_type", "continue")
                         if action_type == "stop":
                             phoenixes[s_id].exhausted = True

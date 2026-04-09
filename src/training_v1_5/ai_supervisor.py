@@ -38,10 +38,15 @@ Ngoài Soft configs cũ (LR, WD), bạn được cấp thêm quyền thay đổi
 - `patience`: Khởi tạo 10. Giảm xuống nếu đồ thị loss đóng băng ngang quá lâu mà ko rớt LR.
 
 {
+  "global_reasoning": [
+    "Bước 1: So sánh cục diện các phiên...",
+    "Bước 2: Phát hiện bất thường cục bộ..."
+  ],
   "analysis_report": "Tóm tắt ngắn (1-2 câu).",
   "telegram_message": "Nội dung ngắn gọn để gửi Tele.",
   "actions": {
     "0": {
+       "session_evaluation": "Val loss tăng, đe doạ overfitting, tăng label_smoothing.",
        "action_type": "continue", 
        "new_lr": ...., 
        "weight_decay": ...., 
@@ -50,8 +55,14 @@ Ngoài Soft configs cũ (LR, WD), bạn được cấp thêm quyền thay đổi
        "label_smoothing": 0.15,
        "patience": 10
     },
-    "1": {"action_type": "force_phoenix"},
-    "2": {"action_type": "continue", "active_window_size": 45}
+    "1": {
+       "session_evaluation": "Đi ngang quá lâu, bế tắc hoàn toàn, ép tái sinh.",
+       "action_type": "force_phoenix"
+    },
+    "2": {
+       "session_evaluation": "Hội tụ tốt, tăng window size để nới curriculum.",
+       "action_type": "continue", "active_window_size": 45
+    }
   },
   "global_action": "continue"
 }
