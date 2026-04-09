@@ -265,6 +265,19 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     # ── In diagnostic batch đầu tiên sau khi setup xong ─────
     _first_batch_logged = False
 
+    # ── Xây dựng AI History Buffer ───────────────────────────
+    min_signals_dict = {s_id: MIN_SIGNALS for s_id in SESSIONS}
+    history_buffer = {s_id: {
+        "avg_train_loss_history": [],
+        "avg_val_loss_history": [],
+        "win_rate_L4_history": [],
+        "total_signals_L4_history": [],
+        "phoenix_count": 0,
+        "current_lr": BASE_LR,
+        "current_weight_decay": 1e-3,
+        "current_min_signals": MIN_SIGNALS
+    } for s_id in SESSIONS}
+
     total_epoch = 0
     while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < epochs:
         # TRAIN
@@ -348,7 +361,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 t = t_int / 100.0
                 n_buy_sig  = (probs_t > t).sum().item()
                 n_sell_sig = (probs_t < (1.0 - t)).sum().item()
-                if (n_buy_sig + n_sell_sig) >= MIN_SIGNALS:
+                if (n_buy_sig + n_sell_sig) >= min_signals_dict[s_id]:
                     max_thresh = t
                     break
 
@@ -366,7 +379,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 totals_t.append(n)
 
             # L4 Statistically Valid
-            is_valid = totals_t[3] >= MIN_SIGNALS
+            is_valid = totals_t[3] >= min_signals_dict[s_id]
             current_scores = calc_strats(wrs, avg_val_loss[s_id])
             
             improved_strategies = []
@@ -422,8 +435,81 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 if action_str: print(f"  ↪ {action_str}")
                 
             phoenixes[s_id].scheduler.step(wrs[3] if totals_t[3] > 0 else avg_val_loss[s_id])
+            
+            # Ghi Metrics vào Buffer cho AI Supervisor
+            history_buffer[s_id]["avg_train_loss_history"].append(float(avg_train_loss[s_id]))
+            history_buffer[s_id]["avg_val_loss_history"].append(float(avg_val_loss[s_id]))
+            history_buffer[s_id]["win_rate_L4_history"].append(float(wrs[3]) if len(wrs) > 3 else 0.0)
+            history_buffer[s_id]["total_signals_L4_history"].append(int(totals_t[3]) if len(totals_t) > 3 else 0)
+            history_buffer[s_id]["phoenix_count"] = phoenixes[s_id].phoenix_count
+            history_buffer[s_id]["current_lr"] = float(phoenixes[s_id].get_lr())
+            history_buffer[s_id]["current_weight_decay"] = float(phoenixes[s_id].optimizer.param_groups[0].get('weight_decay', 0.0))
+            history_buffer[s_id]["current_min_signals"] = min_signals_dict[s_id]
 
         total_epoch += 1
+        
+        # ── LLM META-OPTIMIZER TRIGGER (Mỗi 50 Epochs) ──────────
+        AI_INTERVAL = 50
+        if total_epoch > 0 and total_epoch % AI_INTERVAL == 0:
+            print(f"\n🤖 [AI SUPERVISOR] Đang phân tích metrics sau {total_epoch} epochs...")
+            try:
+                from src.training_v1_5.ai_supervisor import call_llm_meta_optimizer
+                resp_json = call_llm_meta_optimizer(history_buffer, total_epoch, base_dir=str(_ROOT))
+                if resp_json:
+                    print(f"🤖 [AI_REPORT]: {resp_json.get('analysis_report', '')}")
+                    # In ra Sự Kiện (Client_TG sẽ bắt từ khóa 'PHÁT HIỆN SỰ KIỆN MỚI' hoặc in tin nhắn riêng)
+                    tel_msg = resp_json.get('telegram_message', '')
+                    if tel_msg: print(f"🔥 BÁO CÁO AI: {tel_msg}")
+                    
+                    actions = resp_json.get("actions", {})
+                    for dict_key, act in actions.items():
+                        # dict_key có thể là string '0', '1', '2' hoặc 'asia', 'london', 'ny'
+                        if str(dict_key).isdigit(): s_id = int(dict_key)
+                        elif dict_key == 'asia': s_id = 0
+                        elif dict_key == 'london': s_id = 1
+                        else: s_id = 2
+                        
+                        if s_id not in phoenixes: continue
+                        
+                        action_type = act.get("action_type", "continue")
+                        if action_type == "stop":
+                            phoenixes[s_id].exhausted = True
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Quyết định: STOP")
+                            continue
+                            
+                        if "new_lr" in act or "weight_decay" in act:
+                            new_lr = act.get("new_lr")
+                            new_wd = act.get("weight_decay")
+                            for param_group in phoenixes[s_id].optimizer.param_groups:
+                                if new_lr is not None and 1e-6 <= float(new_lr) <= 1e-2:
+                                    param_group['lr'] = float(new_lr)
+                                if new_wd is not None and 0 <= float(new_wd) <= 0.1:
+                                    param_group['weight_decay'] = float(new_wd)
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Cập nhật (LR={new_lr}, WD={new_wd})")
+                            
+                        if "min_signals" in act:
+                            val = int(act["min_signals"])
+                            if 10 <= val <= 50:
+                                min_signals_dict[s_id] = val
+                                print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Đổi MIN_SIGNALS = {val}")
+                                
+                        if action_type == "force_phoenix":
+                            valid = [c for c in top_configs[s_id].values() if c is not None]
+                            chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
+                            print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] AI Bắt Buộc Tái Sinh!")
+                            a_str = phoenixes[s_id].apply_perturbation(chosen)
+                            print(f"  ↪ {a_str}")
+                
+            except Exception as e:
+                print(f"[AI SUPERVISOR ERR] {e}")
+                
+            # Xóa buffer đón chu kỳ mới
+            for s_id in SESSIONS:
+                history_buffer[s_id]["avg_train_loss_history"].clear()
+                history_buffer[s_id]["avg_val_loss_history"].clear()
+                history_buffer[s_id]["win_rate_L4_history"].clear()
+                history_buffer[s_id]["total_signals_L4_history"].clear()
+        # ────────────────────────────────────────────────────────
         
         # Ghi log json (Blackbox)
         _save_blackbox_multi(run_dir, target_name, top_configs, num_xau_features, num_features, total_epoch)
