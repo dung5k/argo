@@ -353,7 +353,7 @@ class TelegramAgent:
                 self.logger.info(f"🌐 [NGROK SERVER] Unified Log API Mở tại: {public_url}")
                 if self.mqtt:
                     import json
-                    self.mqtt.client.publish(f"argo_dungla_9213/{self.client_id}/ngrok_url", json.dumps({"url": public_url}), retain=True)
+                    self.mqtt.client.publish(f"ARGO_ORCH/{self.client_id}/ngrok_url", json.dumps({"url": public_url}), retain=True)
             except Exception as e:
                 self.logger.error(f"❌ [NGROK SERVER] Không thể mớ hầm Ngrok: {e}")
 

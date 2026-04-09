@@ -113,36 +113,6 @@ class HostController:
             self.client.publish(self.cmd_topic, payload, qos=1)
             print(f"[HOST] 📁 Gửi file '{file_name}' ({file_size/1024:.1f}KB) thẳng qua MQTT → {remote_dest}")
             return
-
-    def getlog(self, minutes: int):
-        self._wait_connected()
-        print(f"[HOST] 📡 Đang chờ cấp URL đường hầm Ngrok từ {self.client_id}...")
-        self.client.subscribe(f"{PREFIX}/{self.client_id}/ngrok_url")
-        start_t = time.time()
-        while not self.ngrok_url and time.time() - start_t < 15:
-            time.sleep(0.1)
-            
-        if not self.ngrok_url:
-            print("[LỖI] Không thể lấy được Ngrok URL! Xin hãy chờ Agent Client bung tunnel hoặc chạy --time lâu hơn.")
-            return
-
-        print(f"[HOST] 🌐 Khớp nối URL: {self.ngrok_url}")
-        print(f"[HOST] 🚀 Trích xuất {minutes} phút trước...")
-        
-        import requests
-        try:
-            r = requests.get(f"{self.ngrok_url}/log?minutes={minutes}", headers={"ngrok-skip-browser-warning": "any"}, timeout=15)
-            r.raise_for_status()
-            print("="*60)
-            print(f"📄 LOG TỪ {self.client_id} (thời gian: {minutes} phút)")
-            print("="*60)
-            print(r.text)
-            print("="*60)
-        except Exception as e:
-            print(f"[LỖI] Không qua được cổng Ngrok HTTP: {e}")
-
-    # ===== End of getlog =====
-
         else:
             # === FILE LỚN: Upload lên HuggingFace rồi báo Client kéo về ===
             print(f"[HOST] 📦 File '{file_name}' lớn ({file_size/1024/1024:.1f}MB) — Upload HuggingFace trước...")
@@ -179,6 +149,33 @@ class HostController:
                 print(f"[HOST] 📡 Đã báo Client kéo file từ HF về: {remote_dest}")
             except Exception as e:
                 print(f"[LỖI] Upload HF thất bại: {e}")
+
+    def getlog(self, minutes: int):
+        self._wait_connected()
+        print(f"[HOST] 📡 Đang chờ cấp URL đường hầm Ngrok từ {self.client_id}...")
+        self.client.subscribe(f"{PREFIX}/{self.client_id}/ngrok_url")
+        start_t = time.time()
+        while not self.ngrok_url and time.time() - start_t < 15:
+            time.sleep(0.1)
+            
+        if not self.ngrok_url:
+            print("[LỖI] Không thể lấy được Ngrok URL! Xin hãy chờ Agent Client bung tunnel hoặc chạy --time lâu hơn.")
+            return
+
+        print(f"[HOST] 🌐 Khớp nối URL: {self.ngrok_url}")
+        print(f"[HOST] 🚀 Trích xuất {minutes} phút trước...")
+        
+        import requests
+        try:
+            r = requests.get(f"{self.ngrok_url}/log?minutes={minutes}", headers={"ngrok-skip-browser-warning": "any"}, timeout=15)
+            r.raise_for_status()
+            print("="*60)
+            print(f"📄 LOG TỪ {self.client_id} (thời gian: {minutes} phút)")
+            print("="*60)
+            print(r.text)
+            print("="*60)
+        except Exception as e:
+            print(f"[LỖI] Không qua được cổng Ngrok HTTP: {e}")
 
     def deploy_agent(self, version: str = "latest"):
         """
