@@ -108,5 +108,16 @@
         "ENABLE": true,
         "ACTIVE_WINDOW_SIZE": 60,
         "MASKED_FEATURES": []
+    },
+    "HF_CLOUD": {
+        "REQUIRED_PARQUETS": [
+            "xagusd_mt5_1m_20260301_to_20260409.parquet",
+            "xauusd_mt5_1m_20260301_to_20260409.parquet",
+            "audusd_mt5_1m_20260301_to_20260409.parquet",
+            "eurusd_mt5_1m_20260301_to_20260409.parquet",
+            "vixy_mt5_1m_20260301_to_20260409.parquet",
+            "nasdaq_100_mt5_1m_20260301_to_20260409.parquet",
+            "us_10y_yield_mt5_1m_20260301_to_20260409.parquet"
+        ]
     }
 }
