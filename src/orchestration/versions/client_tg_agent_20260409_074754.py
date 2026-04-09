@@ -27,24 +27,6 @@ Ví dụ:
 
 import os
 import sys
-
-def ensure_dependencies():
-    try:
-        import flask
-        import requests
-        from pyngrok import ngrok
-    except ImportError:
-        print("[AGENT] Thiếu thư viện web/tunnel. Tự động cài đặt Flask, requests, pyngrok...")
-        import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "flask", "requests", "pyngrok"])
-        import site
-        from importlib import reload
-        reload(site)
-
-ensure_dependencies()
-
-
-import sys
 import json
 import logging
 import argparse
@@ -94,17 +76,13 @@ def load_tg_config(base_dir: Path) -> dict:
 def setup_logger(log_dir: Path, client_id: str) -> logging.Logger:
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"tg_agent_{datetime.date.today().isoformat()}.log"
-    unified_file = log_dir / f"{client_id}_unified.log"
-    logger = logging.getLogger(f"tg_agent_{client_id}")
+    logger = logging.getLogger("tg_agent")
     logger.setLevel(logging.DEBUG)
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-    
-    if not logger.handlers:
-        for handler in [logging.FileHandler(str(log_file), encoding="utf-8"),
-                        logging.FileHandler(str(unified_file), encoding="utf-8"),
-                        logging.StreamHandler(sys.stdout)]:
-            handler.setFormatter(fmt)
-            logger.addHandler(handler)
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
+    for h in [logging.FileHandler(str(log_file), encoding="utf-8"),
+              logging.StreamHandler(sys.stdout)]:
+        h.setFormatter(fmt)
+        logger.addHandler(h)
     return logger
 
 
@@ -224,20 +202,12 @@ class TrainingManager:
                     self._log_file   = log_file
                     self._start_time = datetime.datetime.now()
 
-                unified_log_file = log_dir.parent / "logs" / f"{self.client_id}_unified.log"
-                with open(log_file, "w", encoding="utf-8", buffering=1) as lf, \
-                     open(unified_log_file, "a", encoding="utf-8", buffering=1) as uf:
+                with open(log_file, "w", encoding="utf-8", buffering=1) as lf:
                     lf.write(f"=== Task {task_id} | {datetime.datetime.now().isoformat()} ===\n")
                     lf.write(f"CMD: {' '.join(cmd)}\n\n")
                     for line in proc.stdout:
                         lf.write(line)
                         lf.flush()
-                        
-                        # Formatting output for unified log with clear timestamp
-                        ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        uf.write(f"{ts} [TRAIN] {line}")
-                        uf.flush()
-                        
                         sys.stdout.write(line)
                         sys.stdout.flush()
                         if self.mqtt_helper:
@@ -306,60 +276,6 @@ class TelegramAgent:
             self.logger.warning("Không tìm thấy MqttHelper. Chạy chế độ Single-mode (Telegram only).")
 
         self.manager = TrainingManager(base_dir, client_id, self.logger, self.mqtt)
-        self._start_ngrok_log_server()
-
-    def _start_ngrok_log_server(self):
-        def _run_server():
-            import logging as syslogging
-            syslog = syslogging.getLogger('werkzeug')
-            syslog.setLevel(syslogging.ERROR)
-            
-            from flask import Flask, request, Response
-            from pyngrok import ngrok
-            
-            app = Flask(__name__)
-            unified_path = self.base_dir / self.client_id / "logs" / f"{self.client_id}_unified.log"
-            
-            @app.route("/log", methods=["GET"])
-            def express_log():
-                try:
-                    mins = int(request.args.get("minutes", 30))
-                    if not unified_path.exists():
-                        return "Log file empty.", 200
-                        
-                    cutoff = datetime.datetime.now() - datetime.timedelta(minutes=mins)
-                    lines_to_return = []
-                    
-                    with open(unified_path, "r", encoding="utf-8", errors="replace") as f:
-                        lines = f.readlines()
-                        # Fallback for fast parsing without date format logic
-                        for L in reversed(lines):
-                            lines_to_return.append(L)
-                            if len(lines_to_return) > mins * 50: # approx buffer based on minutes
-                                break
-                                
-                    lines_to_return.reverse()
-                    return Response("".join(lines_to_return), mimetype='text/plain')
-                except Exception as e:
-                    return str(e), 500
-
-            port = 8780
-            token = self.cfg.get("ngrok_token", "")
-            if token:
-                ngrok.set_auth_token(token)
-            
-            try:
-                public_url = ngrok.connect(port).public_url
-                self.logger.info(f"🌐 [NGROK SERVER] Unified Log API Mở tại: {public_url}")
-                if self.mqtt:
-                    import json
-                    self.mqtt.client.publish(f"ARGO_ORCH/{self.client_id}/ngrok_url", json.dumps({"url": public_url}), retain=True)
-            except Exception as e:
-                self.logger.error(f"❌ [NGROK SERVER] Không thể mớ hầm Ngrok: {e}")
-
-            app.run(host="0.0.0.0", port=port, use_reloader=False)
-
-        threading.Thread(target=_run_server, daemon=True, name="NgrokLogServer").start()
 
     def _handle_mqtt_cmd(self, payload: dict):
         action = payload.get("cmd", "")

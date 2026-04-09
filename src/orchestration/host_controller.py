@@ -20,6 +20,7 @@ class HostController:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.connected = False
+        self.ngrok_url = None
         
     def on_connect(self, client, userdata, flags, rc, *args, **kwargs):
         # Support both v1 and v2 paho-mqtt callbacks
@@ -37,6 +38,11 @@ class HostController:
 
     def on_message(self, client, userdata, msg, *args, **kwargs):
         try:
+            if "ngrok_url" in msg.topic:
+                payload_str = msg.payload.decode("utf-8")
+                self.ngrok_url = json.loads(payload_str).get("url")
+                return
+
             topic_parts = msg.topic.split('/')
             sender = topic_parts[1] if len(topic_parts) >= 2 else "Unknown"
             payload = msg.payload.decode("utf-8")
@@ -106,6 +112,37 @@ class HostController:
             })
             self.client.publish(self.cmd_topic, payload, qos=1)
             print(f"[HOST] 📁 Gửi file '{file_name}' ({file_size/1024:.1f}KB) thẳng qua MQTT → {remote_dest}")
+            return
+
+    def getlog(self, minutes: int):
+        self._wait_connected()
+        print(f"[HOST] 📡 Đang chờ cấp URL đường hầm Ngrok từ {self.client_id}...")
+        self.client.subscribe(f"{PREFIX}/{self.client_id}/ngrok_url")
+        start_t = time.time()
+        while not self.ngrok_url and time.time() - start_t < 15:
+            time.sleep(0.1)
+            
+        if not self.ngrok_url:
+            print("[LỖI] Không thể lấy được Ngrok URL! Xin hãy chờ Agent Client bung tunnel hoặc chạy --time lâu hơn.")
+            return
+
+        print(f"[HOST] 🌐 Khớp nối URL: {self.ngrok_url}")
+        print(f"[HOST] 🚀 Trích xuất {minutes} phút trước...")
+        
+        import requests
+        try:
+            r = requests.get(f"{self.ngrok_url}/log?minutes={minutes}", headers={"ngrok-skip-browser-warning": "any"}, timeout=15)
+            r.raise_for_status()
+            print("="*60)
+            print(f"📄 LOG TỪ {self.client_id} (thời gian: {minutes} phút)")
+            print("="*60)
+            print(r.text)
+            print("="*60)
+        except Exception as e:
+            print(f"[LỖI] Không qua được cổng Ngrok HTTP: {e}")
+
+    # ===== End of getlog =====
+
         else:
             # === FILE LỚN: Upload lên HuggingFace rồi báo Client kéo về ===
             print(f"[HOST] 📦 File '{file_name}' lớn ({file_size/1024/1024:.1f}MB) — Upload HuggingFace trước...")
@@ -234,8 +271,8 @@ class HostController:
 
 
 def main():
-    parser = argparse.ArgumentParser("Host Controller - ARGO AI")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "update", "send_file", "sync_data", "deploy_agent", "save_version", "status"])
+    parser = argparse.ArgumentParser(description="Host Controller V2 via MQTT")
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "run_code", "send_file", "sync_data", "deploy_agent", "save_version", "status", "getlog"])
     parser.add_argument("--client-id", "-c", default="")
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")
@@ -246,6 +283,7 @@ def main():
     parser.add_argument("--tag", default="", help="Tag version khi lưu (VD: v1.3.5). Mặc định: timestamp")
     parser.add_argument("--mode", "-m", default="MAX", choices=["MAX", "LIGHT", "max", "light"], help="Chế độ hiệu suất khi train (Tối đa hoặc Nhẹ nhàng)")
     parser.add_argument("--time", "-t", type=int, default=15)
+    parser.add_argument("--minutes", type=int, default=60, help="Số phút Log muốn lấy (dành cho getlog)")
     
     args = parser.parse_args()
 
@@ -289,6 +327,8 @@ def main():
         mode_val = getattr(args, 'mode', 'MAX')
         host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val)
         host.listen_logs(args.time)
+    elif args.cmd == "getlog":
+        host.getlog(getattr(args, 'minutes', 60))
     elif args.cmd == "listen":
         host.listen_logs(args.time)
 
