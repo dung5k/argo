@@ -138,9 +138,15 @@ def sync_all_history():
             cfg_data["DATA_SOURCE"] = {}
         cfg_data["DATA_SOURCE"]["DATASET_SUFFIX"] = date_suffix
         
+        # Lưu Tên các File Parquet đã cào thành công để Client biết và không kéo rác
+        if "HF_CLOUD" not in cfg_data:
+            cfg_data["HF_CLOUD"] = {}
+        required_list = [os.path.basename(f) for f in generated_files]
+        cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = required_list
+        
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(cfg_data, f, indent=4, ensure_ascii=False)
-        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' vào {config_file}")
+        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' và {len(required_list)} REQUIRED_PARQUETS vào {config_file}")
 
     print("\n🎉 HOÀN TẤT ĐỒNG BỘ TOÀN BỘ KHO LỊCH SỬ LOCAL.")
 

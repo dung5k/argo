@@ -96,7 +96,7 @@
         "SESSIONS": {
             "asian": {
                 "WEIGHT_FILE": "xauusd_asia_weights_L3_1.4_L4_1.0.pth",
-                "ENTRY_THR": 0.60,
+                "ENTRY_THR": 0.6,
                 "CLOSE_THR": 0.48
             },
             "european": {
@@ -126,5 +126,16 @@
         "ENABLE": true,
         "ACTIVE_WINDOW_SIZE": 30,
         "MASKED_FEATURES": []
+    },
+    "HF_CLOUD": {
+        "REQUIRED_PARQUETS": [
+            "xauusd_mt5_1m_20260301_to_20260408.parquet",
+            "audusd_mt5_1m_20260301_to_20260408.parquet",
+            "eurusd_mt5_1m_20260301_to_20260408.parquet",
+            "xagusd_mt5_1m_20260301_to_20260408.parquet",
+            "vixy_mt5_1m_20260301_to_20260408.parquet",
+            "nasdaq_100_mt5_1m_20260301_to_20260408.parquet",
+            "us_10y_yield_mt5_1m_20260301_to_20260408.parquet"
+        ]
     }
 }
