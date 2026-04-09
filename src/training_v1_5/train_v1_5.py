@@ -472,7 +472,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     if tel_msg: 
                         print(f"🔥 BÁO CÁO AI: {tel_msg}")
                         try:
-                            import requests, json, os
+                            import requests
                             tg_cfg_path = os.path.join(str(_ROOT), "tg_config.json")
                             if os.path.exists(tg_cfg_path):
                                 with open(tg_cfg_path, "r", encoding='utf-8') as f:
