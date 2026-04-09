@@ -73,6 +73,7 @@ CONFIG_MAP = {
     "xauusd": "data/bot_config_xau.json",
     "xau"   : "data/bot_config_xau.json",
     "xau_v1_5": "data/bot_config_xau_v1_5.json",
+    "xag_v1_5": "data/bot_config_xag_v1_5.json",
     "ltc"   : "data/bot_config_ltc.json",
     "oil"   : "data/bot_config_oil.json",
 }
