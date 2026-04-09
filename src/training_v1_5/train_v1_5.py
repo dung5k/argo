@@ -226,7 +226,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     class_weights = torch.tensor([weight_sell, weight_buy], dtype=torch.float32).to(device)
     print(f"⚖️ [Class Balance] BUY={n_buy:,} (W:{weight_buy:.2f}) | SELL={n_sell:,} (W:{weight_sell:.2f})")
 
-    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15).to(device)
+    criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
+    criterions = {s_id: nn.CrossEntropyLoss(**criterion_kwargs).to(device) for s_id in SESSIONS}
 
     # Khởi tạo Hệ thống Đa não bộ
     SESSIONS = {0: "asia", 1: "london", 2: "ny"}
@@ -267,6 +268,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
     # ── Xây dựng AI History Buffer ───────────────────────────
     min_signals_dict = {s_id: MIN_SIGNALS for s_id in SESSIONS}
+    cm_active_window_dict = {s_id: cm_active_window for s_id in SESSIONS}
     history_buffer = {s_id: {
         "avg_train_loss_history": [],
         "avg_val_loss_history": [],
@@ -275,7 +277,10 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         "phoenix_count": 0,
         "current_lr": BASE_LR,
         "current_weight_decay": 1e-3,
-        "current_min_signals": MIN_SIGNALS
+        "current_min_signals": MIN_SIGNALS,
+        "current_cm_window": cm_active_window,
+        "current_patience": MAX_STAGNATE,
+        "current_label_smoothing": 0.15
     } for s_id in SESSIONS}
 
     total_epoch = 0
@@ -289,9 +294,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
             batch_y = batch_y.view(-1)
             batch_s = batch_s.view(-1)
 
-            # Áp dụng Curriculum Masking lên toàn batch
-            if cm_enabled:
-                batch_x = apply_curriculum_mask(batch_x, cm_active_window, cm_masked_indices)
+            # (Curriculum Masking được apply riêng theo từng session bên dưới)
 
             # Diagnostic: in shape + vài giá trị batch đầu tiên
             if not _first_batch_logged:
@@ -306,9 +309,13 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 mask = (batch_s == s_id)
                 if not mask.any(): continue
                     
+                sess_batch_x = batch_x[mask]
+                if cm_enabled:
+                    sess_batch_x = apply_curriculum_mask(sess_batch_x, cm_active_window_dict[s_id], cm_masked_indices)
+                    
                 phoenixes[s_id].optimizer.zero_grad()
-                outputs = models[s_id](batch_x[mask])
-                loss = criterion(outputs, batch_y[mask])
+                outputs = models[s_id](sess_batch_x)
+                loss = criterions[s_id](outputs, batch_y[mask])
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(models[s_id].parameters(), max_norm=1.0)
                 phoenixes[s_id].optimizer.step()
@@ -335,7 +342,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     if not mask.any(): continue
                     
                     outputs = models[s_id](batch_x[mask])
-                    loss_v = criterion(outputs, batch_y[mask])
+                    loss_v = criterions[s_id](outputs, batch_y[mask])
                     val_loss_total[s_id] += loss_v.item()
                     valid_val_batches[s_id] += 1
                     
@@ -445,6 +452,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
             history_buffer[s_id]["current_lr"] = float(phoenixes[s_id].get_lr())
             history_buffer[s_id]["current_weight_decay"] = float(phoenixes[s_id].optimizer.param_groups[0].get('weight_decay', 0.0))
             history_buffer[s_id]["current_min_signals"] = min_signals_dict[s_id]
+            history_buffer[s_id]["current_cm_window"] = cm_active_window_dict[s_id]
+            history_buffer[s_id]["current_patience"] = phoenixes[s_id].scheduler.patience
+            history_buffer[s_id]["current_label_smoothing"] = criterions[s_id].label_smoothing if hasattr(criterions[s_id], 'label_smoothing') else 0.15
 
         total_epoch += 1
         
@@ -492,6 +502,24 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                             if 10 <= val <= 50:
                                 min_signals_dict[s_id] = val
                                 print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Đổi MIN_SIGNALS = {val}")
+                                
+                        if "active_window_size" in act:
+                            val = int(act["active_window_size"])
+                            if 10 <= val <= window_size:
+                                cm_active_window_dict[s_id] = val
+                                print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Mở rộng CM_WINDOW = {val}")
+
+                        if "label_smoothing" in act:
+                            val = float(act["label_smoothing"])
+                            if 0.0 <= val <= 0.5:
+                                criterions[s_id] = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=val).to(device)
+                                print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Đổi LABEL_SMOOTHING = {val}")
+
+                        if "patience" in act:
+                            val = int(act["patience"])
+                            if 3 <= val <= 30:
+                                phoenixes[s_id].scheduler.patience = val
+                                print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Đổi PATIENCE = {val}")
                                 
                         if action_type == "force_phoenix":
                             valid = [c for c in top_configs[s_id].values() if c is not None]
