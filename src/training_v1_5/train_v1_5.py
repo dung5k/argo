@@ -32,6 +32,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from src.legacy.train_ga import TransformerModel, device
+from src.orchestration.hf_sync import push_runs
 
 # ============================================================
 # Dataset V1.5: Lấy Labels V1 x Tách Phiên V2
@@ -360,6 +361,11 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
                 thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f} ({totals_t[i]}L)" for i, t in enumerate(thresholds[-2:]))
                 print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {','.join(improved_strategies)} | Th>={max_thresh:.2f} | {thr_str} | VLoss: {avg_val_loss[s_id]:.4f}")
+                try:
+                    import threading
+                    threading.Thread(target=push_runs, daemon=True).start()
+                except Exception as e:
+                    print(f"  [HF] Bỏ qua sync: {e}")
             else:
                 should_restart = phoenixes[s_id].notify_no_improve()
                 if should_restart:
@@ -368,7 +374,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mạng {s_id} kẹt {phoenixes[s_id].max_stagnate} epoch. Tái sinh!")
                     action_str = phoenixes[s_id].apply_perturbation(chosen)
 
-            if str(total_epoch).endswith("0") or total_epoch == -1:
+            if True:
                 cur_lr = phoenixes[s_id].get_lr()
                 acc_total = sum([c for w, c in zip(wrs, totals_t)]) / sum(totals_t) if sum(totals_t) > 0 else 0
                 print(f"  [Phiên {s_name.upper()}] Ep {total_epoch} | TLoss: {avg_train_loss[s_id]:.4f} | VLoss: {avg_val_loss[s_id]:.4f} | LR: {cur_lr:.1e}")

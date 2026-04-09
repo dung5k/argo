@@ -4,6 +4,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import pandas as pd
+import sys
+import threading
+from pathlib import Path
+_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+if _ROOT not in sys.path: sys.path.insert(0, _ROOT)
+from src.orchestration.hf_sync import push_runs
 
 from train_ga import CNN_LSTM_Model, TimeSeriesDataset, FocalLoss, device
 
@@ -169,6 +175,10 @@ def train_session_model(features, targets, num_features, session_name, start_hou
             epochs_no_improve = 0
             torch.save(model.state_dict(), model_file)
             print(f" 🔥 Đáy Suy Hao Mới Phiên {session_name.upper()} - KHÓA TÍN HIỆU! (Thực Chiến Khắt Khe Đạt: {conf_acc*100:.2f}%)")
+            try:
+                threading.Thread(target=push_runs, daemon=True).start()
+            except Exception as e:
+                print(f"  [HF] Bỏ qua sync: {e}")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
@@ -228,6 +238,10 @@ if __name__ == "__main__":
             train_session_model(features, targets, num_features, session_name, start_hour, end_hour, run_dir)
                 
         print("\n🏆 ĐÃ HOÀN TẤT LẦN LƯỢT ĐÚC NÃO 3 PHIÊN CÙNG KÈM REPORT! MỜI SẾP DÙNG! 🏆")
+        try:
+            push_runs()
+        except:
+            pass
         
     else:
         print("Lỗi: Không tìm thấy dữ liệu Tensor đầu vào!")
