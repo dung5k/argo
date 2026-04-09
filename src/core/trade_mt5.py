@@ -374,8 +374,16 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
         return
         
     live_cfg = CONFIG.get("LIVE_TRADING", {})
-    BUY_ENTRY_THR  = live_cfg.get("BUY_ENTRY_THR", 0.60)
-    SELL_ENTRY_THR = live_cfg.get("SELL_ENTRY_THR", 0.40)
+    session_id, _ = get_current_session()
+    sess_cfg = live_cfg.get("SESSIONS", {}).get(session_id, {})
+    
+    if "ENTRY_THR" in sess_cfg:
+        BUY_ENTRY_THR = sess_cfg["ENTRY_THR"]
+        SELL_ENTRY_THR = max(0.01, round(1.0 - sess_cfg["ENTRY_THR"], 2))
+    else:
+        BUY_ENTRY_THR  = live_cfg.get("BUY_ENTRY_THR", 0.60)
+        SELL_ENTRY_THR = live_cfg.get("SELL_ENTRY_THR", 0.40)
+        
     CLOSE_BUY_THR  = live_cfg.get("CLOSE_BUY_THR", 0.50)
     CLOSE_SELL_THR = live_cfg.get("CLOSE_SELL_THR", 0.50)
     
@@ -513,13 +521,23 @@ def bot_background_loop():
                 with open(config_file, 'r', encoding='utf-8') as ft:
                     CONFIG = json.load(ft)
                     live_cfg = CONFIG.get("LIVE_TRADING", CONFIG)
-                    b_th = int(live_cfg.get("BUY_ENTRY_THR", 0.60) * 100)
-                    s_th = int(live_cfg.get("SELL_ENTRY_THR", 0.40) * 100)
+                    
+                    _s_id, _ = get_current_session()
+                    sess_cfg = live_cfg.get("SESSIONS", {}).get(_s_id, {})
+                    
+                    if "ENTRY_THR" in sess_cfg:
+                        b_th = int(sess_cfg["ENTRY_THR"] * 100)
+                        s_th = int(round(1.0 - sess_cfg["ENTRY_THR"], 2) * 100)
+                    else:
+                        b_th = int(live_cfg.get("BUY_ENTRY_THR", 0.60) * 100)
+                        s_th = int(live_cfg.get("SELL_ENTRY_THR", 0.40) * 100)
+                        
                     gui_thr_text = f"⚖️ Ngưỡng L4: BUY>{b_th}% | SELL<{s_th}%"
                     
-                    weight_file_cfg = CONFIG.get("WEIGHT_FILE", weight_file_cfg)
-                    hf_run_cfg = cfg_t.get("HF_RUN_ID", None)
-        except: pass
+                    weight_file_cfg = sess_cfg.get("WEIGHT_FILE", CONFIG.get("WEIGHT_FILE", weight_file_cfg))
+                    hf_run_cfg = live_cfg.get("HF_RUN_ID", None)
+        except Exception as e: 
+            log_message(f"[LỖI CONFIG] {e}")
         
         # Load from config instead of hardcoding
         WEIGHT_FILE = weight_file_cfg
@@ -675,6 +693,7 @@ def bot_background_loop():
                 
                 # Fetch run name from local if needed
                 active_brain_name = WEIGHT_FILE
+                import re
                 try:
                     match = re.search(r'(run_\d{8}_\d{6}_[^/\\]+)', old_model_path)
                     if match: active_brain_name = match.group(1)
@@ -705,7 +724,7 @@ def bot_background_loop():
         actual_target_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
         target_path = mt5_manager.GLOBAL_MT5_ROUTER_MAP.get(TARGET_SYMBOL)
         global gui_target_text
-        gui_target_text = f'🎯 Cặp: {actual_target_sym} | Sàn: {str(target_path).split(chr(92))[-2] if target_path else \"Local\"}'
+        gui_target_text = f"🎯 Cặp: {actual_target_sym} | Sàn: {str(target_path).split(chr(92))[-2] if target_path else 'Local'}"
         
         if target_path and getattr(mt5_manager, 'current_connected_path', None) != target_path:
             mt5.shutdown()

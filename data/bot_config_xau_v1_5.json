@@ -92,6 +92,21 @@
         }
     },
     "LIVE_TRADING": {
+        "HF_RUN_ID": "run_20260409_171613_xauusd_CFG_XAU_V1_5_TRANSFORMER_V1_5",
+        "SESSIONS": {
+            "asian": {
+                "WEIGHT_FILE": "xauusd_asia_weights_L3_1.4_L4_1.0.pth",
+                "ENTRY_THR": 0.60
+            },
+            "european": {
+                "WEIGHT_FILE": "xauusd_london_weights_L3_1.4_L4_1.0.pth",
+                "ENTRY_THR": 0.64
+            },
+            "us": {
+                "WEIGHT_FILE": "xauusd_ny_weights_BEST_VLOSS.pth",
+                "ENTRY_THR": 0.55
+            }
+        },
         "SYNC_SCALER": false,
         "BUY_ENTRY_THR": 0.64,
         "SELL_ENTRY_THR": 0.36,
@@ -106,7 +121,7 @@
     },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
-        "ACTIVE_WINDOW_SIZE": 60,
+        "ACTIVE_WINDOW_SIZE": 30,
         "MASKED_FEATURES": []
     }
 }
