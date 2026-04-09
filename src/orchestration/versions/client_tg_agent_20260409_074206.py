@@ -300,7 +300,7 @@ class TelegramAgent:
             else:
                 if self.mqtt:
                     self.mqtt.send_log("INFO", f"Khởi động train bằng file cục bộ cho {symbol} ({perf_mode} mode)")
-                self._notify_all(f"✅ <b>{self.client_id}</b>: Tiến trình Training ({symbol}) đã bắt đầu (MQTT)!\nTask: <code>{res.get('task_id')}</code>")
+                self._notify_all(f"✅ <b>{self.client_id}</b>: Training bắt đầu (MQTT)!\nTask: <code>{res.get('task_id')}</code>")
         elif action == "train_code":
             code = payload.get("code", "")
             if not code: return
@@ -551,7 +551,7 @@ class TelegramAgent:
 
             result = self.manager.start_train(config, on_done=on_done)
             if result["ok"]:
-                self._send(chat_id, f"✅ <b>{self.client_id}</b>: Tiến trình Training ({symbol}) đã bắt đầu!\n"
+                self._send(chat_id, f"✅ <b>{self.client_id}</b>: Training bắt đầu!\n"
                                     f"Task: <code>{result['task_id']}</code>")
             else:
                 self._send(chat_id, f"❌ <b>{self.client_id}</b>: {result['error']}")
