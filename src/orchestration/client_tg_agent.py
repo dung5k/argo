@@ -160,6 +160,9 @@ class TrainingManager:
         log_dir  = self.base_dir / self.client_id / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"{task_id}.log"
+        
+        self.target_name = "XAG" if (config_path and "xag" in config_path.lower()) else "XAU"
+        self.version_name = "v1.5" if (config_path and "v1_5" in config_path.lower()) or (script and "v1_5" in script) else "v2"
 
         python       = self._python_exe()
         
@@ -792,24 +795,29 @@ class TelegramAgent:
                 import html
                 send_msg = ""
                 
+                # Trích xuất version và target đã lưu
+                v_name = getattr(self.manager, "version_name", "v?")
+                t_name = getattr(self.manager, "target_name", "???")
+                pfx = f"<b>{self.client_id}</b> [{v_name}|{t_name}]"
+                
                 if current_git_err and current_git_err != getattr(self, "_last_git_err", ""):
                     self._last_git_err = current_git_err
-                    send_msg = f"🚨 <b>{self.client_id}</b> GẶP LỖI ĐẨY GIT!\n"
+                    send_msg = f"🚨 {pfx} GẶP LỖI ĐẨY GIT!\n"
                     send_msg += f"<pre>{html.escape(current_git_err.strip())}</pre>"
                 elif current_event and current_event != getattr(self, "_last_tg_event", ""):
                     self._last_tg_event = current_event
-                    send_msg = f"🔥 <b>{self.client_id}</b> PHÁT HIỆN SỰ KIỆN MỚI!\n"
+                    send_msg = f"🔥 {pfx} PHÁT HIỆN SỰ KIỆN MỚI!\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
                     send_msg += f"<pre>{html.escape(current_event.strip())}</pre>"
                 elif current_peak and current_peak != last_peak_line:
                     last_peak_line = current_peak
-                    send_msg = f"🏆 <b>{self.client_id}</b> TÌM THẤY MẪU MỚI!\n"
+                    send_msg = f"🏆 {pfx} TÌM THẤY MẪU MỚI!\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
                     send_msg += f"<pre>{html.escape(current_peak.strip())}</pre>\n"
                     send_msg += "<i>(Đang tự động Commit lên Git...)</i>"
                 elif epoch_num > 0 and epoch_num % self.progress_n == 0 and epoch_num != last_sent_epoch:
                     last_sent_epoch = epoch_num
-                    send_msg = f"📈 <b>{self.client_id}</b> — Tiến độ (Epoch {epoch_num})\n"
+                    send_msg = f"📈 {pfx} — Tiến độ (Epoch {epoch_num})\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>"
                     
                 if send_msg:
