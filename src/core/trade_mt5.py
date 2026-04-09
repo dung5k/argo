@@ -384,8 +384,15 @@ def manage_mt5_positions(prediction, lot_size=0.01, sl_pips=50, tp_pips=100):
         BUY_ENTRY_THR  = live_cfg.get("BUY_ENTRY_THR", 0.60)
         SELL_ENTRY_THR = live_cfg.get("SELL_ENTRY_THR", 0.40)
         
-    CLOSE_BUY_THR  = live_cfg.get("CLOSE_BUY_THR", 0.50)
-    CLOSE_SELL_THR = live_cfg.get("CLOSE_SELL_THR", 0.50)
+    if "CLOSE_BUY_THR" in sess_cfg and "CLOSE_SELL_THR" in sess_cfg:
+        CLOSE_BUY_THR = sess_cfg["CLOSE_BUY_THR"]
+        CLOSE_SELL_THR = sess_cfg["CLOSE_SELL_THR"]
+    elif "CLOSE_THR" in sess_cfg:
+        CLOSE_BUY_THR = sess_cfg["CLOSE_THR"]
+        CLOSE_SELL_THR = max(0.01, round(1.0 - sess_cfg["CLOSE_THR"], 2))
+    else:
+        CLOSE_BUY_THR  = live_cfg.get("CLOSE_BUY_THR", 0.50)
+        CLOSE_SELL_THR = live_cfg.get("CLOSE_SELL_THR", 0.50)
     
     # Ưu tiên lấy từ config, fallback về args
     cfg_lot_size = live_cfg.get("lot_size", lot_size)

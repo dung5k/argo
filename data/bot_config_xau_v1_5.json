@@ -96,15 +96,18 @@
         "SESSIONS": {
             "asian": {
                 "WEIGHT_FILE": "xauusd_asia_weights_L3_1.4_L4_1.0.pth",
-                "ENTRY_THR": 0.60
+                "ENTRY_THR": 0.60,
+                "CLOSE_THR": 0.48
             },
             "european": {
                 "WEIGHT_FILE": "xauusd_london_weights_L3_1.4_L4_1.0.pth",
-                "ENTRY_THR": 0.64
+                "ENTRY_THR": 0.64,
+                "CLOSE_THR": 0.45
             },
             "us": {
                 "WEIGHT_FILE": "xauusd_ny_weights_BEST_VLOSS.pth",
-                "ENTRY_THR": 0.55
+                "ENTRY_THR": 0.55,
+                "CLOSE_THR": 0.49
             }
         },
         "SYNC_SCALER": false,
