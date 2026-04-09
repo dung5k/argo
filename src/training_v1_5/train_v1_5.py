@@ -1,9 +1,10 @@
 """
-train_v1_5.py - Version 1.5: V1 Core (Binary CrossEntropy) + V2 Framework (MOE Sessions)
+train_v1_5.py - Version 1.5.1: V1 Core + V2 MOE Sessions + Curriculum Learning Masking
 ========================================================================================
 - Data Pipeline & Models: TransformerModel (V1)
 - Loss & Evaluation: CrossEntropyLoss (V1) + L3/L4 Win Rate Calculations
 - Architecture: 100% MOE v2 (chia dữ liệu ra 3 Sessions: Asia, London, NY)
+- v1.5.1: Curriculum Learning Data Masking (zero-out theo config CURRICULUM_MASKING)
 """
 import sys
 if hasattr(sys.stdout, 'reconfigure'):
@@ -33,6 +34,7 @@ if _ROOT not in sys.path:
 
 from src.legacy.train_ga import TransformerModel, device
 from src.orchestration.hf_sync import push_runs
+from src.training_v1_5.curriculum_masking import apply_curriculum_mask, resolve_masked_indices
 
 # ============================================================
 # Dataset V1.5: Lấy Labels V1 x Tách Phiên V2
@@ -132,7 +134,7 @@ class PhoenixRestartV1_5:
 # ============================================================
 def train_unified_v1_5(features, targets, num_features, run_dir, config=None, target_prefix="XAU_USD"):
     print("=======================================================")
-    print("🧠 TRANSFORMER V1.5: V1 CORE + V2 MULTI-SESSION MOE  ")
+    print(f"🧠 TRANSFORMER V1.5.1 [{target_prefix}]: MOE + CURRICULUM ")
     print("=======================================================")
     
     cfg = config or {}
@@ -191,6 +193,30 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
+    # ── Curriculum Masking Setup ──────────────────────────────
+    curriculum_cfg    = cfg.get("CURRICULUM_MASKING", {})
+    cm_enabled        = curriculum_cfg.get("ENABLE", False)
+    cm_active_window  = curriculum_cfg.get("ACTIVE_WINDOW_SIZE", window_size)
+    cm_masked_names   = curriculum_cfg.get("MASKED_FEATURES", [])
+    feature_col_names = list(features.columns)
+    cm_masked_indices = resolve_masked_indices(feature_col_names, cm_masked_names) if cm_enabled else []
+
+    # ── Diagnostic Log (in ra trước khi bắt đầu epoch) ───────
+    print("")
+    print("══════════════════════════════════════════════════════")
+    if cm_enabled:
+        print(f"[CURRICULUM MODE] Symbol: {target_prefix}")
+        print(f"[CURRICULUM MODE] Trạng thái: BẬT")
+        print(f"[CURRICULUM MODE] Window thực tế: Chỉ học {cm_active_window} nến cuối / Tổng {window_size} nến")
+        masked_display = cm_masked_names if cm_masked_names else ["(không có feature nào bị che)"]
+        print(f"[CURRICULUM MODE] Features bị che (Masked): {masked_display}")
+        print(f"[CURRICULUM MODE] Số features bị mask: {len(cm_masked_indices)} / {num_features}")
+    else:
+        print(f"[CURRICULUM MODE] Symbol: {target_prefix} | Trạng thái: TẮT — Dữ liệu đầy đủ")
+    print("══════════════════════════════════════════════════════")
+    print("")
+    # ─────────────────────────────────────────────────────────
+
     train_labels = tr_targ['target'].values
     n_total = len(train_labels)
     n_buy  = (train_labels == 1).sum()
@@ -236,6 +262,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
             "BEST_VLOSS": -avg_v_loss
         }
 
+    # ── In diagnostic batch đầu tiên sau khi setup xong ─────
+    _first_batch_logged = False
+
     total_epoch = 0
     while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < epochs:
         # TRAIN
@@ -246,6 +275,18 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         for batch_x, batch_y, batch_s in train_loader:
             batch_y = batch_y.view(-1)
             batch_s = batch_s.view(-1)
+
+            # Áp dụng Curriculum Masking lên toàn batch
+            if cm_enabled:
+                batch_x = apply_curriculum_mask(batch_x, cm_active_window, cm_masked_indices)
+
+            # Diagnostic: in shape + vài giá trị batch đầu tiên
+            if not _first_batch_logged:
+                _first_batch_logged = True
+                print(f"[CURRICULUM DIAG] Batch shape: {list(batch_x.shape)}")
+                if cm_enabled:
+                    print(f"[CURRICULUM DIAG] Vùng masked (nến 0..{window_size - cm_active_window - 1}), sample[0,0,:4]: {batch_x[0, 0, :4].tolist()}")
+                    print(f"[CURRICULUM DIAG] Vùng active (nến -{cm_active_window}), sample[0,-1,:4]: {batch_x[0, -1, :4].tolist()}")
             
             for s_id in SESSIONS:
                 if phoenixes[s_id].exhausted: continue

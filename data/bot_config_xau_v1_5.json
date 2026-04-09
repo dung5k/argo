@@ -106,14 +106,7 @@
     },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
-        "ACTIVE_WINDOW_SIZE": 20,
-        "MASKED_FEATURES": [
-            "XAGUSD_close_log_ret",
-            "AUDUSD_close_log_ret",
-            "EURUSD_close_log_ret",
-            "NASDAQ_100_close_log_ret",
-            "US_10Y_YIELD_close_log_ret",
-            "VIXY_close_log_ret"
-        ]
+        "ACTIVE_WINDOW_SIZE": 30,
+        "MASKED_FEATURES": []
     }
 }
