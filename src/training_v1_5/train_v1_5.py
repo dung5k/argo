@@ -467,9 +467,29 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 resp_json = call_llm_meta_optimizer(history_buffer, total_epoch, base_dir=str(_ROOT))
                 if resp_json:
                     print(f"🤖 [AI_REPORT]: {resp_json.get('analysis_report', '')}")
-                    # In ra Sự Kiện (Client_TG sẽ bắt từ khóa 'PHÁT HIỆN SỰ KIỆN MỚI' hoặc in tin nhắn riêng)
+                    # In ra Sự Kiện và Bắn thẳng vào Telegram Group/User
                     tel_msg = resp_json.get('telegram_message', '')
-                    if tel_msg: print(f"🔥 BÁO CÁO AI: {tel_msg}")
+                    if tel_msg: 
+                        print(f"🔥 BÁO CÁO AI: {tel_msg}")
+                        try:
+                            import requests, json, os
+                            tg_cfg_path = os.path.join(str(_ROOT), "tg_config.json")
+                            if os.path.exists(tg_cfg_path):
+                                with open(tg_cfg_path, "r", encoding='utf-8') as f:
+                                    tg_cfg = json.load(f)
+                                bot_token = tg_cfg.get("bot_token")
+                                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                                if bot_token and chat_ids:
+                                    # Format message beautifully
+                                    tele_content = f"🤖 <b>[AI SUPERVISOR - {target_prefix}]</b>\n\n{tel_msg}"
+                                    for chat_id in chat_ids:
+                                        requests.post(
+                                            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                                            data={"chat_id": chat_id, "text": tele_content, "parse_mode": "HTML"},
+                                            timeout=5
+                                        )
+                        except Exception as e:
+                            print(f"[TELEGRAM ERROR] {e}")
                     
                     actions = resp_json.get("actions", {})
                     for dict_key, act in actions.items():
