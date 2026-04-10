@@ -327,7 +327,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         valid_train_batches = {s_id: 0 for s_id in SESSIONS}
         
         for batch_x, batch_y, batch_s in train_loader:
-            batch_y = batch_y.view(-1)
+            batch_y = batch_y.view(-1).long()
             batch_s = batch_s.view(-1)
 
             # (Curriculum Masking được apply riêng theo từng session bên dưới)
@@ -370,7 +370,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
         with torch.no_grad():
             for batch_x, batch_y, batch_s in val_loader:
-                batch_y = batch_y.view(-1)
+                batch_y = batch_y.view(-1).long()
                 batch_s = batch_s.view(-1)
                 for s_id in SESSIONS:
                     if phoenixes[s_id].exhausted: continue
