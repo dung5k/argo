@@ -179,8 +179,12 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
     # ── 1. Load Config ────────────────────────────────────────────
     cfg = TrainingConfig.load(base_proj=str(_ROOT))
+    for i, a in enumerate(sys.argv):
+        if a == "--session" and i + 1 < len(sys.argv):
+            cfg.session = sys.argv[i + 1].lower()
+
     print(f"🤖 [ARCH] d_model={cfg.d_model}, nhead={cfg.nhead}, "
-          f"layers={cfg.num_attn_layers}, win={cfg.window_size}")
+          f"layers={cfg.num_attn_layers}, win={cfg.window_size}, session={cfg.session.upper()}")
 
     MAX_STAGNATE           = cfg.max_stagnate
     MAX_PHOENIX            = cfg.max_phoenix
@@ -586,15 +590,16 @@ if __name__ == "__main__":
             CONFIG_ID     = cfg_raw.get("CONFIG_ID", "DEFAULT")
 
     is_reset = "--reset" in sys.argv
+    session_arg = "all"
     for i, a in enumerate(sys.argv):
         if a == "--session" and i + 1 < len(sys.argv):
-            cfg.session = sys.argv[i + 1].lower()
+            session_arg = sys.argv[i + 1].lower()
 
     if is_reset:
         print("[INIT] KÍCH HOẠT DỌN RÁC (--reset): Sẽ xóa checkpoint rác.")
 
     print(f"[INIT] Config: {config_path}")
-    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX} | SESSION: {cfg.session.upper()}")
+    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX} | SESSION: {session_arg.upper()}")
 
     _proj_data = os.path.join(BASE_PROJ_DIR, "data")
     _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")
