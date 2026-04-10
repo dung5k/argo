@@ -3,6 +3,19 @@ import json
 import logging
 from pathlib import Path
 from huggingface_hub import HfApi, snapshot_download
+try:
+    from huggingface_hub.utils import disable_progress_bars as _hf_disable_progress
+except ImportError:
+    _hf_disable_progress = None
+
+
+def _suppress_hf_progress():
+    """Tắt progress bar % của huggingface_hub (do tqdm sinh ra trong stdout/stderr)."""
+    try:
+        if _hf_disable_progress:
+            _hf_disable_progress()
+    except Exception:
+        pass
 
 def _load_config():
     # hf_sync.py = src/orchestration/hf_sync.py
@@ -25,6 +38,7 @@ def _project_root():
 
 def push_data():
     """Đẩy toàn bộ thư mục data/ lên HuggingFace bằng cờ HF Token"""
+    _suppress_hf_progress()
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         print("[HF] Lỗi: Chưa cấu hình 'hf_token' và 'hf_repo_id' trong tg_config.json")
@@ -67,7 +81,8 @@ def push_data():
         return False
 
 def pull_data(logger: logging.Logger = None, config_path: str = None):
-    """Kéo thư mục data/ mới nhất từ HuggingFace về (Cơ chế an toàn không dùng snapshot_download để tránh treo)"""
+    """Kéo thư mục data/ mới nhất từ HuggingFace về (an toàn, không dùng snapshot_download)."""
+    _suppress_hf_progress()
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         msg = "Chưa cấu hình 'hf_token' và 'hf_repo_id' trong tg_config.json. Bỏ qua kéo Data HF."
@@ -136,6 +151,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
 
 def push_runs(logger=None):
     """Đẩy toàn bộ thư mục runs/ (trọng số) lên HuggingFace"""
+    _suppress_hf_progress()
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         msg = "Chưa cấu hình hf_token/hf_repo_id. Bỏ qua push runs."
@@ -183,6 +199,7 @@ def push_runs(logger=None):
 
 def pull_runs(logger=None):
     """Kéo thư mục runs/ (trọng số) mới nhất từ HuggingFace về"""
+    _suppress_hf_progress()
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         msg = "Chưa cấu hình hf_token/hf_repo_id. Bỏ qua pull runs."
