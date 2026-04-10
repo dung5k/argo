@@ -56,7 +56,8 @@ def push_data():
             repo_id=repo_id,
             repo_type="dataset",
             token=token,
-            commit_message="Auto-sync data from Host"
+            commit_message="Auto-sync data from Host",
+            delete_patterns="*"
         )
         print("[HF] Đẩy Data thành công lên HuggingFace! 🚀")
         return True
