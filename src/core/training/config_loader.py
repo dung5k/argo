@@ -47,6 +47,7 @@ class TrainingConfig:
     # Identifiers
     config_id: str = "DEFAULT"
     target_prefix: str = "XAUUSD"
+    session: str = "all"
 
     # Curriculum Masking
     cm_enabled: bool = False
@@ -93,6 +94,7 @@ class TrainingConfig:
         # Identifiers
         cfg.config_id = raw.get("CONFIG_ID", "DEFAULT")
         cfg.target_prefix = raw.get("TARGET_PREFIX", "XAUUSD")
+        cfg.session = "all"
 
         # Architecture from TRAINING block
         training_block = raw.get("TRAINING", {})

@@ -198,7 +198,13 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         features, targets,
         cfg.train_start, cfg.train_end, cfg.val_start, cfg.val_end,
     )
-    print(f"   Train: {len(tr_feat):,} | Val: {len(val_feat):,} nến")
+    
+    train_loader, val_loader, train_dataset, val_dataset = make_dataloaders(
+        tr_feat, tr_tgt, val_feat, val_tgt, cfg.window_size, batch_size,
+        session=cfg.session
+    )
+
+    print(f"  Train: {len(train_dataset):,} | Val: {len(val_dataset):,} nến (Session: {cfg.session.upper()})")
     if len(tr_feat) <= cfg.window_size or len(val_feat) <= cfg.window_size:
         print("⚠️ Dữ liệu quá cạn!")
         return
@@ -304,7 +310,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     else:
         print("\n📌 Không có checkpoint. Khởi tạo model mới.")
 
-    model_file = os.path.join(run_dir, f"{target_name}_unified_weights.pth")
+    sess_suffix = f"_{cfg.session}" if cfg.session != "all" else ""
+    model_file = os.path.join(run_dir, f"{target_name}_unified_weights{sess_suffix}.pth")
     if resumed and global_best_score > 0:
         ckpt.save_best_weights(best_state_dict)
         for sn in top_configs:
@@ -579,11 +586,15 @@ if __name__ == "__main__":
             CONFIG_ID     = cfg_raw.get("CONFIG_ID", "DEFAULT")
 
     is_reset = "--reset" in sys.argv
+    for i, a in enumerate(sys.argv):
+        if a == "--session" and i + 1 < len(sys.argv):
+            cfg.session = sys.argv[i + 1].lower()
+
     if is_reset:
         print("[INIT] KÍCH HOẠT DỌN RÁC (--reset): Sẽ xóa checkpoint rác.")
 
     print(f"[INIT] Config: {config_path}")
-    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
+    print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX} | SESSION: {cfg.session.upper()}")
 
     _proj_data = os.path.join(BASE_PROJ_DIR, "data")
     _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")

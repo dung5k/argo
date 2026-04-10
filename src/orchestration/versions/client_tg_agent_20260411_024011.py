@@ -165,7 +165,7 @@ class TrainingManager:
             return f"🔄 BUSY — task: <code>{self._task_id}</code>{elapsed}"
         return "💤 IDLE"
 
-    def start_train(self, config_path: str, code: str = None, script: str = "", config_content: str = "", on_done=None, session: str = "all", **kwargs) -> dict:
+    def start_train(self, config_path: str, code: str = None, script: str = "", config_content: str = "", on_done=None, **kwargs) -> dict:
         if self.is_busy():
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
@@ -206,9 +206,6 @@ class TrainingManager:
             if not Path(config_abs).exists() and not code:
                 return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
             cmd.append(config_abs)
-
-        if session and session.lower() != "all":
-            cmd.extend(["--session", session.lower()])
 
         env = os.environ.copy()
         perf_mode = kwargs.get("perf_mode", "MAX").upper()
@@ -388,6 +385,7 @@ class TelegramAgent:
                 self.logger.error(f"❌ [NGROK SERVER] Không thể mớ hầm Ngrok: {e}")
 
             app.run(host="0.0.0.0", port=port, use_reloader=False)
+
         threading.Thread(target=_run_server, daemon=True, name="NgrokLogServer").start()
 
     def _handle_mqtt_cmd(self, payload: dict):
@@ -403,11 +401,10 @@ class TelegramAgent:
             symbol = payload.get("symbol", "xauusd").lower()
             script = payload.get("script", "")
             perf_mode = payload.get("perf_mode", "MAX")
-            session = payload.get("session", "all")
             config_content = payload.get("config_content", "")
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
-            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}")
-            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session)
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, script={script}, config={config}, mode={perf_mode}")
+            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:
@@ -651,14 +648,13 @@ class TelegramAgent:
         # Các lệnh cần chỉ định client_id
         target = parts[1].lower() if len(parts) > 1 else ""
 
-        # /train [client_id] [symbol] [session]
+        # /train [client_id] [symbol]
         if cmd == "train":
             if target and target != self.client_id.lower():
                 return  # Lệnh cho client khác, bỏ qua
             symbol = (parts[2] if len(parts) > 2 else "xauusd").lower()
-            session_arg = (parts[3] if len(parts) > 3 else "all").lower()
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
-            self._send(chat_id, f"🔄 <b>{self.client_id}</b>: Đang khởi động training <code>{symbol}</code> (Session: {session_arg})...")
+            self._send(chat_id, f"⏳ <b>{self.client_id}</b>: Đang khởi động training <code>{symbol}</code>...")
 
             def on_done(task_id, exit_code):
                 icon = "✅" if exit_code == 0 else "❌"

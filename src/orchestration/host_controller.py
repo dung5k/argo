@@ -102,6 +102,7 @@ class HostController:
                 "cmd": cmd, 
                 "symbol": symbol, 
                 "script": script,
+                "session": getattr(args, "session", "all").lower(),
                 "perf_mode": mode.upper(),
                 "config_content": config_content
             })
@@ -298,6 +299,7 @@ def main():
     parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "run_code", "send_file", "sync_data", "deploy_agent", "save_version", "status", "getlog", "update"])
     parser.add_argument("--client-id", "-c", default="")
     parser.add_argument("--symbol", "-s", default="xauusd")
+    parser.add_argument("--session", default="all", help="Session (all, asian, european, ny)")
     parser.add_argument("--script", default="")
     parser.add_argument("--raw", action="store_true")
     parser.add_argument("--file", default="")

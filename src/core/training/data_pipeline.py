@@ -24,17 +24,38 @@ class TimeSeriesDataset(Dataset):
         window_size: Số nến trong mỗi cửa sổ.
     """
 
-    def __init__(self, features_df: pd.DataFrame, targets_df: pd.DataFrame, window_size: int):
+    def __init__(self, features_df: pd.DataFrame, targets_df: pd.DataFrame, window_size: int, session: str = "all"):
         self.features_tensor = torch.FloatTensor(features_df.values.copy())
         self.labels_tensor   = torch.LongTensor(targets_df["target"].values.copy())
         self.window_size     = window_size
+        
+        valid_start = window_size - 1
+        total_len = len(self.features_tensor)
+        
+        if session != "all":
+            hours = features_df.index.hour.values
+            if session.lower() == "asian":
+                mask = (hours < 8)
+            elif session.lower() == "european":
+                mask = (hours >= 8) & (hours < 13)
+            elif session.lower() == "ny":
+                mask = (hours >= 13)
+            else:
+                mask = np.ones_like(hours, dtype=bool)
+                
+            valid_indices = np.where(mask)[0]
+            self.indices = valid_indices[valid_indices >= valid_start]
+        else:
+            self.indices = np.arange(valid_start, total_len)
 
     def __len__(self) -> int:
-        return max(0, len(self.features_tensor) - self.window_size)
+        return len(self.indices)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        x = self.features_tensor[idx : idx + self.window_size]
-        y = self.labels_tensor[idx + self.window_size - 1]
+        target_idx = self.indices[idx]
+        start_idx = target_idx - self.window_size + 1
+        x = self.features_tensor[start_idx : target_idx + 1]
+        y = self.labels_tensor[target_idx]
         return x, y
 
 
@@ -98,16 +119,17 @@ def make_dataloaders(
     val_targets:    pd.DataFrame,
     window_size: int,
     batch_size:  int,
+    session: str = "all",
 ) -> Tuple[DataLoader, DataLoader, TimeSeriesDataset, TimeSeriesDataset]:
     """
-    Tạo DataLoader cho train và validation.
+    Tạo DataLoader cho train và validation lọc theo session.
 
     Returns:
         (train_loader, val_loader, train_dataset, val_dataset)
         Trả về cả dataset để có thể reload khi batch_size thay đổi.
     """
-    train_ds = TimeSeriesDataset(train_features, train_targets, window_size)
-    val_ds   = TimeSeriesDataset(val_features,   val_targets,   window_size)
+    train_ds = TimeSeriesDataset(train_features, train_targets, window_size, session)
+    val_ds   = TimeSeriesDataset(val_features,   val_targets,   window_size, session)
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_dl   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False)
     return train_dl, val_dl, train_ds, val_ds
