@@ -189,7 +189,7 @@ class TrainingManager:
             if config_path and "v1_5" in config_path:
                 train_script = str(self.base_dir / "src" / "training_v1_5" / "train_v1_5.py")
             else:
-                train_script = str(self.base_dir / "src" / "legacy" / "train_ga.py")
+                train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
 
         cmd = [python, train_script]
         
