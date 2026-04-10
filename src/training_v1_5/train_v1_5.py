@@ -265,6 +265,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
     # ── In diagnostic batch đầu tiên sau khi setup xong ─────
     _first_batch_logged = False
+    _last_hf_push_time = 0
 
     # ── Xây dựng AI History Buffer ───────────────────────────
     min_signals_dict = {s_id: MIN_SIGNALS for s_id in SESSIONS}
@@ -423,8 +424,10 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f} ({totals_t[i]}L)" for i, t in enumerate(thresholds[-2:]))
                 print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {','.join(improved_strategies)} | Th>={max_thresh:.2f} | {thr_str} | VLoss: {avg_val_loss[s_id]:.4f}")
                 try:
-                    import threading
-                    threading.Thread(target=push_runs, daemon=True).start()
+                    import subprocess, time, sys
+                    if time.time() - _last_hf_push_time > 60:
+                        _last_hf_push_time = time.time()
+                        subprocess.Popen([sys.executable, "src/orchestration/hf_sync.py", "push_runs"])
                 except Exception as e:
                     print(f"  [HF] Bỏ qua sync: {e}")
             else:
