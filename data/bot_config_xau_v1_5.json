@@ -84,7 +84,7 @@
         "VAL_END": "2026-04-08",
         "BATCH_SIZE": 1024,
         "ARCH": {
-            "win": 60,
+            "win": 40,
             "d_model": 256,
             "heads": 8,
             "layers": 3,
@@ -124,18 +124,12 @@
     },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
-        "ACTIVE_WINDOW_SIZE": 30,
+        "ACTIVE_WINDOW_SIZE": 20,
         "MASKED_FEATURES": []
     },
     "HF_CLOUD": {
         "REQUIRED_PARQUETS": [
-            "xauusd_mt5_1m_20260301_to_20260408.parquet",
-            "audusd_mt5_1m_20260301_to_20260408.parquet",
-            "eurusd_mt5_1m_20260301_to_20260408.parquet",
-            "xagusd_mt5_1m_20260301_to_20260408.parquet",
-            "vixy_mt5_1m_20260301_to_20260408.parquet",
-            "nasdaq_100_mt5_1m_20260301_to_20260408.parquet",
-            "us_10y_yield_mt5_1m_20260301_to_20260408.parquet"
+            "vixy_mt5_1m_20260301_to_20260408.parquet"
         ]
     }
 }
