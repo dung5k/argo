@@ -164,7 +164,8 @@ def _hf_sync_async(run_dir: str):
                 sys.path.insert(0, src_path)
             from orchestration.hf_sync import push_runs
             if push_runs():
-                print("    [HF] Đã đồng bộ trọng số V2 lên HuggingFace.")
+                pass
+                # print("    [HF] Đã đồng bộ trọng số V2 lên HuggingFace.")
         except Exception:
             pass
     threading.Thread(target=_worker, daemon=True).start()
@@ -598,7 +599,7 @@ def train_v2(
             
             # Đồng bộ lên HuggingFace nếu có bất kỳ mô hình nào được cải thiện
             if epoch_has_improvement:
-                print(f"\n[HF] Phát hiện mẫu tốt hơn. Kích hoạt đồng bộ HF...")
+                # print(f"\n[HF] Phát hiện mẫu tốt hơn. Kích hoạt đồng bộ HF...")
                 try:
                     from src.orchestration.hf_sync import push_runs
                     push_runs()
@@ -873,7 +874,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # ── Sync lên HuggingFace ───────────────────────────────────
-    print("\n[HF] Đồng bộ cuối phiên lên HuggingFace...")
+    # print("\n[HF] Đồng bộ cuối phiên lên HuggingFace...")
     try:
         from src.orchestration.hf_sync import push_runs
         push_runs()

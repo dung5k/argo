@@ -795,10 +795,19 @@ class TelegramAgent:
                 import html
                 send_msg = ""
                 
-                # Trích xuất version và target đã lưu
+                # Trích xuất version và target từ dòng [RUN] trong logs
                 v_name = getattr(self.manager, "version_name", "v?")
                 t_name = getattr(self.manager, "target_name", "???")
-                pfx = f"<b>{self.client_id}</b> [{v_name}|{t_name}]"
+                run_lines = [l for l in lines if "[RUN]" in l]
+                if run_lines:
+                    run_name = run_lines[-1].split("[RUN]")[-1].strip()
+                    if "v1_5" in run_name.lower(): v_name = "v1.5"
+                    elif "v2" in run_name.lower() or "V2" in run_name: v_name = "v2.0"
+                    
+                    if "xau" in run_name.lower(): t_name = "XAUUSD"
+                    elif "xag" in run_name.lower(): t_name = "XAGUSD"
+
+                pfx = f"<b>{self.client_id}</b> [Ver: {v_name} | Mã: {t_name}]"
                 
                 if current_git_err and current_git_err != getattr(self, "_last_git_err", ""):
                     self._last_git_err = current_git_err
@@ -814,7 +823,6 @@ class TelegramAgent:
                     send_msg = f"🏆 {pfx} TÌM THẤY MẪU MỚI!\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
                     send_msg += f"<pre>{html.escape(current_peak.strip())}</pre>\n"
-                    send_msg += "<i>(Đang tự động Commit lên Git...)</i>"
                 elif epoch_num > 0 and epoch_num % self.progress_n == 0 and epoch_num != last_sent_epoch:
                     last_sent_epoch = epoch_num
                     send_msg = f"📈 {pfx} — Tiến độ (Epoch {epoch_num})\n"
