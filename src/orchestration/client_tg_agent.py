@@ -71,7 +71,10 @@ except ImportError:
 AGENT_VERSION = "2.1.0-SkyNet"
 
 ARGO_DATA_DIR = os.environ.get("ARGO_DATA_DIR", "C:/argo/data")
+os.environ["ARGO_DATA_DIR"] = ARGO_DATA_DIR
+
 ARGO_LOGS_DIR = os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs")
+os.environ["ARGO_LOGS_DIR"] = ARGO_LOGS_DIR
 
 CONFIG_MAP = {
     "xauusd": f"{ARGO_DATA_DIR}/bot_config_xau.json",
