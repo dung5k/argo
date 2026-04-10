@@ -143,7 +143,7 @@ def push_runs(logger=None):
 
     import os
     pth_files = [os.path.join(r,f) for r,d,files in os.walk(runs_dir) for f in files if f.endswith('.pth')]
-    log(f"[HF] Đang đẩy {len(pth_files)} trọng số (.pth) lên {repo_id}/runs/ ...")
+    # log(f"[HF] Đang đẩy {len(pth_files)} trọng số (.pth) lên {repo_id}/runs/ ...")
 
     import time
     max_retries = 3
@@ -159,7 +159,7 @@ def push_runs(logger=None):
                 token=token,
                 commit_message=f"Auto-sync training weights to HuggingFace (Attempt {attempt+1})"
             )
-            log(f"[HF] Đẩy {len(pth_files)} trọng số lên Đám mây thành công! 🚀")
+            # log(f"[HF] Đẩy {len(pth_files)} trọng số lên Đám mây thành công! 🚀")
             return True
         except Exception as e:
             if attempt < max_retries - 1:
