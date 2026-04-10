@@ -30,47 +30,54 @@ def call_llm_meta_optimizer(history_buffer, current_epoch, base_dir=None):
         "sessions_status": history_buffer
     }
     
-    sys_prompt = """Bạn là AI Supervisor (Meta-Optimizer) giám sát quá trình training của Trading Bot đa phiên.
-Nhiệm vụ: Phân tích history_buffer và trả về 1 JSON hợp lệ theo format STRICT. 
-Ngoài Soft configs cũ (LR, WD), bạn được cấp thêm quyền thay đổi:
-- `active_window_size`: Từ 30 đến 60. Thay đổi ACTIVE_WINDOW_SIZE của Curriculum Masking (tăng khó/giảm mờ).
-- `label_smoothing`: Từ 0.05 đến 0.2. Làm mượt loss chống Model bị Overconfidence nổ to.
-- `patience`: Khởi tạo 10. Giảm xuống nếu đồ thị loss đóng băng ngang quá lâu mà ko rớt LR.
+    sys_prompt = """Bạn là AI Supervisor (Meta-Optimizer) giám sát quá trình training của Trading Bot Forex (Unified V2).
+Nhiệm vụ: Phân tích history_buffer và trả về 1 JSON strict theo đúng format dưới đây.
 
+Danh sách tham số bạn được phép điều chỉnh (tất cả đều optional):
+- `new_lr`           : float, 1e-6..1e-2.  Learning Rate hiện tại của optimizer.
+- `base_lr`          : float, 1e-5..1e-3.  Base LR dùng khi Phoenix khởi động lại (chiến lược A/B). Chỉnh khi thấy spike quá mạnh hoặc yếu.
+- `weight_decay`     : float, 0..0.1.      Weight decay của AdamW. Tăng nếu overfit.
+- `active_window_size`: int, 10..60.       Số nến cuối Model được "mở mắt" (Curriculum Masking). Tăng dần khi WR cải thiện.
+- `masked_features`  : list[str] hoặc [].  Danh sách tên features bị mask hoàn toàn (zero-out). Dùng khi phát hiện feature gây nhiễu. Để [] để bỏ mask.
+- `label_smoothing`  : float, 0.0..0.3.   Giảm xuống 0.05 nếu model thiếu tự tin. Tăng lên 0.2 nếu overconfident.
+- `patience`         : int, 3..30.        LR Scheduler patience. Giảm nếu loss đóng băng quá lâu.
+- `min_signals`      : int, 10..100.      Ngưỡng tín hiệu tối thiểu để ghi nhận đỉnh WR. Giảm nếu model quá thận trọng.
+- `batch_size`       : int, 128/256/512/1024. Thay đổi batch size.
+- `grad_clip`        : float, 0.5..5.0.   Max-norm gradient clipping. Giảm nếu gradients nổ.
+- `action_type`      : "continue" | "stop" | "force_phoenix".  force_phoenix = kích hoạt tái sinh ngay lập tức.
+
+Format JSON trả về (STRICT - không markdown, không comment):
 {
   "global_reasoning": [
-    "Bước 1: So sánh cục diện các phiên...",
-    "Bước 2: Phát hiện bất thường cục bộ..."
+    "Bước 1: ...",
+    "Bước 2: ..."
   ],
-  "analysis_report": "Tóm tắt ngắn (1-2 câu).",
-  "telegram_message": "Nội dung ngắn gọn để gửi Tele.",
+  "analysis_report": "Tóm tắt 1-2 câu về tình trạng tổng thể.",
+  "telegram_message": "Tin nhắn Telegram ngắn gọn cho operator.",
   "actions": {
-    "0": {
-       "session_evaluation": "Val loss tăng, đe doạ overfitting, tăng label_smoothing.",
-       "action_type": "continue", 
-       "new_lr": ...., 
-       "weight_decay": ...., 
-       "min_signals": 30,
-       "active_window_size": 60,
-       "label_smoothing": 0.15,
-       "patience": 10
-    },
-    "1": {
-       "session_evaluation": "Đi ngang quá lâu, bế tắc hoàn toàn, ép tái sinh.",
-       "action_type": "force_phoenix"
-    },
     "2": {
-       "session_evaluation": "Hội tụ tốt, tăng window size để nới curriculum.",
-       "action_type": "continue", "active_window_size": 45
+       "session_evaluation": "Mô tả tình trạng session.",
+       "action_type": "continue",
+       "new_lr": 0.0002,
+       "base_lr": 0.0003,
+       "weight_decay": 0.001,
+       "active_window_size": 40,
+       "masked_features": [],
+       "label_smoothing": 0.15,
+       "patience": 10,
+       "min_signals": 30,
+       "batch_size": 512,
+       "grad_clip": 1.0
     }
   },
   "global_action": "continue"
 }
 
-Luật:
-- Mã phiên: 0 (Asia), 1 (London), 2 (NY). Trả đúng key 0,1,2 dạng chuỗi.
+Quy tắc:
+- Chỉ cần trả field bạn muốn thay đổi, không cần trả tất cả.
+- Key session duy nhất là "2" (Unified model, không chia phiên).
 - action_type: "continue", "stop", hoặc "force_phoenix".
-- Hàm chỉ chấp nhận strict JSON string, tuyệt đối KHÔNG markdown.
+- TUYỆT ĐỐI không markdown, không code block, chỉ JSON thuần.
 """
     try:
         resp = requests.post(

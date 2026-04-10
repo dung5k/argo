@@ -459,7 +459,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     meta_ai = PhoenixMetaAI(cm_active_window if cm_enabled else window_size, window_size)
 
     def apply_perturbation(phoenix_num):
-        nonlocal optimizer, scheduler, batch_size, cm_active_window
+        nonlocal optimizer, scheduler, batch_size, cm_active_window, BASE_LR
         strat, expanded = meta_ai.decide_strategy()
         
         if expanded and cm_enabled:
@@ -495,6 +495,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     phoenix_count     = 0
     total_epoch       = 0
     need_reload_loader = False
+    grad_clip_norm    = 1.0  # AI-adjustable
 
     import time
     try:
@@ -517,7 +518,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 outputs = model(batch_x)
                 loss = criterion(outputs, batch_y)
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip_norm)
                 optimizer.step()
                 train_loss += loss.item()
 
@@ -662,7 +663,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                     _sv = _ilu.module_from_spec(_spec)
                     _spec.loader.exec_module(_sv)
 
-                    # Đóng gói history của session duy nhất
+                    # Đóng gói history của session duy nhất (key "2" = unified)
                     _hbuf = {
                         "2": {
                             "avg_train_loss_history": [meta_ai.history[i]['loss'] for i in range(len(meta_ai.history))],
@@ -671,11 +672,16 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                             "total_signals_L4_history": [totals_t[3]] * len(meta_ai.history),
                             "phoenix_count": phoenix_count,
                             "current_lr": float(cur_lr),
+                            "current_base_lr": float(BASE_LR),
                             "current_weight_decay": float(optimizer.param_groups[0].get('weight_decay', 1e-3)),
                             "current_min_signals": MIN_SIGNALS,
                             "current_cm_window": int(cm_active_window),
+                            "current_cm_max_window": int(window_size),
                             "current_patience": int(scheduler.patience),
-                            "current_label_smoothing": 0.15
+                            "current_label_smoothing": float(criterion.label_smoothing) if hasattr(criterion, 'label_smoothing') else 0.15,
+                            "current_batch_size": int(batch_size),
+                            "current_grad_clip": float(grad_clip_norm),
+                            "current_masked_features": cm_masked_names
                         }
                     }
                     _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -701,7 +707,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                             except Exception as _te:
                                 print(f"  [Telegram Error] {_te}")
 
-                        # Áp dụng các điều chỉnh từ LLM (dùng key "2" → unified session)
+                        # Áp dụng các điều chỉnh từ LLM (key "2" = unified session)
                         _act = resp.get("actions", {}).get("2", {})
                         if _act:
                             if "new_lr" in _act:
@@ -709,22 +715,55 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                                 if 1e-6 <= _nlr <= 1e-2:
                                     for pg in optimizer.param_groups: pg['lr'] = _nlr
                                     print(f"  [LLM] Điều chỉnh LR = {_nlr:.1e}")
+                            if "base_lr" in _act:
+                                _nblr = float(_act["base_lr"])
+                                if 1e-5 <= _nblr <= 1e-3:
+                                    BASE_LR = _nblr
+                                    print(f"  [LLM] Điều chỉnh BASE_LR = {_nblr:.1e} (dùng khi Phoenix khởi động)")
                             if "weight_decay" in _act:
                                 _nwd = float(_act["weight_decay"])
                                 if 0 <= _nwd <= 0.1:
                                     for pg in optimizer.param_groups: pg['weight_decay'] = _nwd
                                     print(f"  [LLM] Điều chỉnh WD = {_nwd}")
+                            if "label_smoothing" in _act:
+                                _nls = float(_act["label_smoothing"])
+                                if 0.0 <= _nls <= 0.3:
+                                    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=_nls).to(device)
+                                    print(f"  [LLM] Điều chỉnh Label Smoothing = {_nls}")
+                            if "min_signals" in _act:
+                                _nms = int(_act["min_signals"])
+                                if 10 <= _nms <= 100:
+                                    MIN_SIGNALS = _nms
+                                    print(f"  [LLM] Điều chỉnh MIN_SIGNALS = {_nms}")
                             if "active_window_size" in _act:
                                 _nwin = int(_act["active_window_size"])
                                 if 10 <= _nwin <= window_size:
                                     cm_active_window = _nwin
                                     meta_ai.cm_window = _nwin
-                                    print(f"  [LLM] Mở rộng Curriculum Window = {_nwin} nến")
+                                    meta_ai.max_window = window_size
+                                    print(f"  [LLM] Điều chỉnh Curriculum Window = {_nwin} nến")
+                            if "masked_features" in _act:
+                                _nmf = _act["masked_features"]
+                                if isinstance(_nmf, list):
+                                    cm_masked_names = _nmf
+                                    cm_masked_indices = resolve_masked_indices(feature_col_names, _nmf)
+                                    print(f"  [LLM] Cập nhật Masked Features: {_nmf if _nmf else '(Bỏ mask)'}")
                             if "patience" in _act:
                                 _npat = int(_act["patience"])
                                 if 3 <= _npat <= 30:
                                     scheduler.patience = _npat
                                     print(f"  [LLM] Điều chỉnh Patience = {_npat}")
+                            if "batch_size" in _act:
+                                _nbs = int(_act["batch_size"])
+                                if _nbs in [128, 256, 512, 1024]:
+                                    batch_size = _nbs
+                                    need_reload_loader = True
+                                    print(f"  [LLM] Điều chỉnh Batch Size = {_nbs}")
+                            if "grad_clip" in _act:
+                                _ngc = float(_act["grad_clip"])
+                                if 0.5 <= _ngc <= 5.0:
+                                    grad_clip_norm = _ngc
+                                    print(f"  [LLM] Điều chỉnh Grad Clip = {_ngc}")
                             if _act.get("action_type") == "force_phoenix":
                                 print("  [LLM] \U0001f525 Bắt buộc Phoenix! Khởi động lại Model tốt nhất.")
                                 valid_cfgs = [c for c in top_configs.values() if c is not None]
