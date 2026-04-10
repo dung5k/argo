@@ -70,10 +70,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     # PHOENIX HYPERPARAMS
     epochs         = 10000
     batch_size     = 512
-    BASE_LR        = 1e-4
+    BASE_LR        = 3e-4  # Align với V1.5 (1e-4 quá thấp, hội tụ chậm 3x)
     MAX_STAGNATE   = 10
     MAX_PHOENIX    = 40
     MIN_SIGNALS    = 30
+    AI_SUPERVISOR_INTERVAL = 50  # Gọi LLM Meta-Optimizer mỗi N epochs
 
     import subprocess
     try:
@@ -520,6 +521,16 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 optimizer.step()
                 train_loss += loss.item()
 
+            avg_train_loss = train_loss / len(train_loader) if len(train_loader) > 0 else 0
+
+            # Diagnostic: in shape + curriculum mask check (chỉ 1 lần)
+            if total_epoch == 0:
+                sample_batch = next(iter(train_loader))[0]
+                print(f"[DIAG] Batch shape: {list(sample_batch.shape)}")
+                if cm_enabled:
+                    print(f"[DIAG] Curriculum masked (0..{window_size - cm_active_window - 1}), sample[0,0,:4]: {sample_batch[0, 0, :4].tolist()}")
+                    print(f"[DIAG] Active window (last {cm_active_window}), sample[0,-1,:4]:    {sample_batch[0, -1, :4].tolist()}")
+
             model.eval()
             correct, total = 0, 0
             val_loss = 0.0
@@ -573,7 +584,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
 
             phoenix_tag = f"[P{phoenix_count}]" if phoenix_count > 0 else ""
             epoch_time = time.time() - epoch_start_time
-            print(f"Epoch {total_epoch:04d} {phoenix_tag}| VLoss: {avg_val_loss:.4f} | LR: {cur_lr:.2e} | WR: {val_acc*100:.1f}% | MaxTh: {max_thresh:.2f} | Time: {epoch_time:.1f}s")
+            print(f"Epoch {total_epoch:04d} {phoenix_tag}| TLoss: {avg_train_loss:.4f} | VLoss: {avg_val_loss:.4f} | LR: {cur_lr:.2e} | WR: {val_acc*100:.1f}% | MaxTh: {max_thresh:.2f} | Time: {epoch_time:.1f}s")
             thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f}%({totals_t[i]}L)" for i, t in enumerate(thresholds))
             print(f"  {thr_str}")
 
@@ -591,6 +602,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                     if top_configs[s_name] is None or s_val > top_configs[s_name]["score"]:
                         top_configs[s_name] = {
                             "score": s_val,
+                            "epoch": total_epoch,
                             "state_dict": copy.deepcopy(model.state_dict()),
                             "thresholds": thresholds[:],
                             "wrs": wrs[:],
@@ -639,6 +651,89 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 epochs_no_improve = 0
                 need_reload_loader = apply_perturbation(phoenix_count)
                 print(f"   → Tiếp tục khám phá (còn {MAX_PHOENIX - phoenix_count} lần tái sinh)\n")
+
+            # ── LLM Meta-Optimizer (Gemini) mỗi N Epochs ─────────────────
+            if total_epoch > 0 and total_epoch % AI_SUPERVISOR_INTERVAL == 0:
+                print(f"\n\U0001f916 [LLM SUPERVISOR] Phân tích sau {total_epoch} epochs...")
+                try:
+                    _sv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "training_v1_5", "ai_supervisor.py")
+                    import importlib.util as _ilu
+                    _spec = _ilu.spec_from_file_location("ai_supervisor", _sv_path)
+                    _sv = _ilu.module_from_spec(_spec)
+                    _spec.loader.exec_module(_sv)
+
+                    # Đóng gói history của session duy nhất
+                    _hbuf = {
+                        "2": {
+                            "avg_train_loss_history": [meta_ai.history[i]['loss'] for i in range(len(meta_ai.history))],
+                            "avg_val_loss_history":   [meta_ai.history[i]['loss'] for i in range(len(meta_ai.history))],
+                            "win_rate_L4_history":    [meta_ai.history[i]['wr']   for i in range(len(meta_ai.history))],
+                            "total_signals_L4_history": [totals_t[3]] * len(meta_ai.history),
+                            "phoenix_count": phoenix_count,
+                            "current_lr": float(cur_lr),
+                            "current_weight_decay": float(optimizer.param_groups[0].get('weight_decay', 1e-3)),
+                            "current_min_signals": MIN_SIGNALS,
+                            "current_cm_window": int(cm_active_window),
+                            "current_patience": int(scheduler.patience),
+                            "current_label_smoothing": 0.15
+                        }
+                    }
+                    _base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                    resp = _sv.call_llm_meta_optimizer(_hbuf, total_epoch, base_dir=_base_dir)
+                    if resp:
+                        print(f"\U0001f916 [LLM REPORT]: {resp.get('analysis_report', '')}")
+                        tel_msg = resp.get('telegram_message', '')
+                        if tel_msg:
+                            print(f"  Telegram: {tel_msg}")
+                            try:
+                                import requests as _req
+                                tg_path = os.path.join(_base_dir, "tg_config.json")
+                                if os.path.exists(tg_path):
+                                    with open(tg_path, "r", encoding='utf-8') as _f:
+                                        _tg = json.load(_f)
+                                    _tok = _tg.get("bot_token")
+                                    _ids = _tg.get("allowed_user_ids", [])
+                                    if _tok and _ids:
+                                        _msg = f"\U0001f916 <b>[LLM SUPERVISOR - {target_prefix}]</b>\n\n{tel_msg}"
+                                        for _cid in _ids:
+                                            _req.post(f"https://api.telegram.org/bot{_tok}/sendMessage",
+                                                data={"chat_id": _cid, "text": _msg, "parse_mode": "HTML"}, timeout=5)
+                            except Exception as _te:
+                                print(f"  [Telegram Error] {_te}")
+
+                        # Áp dụng các điều chỉnh từ LLM (dùng key "2" → unified session)
+                        _act = resp.get("actions", {}).get("2", {})
+                        if _act:
+                            if "new_lr" in _act:
+                                _nlr = float(_act["new_lr"])
+                                if 1e-6 <= _nlr <= 1e-2:
+                                    for pg in optimizer.param_groups: pg['lr'] = _nlr
+                                    print(f"  [LLM] Điều chỉnh LR = {_nlr:.1e}")
+                            if "weight_decay" in _act:
+                                _nwd = float(_act["weight_decay"])
+                                if 0 <= _nwd <= 0.1:
+                                    for pg in optimizer.param_groups: pg['weight_decay'] = _nwd
+                                    print(f"  [LLM] Điều chỉnh WD = {_nwd}")
+                            if "active_window_size" in _act:
+                                _nwin = int(_act["active_window_size"])
+                                if 10 <= _nwin <= window_size:
+                                    cm_active_window = _nwin
+                                    meta_ai.cm_window = _nwin
+                                    print(f"  [LLM] Mở rộng Curriculum Window = {_nwin} nến")
+                            if "patience" in _act:
+                                _npat = int(_act["patience"])
+                                if 3 <= _npat <= 30:
+                                    scheduler.patience = _npat
+                                    print(f"  [LLM] Điều chỉnh Patience = {_npat}")
+                            if _act.get("action_type") == "force_phoenix":
+                                print("  [LLM] \U0001f525 Bắt buộc Phoenix! Khởi động lại Model tốt nhất.")
+                                valid_cfgs = [c for c in top_configs.values() if c is not None]
+                                if valid_cfgs:
+                                    chosen = random.choice(valid_cfgs)
+                                    model.load_state_dict(copy.deepcopy(chosen['state_dict']))
+                                epochs_no_improve = MAX_STAGNATE  # kích hoạt phoenix ngay vòng sau
+                except Exception as _e:
+                    print(f"\U0001f916 [LLM SUPERVISOR ERR] {_e}")
 
     except KeyboardInterrupt:
         print("\n⚡ [KHẨN CẤP] Dừng khẩn cấp. Đang lưu Hộp đen...")
