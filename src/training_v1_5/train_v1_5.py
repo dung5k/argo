@@ -665,8 +665,9 @@ def validate_startup_configs(cfg_dict, root_dir):
             gemini = tg.get("gemini_api_key", cfg_dict.get("gemini_api_key", ""))
             hf = tg.get("hf_token", cfg_dict.get("hf_token", ""))
             
-            if not gemini or not gemini.startswith("AIza"):
-                errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong tg_config.json")
+            # Bỏ qua check bắt buộc gemini_api_key để xài hardcode trong ai_supervisor
+            # if not gemini or not gemini.startswith("AIza"):
+            #     errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong tg_config.json")
                 
             if not hf or not hf.startswith("hf_"):
                 errors.append("- hf_token (Chưa khai báo hoặc sai định dạng hf_...) trong tg_config.json")
@@ -681,7 +682,7 @@ def validate_startup_configs(cfg_dict, root_dir):
     if errors:
         print("\n" + "🔥"*25)
         print("🚨 [CRITICAL LỖI KHỞI ĐỘNG] THIẾU CẤU HÌNH BẮT BUỘC 🚨")
-        print("Xin hãy sửa các lỗi sau để bot có thể gọi AI và gửi nhắn tin Telegram:")
+        print("Xin hãy sửa các lỗi sau để bot có thể tải Data và gửi nhắn tin Telegram:")
         for e in errors:
             print(f"  {e}")
         print("🔥"*25 + "\n")

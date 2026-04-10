@@ -124,9 +124,11 @@ def ask_ai_for_phoenix_strategy(s_name: str, history_buffer: dict, base_dir: str
             
     api_key = cfg.get("gemini_api_key", "").strip()
     if not api_key:
-        print("[PHOENIX AI] Không tìm thấy API Key, tự động Fallback về Random!")
-        return None
+        api_key = "AIzaSyBuJP93STno4RBbF-wQACneWKQ6kF22-3o"
         
+    if not api_key or not api_key.startswith("AIza"):
+        print("[PHOENIX AI] Không tìm thấy API Key hợp lệ, tự động Fallback về Random!")
+        return None
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     
     session_data = history_buffer.get(s_name, {}) if isinstance(s_name, str) else history_buffer
