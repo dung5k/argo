@@ -143,11 +143,13 @@ def sync_all_history():
             cfg_data["HF_CLOUD"] = {}
         
         target_prefix = cfg_data.get("TARGET_PREFIX", "XAUUSD").upper()
+        config_id = cfg_data.get("CONFIG_ID", target_prefix)
+        
         # Chỉ lưu các file tối quan trọng cho huấn luyện vào danh sách kéo về của Client
         required_list = [
-            f"final_features_{target_prefix}.parquet",
-            f"target_direction_{target_prefix}.parquet",
-            "scaler.pkl"
+            f"final_features_{config_id}.parquet",
+            f"target_direction_{config_id}.parquet",
+            f"scaler_{config_id}.pkl"
         ]
         
         cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = required_list

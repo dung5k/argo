@@ -598,8 +598,8 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"⚠️ [TRAIN] Bỏ qua kích hoạt đồng bộ HF (Không quan trọng): {e}")
         
-    features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
-    target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
+    features_path = os.path.join(data_path, f"final_features_{CONFIG_ID}.parquet")
+    target_path   = os.path.join(data_path, f"target_direction_{CONFIG_ID}.parquet")
 
     if not os.path.exists(target_path):
         fallback_target = os.path.join(data_path, "target_direction.parquet")

@@ -24,8 +24,10 @@ if os.path.exists(config_path):
     with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
         TARGET_PREFIX = config.get("TARGET_PREFIX", "XAU_USD")
+        CONFIG_ID = config.get("CONFIG_ID", TARGET_PREFIX)
 else:
     TARGET_PREFIX = "XAU_USD"
+    CONFIG_ID = "XAU_USD"
 
 def add_time_embeddings(df):
     """
@@ -295,7 +297,7 @@ def create_stationary_features(df, is_live=False):
     data_path = os.path.join(script_dir, "data")
     
     if is_live:
-        scaler = joblib.load(os.path.join(data_path, 'scaler.pkl'))
+        scaler = joblib.load(os.path.join(data_path, f'scaler_{CONFIG_ID}.pkl'))
         
         # --- [AUTO-ALIGN SHIELD] TỰ ĐỘNG CHUẨN HOÁ CỘT (CHỐNG CRASH) ---
         expected_cols = list(scaler.feature_names_in_)
@@ -313,10 +315,10 @@ def create_stationary_features(df, is_live=False):
         
         scaled_data = scaler.transform(feature_df)
     else:
-        print("-> [TRAIN MODE] Đang tính toán Độ Lệch Chuẩn 15 Tháng và Đúc Scaler.pkl...")
+        print(f"-> [TRAIN MODE] Đang tính toán Độ Lệch Chuẩn 15 Tháng và Đúc scaler_{CONFIG_ID}.pkl...")
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(feature_df)
-        joblib.dump(scaler, os.path.join(data_path, 'scaler.pkl'))
+        joblib.dump(scaler, os.path.join(data_path, f'scaler_{CONFIG_ID}.pkl'))
         
     scaled_df = pd.DataFrame(scaled_data, index=feature_df.index, columns=feature_df.columns)
     
@@ -333,12 +335,13 @@ def create_stationary_features(df, is_live=False):
     
     # Lưu metadata ra JSON để train_final.py đọc
     import json
-    meta_path = os.path.join(data_path, f"feature_meta_{TARGET_PREFIX}.json")
+    meta_path = os.path.join(data_path, f"feature_meta_{CONFIG_ID}.json")
     with open(meta_path, "w") as f:
         json.dump({
             "num_xau_features": num_xau_features, 
             "total_features": len(scaled_df.columns),
-            "target_prefix": TARGET_PREFIX
+            "target_prefix": TARGET_PREFIX,
+            "config_id": CONFIG_ID
         }, f)
     
     print(f"-> Hoàn tất Stationarity & Scaling. Kích thước Tensor: {scaled_df.shape}")
@@ -422,14 +425,14 @@ if __name__ == "__main__":
         n_sell = (target_direction == 0).sum()
         print(f"-> [Momentum Label T+5] Tổng: {len(target_direction):,} | BUY: {n_buy:,} ({n_buy/len(target_direction)*100:.1f}%) | SELL: {n_sell:,} ({n_sell/len(target_direction)*100:.1f}%)")
         
-        target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet"))
+        target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, f"target_direction_{CONFIG_ID}.parquet"))
     
     print(f"-> Dữ liệu Input cuối cùng: {final_features.shape}")
     if is_live:
-        final_features.to_parquet(os.path.join(data_path, f"live_features_{TARGET_PREFIX}.parquet"))
+        final_features.to_parquet(os.path.join(data_path, f"live_features_{CONFIG_ID}.parquet"))
         print(f"\n[OK] Feature Engineering (LIVE) hoàn tất! Sẵn sàng báo tín hiệu.")
     else:
-        final_features.to_parquet(os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet"))
+        final_features.to_parquet(os.path.join(data_path, f"final_features_{CONFIG_ID}.parquet"))
         print(f"\n[OK] Feature Engineering (TRAIN) hoàn tất! Chuyển qua huấn luyện.")
 
 

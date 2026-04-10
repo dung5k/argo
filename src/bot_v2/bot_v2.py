@@ -54,6 +54,7 @@ if os.path.exists(config_file):
             CONFIG = json.load(f)
             TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
             TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAU_USD")
+            CONFIG_ID = CONFIG.get("CONFIG_ID", TARGET_PREFIX)
             WEIGHT_FILE = CONFIG.get("WEIGHT_FILE", "xauusd_unified_weights.pth")
             WEIGHT_FILES = CONFIG.get("WEIGHT_FILES", {})
     except: pass
@@ -105,6 +106,14 @@ def bot_background_loop():
     while True:
         gui_time = datetime.now().strftime('%H:%M:%S')
         
+        # 0. Hot Reload Config liên tục
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                CONFIG = json.load(f)
+                trade_manager.config = CONFIG
+        except Exception:
+            pass
+        
         # 1. Đo lường Phiên Thời Gian (Hot-Swap não bộ)
         session_id, session_display = get_current_session()
         
@@ -123,7 +132,7 @@ def bot_background_loop():
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, dropout_rate, num_xau)
                 
                 # Nạp Tiền Xử Lý DataFrame
-                scaler_path = os.path.join(safe_script_dir, "data", "scaler_v2.pkl")
+                scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{CONFIG_ID}.pkl")
                 processor = V2DataProcessor(scaler_path, i_feats, window_size)
                 
                 current_loaded_session = session_id
