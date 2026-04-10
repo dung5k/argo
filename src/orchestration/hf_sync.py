@@ -57,7 +57,8 @@ def push_data():
             repo_type="dataset",
             token=token,
             commit_message="Auto-sync data from Host",
-            delete_patterns="*"
+            delete_patterns="*",
+            ignore_patterns=["*.json"]
         )
         print("[HF] Đẩy Data thành công lên HuggingFace! 🚀")
         return True
@@ -98,7 +99,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         from huggingface_hub import HfApi, hf_hub_download
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
-        parquet_files = [f for f in files if f.startswith("data/") and f.endswith(".parquet")]
+        parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl"))]
         if required_parquets:
             parquet_files = [f for f in parquet_files if f.replace("data/", "") in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
