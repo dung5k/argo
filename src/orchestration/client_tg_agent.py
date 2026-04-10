@@ -68,7 +68,7 @@ try:
 except ImportError:
     MqttHelper = None
 
-AGENT_VERSION = "2.1.0-SkyNet"
+AGENT_VERSION = "2.2.0-SkyNet"
 
 ARGO_DATA_DIR = os.environ.get("ARGO_DATA_DIR", "C:/argo/data")
 os.environ["ARGO_DATA_DIR"] = ARGO_DATA_DIR

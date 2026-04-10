@@ -12,4 +12,10 @@ Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn
 2. Call `git commit -m "bot: <mô tả ngắn gọn tiếng Việt>"`
 3. Call `git push` (optional: continue if it fails due to branching)
 
-*Mục đích: Đảm bảo mọi thay đổi trên môi trường Live/Production của User luôn được lưu vết lên Source Control (Github/Gitlab).*
+
+# Nguyên tắc code
+- Việc code luôn luôn cần tách thành class và hàm có tính năng và nhiệm vụ động lập, có input và output đơn giản
+
+- Sau khi code hoàn thành 1 hàm thì cần viết unit test để đảm bảo hàm đấy chạy đúng
+
+- Hạn chế hardcode, cần viết code cho bài toán tổng quát, các giá trị hardcode cần được đưa vào file config

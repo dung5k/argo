@@ -297,7 +297,7 @@ class HostController:
 
 def main():
     parser = argparse.ArgumentParser(description="Host Controller V2 via MQTT")
-    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "run_code", "send_file", "sync_data", "deploy_agent", "save_version", "status", "getlog"])
+    parser.add_argument("cmd", choices=["train", "kill", "listen", "run", "run_code", "send_file", "sync_data", "deploy_agent", "save_version", "status", "getlog", "update"])
     parser.add_argument("--client-id", "-c", default="")
     parser.add_argument("--symbol", "-s", default="xauusd")
     parser.add_argument("--script", default="")

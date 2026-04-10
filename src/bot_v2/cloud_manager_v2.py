@@ -84,13 +84,14 @@ class V2CloudManager:
                 )
                 with open(metrix_path, "r", encoding='utf-8') as fm:
                     metrix = json.load(fm)
+                shutil.copy(metrix_path, os.path.join(self.data_dir, "training_metrix_v2.json"))
                 inference_feats = metrix.get("data_features", [])
                 if inference_feats:
                     num_features = len(inference_feats)
                 # Override via dimensions if present (tương thích training_metrix cập nhật)
                 dims = metrix.get("dimensions", {})
                 if dims:
-                    num_xau_features = dims.get("num_features_xau", num_xau_features)
+                    num_xau_features = dims.get("num_features_target", num_xau_features)
                     num_macro = dims.get("num_features_macro", num_features - num_xau_features)
                     num_features = num_xau_features + num_macro
             except Exception as e:

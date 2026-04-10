@@ -97,6 +97,17 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     
     try:
         from huggingface_hub import HfApi, hf_hub_download
+        
+        # --- [CLEANUP] Dọn rác các file Parquet/Pkl cũ không còn nằm trong REQUIRED_PARQUETS ---
+        if required_parquets and data_dir.exists():
+            for local_file in data_dir.glob("*"):
+                if local_file.suffix in [".parquet", ".pkl"]:
+                    if local_file.name not in required_parquets:
+                        try:
+                            local_file.unlink()
+                            log(f"  🗑️ Đã dọn dẹp file tàn dư: {local_file.name}")
+                        except: pass
+                        
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
         parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl"))]
@@ -142,7 +153,6 @@ def push_runs(logger=None):
         print(f"[HF] Không tìm thấy thư mục {runs_dir}")
         return False
 
-    import os
     pth_files = [os.path.join(r,f) for r,d,files in os.walk(runs_dir) for f in files if f.endswith('.pth')]
     # log(f"[HF] Đang đẩy {len(pth_files)} trọng số (.pth) lên {repo_id}/runs/ ...")
 
