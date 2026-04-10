@@ -650,7 +650,10 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
                         "session_evs": eval_res.session_evs,
                         "best_ev": eval_res.best_ev,
                         "val_loss": eval_res.val_loss,
-                        "threshold_metrics": metrics_list
+                        "threshold_metrics": metrics_list,
+                        "win_rates": [m.win_rate * 100 for m in eval_res.threshold_metrics],
+                        "thresholds": [m.threshold for m in eval_res.threshold_metrics],
+                        "totals": [m.total_signals for m in eval_res.threshold_metrics]
                     }
                 else:
                     sess_data[k] = {"score": v["score"], "epoch": v["epoch"]}
