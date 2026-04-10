@@ -682,21 +682,23 @@ if __name__ == "__main__":
     def validate_startup_configs(cfg_dict, root_dir):
         """Kiểm tra cấu hình tại thời điểm khởi động"""
         errors = []
-        gemini = cfg_dict.get("gemini_api_key", "")
-        hf = cfg_dict.get("hf_token", "")
-        
-        if not gemini or not gemini.startswith("AIza"):
-            errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong cấu hình.")
-            
-        if not hf or not hf.startswith("hf_"):
-            errors.append("- hf_token (Chưa khai báo hoặc sai định dạng hf_...) trong cấu hình.")
-            
         tg_cfg_path = os.path.join(root_dir, "tg_config.json")
         if os.path.exists(tg_cfg_path):
             with open(tg_cfg_path, "r", encoding="utf-8") as f:
                 tg = json.load(f)
-                if not tg.get("bot_token"): errors.append("- bot_token (Thiếu token Telegram trong tg_config.json)")
-                if not tg.get("allowed_user_ids"): errors.append("- allowed_user_ids (Thiếu danh sách Chat ID nhận tin nhắn)")
+                gemini = tg.get("gemini_api_key", cfg_dict.get("gemini_api_key", ""))
+                hf = tg.get("hf_token", cfg_dict.get("hf_token", ""))
+                
+                if not gemini or not gemini.startswith("AIza"):
+                    errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong tg_config.json")
+                    
+                if not hf or not hf.startswith("hf_"):
+                    errors.append("- hf_token (Chưa khai báo hoặc sai định dạng hf_...) trong tg_config.json")
+                    
+                if not tg.get("bot_token"): 
+                    errors.append("- bot_token (Thiếu token Telegram trong tg_config.json)")
+                if not tg.get("allowed_chat_ids"): 
+                    errors.append("- allowed_chat_ids (Thiếu danh sách Chat ID nhận tin nhắn Telegram)")
         else:
             errors.append("- Không tìm thấy tệp tg_config.json tại thư mục gốc.")
             

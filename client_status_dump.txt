@@ -1,0 +1,8 @@
+[argo_dungla_9213/clientEW/log]
+[RAW_CODE] 
+FILE: clientEW\logs\clientEW_unified.log
+2026-04-09 08:54:27 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'train' | payload={'cmd': 'train', 'symbol': 'xau', 'script': 'src/training_v2/train_v2.py', 'perf_mode': 'LIGHT'}
+2026-04-09 08:54:27 [INFO] 📥 [MQTT CMD] Nhận lệnh: 'train' | payload={'cmd': 'train', 'symbol': 'xau', 'script': 'src/training_v2/train_v2.py', 'perf_mode': 'LIGHT'}
+2026-04-09 08:54:27 [INFO]   ➜ Khởi động TRAIN cục bộ, symbol=xau, script=src/training_v2/train_v2.py, config=data/bot_config_xau.json, mode=LIGHT
+2026-04-09 08:54:27 [INFO]   ➜ Khởi động TRAIN cục bộ, symbol=xau, script=src/training_v2/train_v2.py, config=data/bot_config_xau.json, mode=LIGHT
+---
