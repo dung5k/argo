@@ -32,7 +32,8 @@ def push_data():
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    data_dir = _project_root() / "data"
+    argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(_project_root() / "data"))
+    data_dir = Path(argo_data_dir)
     
     if not data_dir.exists():
         print(f"[HF] Lỗi: Không tìm thấy thư mục {data_dir}")
@@ -75,7 +76,8 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
     base_dir = _project_root()
-    data_dir = base_dir / "data"
+    argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(base_dir / "data"))
+    data_dir = Path(argo_data_dir)
     
     # Read OPTIONAL REQUIRED PARQUETS list from config
     required_parquets = None
@@ -93,8 +95,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     log(f"[HF] Bắt đầu tải Parquet data từ {repo_id} (Safe HTTP Method)...")
     
     try:
-        from huggingface_hub import HfApi
-        import requests
+        from huggingface_hub import HfApi, hf_hub_download
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
         parquet_files = [f for f in files if f.startswith("data/") and f.endswith(".parquet")]
@@ -102,19 +103,17 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
             parquet_files = [f for f in parquet_files if f.replace("data/", "") in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
         
-        headers = {"Authorization": f"Bearer {token}"}
+        target_dir = str(data_dir.parent)
         for f in parquet_files:
-            url = f"https://huggingface.co/datasets/{repo_id}/resolve/main/{f}"
-            local_path = base_dir / f
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Streaming download
-            with requests.get(url, headers=headers, stream=True) as r:
-                r.raise_for_status()
-                with open(local_path, "wb") as file:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        file.write(chunk)
-            log(f"  + Đã lấy: {f}")
+            log(f"  + Checking/Downloading: {f} -> {target_dir}")
+            hf_hub_download(
+                repo_id=repo_id,
+                filename=f,
+                repo_type="dataset",
+                token=token,
+                local_dir=target_dir,
+                local_dir_use_symlinks=False
+            )
             
         log("[HF] Tải Dữ Liệu Hoàn Tất! Sẵn sàng huấn luyện. ✅")
         return True
@@ -134,7 +133,8 @@ def push_runs(logger=None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    runs_dir = _project_root() / "runs"
+    argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
+    runs_dir = Path(argo_logs_dir) / "runs"
     log = logger.info if logger else print
 
     if not runs_dir.exists():
@@ -181,7 +181,7 @@ def pull_runs(logger=None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    base_dir = _project_root()
+    argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
     log(f"[HF] Đang kéo trọng số từ {repo_id}/runs/ về...")
 
@@ -191,7 +191,7 @@ def pull_runs(logger=None):
             repo_type="dataset",
             token=token,
             allow_patterns="runs/**",
-            local_dir=str(base_dir),
+            local_dir=str(argo_logs_dir),
             local_dir_use_symlinks=False,
             force_download=False
         )

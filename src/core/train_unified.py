@@ -588,6 +588,16 @@ if __name__ == "__main__":
     ARGO_LOGS_DIR = cfg.get("ARGO_LOGS_DIR", os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs"))
 
     data_path = ARGO_DATA_DIR
+    
+    # Kích hoạt tự động đồng bộ (pull) đúng dữ liệu parquet quy định trong config
+    try:
+        sys.path.insert(0, os.path.join(_ROOT, "src", "orchestration"))
+        from hf_sync import pull_data
+        print("☁️ [TRAIN] Kích hoạt đồng bộ HF theo cấu hình (REQUIRED_PARQUETS)...")
+        pull_data(config_path=config_path)
+    except Exception as e:
+        print(f"⚠️ [TRAIN] Bỏ qua kích hoạt đồng bộ HF (Không quan trọng): {e}")
+        
     features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
 
