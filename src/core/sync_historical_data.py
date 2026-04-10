@@ -141,12 +141,21 @@ def sync_all_history():
         # Lưu Tên các File Parquet đã cào thành công để Client biết và không kéo rác
         if "HF_CLOUD" not in cfg_data:
             cfg_data["HF_CLOUD"] = {}
+        
+        target_prefix = cfg_data.get("TARGET_PREFIX", "XAUUSD").upper()
         required_list = [os.path.basename(f) for f in generated_files]
-        cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = required_list
+        # Bổ sung các file tối quan trọng cho huấn luyện vào danh sách kéo về (tránh việc đè mất)
+        required_list.extend([
+            f"final_features_{target_prefix}.parquet",
+            f"target_direction_{target_prefix}.parquet",
+            "scaler.pkl"
+        ])
+        
+        cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = list(set(required_list))  # xoá trùng
         
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(cfg_data, f, indent=4, ensure_ascii=False)
-        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' và {len(required_list)} REQUIRED_PARQUETS vào {config_file}")
+        print(f"🔧 Đã cập nhật DATASET_SUFFIX='{date_suffix}' và {len(required_list)} REQUIRED_PARQUETS (Bao gồm RAW & Final Features) vào {config_file}")
 
     print("\n🎉 HOÀN TẤT ĐỒNG BỘ TOÀN BỘ KHO LỊCH SỬ LOCAL.")
 
