@@ -653,6 +653,39 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
     with open(meta_file, 'w', encoding='utf-8') as f:
         json.dump(out, f, indent=4, ensure_ascii=False)
 
+
+def validate_startup_configs(cfg_dict, root_dir):
+    """Kiểm tra khắt khe cấu hình tại thời điểm khởi động để chống báo lỗi giữa chừng"""
+    errors = []
+    gemini = cfg_dict.get("gemini_api_key", "")
+    hf = cfg_dict.get("hf_token", "")
+    
+    if not gemini or not gemini.startswith("AIza"):
+        errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong cấu hình.")
+        
+    if not hf or not hf.startswith("hf_"):
+        errors.append("- hf_token (Chưa khai báo hoặc sai định dạng hf_...) trong cấu hình.")
+        
+    tg_cfg_path = os.path.join(root_dir, "tg_config.json")
+    if os.path.exists(tg_cfg_path):
+        with open(tg_cfg_path, "r", encoding="utf-8") as f:
+            tg = json.load(f)
+            if not tg.get("bot_token"): errors.append("- bot_token (Thiếu token Telegram trong tg_config.json)")
+            if not tg.get("allowed_user_ids"): errors.append("- allowed_user_ids (Thiếu danh sách Chat ID nhận tin nhắn)")
+    else:
+        errors.append("- Không tìm thấy tệp tg_config.json tại thư mục gốc.")
+        
+    if errors:
+        print("\n" + "🔥"*25)
+        print("🚨 [CRITICAL LỖI KHỞI ĐỘNG] THIẾU CẤU HÌNH BẮT BUỘC 🚨")
+        print("Xin hãy sửa các lỗi sau để bot có thể gọi AI và gửi nhắn tin Telegram:")
+        for e in errors:
+            print(f"  {e}")
+        print("🔥"*25 + "\n")
+        import sys
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -675,6 +708,8 @@ if __name__ == "__main__":
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
     DATA_PATH     = os.path.join(_ROOT, "data")
+    
+    validate_startup_configs(cfg, _ROOT)
 
     features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(DATA_PATH, f"target_direction_{TARGET_PREFIX}.parquet")
@@ -691,6 +726,20 @@ if __name__ == "__main__":
     run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V1_5"
     run_dir  = os.path.join(_ROOT, "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
+    
+    class _TeeLogger:
+        def __init__(self, filename):
+            self.terminal = sys.stdout
+            self.log = open(filename, "a", encoding="utf-8", buffering=1)
+        def write(self, msg):
+            self.terminal.write(msg)
+            self.log.write(msg)
+            self.flush()
+        def flush(self):
+            self.terminal.flush()
+            self.log.flush()
+
+    sys.stdout = _TeeLogger(os.path.join(run_dir, "train_v1_5.log"))
     
     # Copy scaler
     import shutil

@@ -678,6 +678,37 @@ if __name__ == "__main__":
     import argparse
 
     BASE_PROJ = _ROOT
+    
+    def validate_startup_configs(cfg_dict, root_dir):
+        """Kiểm tra cấu hình tại thời điểm khởi động"""
+        errors = []
+        gemini = cfg_dict.get("gemini_api_key", "")
+        hf = cfg_dict.get("hf_token", "")
+        
+        if not gemini or not gemini.startswith("AIza"):
+            errors.append("- gemini_api_key (Chưa khai báo hoặc sai định dạng AIza...) trong cấu hình.")
+            
+        if not hf or not hf.startswith("hf_"):
+            errors.append("- hf_token (Chưa khai báo hoặc sai định dạng hf_...) trong cấu hình.")
+            
+        tg_cfg_path = os.path.join(root_dir, "tg_config.json")
+        if os.path.exists(tg_cfg_path):
+            with open(tg_cfg_path, "r", encoding="utf-8") as f:
+                tg = json.load(f)
+                if not tg.get("bot_token"): errors.append("- bot_token (Thiếu token Telegram trong tg_config.json)")
+                if not tg.get("allowed_user_ids"): errors.append("- allowed_user_ids (Thiếu danh sách Chat ID nhận tin nhắn)")
+        else:
+            errors.append("- Không tìm thấy tệp tg_config.json tại thư mục gốc.")
+            
+        if errors:
+            print("\n" + "🔥"*25)
+            print("🚨 [CRITICAL LỖI KHỞI ĐỘNG] THIẾU CẤU HÌNH BẮT BUỘC 🚨")
+            print("Xin hãy sửa các lỗi sau để bot có thể gọi AI và gửi nhắn tin Telegram:")
+            for e in errors:
+                print(f"  {e}")
+            print("🔥"*25 + "\n")
+            import sys
+            sys.exit(1)
 
     parser = argparse.ArgumentParser(description="Training V2 — 5 Math Improvements")
     parser.add_argument("config", nargs="?", help="Đường dẫn bot_config_*.json")
@@ -700,6 +731,8 @@ if __name__ == "__main__":
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
     DATA_PATH     = os.path.join(BASE_PROJ, "data")
+    
+    validate_startup_configs(cfg, BASE_PROJ)
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
