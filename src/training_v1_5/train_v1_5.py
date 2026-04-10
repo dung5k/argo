@@ -259,7 +259,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     class_weights = torch.tensor([weight_sell, weight_buy], dtype=torch.float32).to(device)
     print(f"⚖️ [Class Balance] BUY={n_buy:,} (W:{weight_buy:.2f}) | SELL={n_sell:,} (W:{weight_sell:.2f})")
 
-    SESSIONS = {0: "asia", 1: "london", 2: "ny"}
+    SESSIONS = {2: "ny"}
     criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
     criterions = {s_id: nn.CrossEntropyLoss(**criterion_kwargs).to(device) for s_id in SESSIONS}
 
