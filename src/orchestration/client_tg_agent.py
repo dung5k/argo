@@ -68,7 +68,7 @@ try:
 except ImportError:
     MqttHelper = None
 
-AGENT_VERSION = "2.0.0-SkyNet"
+AGENT_VERSION = "2.1.0-SkyNet"
 
 ARGO_DATA_DIR = os.environ.get("ARGO_DATA_DIR", "C:/argo/data")
 ARGO_LOGS_DIR = os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs")
@@ -78,6 +78,12 @@ CONFIG_MAP = {
     "xau"   : f"{ARGO_DATA_DIR}/bot_config_xau.json",
     "xau_v1_5": f"{ARGO_DATA_DIR}/bot_config_xau_v1_5.json",
     "xag_v1_5": f"{ARGO_DATA_DIR}/bot_config_xag_v1_5.json",
+    "xau_v2": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
+    "xag_v2": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
+    "xau_v2_0": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
+    "xag_v2_0": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
+    "xau_v2.0": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
+    "xag_v2.0": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
     "ltc"   : f"{ARGO_DATA_DIR}/bot_config_ltc.json",
     "oil"   : f"{ARGO_DATA_DIR}/bot_config_oil.json",
 }
