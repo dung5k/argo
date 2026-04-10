@@ -101,11 +101,44 @@ class PhoenixRestartV1_5:
     def get_lr(self):
         return self.optimizer.param_groups[0]['lr']
 
-    def apply_perturbation(self, fallback_state_dict):
+    def apply_perturbation(self, fallback_state_dict, s_name=None, history_buffer=None):
         self.model.load_state_dict(copy.deepcopy(fallback_state_dict))
         self.reset_stagnation()
         
-        strat = random.choice(['A', 'B', 'C', 'D'])
+        strat = 'A'
+        try:
+            if s_name and history_buffer:
+                from src.training_v1_5.ai_supervisor import ask_ai_for_phoenix_strategy
+                ai_decision = ask_ai_for_phoenix_strategy(s_name, history_buffer, str(_ROOT))
+                if ai_decision:
+                    strat = ai_decision.get("strategy", "A")
+                    print(f"  ↪ 🤖 [AI Quyết Định Phoenix] Chọn Strategy {strat}: {ai_decision.get('reason')}")
+                    tel_msg = ai_decision.get("telegram_message")
+                    if tel_msg:
+                        try:
+                            import requests
+                            tg_cfg_path = os.path.join(str(_ROOT), "tg_config.json")
+                            if os.path.exists(tg_cfg_path):
+                                with open(tg_cfg_path, "r", encoding='utf-8') as f:
+                                    tg_cfg = json.load(f)
+                                bot_token = tg_cfg.get("bot_token")
+                                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                                if bot_token and chat_ids:
+                                    tele_content = f"🤖 <b>[PHOENIX AI - {s_name.upper()}]</b>\n\n{tel_msg}"
+                                    for chat_id in chat_ids:
+                                        requests.post(
+                                            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                                            data={"chat_id": chat_id, "text": tele_content, "parse_mode": "HTML"},
+                                            timeout=5
+                                        )
+                        except Exception as e:
+                            print(f"[TELEGRAM ERROR in Phoenix] {e}")
+            else:
+                strat = random.choice(['A', 'B', 'C', 'D'])
+        except Exception as e:
+            print(f"[PHOENIX] Lỗi gọi AI, fallback random: {e}")
+            strat = random.choice(['A', 'B', 'C', 'D'])
+
         action = ""
         if strat == 'A':
             spike_lr = random.uniform(2e-4, 8e-4)
@@ -285,7 +318,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     } for s_id in SESSIONS}
 
     total_epoch = 0
+    import time
     while any(not phx.exhausted for phx in phoenixes.values()) and total_epoch < epochs:
+        epoch_start_time = time.time()
         # TRAIN
         for m in models.values(): m.train()
         train_loss = {s_id: 0.0 for s_id in SESSIONS}
@@ -436,7 +471,11 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     valid = [c for c in top_configs[s_id].values() if c is not None]
                     chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
                     print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mạng {s_id} kẹt {phoenixes[s_id].max_stagnate} epoch. Tái sinh!")
-                    action_str = phoenixes[s_id].apply_perturbation(chosen)
+                    action_str = phoenixes[s_id].apply_perturbation(
+                        chosen, 
+                        s_name=s_name, 
+                        history_buffer=history_buffer
+                    )
 
             if True:
                 cur_lr = phoenixes[s_id].get_lr()
@@ -496,7 +535,6 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     
                     actions = resp_json.get("actions", {})
                     for dict_key, act in actions.items():
-                        # dict_key có thể là string '0', '1', '2' hoặc 'asia', 'london', 'ny'
                         if str(dict_key).isdigit(): s_id = int(dict_key)
                         elif dict_key == 'asia': s_id = 0
                         elif dict_key == 'london': s_id = 1
@@ -506,9 +544,23 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         
                         eval_msg = act.get("session_evaluation", "")
                         if eval_msg:
-                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Nghĩ: {eval_msg}")
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Nghi: {eval_msg}")
                         
                         action_type = act.get("action_type", "continue")
+                        if action_type == "force_phoenix":
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] 💀 AI 강제 PHOENIX!")
+                            if top_configs[s_id][CONFIG_ID] is not None:
+                                action_info = phoenixes[s_id].apply_perturbation(
+                                    top_configs[s_id][CONFIG_ID]["state_dict"], 
+                                    s_name=SESSIONS[s_id], 
+                                    history_buffer=history_buffer
+                                )
+                                print(f"    ↪ {action_info}")
+                            else:
+                                print("    ↪ Chưa có đỉnh nào, bỏ qua lệnh AI ép.")
+                                phoenixes[s_id].reset_stagnation()
+                            continue
+                            
                         if action_type == "stop":
                             phoenixes[s_id].exhausted = True
                             print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Quyết định: STOP")

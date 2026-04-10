@@ -107,3 +107,78 @@ Luật:
     except Exception as e:
         print(f"[AI SUPERVISOR] ⚠️ Lỗi Exception: {e}")
     return None
+
+def ask_ai_for_phoenix_strategy(s_name: str, history_buffer: dict, base_dir: str):
+    """
+    Hỏi AI chọn 1 trong 4 chiến lược đột biến (A, B, C, D) cho mạng bị chết lâm sàng.
+    Trả về Dict: {"strategy": "A", "reason": "...", "action_log": "..."}
+    """
+    cfg_path = os.path.join(base_dir, "data", "bot_config_xau.json")
+    if not os.path.exists(cfg_path):
+        cfg_path = os.path.join(base_dir, "data", "bot_config.json")
+        
+    cfg = {}
+    if os.path.exists(cfg_path):
+        with open(cfg_path, 'r', encoding='utf-8') as f:
+            cfg = json.load(f)
+            
+    api_key = cfg.get("gemini_api_key", "").strip()
+    if not api_key:
+        print("[PHOENIX AI] Không tìm thấy API Key, tự động Fallback về Random!")
+        return None
+        
+    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    
+    session_data = history_buffer.get(s_name, {}) if isinstance(s_name, str) else history_buffer
+    
+    prompt = {
+        "event": "PHOENIX_RESTART_TRIGGER",
+        "target_session": s_name,
+        "stagnation_duration_epochs": 10,
+        "current_state": session_data
+    }
+    
+    sys_prompt = """ĐÂY LÀ KHẨN CẤP. Mạng Nơ-ron của phiên giao dịch này đã đóng băng xuyên suốt 10 Epoch không có đột biến (Validation Loss nằm ngang hoặc đi lùi). 
+Theo quy trình PHOENIX RESTART, hệ thống đã Reset lại trọng số về đỉnh cũ tốt nhất. 
+Nhiệm vụ của bạn: Dựa vào tình trạng Loss và LR gần nhất, chỉ định 1 trong 4 mũi vắc-xin Tái Sinh (A, B, C, D) phù hợp nhất.
+- Chọn A (Spike LR mạnh): Nếu Learning Rate (LR) gần đây quá bé (<5e-5).
+- Chọn B (Noise Injection): Nếu loss chạy thành một đường thẳng tắp kẹt cứng bất kể LR.
+- Chọn C (Fine-tune giỏ giọt): Nếu VLoss nhảy múa dữ dội, cần ép đi nhẹ.
+- Chọn D (Data Shuffle thuần): Nếu muốn xào bài làm lại từ đầu.
+
+Chú ý: Trả về CHUẨN JSON chứa 3 field:
+{
+  "strategy": "A", (Chỉ đúng chữ cái A, B, C hoặc D)
+  "reason": "Lý do ngắn 1 câu",
+  "telegram_message": "Nội dung báo cáo lên phòng điều hành về chiến dịch tái sinh này"
+}
+"""
+    try:
+        resp = requests.post(
+            api_url,
+            json={
+                "system_instruction": {
+                    "parts": [{"text": sys_prompt}]
+                },
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": json.dumps(prompt)}]
+                    }
+                ],
+                "generationConfig": {
+                    "response_mime_type": "application/json"
+                }
+            },
+            timeout=20
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            content = data["candidates"][0]["content"]["parts"][0]["text"]
+            content = re.sub(r"```json\s*", "", content).replace("```", "").strip()
+            return json.loads(content)
+        else:
+            print(f"[PHOENIX AI] ⚠️ API HTTP Code {resp.status_code}")
+    except Exception as e:
+        print(f"[PHOENIX AI] ⚠️ Network Error: {e}")
+    return None
