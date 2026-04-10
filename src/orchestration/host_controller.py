@@ -63,6 +63,33 @@ class HostController:
     def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False, mode: str = "MAX"):
         self._wait_connected()
         
+        config_content = ""
+        if cmd == "train":
+            LOCAL_CONFIG_MAP = {
+                "xauusd": "data/bot_config_xau.json",
+                "xau"   : "data/bot_config_xau.json",
+                "xau_v1_5": "data/bot_config_xau_v1_5.json",
+                "xag_v1_5": "data/bot_config_xag_v1_5.json",
+                "xau_v2": "data/bot_config_xau_v2.json",
+                "xag_v2": "data/bot_config_xag_v2.json",
+                "xau_v2_0": "data/bot_config_xau_v2.json",
+                "xag_v2_0": "data/bot_config_xag_v2.json",
+                "xau_v2.0": "data/bot_config_xau_v2.json",
+                "xag_v2.0": "data/bot_config_xag_v2.json",
+                "ltc"   : "data/bot_config_ltc.json",
+                "oil"   : "data/bot_config_oil.json",
+            }
+            local_cfg = LOCAL_CONFIG_MAP.get(symbol)
+            if local_cfg:
+                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                local_cfg_path = os.path.join(base_dir, local_cfg)
+                if os.path.exists(local_cfg_path):
+                    with open(local_cfg_path, "r", encoding="utf-8") as f:
+                        config_content = f.read()
+                    print(f"[HOST] Đã đính kèm cấu hình {local_cfg} ({len(config_content)} bytes) vào lệnh train.")
+                else:
+                    print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
+                    
         if cmd == "run" and raw and script:
             try:
                 with open(script, "r", encoding="utf-8") as f:
@@ -77,7 +104,8 @@ class HostController:
                 "cmd": cmd, 
                 "symbol": symbol, 
                 "script": script,
-                "perf_mode": mode.upper()
+                "perf_mode": mode.upper(),
+                "config_content": config_content
             })
             
         self.client.publish(self.cmd_topic, payload, qos=1)

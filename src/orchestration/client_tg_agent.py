@@ -162,7 +162,7 @@ class TrainingManager:
             return f"🔄 BUSY — task: <code>{self._task_id}</code>{elapsed}"
         return "💤 IDLE"
 
-    def start_train(self, config_path: str, code: str = None, script: str = "", on_done=None, **kwargs) -> dict:
+    def start_train(self, config_path: str, code: str = None, script: str = "", config_content: str = "", on_done=None, **kwargs) -> dict:
         if self.is_busy():
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
@@ -193,6 +193,13 @@ class TrainingManager:
         if config_path:
             config_abs = (str(self.base_dir / config_path)
                           if not Path(config_path).is_absolute() else config_path)
+            
+            if config_content:
+                Path(config_abs).parent.mkdir(parents=True, exist_ok=True)
+                with open(config_abs, "w", encoding="utf-8") as f:
+                    f.write(config_content)
+                self.logger.info(f"  [CONFIG] Đã tự động tạo/lưu file cấu hình vào: {config_abs}")
+                
             if not Path(config_abs).exists() and not code:
                 return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
             cmd.append(config_abs)
@@ -388,9 +395,10 @@ class TelegramAgent:
             symbol = payload.get("symbol", "xauusd").lower()
             script = payload.get("script", "")
             perf_mode = payload.get("perf_mode", "MAX")
+            config_content = payload.get("config_content", "")
             config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
             self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, script={script}, config={config}, mode={perf_mode}")
-            res = self.manager.start_train(config, script=script, perf_mode=perf_mode)
+            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:
