@@ -66,16 +66,14 @@ class HostController:
         config_content = ""
         if cmd == "train":
             LOCAL_CONFIG_MAP = {
-                "xauusd": "data/bot_config_xau.json",
-                "xau"   : "data/bot_config_xau.json",
+                "xauusd": "data/bot_config_xau_v2.json",
+                "xau"   : "data/bot_config_xau_v2.json",
+                "xagusd": "data/bot_config_xag_v2.json",
+                "xag"   : "data/bot_config_xag_v2.json",
                 "xau_v1_5": "data/bot_config_xau_v1_5.json",
                 "xag_v1_5": "data/bot_config_xag_v1_5.json",
                 "xau_v2": "data/bot_config_xau_v2.json",
                 "xag_v2": "data/bot_config_xag_v2.json",
-                "xau_v2_0": "data/bot_config_xau_v2.json",
-                "xag_v2_0": "data/bot_config_xag_v2.json",
-                "xau_v2.0": "data/bot_config_xau_v2.json",
-                "xag_v2.0": "data/bot_config_xag_v2.json",
                 "ltc"   : "data/bot_config_ltc.json",
                 "oil"   : "data/bot_config_oil.json",
             }
