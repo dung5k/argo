@@ -656,10 +656,10 @@ if __name__ == "__main__":
 
         import glob, shutil
         
-        scaler_src = os.path.join(data_path, "scaler.pkl")
+        scaler_src = os.path.join(data_path, f"scaler_{CONFIG_ID}.pkl")
         if os.path.exists(scaler_src):
-            shutil.copy(scaler_src, os.path.join(run_dir, "scaler.pkl"))
-            print(f"📦 Đã đóng gói kèm scaler.pkl (Bộ Kính Data) vào thư mục Run.")
+            shutil.copy(scaler_src, os.path.join(run_dir, f"scaler_{CONFIG_ID}.pkl"))
+            print(f"📦 Đã đóng gói kèm scaler_{CONFIG_ID}.pkl (Bộ Kính Data) vào thư mục Run.")
             print("☁️ Đang đồng bộ CẤP TỐC scaler.pkl lên Đám mây HuggingFace để mồi sẵn cho Live Bot...")
             try:
                 src_path = os.path.join(BASE_PROJ_DIR, "src")
@@ -670,13 +670,13 @@ if __name__ == "__main__":
                 hf_cfg = _load_config()
                 if hf_cfg and "hf_token" in hf_cfg and "hf_repo_id" in hf_cfg:
                     api = HfApi(token=hf_cfg["hf_token"])
-                    target_repo_path = f"runs/{run_name}/scaler.pkl"
+                    target_repo_path = f"runs/{run_name}/scaler_{CONFIG_ID}.pkl"
                     api.upload_file(
-                        path_or_fileobj=os.path.join(run_dir, "scaler.pkl"),
+                        path_or_fileobj=os.path.join(run_dir, f"scaler_{CONFIG_ID}.pkl"),
                         path_in_repo=target_repo_path,
                         repo_id=hf_cfg["hf_repo_id"],
                         repo_type="dataset",
-                        commit_message=f"bot: Đẩy NHANH scaler.pkl lên mồi trước phục vụ Live Bot ({run_name})"
+                        commit_message=f"bot: Đẩy NHANH scaler_{CONFIG_ID}.pkl lên mồi trước phục vụ Live Bot ({run_name})"
                     )
                     print(f"✅ Đã tải NHANH scaler.pkl thành công vào: '{target_repo_path}' !")
                 else:
