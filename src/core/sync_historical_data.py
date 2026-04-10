@@ -143,15 +143,14 @@ def sync_all_history():
             cfg_data["HF_CLOUD"] = {}
         
         target_prefix = cfg_data.get("TARGET_PREFIX", "XAUUSD").upper()
-        required_list = [os.path.basename(f) for f in generated_files]
-        # Bổ sung các file tối quan trọng cho huấn luyện vào danh sách kéo về (tránh việc đè mất)
-        required_list.extend([
+        # Chỉ lưu các file tối quan trọng cho huấn luyện vào danh sách kéo về của Client
+        required_list = [
             f"final_features_{target_prefix}.parquet",
             f"target_direction_{target_prefix}.parquet",
             "scaler.pkl"
-        ])
+        ]
         
-        cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = list(set(required_list))  # xoá trùng
+        cfg_data["HF_CLOUD"]["REQUIRED_PARQUETS"] = required_list
         
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(cfg_data, f, indent=4, ensure_ascii=False)
