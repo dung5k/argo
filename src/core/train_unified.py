@@ -163,7 +163,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
-    meta_path = rf"C:\argo\data\feature_meta_{target_prefix}.json"
+    argo_data_dir = _date_override.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
+    meta_path = os.path.join(argo_data_dir, f"feature_meta_{target_prefix}.json")
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
     if os.path.exists(meta_path):
@@ -180,7 +181,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     ).to(device)
 
     # === [RESUME] LOAD CHECKPOINT ===
-    runs_base = "C:/argo/logs/runs"
+    argo_logs_dir = _date_override.get("ARGO_LOGS_DIR", os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs"))
+    runs_base = os.path.join(argo_logs_dir, "runs")
     
     # Chỉ kế thừa checkpoint TỪ CÙNG MỘT CONFIG_ID
     cfg_id = _date_override.get("CONFIG_ID", "DEFAULT")
@@ -582,7 +584,10 @@ if __name__ == "__main__":
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
 
-    data_path = "C:/argo/data"
+    ARGO_DATA_DIR = cfg.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
+    ARGO_LOGS_DIR = cfg.get("ARGO_LOGS_DIR", os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs"))
+
+    data_path = ARGO_DATA_DIR
     features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
 
@@ -621,7 +626,7 @@ if __name__ == "__main__":
         run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         target_clean = TARGET_PREFIX.lower().replace("_", "")
         run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER"
-        base_runs_dir = "C:/argo/logs/runs"
+        base_runs_dir = os.path.join(ARGO_LOGS_DIR, "runs")
         run_dir  = os.path.join(base_runs_dir, run_name)
         os.makedirs(run_dir, exist_ok=True)
         

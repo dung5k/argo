@@ -69,13 +69,17 @@ except ImportError:
     MqttHelper = None
 
 AGENT_VERSION = "2.0.0-SkyNet"
+
+ARGO_DATA_DIR = os.environ.get("ARGO_DATA_DIR", "C:/argo/data")
+ARGO_LOGS_DIR = os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs")
+
 CONFIG_MAP = {
-    "xauusd": "C:/argo/data/bot_config_xau.json",
-    "xau"   : "C:/argo/data/bot_config_xau.json",
-    "xau_v1_5": "C:/argo/data/bot_config_xau_v1_5.json",
-    "xag_v1_5": "C:/argo/data/bot_config_xag_v1_5.json",
-    "ltc"   : "C:/argo/data/bot_config_ltc.json",
-    "oil"   : "C:/argo/data/bot_config_oil.json",
+    "xauusd": f"{ARGO_DATA_DIR}/bot_config_xau.json",
+    "xau"   : f"{ARGO_DATA_DIR}/bot_config_xau.json",
+    "xau_v1_5": f"{ARGO_DATA_DIR}/bot_config_xau_v1_5.json",
+    "xag_v1_5": f"{ARGO_DATA_DIR}/bot_config_xag_v1_5.json",
+    "ltc"   : f"{ARGO_DATA_DIR}/bot_config_ltc.json",
+    "oil"   : f"{ARGO_DATA_DIR}/bot_config_oil.json",
 }
 
 
@@ -157,7 +161,7 @@ class TrainingManager:
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
         task_id  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + "_train"
-        log_dir  = Path("C:/argo/logs") / self.client_id
+        log_dir  = Path(ARGO_LOGS_DIR) / self.client_id
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"{task_id}.log"
         
@@ -302,7 +306,7 @@ class TelegramAgent:
         self.progress_n   = cfg.get("progress_every_n_epochs", 10)
         self._offset      = 0
 
-        log_dir      = Path("C:/argo/logs") / client_id
+        log_dir      = Path(ARGO_LOGS_DIR) / client_id
         self.logger  = setup_logger(log_dir, client_id)
 
         self.mqtt = MqttHelper(client_id, self._handle_mqtt_cmd) if MqttHelper else None
@@ -322,7 +326,7 @@ class TelegramAgent:
             from pyngrok import ngrok
             
             app = Flask(__name__)
-            unified_path = Path("C:/argo/logs") / f"{self.client_id}_unified.log"
+            unified_path = Path(ARGO_LOGS_DIR) / f"{self.client_id}_unified.log"
             
             @app.route("/log", methods=["GET"])
             def express_log():
