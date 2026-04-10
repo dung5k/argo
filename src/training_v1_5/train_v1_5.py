@@ -264,7 +264,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     criterions = {s_id: nn.CrossEntropyLoss(**criterion_kwargs).to(device) for s_id in SESSIONS}
 
     # Khởi tạo Hệ thống Đa não bộ
-    meta_path = os.path.join(_ROOT, "data", f"feature_meta_{target_prefix}.json")
+    meta_path = os.path.join("C:/argo/data", f"feature_meta_{target_prefix}.json")
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
     if os.path.exists(meta_path):
@@ -698,8 +698,8 @@ if __name__ == "__main__":
 
     config_path = args.config
     if not config_path:
-        for candidate in ["data/bot_config_xau.json", "data/bot_config.json"]:
-            p = os.path.join(_ROOT, candidate)
+        for candidate in ["C:/argo/data/bot_config_xau.json", "C:/argo/data/bot_config.json"]:
+            p = candidate
             if os.path.exists(p):
                 config_path = p
                 break
@@ -711,7 +711,7 @@ if __name__ == "__main__":
 
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
-    DATA_PATH     = os.path.join(_ROOT, "data")
+    DATA_PATH     = "C:/argo/data"
     
     validate_startup_configs(cfg, _ROOT)
 
@@ -728,7 +728,7 @@ if __name__ == "__main__":
     run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     target_clean = TARGET_PREFIX.lower().replace("_", "")
     run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V1_5"
-    run_dir  = os.path.join(_ROOT, "runs", run_name)
+    run_dir  = os.path.join("C:/argo/logs/runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
     
     class _TeeLogger:

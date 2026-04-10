@@ -163,7 +163,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
-    meta_path = rf"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor\data\feature_meta_{target_prefix}.json"
+    meta_path = rf"C:\argo\data\feature_meta_{target_prefix}.json"
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
     if os.path.exists(meta_path):
@@ -180,7 +180,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     ).to(device)
 
     # === [RESUME] LOAD CHECKPOINT ===
-    runs_base = str(Path(__file__).resolve().parent.parent.parent / "runs")
+    runs_base = "C:/argo/logs/runs"
     
     # Chỉ kế thừa checkpoint TỪ CÙNG MỘT CONFIG_ID
     cfg_id = _date_override.get("CONFIG_ID", "DEFAULT")
@@ -582,7 +582,7 @@ if __name__ == "__main__":
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
 
-    data_path = os.path.join(BASE_PROJ_DIR, "data")
+    data_path = "C:/argo/data"
     features_path = os.path.join(data_path, f"final_features_{TARGET_PREFIX}.parquet")
     target_path   = os.path.join(data_path, f"target_direction_{TARGET_PREFIX}.parquet")
 
@@ -621,7 +621,7 @@ if __name__ == "__main__":
         run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         target_clean = TARGET_PREFIX.lower().replace("_", "")
         run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER"
-        base_runs_dir = os.path.join(BASE_PROJ_DIR, "runs")
+        base_runs_dir = "C:/argo/logs/runs"
         run_dir  = os.path.join(base_runs_dir, run_name)
         os.makedirs(run_dir, exist_ok=True)
         

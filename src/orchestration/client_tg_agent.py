@@ -70,12 +70,12 @@ except ImportError:
 
 AGENT_VERSION = "2.0.0-SkyNet"
 CONFIG_MAP = {
-    "xauusd": "data/bot_config_xau.json",
-    "xau"   : "data/bot_config_xau.json",
-    "xau_v1_5": "data/bot_config_xau_v1_5.json",
-    "xag_v1_5": "data/bot_config_xag_v1_5.json",
-    "ltc"   : "data/bot_config_ltc.json",
-    "oil"   : "data/bot_config_oil.json",
+    "xauusd": "C:/argo/data/bot_config_xau.json",
+    "xau"   : "C:/argo/data/bot_config_xau.json",
+    "xau_v1_5": "C:/argo/data/bot_config_xau_v1_5.json",
+    "xag_v1_5": "C:/argo/data/bot_config_xag_v1_5.json",
+    "ltc"   : "C:/argo/data/bot_config_ltc.json",
+    "oil"   : "C:/argo/data/bot_config_oil.json",
 }
 
 
@@ -157,7 +157,7 @@ class TrainingManager:
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
         task_id  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + "_train"
-        log_dir  = self.base_dir / self.client_id / "logs"
+        log_dir  = Path("C:/argo/logs") / self.client_id
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"{task_id}.log"
         
@@ -228,7 +228,7 @@ class TrainingManager:
                     self._log_file   = log_file
                     self._start_time = datetime.datetime.now()
 
-                unified_log_file = log_dir.parent / "logs" / f"{self.client_id}_unified.log"
+                unified_log_file = log_dir.parent / f"{self.client_id}_unified.log"
                 with open(log_file, "w", encoding="utf-8", buffering=1) as lf, \
                      open(unified_log_file, "a", encoding="utf-8", buffering=1) as uf:
                     lf.write(f"=== Task {task_id} | {datetime.datetime.now().isoformat()} ===\n")
@@ -302,7 +302,7 @@ class TelegramAgent:
         self.progress_n   = cfg.get("progress_every_n_epochs", 10)
         self._offset      = 0
 
-        log_dir      = base_dir / client_id / "logs"
+        log_dir      = Path("C:/argo/logs") / client_id
         self.logger  = setup_logger(log_dir, client_id)
 
         self.mqtt = MqttHelper(client_id, self._handle_mqtt_cmd) if MqttHelper else None
@@ -322,7 +322,7 @@ class TelegramAgent:
             from pyngrok import ngrok
             
             app = Flask(__name__)
-            unified_path = self.base_dir / self.client_id / "logs" / f"{self.client_id}_unified.log"
+            unified_path = Path("C:/argo/logs") / f"{self.client_id}_unified.log"
             
             @app.route("/log", methods=["GET"])
             def express_log():
