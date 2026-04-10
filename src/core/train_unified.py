@@ -585,10 +585,12 @@ if __name__ == "__main__":
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
 
+    _proj_data = os.path.join(BASE_PROJ_DIR, "data")
+    _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")
     ARGO_DATA_DIR = cfg_raw.get("ARGO_DATA_DIR",
-                                os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
+                                os.environ.get("ARGO_DATA_DIR", _proj_data))
     ARGO_LOGS_DIR = cfg_raw.get("ARGO_LOGS_DIR",
-                                os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs"))
+                                os.environ.get("ARGO_LOGS_DIR", _proj_logs))
     data_path = ARGO_DATA_DIR
 
     # Sync dữ liệu từ HuggingFace
