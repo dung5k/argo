@@ -414,8 +414,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         print(f"    💾 Đã lưu các bản đầu tiên (baseline) vào run hiện tại.")
 
     class PhoenixMetaAI:
-        def __init__(self):
+        def __init__(self, start_cm_window, max_window):
             self.history = []
+            self.cm_window = start_cm_window
+            self.max_window = max_window
+            self.cm_expanded_count = 0
             
         def record_epoch(self, val_loss, wr):
             self.history.append({"loss": val_loss, "wr": wr})
@@ -424,26 +427,43 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                 
         def decide_strategy(self):
             if len(self.history) < 2:
-                return 'D'
+                return 'D', False
+            
             recent = self.history[-MAX_STAGNATE:]
             loss_trend = recent[-1]['loss'] - recent[0]['loss']
             wr_trend = recent[-1]['wr'] - recent[0]['wr']
             avg_wr = sum(h['wr'] for h in recent) / len(recent)
             
+            # Khởi tạo lệnh mở rộng Masking
+            expand_masking = False
+            
+            # Logic: Nếu Mắc kẹt hoặc Giảm WR mà vẫn đang bị Masking, ưu tiên mở Masking thay vì vọc LR
+            if wr_trend <= 0 and self.cm_window < self.max_window:
+                self.cm_window = min(self.max_window, self.cm_window + 10)
+                self.cm_expanded_count += 1
+                expand_masking = True
+            
+            strat = 'D'
             if loss_trend > 0.05 and wr_trend < 0:
-                return 'B' # Tình huống 1: Bội thực (Loss vọt, WR cắm) -> Bơm Noise
+                strat = 'B' # Tình huống 1: Bội thực (Loss vọt, WR cắm) -> Bơm Noise
             elif abs(loss_trend) < 0.01 and abs(wr_trend) < 0.01:
-                return 'A' # Tình huống 2: Tuyệt Vọng (Đi ngang) -> LR Spike x5
+                strat = 'A' # Tình huống 2: Tuyệt Vọng (Đi ngang) -> LR Spike x5
             elif avg_wr > 0.55 and wr_trend <= 0:
-                return 'C' # Tình huống 3: Tinh Chỉnh (WR cao nhưng chững) -> Fine-tune
+                strat = 'C' # Tình huống 3: Tinh Chỉnh (WR cao nhưng chững) -> Fine-tune
             else:
-                return 'D' # Tình huống 4: Nhiễu Loạn -> Batch Shuffle
+                strat = 'D' # Tình huống 4: Nhiễu Loạn -> Batch Shuffle
+                
+            return strat, expand_masking
 
-    meta_ai = PhoenixMetaAI()
+    meta_ai = PhoenixMetaAI(cm_active_window if cm_enabled else window_size, window_size)
 
     def apply_perturbation(phoenix_num):
-        nonlocal optimizer, scheduler, batch_size
-        strat = meta_ai.decide_strategy()
+        nonlocal optimizer, scheduler, batch_size, cm_active_window
+        strat, expanded = meta_ai.decide_strategy()
+        
+        if expanded and cm_enabled:
+            cm_active_window = meta_ai.cm_window
+            print(f"  👁️ [META-AI] Cởi trói Curriculum: Mở rộng tầm nhìn lên {cm_active_window} nến!")
         
         if strat == 'A':
             spike_lr = random.uniform(2e-4, 8e-4) # Spike
