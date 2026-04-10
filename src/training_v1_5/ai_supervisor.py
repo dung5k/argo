@@ -4,7 +4,7 @@ import json
 import re
 
 def call_llm_meta_optimizer(history_buffer, current_epoch, base_dir=None):
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    api_key = os.environ.get("GEMINI_API_KEY", "AIzaSyBuJP93STno4RBbF-wQACneWKQ6kF22-3o")
     model_name = os.environ.get("LLM_MODEL", "gemini-3-flash-preview")
     
     if base_dir:
