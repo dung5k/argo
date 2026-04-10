@@ -122,5 +122,10 @@
         "SESSION_GUARD_ENABLED": true,
         "MARKET_OPEN": "01:05",
         "MARKET_CLOSE": "23:55"
+    },
+    "CURRICULUM_MASKING": {
+        "ENABLE": true,
+        "ACTIVE_WINDOW_SIZE": 20,
+        "MASKED_FEATURES": []
     }
 }
