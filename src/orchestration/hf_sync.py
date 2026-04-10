@@ -83,7 +83,6 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     required_parquets = None
     if config_path:
         import json
-        from pathlib import Path
         try:
             with open(config_path, 'r', encoding='utf-8') as cf:
                 bot_cfg = json.load(cf)
