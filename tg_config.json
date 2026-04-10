@@ -7,5 +7,6 @@
   "poll_interval_sec": 5,
   "progress_every_n_epochs": 10,
   "hf_token": "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",
-  "hf_repo_id": "dung5k/argo_data"
+  "hf_repo_id": "dung5k/argo_data",
+  "gemini_api_key": "AIzaSyBuJP93STno4RBbF-wQACneWKQ6kF22-3o"
 }
