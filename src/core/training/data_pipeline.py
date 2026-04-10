@@ -25,8 +25,8 @@ class TimeSeriesDataset(Dataset):
     """
 
     def __init__(self, features_df: pd.DataFrame, targets_df: pd.DataFrame, window_size: int):
-        self.features_tensor = torch.FloatTensor(features_df.values)
-        self.labels_tensor   = torch.LongTensor(targets_df["target"].values)
+        self.features_tensor = torch.FloatTensor(features_df.values.copy())
+        self.labels_tensor   = torch.LongTensor(targets_df["target"].values.copy())
         self.window_size     = window_size
 
     def __len__(self) -> int:

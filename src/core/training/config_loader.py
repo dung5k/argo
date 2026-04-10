@@ -40,9 +40,9 @@ class TrainingConfig:
     val_start: Optional[pd.Timestamp] = None
     val_end: Optional[pd.Timestamp] = None
 
-    # Directories
-    argo_data_dir: str = "C:/argo/data"
-    argo_logs_dir: str = "C:/argo/logs"
+    # Directories — mặc định dùng env hoặc fallback về project data/
+    argo_data_dir: str = field(default_factory=lambda: os.environ.get("ARGO_DATA_DIR", "data"))
+    argo_logs_dir: str = field(default_factory=lambda: os.environ.get("ARGO_LOGS_DIR", "logs"))
 
     # Identifiers
     config_id: str = "DEFAULT"
