@@ -222,6 +222,9 @@ class TrainingManager:
         else:
             env["PERFORMANCE_MODE"] = "MAX"
         env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"})
+        # Đảm bảo train_unified.py và hf_sync.pull_data dùng cùng data path
+        env.setdefault("ARGO_DATA_DIR", str(self.base_dir / "data"))
+        env.setdefault("ARGO_LOGS_DIR", str(self.base_dir / "logs"))
 
         self.logger.info(f"▶ START TRAIN task={task_id}")
         self._on_done_cb = on_done
