@@ -69,13 +69,6 @@ gui_market_data = []
 # Khởi tạo Lõi Trade Manager của V2
 trade_manager = V2TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
-def get_current_session():
-    now_utc = datetime.now(timezone.utc)
-    hour = now_utc.hour
-    if 8 <= hour < 13: return "european", "ÂU (LONDON)"
-    elif 13 <= hour < 22: return "us", "MỸ (WALLSTREET)"
-    else: return "asian", "Á (TOKYO/SYDNEY)"
-
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG
     print("[BOT] Đang kích hoạt OOP Modules...")
@@ -100,43 +93,33 @@ def bot_background_loop():
         gui_status = "❌ Mất Kết Nối MT5 Terminal!"
         return
         
-    current_loaded_session = ""
     last_tick_err_time = 0
-    
+    brain_loaded = False
+    processor = None
+
     while True:
         gui_time = datetime.now().strftime('%H:%M:%S')
         
-        # 0. Hot Reload Config liên tục
         try:
             with open(config_file, "r", encoding="utf-8") as f:
                 CONFIG = json.load(f)
                 trade_manager.config = CONFIG
         except Exception:
             pass
-        
-        # 1. Đo lường Phiên Thời Gian (Hot-Swap não bộ)
-        session_id, session_display = get_current_session()
-        
-        if session_id != current_loaded_session:
-            # Đồng bộ não bộ phiên mới
+            
+        if not brain_loaded:
             try:
-                gui_session = f"{session_display} [Đang kéo Cloud...]"
+                gui_session = "UNIFIED [Đang kéo Cloud...]"
+                m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(WEIGHT_FILE, "unified")
+                gui_session = f"UNIFIED [{a_name[:20]}]"
                 
-                # Ưu tiên lấy cấu hình chỉ định rõ ràng của từng Phiên, nếu không có thì xài cấu hình chung (WEIGHT_FILE)
-                actual_weight_file = WEIGHT_FILES.get(session_id, WEIGHT_FILE)
-                
-                m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(actual_weight_file, session_id)
-                gui_session = f"{session_display} [{a_name[:20]}]"
-                
-                # Nạp Động Cơ Suy Diễn
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, dropout_rate, num_xau)
                 
-                # Nạp Tiền Xử Lý DataFrame
                 scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{CONFIG_ID}.pkl")
                 processor = V2DataProcessor(scaler_path, i_feats, window_size)
                 
-                current_loaded_session = session_id
-                gui_status = f"✅ Brain Nạp Xong: {session_id.upper()}"
+                brain_loaded = True
+                gui_status = "✅ Nhất thể hóa Trọng Số (Unified Brain) thành công!"
             except Exception as ce:
                 gui_status = f"❌ Cloud Sync Lỗi: {str(ce)[:30]}"
                 time.sleep(5)

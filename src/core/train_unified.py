@@ -29,6 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from legacy.train_ga import TransformerModel, TimeSeriesDataset, device
+from training_v1_5.curriculum_masking import apply_curriculum_mask, resolve_masked_indices
 
 
 def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
@@ -163,6 +164,32 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
+    # ── Curriculum Masking Setup ──────────────────────────────
+    cfg = {}
+    try:
+        if _cfg_path and os.path.exists(_cfg_path):
+            with open(_cfg_path, "r", encoding="utf-8") as _f:
+                cfg = json.load(_f)
+    except: pass
+    
+    curriculum_cfg    = cfg.get("CURRICULUM_MASKING", {})
+    cm_enabled        = curriculum_cfg.get("ENABLE", False)
+    cm_active_window  = curriculum_cfg.get("ACTIVE_WINDOW_SIZE", window_size)
+    cm_masked_names   = curriculum_cfg.get("MASKED_FEATURES", [])
+    feature_col_names = list(features.columns)
+    cm_masked_indices = resolve_masked_indices(feature_col_names, cm_masked_names) if cm_enabled else []
+
+    print("")
+    print("══════════════════════════════════════════════════════")
+    if cm_enabled:
+        print(f"[CURRICULUM MODE] Symbol: {target_prefix}")
+        print(f"[CURRICULUM MODE] Trạng thái: BẬT")
+        print(f"[CURRICULUM MODE] Window: Chỉ học {cm_active_window} nến cuối / {window_size} nến")
+    else:
+        print(f"[CURRICULUM MODE] Symbol: {target_prefix} | Trạng thái: TẮT")
+    print("══════════════════════════════════════════════════════")
+    print("")
+
     argo_data_dir = _date_override.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
     meta_path = os.path.join(argo_data_dir, f"feature_meta_{target_prefix}.json")
     num_xau_features = None
@@ -207,6 +234,18 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         }
 
     resumed = False
+    
+    if is_reset and checkpoint_candidates:
+        print(f"\n🧹 [RESET] Đang dọn sạch {len(checkpoint_candidates)} checkpoint(s) rác thuộc {target_name} ({cfg_id})...")
+        for ckpt in checkpoint_candidates:
+            try:
+                import shutil
+                shutil.rmtree(ckpt.parent)
+                print(f"   Đã xóa: {ckpt.parent.name}")
+            except Exception as e:
+                print(f"   Không thể xóa {ckpt.parent.name}: {e}")
+        checkpoint_candidates = []
+
     if checkpoint_candidates:
         latest_ckpt = checkpoint_candidates[int(len(checkpoint_candidates)>1)] # Dùng ckpt tốt nhất hoặc bản baseline
         print(f"\n♻️  Tìm thấy checkpoint: {latest_ckpt}")
@@ -374,31 +413,60 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         save_blackbox(0)
         print(f"    💾 Đã lưu các bản đầu tiên (baseline) vào run hiện tại.")
 
+    class PhoenixMetaAI:
+        def __init__(self):
+            self.history = []
+            
+        def record_epoch(self, val_loss, wr):
+            self.history.append({"loss": val_loss, "wr": wr})
+            if len(self.history) > MAX_STAGNATE * 2:
+                self.history.pop(0)
+                
+        def decide_strategy(self):
+            if len(self.history) < 2:
+                return 'D'
+            recent = self.history[-MAX_STAGNATE:]
+            loss_trend = recent[-1]['loss'] - recent[0]['loss']
+            wr_trend = recent[-1]['wr'] - recent[0]['wr']
+            avg_wr = sum(h['wr'] for h in recent) / len(recent)
+            
+            if loss_trend > 0.05 and wr_trend < 0:
+                return 'B' # Tình huống 1: Bội thực (Loss vọt, WR cắm) -> Bơm Noise
+            elif abs(loss_trend) < 0.01 and abs(wr_trend) < 0.01:
+                return 'A' # Tình huống 2: Tuyệt Vọng (Đi ngang) -> LR Spike x5
+            elif avg_wr > 0.55 and wr_trend <= 0:
+                return 'C' # Tình huống 3: Tinh Chỉnh (WR cao nhưng chững) -> Fine-tune
+            else:
+                return 'D' # Tình huống 4: Nhiễu Loạn -> Batch Shuffle
+
+    meta_ai = PhoenixMetaAI()
+
     def apply_perturbation(phoenix_num):
         nonlocal optimizer, scheduler, batch_size
-        strat = random.choice(['A', 'B', 'C', 'D'])
+        strat = meta_ai.decide_strategy()
+        
         if strat == 'A':
-            spike_lr = random.uniform(2e-4, 8e-4)
+            spike_lr = random.uniform(2e-4, 8e-4) # Spike
             optimizer = make_optimizer(lr=spike_lr)
             scheduler = make_scheduler(optimizer)
-            print(f"  🔥 Chiến lược A: LR Spike → LR={spike_lr:.1e} (thoát local minima)")
+            print(f"  🧠 [META-AI] Phát hiện Tuyệt Vọng (Local Minima) -> Chọn A: LR Spike (LR={spike_lr:.1e})")
         elif strat == 'B':
-            noise_sigma = random.uniform(0.001, 0.005)
+            noise_sigma = random.uniform(0.002, 0.008)
             with torch.no_grad():
                 for param in model.parameters():
                     param.add_(torch.randn_like(param) * noise_sigma)
             optimizer = make_optimizer(lr=BASE_LR)
             scheduler = make_scheduler(optimizer)
-            print(f"  🌊 Chiến lược B: Noise Injection σ={noise_sigma:.4f} (khám phá vùng lân cận)")
+            print(f"  🧠 [META-AI] Phát hiện Bội Thực (Overfit) -> Chọn B: Noise Injection (σ={noise_sigma:.4f})")
         elif strat == 'C':
-            fine_lr = random.uniform(5e-5, 2e-4)
-            optimizer = optim.AdamW(model.parameters(), lr=fine_lr, weight_decay=random.uniform(1e-3, 5e-3))
+            fine_lr = random.uniform(1e-5, 8e-5)
+            optimizer = optim.AdamW(model.parameters(), lr=fine_lr, weight_decay=random.uniform(5e-3, 1e-2))
             scheduler = make_scheduler(optimizer)
-            print(f"  🎯 Chiến lược C: Fine-tune Sâu → LR={fine_lr:.1e}, WD tăng (tinh chỉnh precision)")
+            print(f"  🧠 [META-AI] Phát hiện Đỉnh Thô (Chững WR cao) -> Chọn C: Fine-tune Sâu (LR={fine_lr:.1e})")
         elif strat == 'D':
-            new_batch = random.choice([128, 256, 384])
+            new_batch = random.choice([128, 256, 384, 512])
             batch_size = new_batch
-            print(f"  🎲 Chiến lược D: Batch Shuffle → batch_size={new_batch} (gradient đa dạng hơn)")
+            print(f"  🧠 [META-AI] Phát hiện Nhiễu Loạn -> Chọn D: Batch Shuffle (size={new_batch})")
             return True
         return False
 
@@ -420,6 +488,10 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             train_loss = 0.0
             for batch_x, batch_y in train_loader:
                 batch_y = batch_y.view(-1)
+                
+                if cm_enabled:
+                    batch_x = apply_curriculum_mask(batch_x, cm_active_window, cm_masked_indices)
+
                 optimizer.zero_grad()
                 outputs = model(batch_x)
                 loss = criterion(outputs, batch_y)
@@ -476,6 +548,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             avg_val_loss = val_loss / len(val_loader) if len(val_loader) > 0 else 0
             cur_lr       = optimizer.param_groups[0]['lr']
             total_epoch += 1
+            
+            meta_ai.record_epoch(avg_val_loss, val_acc)
 
             phoenix_tag = f"[P{phoenix_count}]" if phoenix_count > 0 else ""
             epoch_time = time.time() - epoch_start_time
@@ -580,6 +654,10 @@ if __name__ == "__main__":
             cfg = json.load(f)
             TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
             CONFIG_ID = cfg.get("CONFIG_ID", "DEFAULT")
+
+    is_reset = "--reset" in sys.argv
+    if is_reset:
+        print("[INIT] KÍCH HOẠT DỌN RÁC (--reset): Sẽ xóa mọi checkpoint rác của mảng này.")
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
