@@ -385,7 +385,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         "current_min_signals": MIN_SIGNALS,
         "current_cm_window": cm_active_window,
         "current_patience": MAX_STAGNATE,
-        "current_label_smoothing": 0.15
+        "current_label_smoothing": 0.15,
+        "previous_ai_actions": []
     } for s_id in SESSIONS}
 
     total_epoch = 0
@@ -669,6 +670,19 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         eval_msg = act.get("session_evaluation", "")
                         if eval_msg:
                             print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI Nghi: {eval_msg}")
+
+                        # Lưu lại hành động của AI vào buffer
+                        if "previous_ai_actions" not in history_buffer[s_id]:
+                             history_buffer[s_id]["previous_ai_actions"] = []
+                        history_buffer[s_id]["previous_ai_actions"].append({
+                            "epoch": total_epoch,
+                            "reason": eval_msg,
+                            "action_type": act.get("action_type", "continue"),
+                            "param_changes": {k: v for k, v in act.items() if k not in ["action_type", "session_evaluation"]}
+                        })
+                        if len(history_buffer[s_id]["previous_ai_actions"]) > 3:
+                            history_buffer[s_id]["previous_ai_actions"].pop(0)
+                        
                         
                         action_type = act.get("action_type", "continue")
                         if action_type == "force_phoenix":

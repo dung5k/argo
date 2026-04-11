@@ -31,7 +31,8 @@ def call_llm_meta_optimizer(history_buffer, current_epoch, base_dir=None):
     }
     
     sys_prompt = """Bạn là AI Supervisor (Meta-Optimizer) giám sát quá trình training của Trading Bot Forex (v1.5).
-Nhiệm vụ: Phân tích history_buffer (đặc biệt chú ý epochs_no_improve và best_vloss_recorded) và trả về 1 JSON strict theo đúng format.
+Nhiệm vụ: Phân tích history_buffer (đặc biệt chú ý epochs_no_improve, best_vloss_recorded, và previous_ai_actions) và trả về 1 JSON strict theo đúng format.
+Quan trọng: Trong history_buffer chứa `previous_ai_actions`, đây là những lần ra quyết định TRƯỚC ĐÂY của MỘT AI NHƯ BẠN. Hãy dựa vào kết quả thay đổi trước đó để đánh giá xem quyết định cũ có hiệu quả không, qua đó đưa ra quyết định mới sáng suốt nhất.
 
 Danh sách tham số bạn được phép điều chỉnh (tất cả đều optional):
 - `new_lr`           : float, 1e-6..1e-2.  Learning Rate hiện tại của optimizer.
