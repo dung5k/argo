@@ -131,10 +131,10 @@ class TrainingManager:
         self.logger    = logger
         self.mqtt_helper = mqtt_helper
         self._lock     = threading.Lock()
-        self._proc: subprocess.Popen | None = None
-        self._task_id: str | None = None
-        self._log_file: Path | None = None
-        self._start_time: datetime.datetime | None = None
+        self._proc     = None
+        self._task_id  = None
+        self._log_file = None
+        self._start_time = None
         self._on_done_cb = None  # callback khi training xong
 
     def _python_exe(self) -> str:
@@ -153,7 +153,7 @@ class TrainingManager:
         with self._lock:
             return self._proc is not None and self._proc.poll() is None
 
-    def log_file(self) -> Path | None:
+    def log_file(self):
         return self._log_file
 
     def status_text(self) -> str:
