@@ -309,7 +309,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         s_name = SESSIONS[s_id]
         
         # Tìm file weight ở thư mục run CŨ MỚI NHẤT
-        candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_BEST_VLOSS.pth"))
+        candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_VLOSS_WR.pth"))
+        if not candidate_paths:
+            candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_BEST_VLOSS.pth"))
         candidate_paths.sort(reverse=True)
         weight_path = candidate_paths[0] if candidate_paths else None
         
@@ -325,7 +327,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 tg_msg = f"⚠️ [Khởi động] Lỗi load trọng số cũ ({e}) -> TẠO MỚI HOÀN TOÀN"
                 print(f"[INIT] {tg_msg}")
         else:
-            tg_msg = f"✨ [Khởi động] TẠO MỚI HOÀN TOÀN (Không tìm thấy trọng số BEST_VLOSS cũ nào)"
+            tg_msg = f"✨ [Khởi động] TẠO MỚI HOÀN TOÀN (Không tìm thấy trọng số VLOSS_WR hay BEST_VLOSS cũ nào)"
             print(f"[INIT] {tg_msg}")
 
         # Gửi Telegram
@@ -353,18 +355,20 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         models[s_id], base_lr=BASE_LR, max_phoenix=MAX_PHOENIX, max_stagnate=MAX_STAGNATE
     ) for s_id in SESSIONS}
 
-    CONFIG_NAMES = ["BEST_VLOSS"]
+    CONFIG_NAMES = ["VLOSS_WR"]
     top_configs = {s_id: {k: None for k in CONFIG_NAMES} for s_id in SESSIONS}
 
     global_best_score = {s_id: 0.0 for s_id in SESSIONS}
     global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
 
     def calc_strats(wrs_arr, totals_arr, avg_v_loss):
-        """1 tieu chi phuc vu thuc chien:
-        - BEST_VLOSS   : on dinh nhat — it overfit, dung lam baseline
+        """Tiêu chí thực chiến:
+        - VLOSS_WR   : Kết hợp VLoss và WinRate (giảm trade-off stagnation)
         """
+        vloss_score = -avg_v_loss
+        wr_score = wrs_arr[-1] if len(wrs_arr) > 0 else 0.0
         return {
-            "BEST_VLOSS":    -avg_v_loss,
+            "VLOSS_WR":    vloss_score + (wr_score * 0.5),
         }
 
     # ── In diagnostic batch đầu tiên sau khi setup xong ─────
@@ -687,9 +691,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         action_type = act.get("action_type", "continue")
                         if action_type == "force_phoenix":
                             print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] 💀 AI 강제 PHOENIX!")
-                            if top_configs[s_id]["BEST_VLOSS"] is not None:
+                            if top_configs[s_id]["VLOSS_WR"] is not None:
                                 action_info = phoenixes[s_id].apply_perturbation(
-                                    top_configs[s_id]["BEST_VLOSS"]["state_dict"], 
+                                    top_configs[s_id]["VLOSS_WR"]["state_dict"], 
                                     s_name=SESSIONS[s_id], 
                                     history_buffer=history_buffer
                                 )
