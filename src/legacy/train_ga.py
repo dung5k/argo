@@ -206,7 +206,10 @@ class TransformerModel(nn.Module):
             dim_feedforward=d_model * 4,
             dropout=dropout_rate, batch_first=True, norm_first=True  # Pre-LN: ổn định hơn
         )
-        self.xau_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers, enable_nested_tensor=False)
+        try:
+            self.xau_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers, enable_nested_tensor=False)
+        except TypeError:
+            self.xau_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         
         # === LUỒNG 2: MACRO FC EMBEDDER ===
         macro_hidden = max(16, d_model // 4)
