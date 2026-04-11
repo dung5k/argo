@@ -7,6 +7,15 @@ echo   CAI DAT MOI TRUONG GPU CHUYEN DUNG (CU111) CHO ARGO
 echo   Ho tro dac biet cho cac may dung Driver tu nam 2021
 echo ========================================================
 echo.
+echo [CANH BAO QUAN TRONG]: 
+echo Thuoc dac tri nay CHI DUOC DUNG cho nhung may co Card roi NVIDIA
+echo ma khong the cap nhat Driver (Bi ket o CUDA 11.1).
+echo Cac may khac (chay CPU hoac GPU doi moi) vui long DONG CUA SO nay lai!
+echo.
+echo Ban chac chan day la may can ha cap Python khong? 
+pause
+echo.
+echo.
 
 echo [1] Dang tai Python 3.9.13 xuong thu muc hien tai...
 powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe' -OutFile 'python-3.9.13-amd64.exe' -UseBasicParsing"
