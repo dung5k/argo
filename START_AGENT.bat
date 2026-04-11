@@ -109,29 +109,35 @@ echo.
 :: =============================================================
 :: TAO MOI TRUONG PYTHON (VENV)
 :: =============================================================
-if exist "venv\Scripts\python.exe" (
-    "venv\Scripts\python.exe" -c "import sys" >nul 2>&1
+set TARGET_VENV=venv
+if exist "%LOCALAPPDATA%\Argo_Venv\Scripts\python.exe" (
+    set TARGET_VENV=%LOCALAPPDATA%\Argo_Venv
+    echo [INFO] Phat hien Moi truong VENV dung chung: !TARGET_VENV!
+)
+
+if exist "!TARGET_VENV!\Scripts\python.exe" (
+    "!TARGET_VENV!\Scripts\python.exe" -c "import sys" >nul 2>&1
     if !errorlevel! equ 0 (
         echo [OK] Moi truong VENV san sang.
         goto :install_deps
     ) else (
         echo [CANH BAO] Môi trường cu bi loi, dang xoa...
-        rmdir /s /q venv
+        rmdir /s /q "!TARGET_VENV!"
     )
 )
 echo [INFO] Dang cai dat moi truong (chi mat vai phut lan dau)...
-"!PYTHON_EXE!" -m venv venv
+"!PYTHON_EXE!" -m venv !TARGET_VENV!
 
 :install_deps
 echo [INFO] Dang cai dat cac thu vien can thiet...
-"venv\Scripts\python.exe" -m pip install -q -r requirements.txt 2>nul
+"!TARGET_VENV!\Scripts\python.exe" -m pip install -q -r requirements.txt 2>nul
 if !errorlevel! neq 0 (
-    "venv\Scripts\python.exe" -c "import torch" 2>nul
+    "!TARGET_VENV!\Scripts\python.exe" -c "import torch" 2>nul
     if !errorlevel! neq 0 (
         echo [INFO] Chua co PyTorch. Tien hanh tai PyTorch tu dong...
-        "venv\Scripts\python.exe" -m pip install -q torch
+        "!TARGET_VENV!\Scripts\python.exe" -m pip install -q torch
     )
-    "venv\Scripts\python.exe" -m pip install -q pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
+    "!TARGET_VENV!\Scripts\python.exe" -m pip install -q pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
 )
 echo [OK] Thu vien san sang.
 echo.
@@ -151,7 +157,7 @@ echo.
 
 set PYTHONUTF8=1
 set PYTHONUNBUFFERED=1
-"venv\Scripts\python.exe" src\orchestration\client_tg_agent.py --client-id !CLIENT_ID! --base-dir "%cd%"
+"!TARGET_VENV!\Scripts\python.exe" src\orchestration\client_tg_agent.py --client-id !CLIENT_ID! --base-dir "%cd%"
 
 if !errorlevel! equ 69 (
     echo [AUTO-UPDATE] He thong dang tu dong khoi dong lai Agent sau khi cap nhat...

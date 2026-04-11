@@ -39,17 +39,19 @@ if exist "venv" (
     rmdir /s /q venv
 )
 
-echo [4] Tao moi truong ao venv dua tren Python 3.9...
-"%PY39_PATH%" -m venv venv
+set ARGO_VENV=%LOCALAPPDATA%\Argo_Venv
+echo [4] Tao moi truong ao dung chung tai: %ARGO_VENV%...
+if exist "%ARGO_VENV%" rmdir /s /q "%ARGO_VENV%"
+"%PY39_PATH%" -m venv "%ARGO_VENV%"
 
 echo [5] Dang cap nhat pip cua venv...
-venv\Scripts\python.exe -m pip install --upgrade pip
+"%ARGO_VENV%\Scripts\python.exe" -m pip install --upgrade pip
 
 echo [6] Dang cai dat PyTorch 1.10.1 (CUDA 11.1) - Ban dac biet...
-venv\Scripts\python.exe -m pip install torch==1.10.1+cu111 -f https://download.pytorch.org/whl/cu111/torch_stable.html
+"%ARGO_VENV%\Scripts\python.exe" -m pip install torch==1.10.1+cu111 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 
 echo [7] Cai dat cac thu vien lien quan cua du an (pandas, numpy, v.v.)...
-venv\Scripts\python.exe -m pip install pandas numpy paho-mqtt requests pyarrow fastparquet matplotlib huggingface_hub
+"%ARGO_VENV%\Scripts\python.exe" -m pip install pandas numpy paho-mqtt requests pyarrow fastparquet matplotlib huggingface_hub
 
 echo.
 echo [8] Dang don dep rac...
