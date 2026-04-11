@@ -89,12 +89,12 @@
     },
     "TRAINING": {
         "PERFORMANCE_MODE": "MAX",
-        "TRAIN_START": "2026-03-01",
+        "TRAIN_START": "2026-02-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-08",
         "BATCH_SIZE": 2048,
         "ARCH": {
-            "win": 40,
+            "win": 60,
             "d_model": 256,
             "heads": 8,
             "layers": 3,
@@ -123,8 +123,8 @@
         "SESSION_END_UTC": "22:00"
     },
     "CURRICULUM_MASKING": {
-        "ENABLE": false,
-        "ACTIVE_WINDOW_SIZE": 20,
+        "ENABLE": true,
+        "ACTIVE_WINDOW_SIZE": 30,
         "MASKED_FEATURES": []
     },
     "HF_CLOUD": {
