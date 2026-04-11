@@ -486,7 +486,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     import matplotlib.pyplot as plt
                     chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}_{s_name}.png")
                     
-                    plot_thresholds = [round(0.50 + (max_thresh - 0.50) * i / 9, 4) for i in range(10)] if max_thresh > 0.50 else [0.50]
+                    plot_thresholds = [x / 100.0 for x in range(50, 101)]
                     plot_wrs, plot_totals = [], []
                     for pt in plot_thresholds:
                         plo = 1.0 - pt
@@ -498,16 +498,28 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         plot_totals.append(int(n))
                         
                     plt.figure(figsize=(10, 5))
-                    x_vals = [t*100 for t in plot_thresholds]
-                    y_vals = [w*100 for w in plot_wrs]
-                    plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
-                    for xv, yv, tot in zip(x_vals, y_vals, plot_totals):
-                        plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
+                    valid_x, valid_y, valid_tot = [], [], []
+                    for t, w, tot in zip(plot_thresholds, plot_wrs, plot_totals):
+                        if tot > 0:
+                            valid_x.append(t*100)
+                            valid_y.append(w*100)
+                            valid_tot.append(tot)
+
+                    plt.plot(valid_x, valid_y, marker='o', linestyle='-', color='indigo', linewidth=2)
+                    
+                    latest_xv = -100
+                    for xv, yv, tot in zip(valid_x, valid_y, valid_tot):
+                        if xv - latest_xv >= 2.5 or abs((xv/100) - max_thresh) < 0.01:
+                            plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
+                            latest_xv = xv
+
                     plt.title(f"[{s_name.upper()}] Epoch {total_epoch} | MaxTh={max_thresh:.2f}\nTiêu chí: {', '.join(improved_strategies)}", fontsize=11, pad=12, fontweight='bold', color='darkred')
                     plt.xlabel("Threshold (%)")
                     plt.ylabel("Win Rate (%)")
                     plt.grid(True, linestyle='--', alpha=0.6)
-                    plt.ylim(min(45, min(y_vals)-5), max(85, max(y_vals)+5))
+                    if valid_y:
+                        plt.ylim(min(45, min(valid_y)-5), max(85, max(valid_y)+5))
+                    plt.xlim(50, 100)
                     plt.tight_layout()
                     plt.savefig(chart_path)
                     plt.close()
