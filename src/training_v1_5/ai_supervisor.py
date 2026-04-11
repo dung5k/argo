@@ -30,8 +30,8 @@ def call_llm_meta_optimizer(history_buffer, current_epoch, base_dir=None):
         "sessions_status": history_buffer
     }
     
-    sys_prompt = """Bạn là AI Supervisor (Meta-Optimizer) giám sát quá trình training của Trading Bot Forex (Unified V2).
-Nhiệm vụ: Phân tích history_buffer và trả về 1 JSON strict theo đúng format dưới đây.
+    sys_prompt = """Bạn là AI Supervisor (Meta-Optimizer) giám sát quá trình training của Trading Bot Forex (v1.5).
+Nhiệm vụ: Phân tích history_buffer (đặc biệt chú ý epochs_no_improve và best_vloss_recorded) và trả về 1 JSON strict theo đúng format.
 
 Danh sách tham số bạn được phép điều chỉnh (tất cả đều optional):
 - `new_lr`           : float, 1e-6..1e-2.  Learning Rate hiện tại của optimizer.
@@ -44,19 +44,19 @@ Danh sách tham số bạn được phép điều chỉnh (tất cả đều opt
 - `min_signals`      : int, 10..100.      Ngưỡng tín hiệu tối thiểu để ghi nhận đỉnh WR. Giảm nếu model quá thận trọng.
 - `batch_size`       : int, 128/256/512/1024. Thay đổi batch size.
 - `grad_clip`        : float, 0.5..5.0.   Max-norm gradient clipping. Giảm nếu gradients nổ.
-- `action_type`      : "continue" | "stop" | "force_phoenix".  force_phoenix = kích hoạt tái sinh ngay lập tức.
+- `action_type`      : "continue" | "stop" | "force_phoenix".  force_phoenix = kích hoạt tái sinh ngay lập tức. KIỂM TRA MỨC epochs_no_improve để dùng tính năng này.
 
 Format JSON trả về (STRICT - không markdown, không comment):
 {
   "global_reasoning": [
-    "Bước 1: ...",
-    "Bước 2: ..."
+    "Bước 1: Kiểm tra epochs_no_improve và so sánh validation loss hiện tại với best_vloss_recorded...",
+    "Bước 2: Xác định xu hướng hiện tại..."
   ],
   "analysis_report": "Tóm tắt 1-2 câu về tình trạng tổng thể.",
-  "telegram_message": "Tin nhắn Telegram ngắn gọn cho operator.",
+  "telegram_message": "Tin nhắn Telegram báo cáo RÕ RÀNG TRẠNG THÁI HIỆN TẠI VÀ CHỈ RÕ LÝ DO cho hành động (VD: 'Stagnate 50 epoch -> Kích hoạt Phoenix' hoặc 'WR giảm -> Tăng Weight Decay').",
   "actions": {
     "2": {
-       "session_evaluation": "Mô tả tình trạng session.",
+       "session_evaluation": "Mô tả TRỰC TIẾP LÝ DO tại sao lại lựa chọn quyết định đổi thông số hoặc force_phoenix dưới đây.",
        "action_type": "continue",
        "new_lr": 0.0002,
        "base_lr": 0.0003,
@@ -74,6 +74,7 @@ Format JSON trả về (STRICT - không markdown, không comment):
 }
 
 Quy tắc:
+- BẠN BẮT BUỘC PHẢI GIẢI THÍCH LÝ DO TRONG session_evaluation VÀ telegram_message.
 - Chỉ cần trả field bạn muốn thay đổi, không cần trả tất cả.
 - Key session duy nhất là "2" (Unified model, không chia phiên).
 - action_type: "continue", "stop", hoặc "force_phoenix".

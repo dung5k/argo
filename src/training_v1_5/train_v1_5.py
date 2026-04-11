@@ -566,6 +566,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
             history_buffer[s_id]["win_rate_L4_history"].append(float(wrs[3]) if len(wrs) > 3 else 0.0)
             history_buffer[s_id]["total_signals_L4_history"].append(int(totals_t[3]) if len(totals_t) > 3 else 0)
             history_buffer[s_id]["phoenix_count"] = phoenixes[s_id].phoenix_count
+            history_buffer[s_id]["epochs_no_improve"] = phoenixes[s_id].epochs_no_improve
+            history_buffer[s_id]["best_vloss_recorded"] = float(global_best_vloss[s_id])
             history_buffer[s_id]["current_lr"] = float(phoenixes[s_id].get_lr())
             history_buffer[s_id]["current_weight_decay"] = float(phoenixes[s_id].optimizer.param_groups[0].get('weight_decay', 0.0))
             history_buffer[s_id]["current_min_signals"] = min_signals_dict[s_id]
