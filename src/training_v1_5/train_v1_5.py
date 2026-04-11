@@ -202,7 +202,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     num_attn_layers = 3
     dropout_rate   = 0.2
     BASE_LR        = 0.0003
-    MAX_STAGNATE   = 10
+    MAX_STAGNATE   = 50
     MAX_PHOENIX    = 40
     MIN_SIGNALS    = 30
 
