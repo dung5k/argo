@@ -141,6 +141,19 @@ class PhoenixMetaAI:
         return 'D', expand                                          # Batch shuffle
 
 
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None, gamma=2.0, label_smoothing=0.0):
+        super().__init__()
+        self.weight = weight
+        self.gamma = gamma
+        self.label_smoothing = label_smoothing
+
+    def forward(self, inputs, targets):
+        ce_loss = F.cross_entropy(inputs, targets, weight=self.weight, reduction='none', label_smoothing=self.label_smoothing)
+        pt = torch.exp(-ce_loss)
+        focal_loss = ((1 - pt) ** self.gamma) * ce_loss
+        return focal_loss.mean()
+
 # ─────────────────────────────────────────────────────────────────────
 # Main training function
 # ─────────────────────────────────────────────────────────────────────
@@ -289,7 +302,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         print(f"\n♻️  Checkpoint: {latest}")
         resumed = ckpt.load_transfer(model, latest)
         if resumed:
-            base_crit = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15).to(device)
+            base_crit = FocalLoss(weight=class_weights, gamma=2.0, label_smoothing=0.15).to(device)
             bvloss, _, bprobs, blabels = _evaluate_epoch(model, val_loader, base_crit)
             max_t = find_max_threshold(bprobs, MIN_SIGNALS)
             thrs  = build_thresholds(max_t)
@@ -334,8 +347,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
             opt, mode="max", patience=10, factor=0.5, min_lr=1e-6)
 
     def make_criterion(label_smoothing=0.15):
-        return nn.CrossEntropyLoss(
-            weight=class_weights, label_smoothing=label_smoothing).to(device)
+        return FocalLoss(
+            weight=class_weights, gamma=2.0, label_smoothing=label_smoothing).to(device)
 
     optimizer      = make_optimizer()
     scheduler      = make_scheduler(optimizer)
