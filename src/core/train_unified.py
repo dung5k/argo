@@ -517,7 +517,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                         plt.grid(True, linestyle='--', alpha=0.6)
                         if valid_y:
                             plt.ylim(min(45, min(valid_y)-5), max(85, max(valid_y)+5))
-                        plt.xlim(50, 100)
+                        if valid_x:
+                            plt.xlim(49, max(valid_x) + 1)
                         plt.tight_layout()
                         plt.savefig(chart_path)
                         plt.close()
