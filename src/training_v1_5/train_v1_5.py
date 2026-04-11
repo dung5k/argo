@@ -710,7 +710,10 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("config", nargs="?", help="Đường dẫn bot_config_*.json")
-    args = parser.parse_args()
+    parser.add_argument("--session", default="all", help="Session to train on")
+    parser.add_argument("--msg", default="", help="Message regarding changes")
+    parser.add_argument("--reset", action="store_true", help="Reset garbage collection")
+    args, unknown = parser.parse_known_args()
 
     config_path = args.config
     if not config_path:
