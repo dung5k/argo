@@ -817,9 +817,6 @@ class TelegramAgent:
                 event_lines = [l for l in lines if "[PHOENIX" in l or "Tái sinh!" in l]
                 current_event = event_lines[-1] if event_lines else ""
 
-                ver_lines = [l for l in lines if "[VERSION_INFO]" in l]
-                current_ver = ver_lines[-1] if ver_lines else ""
-
                 git_err_lines = [l for l in lines if "[GIT LỖI PUSH]" in l or "[GIT LỖI THỰC THI THÊM]" in l]
                 current_git_err = git_err_lines[-1] if git_err_lines else ""
                 
@@ -844,10 +841,6 @@ class TelegramAgent:
                     self._last_git_err = current_git_err
                     send_msg = f"🚨 {pfx} GẶP LỖI ĐẨY GIT!\n"
                     send_msg += f"<pre>{html.escape(current_git_err.strip())}</pre>"
-                elif current_ver and current_ver != getattr(self, "_last_ver_info", ""):
-                    self._last_ver_info = current_ver
-                    send_msg = f"🚀 {pfx} KHỞI ĐỘNG PHIÊN BẢN MỚI!\n"
-                    send_msg += f"<pre>{html.escape(current_ver.strip())}</pre>"
                 elif current_event and current_event != getattr(self, "_last_tg_event", ""):
                     self._last_tg_event = current_event
                     send_msg = f"🔥 {pfx} PHÁT HIỆN SỰ KIỆN MỚI!\n"

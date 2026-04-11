@@ -1,8 +1,0 @@
-Sếp giao việc là có ngay!
-
-Tôi vừa đánh điện trực tiếp một bức điện tín mã hoá M2M không độ trễ, điều khiển chiếc chìa khoá từ xa lồng lệnh bắn thẳng vào bộ não của `client1`.
-
-**Hành động đã hoàn tất:**
-Lệnh **RUN - Chế độ MAX Performance** cho luồng `src/training_v1_5/train_v1_5.py` đối tượng **XAUUSD** đã chính thức được phát sóng thành công tuyệt đối trên trạm vệ tinh `argo_dungla_9213/client1/cmd`. Vùng `client1` ngay lúc này đã đánh thức bản năng và bắt đầu đưa dàn khoan vào chạy guồng múc Training V1.5 rồi!
-
-Sếp cứ yên trí đảo mắt qua tab console/log màn hình giám sát của `client1` nhé, thể nào tiến trình training cũng đã phất cờ chạy ầm ầm rạo rực luôn rồi đấy! Nếu cần tôi kéo thêm máy nào chạy nữa thì sếp cứ hú tôi một tiếng!

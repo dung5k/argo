@@ -43,6 +43,8 @@ from core.training.llm_supervisor import LLMSupervisor, TrainingState
 # Set bởi __main__
 is_reset: bool = False
 
+RUN_VERSION_DESC = "Focal Loss & Thông báo Telegram chi tiết"
+
 
 # ─────────────────────────────────────────────────────────────────────
 # Private training primitives — đơn giản, testable
@@ -615,6 +617,7 @@ if __name__ == "__main__":
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX} | SESSION: {session_arg.upper()}")
+    print(f"[VERSION_INFO] Tích hợp tính năng: {RUN_VERSION_DESC}")
 
     _proj_data = os.path.join(BASE_PROJ_DIR, "data")
     _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")

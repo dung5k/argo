@@ -1,7 +1,6 @@
 import os, glob
 from pathlib import Path
 
-# Tim train.log trong thu muc runs moi nhat
 argo_logs = os.environ.get("ARGO_LOGS_DIR", "")
 if not argo_logs:
     base = Path(__file__).resolve().parent.parent.parent
@@ -10,7 +9,6 @@ if not argo_logs:
 runs_dir = Path(argo_logs) / "runs"
 print(f"[DUMP] Searching runs in: {runs_dir}")
 
-# Tim tat ca train.log, sort theo mtime
 pattern = str(runs_dir / "**" / "train.log")
 files = sorted(glob.glob(pattern, recursive=True), key=os.path.getmtime, reverse=True)
 
@@ -26,15 +24,13 @@ else:
     with open(log_file, "r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
     print(f"[DUMP] Tong dong: {len(lines)}")
-    # In 40 dong sau CURRICULUM
-    for i, l in enumerate(lines):
-        if "CURRICULUM" in l or "Epoch" in l:
-            start = max(0, i-1)
-            end = min(len(lines), i+30)
-            for ll in lines[start:end]:
-                print(ll.rstrip())
-            break
+    # In 100 dòng đầu và 100 dòng cuối để bắt toàn trạng
+    if len(lines) > 200:
+        for l in lines[:100]:
+            print(l.rstrip())
+        print("\n... [TRUNCATED] ...\n")
+        for l in lines[-100:]:
+            print(l.rstrip())
     else:
-        # In 40 dong cuoi
-        for l in lines[-40:]:
+        for l in lines:
             print(l.rstrip())

@@ -60,7 +60,7 @@ class HostController:
                 if self.connected: break
                 time.sleep(0.1)
 
-    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw: bool = False, mode: str = "MAX"):
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw=False, config_path: str = "", mode: str = "MAX", session: str = "all"):
         self._wait_connected()
         
         config_content = ""
@@ -102,7 +102,7 @@ class HostController:
                 "cmd": cmd, 
                 "symbol": symbol, 
                 "script": script,
-                "session": getattr(args, "session", "all").lower(),
+                "session": session.lower(),
                 "perf_mode": mode.upper(),
                 "config_content": config_content
             })
@@ -350,7 +350,8 @@ def main():
         host.listen_logs(args.time)
     elif args.cmd in ["train", "kill", "run", "update"]:
         mode_val = getattr(args, 'mode', 'MAX')
-        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val)
+        cfg_path = args.file if args.cmd == "train" and args.file else ""
+        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'))
         host.listen_logs(args.time)
     elif args.cmd == "getlog":
         host.getlog(getattr(args, 'minutes', 60))
