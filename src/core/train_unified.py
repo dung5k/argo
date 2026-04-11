@@ -19,6 +19,8 @@ import random
 import datetime
 from pathlib import Path
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Ép backend thread-safe trước mọi import pyplot
 import torch
 import torch.nn as nn
 import torch.optim as optim
