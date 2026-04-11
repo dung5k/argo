@@ -504,7 +504,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                         plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
                         for xv, yv, tot in zip(x_vals, y_vals, plot_totals):
                             plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
-                        plt.title(f"Peak Performance | MaxTh={max_thresh:.2f}")
+                        plt.title(f"[{target_prefix}] Epoch {total_epoch} | MaxTh={max_thresh:.2f}\nTiêu chí: {', '.join(improved_strategies)}", fontsize=11, pad=12, fontweight='bold', color='darkred')
                         plt.xlabel("Threshold (%)")
                         plt.ylabel("Win Rate (%)")
                         plt.grid(True, linestyle='--', alpha=0.6)

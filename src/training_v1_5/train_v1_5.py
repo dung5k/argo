@@ -494,7 +494,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
                     for xv, yv, tot in zip(x_vals, y_vals, plot_totals):
                         plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
-                    plt.title(f"Peak [{s_name.upper()}] | MaxTh={max_thresh:.2f}")
+                    plt.title(f"[{s_name.upper()}] Epoch {total_epoch} | MaxTh={max_thresh:.2f}\nTiêu chí: {', '.join(improved_strategies)}", fontsize=11, pad=12, fontweight='bold', color='darkred')
                     plt.xlabel("Threshold (%)")
                     plt.ylabel("Win Rate (%)")
                     plt.grid(True, linestyle='--', alpha=0.6)
