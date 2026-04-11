@@ -316,7 +316,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         tg_msg = ""
         if weight_path and os.path.exists(weight_path):
             try:
-                models[s_id].load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
+                models[s_id].load_state_dict(torch.load(weight_path, map_location=device))
                 folder_name_parts = os.path.basename(os.path.dirname(weight_path)).split('_')
                 short_dir = f"{folder_name_parts[1]}_{folder_name_parts[2]}" if len(folder_name_parts) >= 3 else os.path.basename(os.path.dirname(weight_path))
                 tg_msg = f"♻️ [Khởi động] Kế thừa thành công trọng số cũ từ Run: {short_dir}"
