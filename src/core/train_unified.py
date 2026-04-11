@@ -400,6 +400,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     llm_sv  = LLMSupervisor(sv_path, str(_ROOT), target_prefix)
 
     # ── 9. Training Loop ──────────────────────────────────────────
+    model = model.to(device)
     epochs_no_improve  = 0
     phoenix_count      = 0
     total_epoch        = 0

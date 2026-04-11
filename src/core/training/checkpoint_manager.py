@@ -87,6 +87,10 @@ class CheckpointManager:
         """
         try:
             state = torch.load(str(checkpoint_path), map_location=self.device, weights_only=True)
+        except TypeError:
+            state = torch.load(str(checkpoint_path), map_location=self.device)
+            
+        try:
             current = model.state_dict()
             matched = {}
             for k, v in state.items():
