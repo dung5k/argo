@@ -1,81 +1,208 @@
+"""
+crawl_mt5.py - Cào dữ liệu M1 từ MT5 theo cấu hình ROUTING trong bot_config.
+
+Hỗ trợ:
+- Nhiều MT5 instance (EXNESS, DEFAULT, MT5_2...)
+- Continuous contracts (USTECm*, Z10Y* — tự ghép từng tháng)
+- 100% nguồn MT5, không dùng yfinance
+"""
 import MetaTrader5 as mt5
 import pandas as pd
 from datetime import datetime, timezone
-import os
-import sys
-import time
+import os, sys, json, time
+from pathlib import Path
 
-def fetch_mt5_data(symbol="XAUUSD", timeframe=mt5.TIMEFRAME_M1):
-    print("Đang khởi động kết nối vào MT5 đang mở...")
-    MT5_MAIN_PATH = r"C:\Program Files\MetaTrader 5\terminal64.exe"
-    
-    if not mt5.initialize(path=MT5_MAIN_PATH):
-        print("Lỗi: Khởi tạo thư viện MetaTrader5 thất bại!")
-        print(f"Error code: {mt5.last_error()}")
+
+def _mt5_path_for_broker(brokers: dict, broker_key: str) -> str:
+    path = brokers.get(broker_key, brokers.get("DEFAULT", ""))
+    if path == "LOCAL":
+        return brokers.get("DEFAULT", "")
+    return path
+
+
+def _init_mt5(mt5_path: str) -> bool:
+    """Khởi động MT5 instance tại đường dẫn chỉ định."""
+    if not mt5.initialize(path=mt5_path):
+        print(f"  [MT5] Lỗi khởi tạo: {mt5_path} | Error: {mt5.last_error()}")
+        return False
+    print(f"  [MT5] Kết nối thành công: {Path(mt5_path).parent.name} | Ver: {mt5.version()}")
+    return True
+
+
+def _utc_offset_hours() -> int:
+    """Tính offset giờ của MT5 server so với UTC."""
+    try:
+        tick_time = mt5.symbol_info_tick("EURUSD")
+        if tick_time and tick_time.time > 0:
+            offset_sec = tick_time.time - int(time.time())
+            return round(offset_sec / 3600)
+    except Exception:
+        pass
+    return 0
+
+
+def fetch_symbol(symbol: str, mt5_path: str, from_date: str = "2025-01-01") -> pd.DataFrame | None:
+    """Cào M1 cho 1 symbol từ 1 MT5 instance cụ thể."""
+    if not _init_mt5(mt5_path):
         return None
-        
-    print("Khởi tạo MT5 thành công. Phiên bản Terminal:", mt5.version())
-    
-    # Kiểm tra mã giao dịch có tồn tại không
-    selected = mt5.symbol_select(symbol, True)
-    if not selected:
-        print(f"Lỗi: Không tìm thấy mã {symbol} trong MT5.")
-        print("Cách sửa: Mở phần mềm MT5 -> Bấm Ctrl+U (Symbols) -> Tìm XAUUSD -> Nhấp đúp cho hiện vàng -> Thử lại.")
+
+    if not mt5.symbol_select(symbol, True):
+        print(f"  [MT5] Không tìm thấy mã {symbol}. Bỏ qua.")
         mt5.shutdown()
         return None
-        
-    print(f"Bắt đầu tải nến 1 phút (M1) gần nhất cho {symbol}...")
-    
-    is_live = (len(sys.argv) > 1 and sys.argv[1] == "live")
-    bars = 1440 if is_live else 1000000 # Cào siêu sâu 1 triệu nến để đảm bảo phủ kín năm ngoái
-    rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
-    
+
+    print(f"  [MT5] Đang cào {symbol} (M1)...")
+    rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, 1_000_000)
     if rates is None or len(rates) == 0:
-        print(f"Lỗi: Không tải được lịch sử giá. Có thể sàn Demo chưa có đủ data (Error: {mt5.last_error()})")
+        print(f"  [MT5] Không lấy được data {symbol}: {mt5.last_error()}")
         mt5.shutdown()
         return None
-        
-    print(f"Tải HOÀN TẤT: Rút thành công {len(rates):,} nến từ MT5.")
-    
-    # --- THUẬT TOÁN ĐỒNG BỘ MÚI GIỜ MT5 VỀ UTC CHUẨN ---
-    tick = mt5.symbol_info_tick(symbol)
-    offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
-    offset_hours = round(offset_sec / 3600)
-    
+
+    offset_h = _utc_offset_hours()
     df = pd.DataFrame(rates)
-    df['time'] = df['time'] - (offset_hours * 3600) # Ép phẳng về UTC 0
+    df['time'] = df['time'] - offset_h * 3600
     df['datetime'] = pd.to_datetime(df['time'], unit='s')
     df.set_index('datetime', inplace=True)
     df.rename(columns={'tick_volume': 'volume'}, inplace=True)
-    
-    # Lọc lại đúng mốc từ 2025-01-01 (Bỏ qua lọc nếu đang chạy Live cho nhẹ)
-    if not is_live:
-        df = df[df.index >= pd.to_datetime("2025-01-01")]
-        print(f"Đã lọc dữ liệu từ 2025-01-01, còn lại {len(df):,} nến.")
-    
+
+    df = df[df.index >= pd.to_datetime(from_date)]
+    print(f"  [MT5] {symbol}: {len(df):,} nến từ {from_date}")
     mt5.shutdown()
     return df
 
-def save_to_parquet(df, path):
-    try:
-        df.to_parquet(path)
-        print(f"Đã lưu Parquet thành công tại {path}\n")
-    except Exception as e:
-        print(f"Lỗi lưu file: {e}")
+
+def fetch_continuous_contract(prefix: str, mt5_path: str,
+                              contract_months: list = None,
+                              from_date: str = "2025-01-01") -> pd.DataFrame | None:
+    """
+    Ghép Continuous Contract từ nhiều contract theo tháng.
+    Ví dụ: Z10Y prefix → Z10YJ, Z10YK, Z10YM, Z10YU, Z10YZ, Z10YH (theo năm 2024-2026)
+    """
+    if not _init_mt5(mt5_path):
+        return None
+
+    years = ["24", "25", "26"]
+    months = contract_months or ["H", "M", "U", "Z"]
+    candidates = [f"{prefix}{m}{y}" for y in years for m in months]
+
+    print(f"  [MT5] Continuous Contract {prefix}*: thử {len(candidates)} candidates...")
+    frames = []
+    for sym in candidates:
+        if not mt5.symbol_select(sym, True):
+            continue
+        rates = mt5.copy_rates_from_pos(sym, mt5.TIMEFRAME_M1, 0, 1_000_000)
+        if rates is None or len(rates) == 0:
+            continue
+        offset_h = _utc_offset_hours()
+        df = pd.DataFrame(rates)
+        df['time'] = df['time'] - offset_h * 3600
+        df['datetime'] = pd.to_datetime(df['time'], unit='s')
+        df.set_index('datetime', inplace=True)
+        df.rename(columns={'tick_volume': 'volume'}, inplace=True)
+        df = df[df.index >= pd.to_datetime(from_date)]
+        if not df.empty:
+            frames.append(df)
+            print(f"    + {sym}: {len(df):,} nến")
+
+    mt5.shutdown()
+    if not frames:
+        print(f"  [MT5] Không lấy được continuous contract {prefix}*")
+        return None
+
+    # Ghép, ưu tiên nến mới nhất khi trùng timestamp
+    merged = pd.concat(frames)
+    merged = merged[~merged.index.duplicated(keep='last')].sort_index()
+    print(f"  [MT5] {prefix}* ghép: {len(merged):,} nến sau khi dedup")
+    return merged
+
+
+def crawl_all(config_path: str) -> None:
+    """Entry point chính: đọc config, cào tất cả symbols theo ROUTING."""
+    with open(config_path, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+
+    data_source = cfg.get("DATA_SOURCE", {})
+    brokers = data_source.get("BROKERS", {})
+    routing = data_source.get("ROUTING", {})
+    continuous = data_source.get("CONTINUOUS_CONTRACTS", {})
+    suffix = data_source.get("DATASET_SUFFIX", "2025_2026")
+    from_date = "2025-01-01"
+    if "-" in suffix and suffix.count("-") == 0:
+        pass  # dùng mặc định
+
+    base_dir = Path(config_path).resolve().parent.parent
+    data_dir = base_dir / "data"
+    data_dir.mkdir(exist_ok=True)
+
+    print(f"\n{'='*60}")
+    print(f"CRAWL MT5 - Config: {Path(config_path).name}")
+    print(f"Data dir: {data_dir}")
+    print(f"Suffix  : {suffix}")
+    print(f"{'='*60}\n")
+
+    # 1. Cào từng symbol thông thường theo ROUTING
+    for symbol_key, broker_key in routing.items():
+        # Các symbol là Continuous Contract xử lý riêng bên dưới
+        if symbol_key in continuous:
+            continue
+
+        mt5_path = _mt5_path_for_broker(brokers, broker_key)
+        if not mt5_path or mt5_path == "LOCAL":
+            print(f"[SKIP] {symbol_key}: broker '{broker_key}' không có đường dẫn MT5.")
+            continue
+
+        # Loại bỏ suffix 'm' để lấy tên file chuẩn (XAUUSDm → xauusd)
+        file_stem = symbol_key.lower().replace("m", "", 1) if symbol_key.endswith("m") else symbol_key.lower()
+        out_file = data_dir / f"{file_stem}_1m_{suffix}.parquet"
+
+        print(f"\n>>> Symbol: {symbol_key} | Broker: {broker_key}")
+        df = fetch_symbol(symbol_key, mt5_path, from_date=from_date)
+        if df is not None and not df.empty:
+            df.to_parquet(out_file)
+            print(f"  [SAVE] {out_file.name}")
+
+    # 2. Cào Continuous Contracts (NASDAQ_100, US_10Y_YIELD...)
+    for cc_key, cc_cfg in continuous.items():
+        prefix = cc_cfg.get("PREFIX", "")
+        broker_key = cc_cfg.get("BROKER", "DEFAULT")
+        months = cc_cfg.get("CONTRACT_MONTHS", ["H", "M", "U", "Z"])
+        mt5_path = _mt5_path_for_broker(brokers, broker_key)
+
+        if not mt5_path:
+            print(f"[SKIP] {cc_key}: không có đường dẫn MT5 broker '{broker_key}'.")
+            continue
+
+        out_file = data_dir / f"{cc_key.lower()}_1m_{suffix}.parquet"
+        print(f"\n>>> Continuous: {cc_key} | Prefix: {prefix}* | Broker: {broker_key}")
+        df = fetch_continuous_contract(prefix, mt5_path, contract_months=months, from_date=from_date)
+        if df is not None and not df.empty:
+            df.to_parquet(out_file)
+            print(f"  [SAVE] {out_file.name}")
+
+    print(f"\n{'='*60}")
+    print("Hoàn tất cào dữ liệu từ MT5!")
+    print(f"{'='*60}")
+
 
 if __name__ == "__main__":
-    base_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor"
-    data_path = os.path.join(base_path, "data")
-    os.makedirs(data_path, exist_ok=True)
-    
-    symbols = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "XAGUSD", "VIXY"]
-    
-    for symbol in symbols:
-        print(f"\n{'='*40}")
-        df = fetch_mt5_data(symbol)
-        
-        if df is not None and not df.empty:
-            file_path = os.path.join(data_path, f"{symbol.lower()}_1m_2025_2026.parquet")
-            save_to_parquet(df, file_path)
-            
-    print(f"\nHoàn tất cào dữ liệu từ MT5! Thư mục lưu: {data_path}")
+    config_path = sys.argv[1] if len(sys.argv) > 1 else None
+    if not config_path:
+        # Tìm config mặc định
+        default_dirs = [
+            Path(__file__).resolve().parent.parent.parent / "data",
+            Path("C:/argo/data"),
+        ]
+        for d in default_dirs:
+            for name in ["bot_config_xau_ny_v1_5.json", "bot_config_xau.json", "bot_config.json"]:
+                p = d / name
+                if p.exists():
+                    config_path = str(p)
+                    break
+            if config_path:
+                break
+
+    if not config_path or not Path(config_path).exists():
+        print(f"[LỖI] Không tìm thấy file config. Truyền đường dẫn làm tham số đầu tiên.")
+        sys.exit(1)
+
+    crawl_all(config_path)
