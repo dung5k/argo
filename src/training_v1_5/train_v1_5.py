@@ -773,11 +773,34 @@ if __name__ == "__main__":
     # Kích hoạt tự động đồng bộ (pull) đúng dữ liệu parquet quy định trong config
     try:
         sys.path.insert(0, os.path.join(_ROOT, "src", "orchestration"))
-        from hf_sync import pull_data
-        print("☁️ [TRAIN] Kích hoạt đồng bộ HF theo cấu hình (REQUIRED_PARQUETS)...")
+        from hf_sync import pull_data, pull_runs
+        print("☁️ [TRAIN] Kích hoạt đồng bộ HF theo cấu hình (REQUIRED_PARQUETS) và Runs...")
         pull_data(config_path=config_path)
+        pull_runs()
     except Exception as e:
         print(f"⚠️ [TRAIN] Bỏ qua kích hoạt đồng bộ HF (Không quan trọng): {e}")
+
+    # ===== INHERIT CONFIG FROM HF =====
+    base_runs_dir = os.path.join(ARGO_LOGS_DIR, "runs")
+    target_clean = TARGET_PREFIX.lower().replace("_", "")
+    try:
+        import glob
+        folders = glob.glob(os.path.join(base_runs_dir, f"run_*_{target_clean}_{CONFIG_ID}_*"))
+        folders.sort(reverse=True)
+        for folder in folders:
+            if glob.glob(os.path.join(folder, "*.pth")):
+                inherited_cfg = os.path.join(folder, f"config_{CONFIG_ID}.json")
+                if os.path.exists(inherited_cfg):
+                    print(f"🔄 [INIT] PHÁT HIỆN KẾ THỪA: Ghi đè cấu hình hiện tại bằng cấu hình từ HF ({inherited_cfg})")
+                    with open(inherited_cfg, "r", encoding="utf-8") as f:
+                        cfg.update(json.load(f))
+                        TARGET_PREFIX = cfg.get("TARGET_PREFIX", TARGET_PREFIX)
+                        CONFIG_ID     = cfg.get("CONFIG_ID", CONFIG_ID)
+                    config_path = inherited_cfg
+                break
+    except Exception as e:
+        print(f"⚠️ [INIT] Lỗi kiểm tra cấu hình kế thừa: {e}")
+    # ==================================
 
     features_path = os.path.join(DATA_PATH, f"final_features_{CONFIG_ID}.parquet")
     target_path   = os.path.join(DATA_PATH, f"target_direction_{CONFIG_ID}.parquet")
@@ -811,6 +834,14 @@ if __name__ == "__main__":
     
     print(f"📁 Run dir: {run_name}")
     print(f"[VERSION_INFO] Tích hợp tính năng: {RUN_VERSION_DESC}")
+    
+    # Copy config to run_dir so it gets pushed to HF next time
+    import shutil
+    try:
+        if config_path and os.path.exists(config_path):
+            shutil.copy(config_path, os.path.join(run_dir, f"config_{CONFIG_ID}.json"))
+    except Exception:
+        pass
     
     # Copy scaler
     import shutil
