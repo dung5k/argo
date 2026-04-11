@@ -304,21 +304,28 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
     # === LOAD TRỌNG SỐ & GỬI TELEGRAM ===
     base_dir_app = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import glob
     for s_id in SESSIONS:
         s_name = SESSIONS[s_id]
-        weight_path = os.path.join(run_dir, f"{target_name}_{s_name}_weights_BEST_VLOSS.pth")
+        
+        # Tìm file weight ở thư mục run CŨ MỚI NHẤT
+        candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_BEST_VLOSS.pth"))
+        candidate_paths.sort(reverse=True)
+        weight_path = candidate_paths[0] if candidate_paths else None
         
         tg_msg = ""
-        if os.path.exists(weight_path):
+        if weight_path and os.path.exists(weight_path):
             try:
                 models[s_id].load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
-                tg_msg = f"♻️ [Khởi động] Kế thừa thành công trọng số cũ: {target_name}_{s_name}_weights_BEST_VLOSS.pth"
-                print(f"[INIT] {tg_msg}")
+                folder_name_parts = os.path.basename(os.path.dirname(weight_path)).split('_')
+                short_dir = f"{folder_name_parts[1]}_{folder_name_parts[2]}" if len(folder_name_parts) >= 3 else os.path.basename(os.path.dirname(weight_path))
+                tg_msg = f"♻️ [Khởi động] Kế thừa thành công trọng số cũ từ Run: {short_dir}"
+                print(f"[INIT] {tg_msg} ({weight_path})")
             except Exception as e:
-                tg_msg = f"⚠️ [Khởi động] Lỗi load trọng số cũ {weight_path} ({e}) -> TẠO MỚI HOÀN TOÀN"
+                tg_msg = f"⚠️ [Khởi động] Lỗi load trọng số cũ ({e}) -> TẠO MỚI HOÀN TOÀN"
                 print(f"[INIT] {tg_msg}")
         else:
-            tg_msg = f"✨ [Khởi động] TẠO MỚI HOÀN TOÀN (Không tìm thấy trọng số phụ trợ cũ để kế thừa)"
+            tg_msg = f"✨ [Khởi động] TẠO MỚI HOÀN TOÀN (Không tìm thấy trọng số BEST_VLOSS cũ nào)"
             print(f"[INIT] {tg_msg}")
 
         # Gửi Telegram
