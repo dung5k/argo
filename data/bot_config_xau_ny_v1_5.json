@@ -1,7 +1,7 @@
 {
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
-    "CONFIG_ID": "CFG_XAU_NY",
+    "CONFIG_ID": "CFG_XAU_NY_V1_5",
     "SESSION": "ny",
     "SESSION_UTC": {
         "START": "13:00",
@@ -116,9 +116,9 @@
     "HF_CLOUD": {
         "KEEP_LOCAL_PARQUET": true,
         "REQUIRED_PARQUETS": [
-            "final_features_CFG_XAU_NY.parquet",
-            "target_direction_CFG_XAU_NY.parquet",
-            "scaler_CFG_XAU_NY.pkl"
+            "final_features_CFG_XAU_NY_V1_5.parquet",
+            "target_direction_CFG_XAU_NY_V1_5.parquet",
+            "scaler_CFG_XAU_NY_V1_5.pkl"
         ]
     }
 }
