@@ -494,11 +494,15 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                     try:
                         import matplotlib.pyplot as plt
                         chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}.png")
-                        plt.figure(figsize=(8, 4))
-                        x_vals = [t*100 for t in thresholds]
-                        y_vals = [w*100 for w in wrs]
+                        
+                        plot_thresholds = [0.50 + (max_thresh - 0.50) * i / 9 for i in range(10)] if max_thresh > 0.50 else [0.50]
+                        plot_wrs, plot_totals = compute_winrates(all_probs, all_labels, plot_thresholds)
+                        
+                        plt.figure(figsize=(10, 5))
+                        x_vals = [t*100 for t in plot_thresholds]
+                        y_vals = [w*100 for w in plot_wrs]
                         plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
-                        for xv, yv, tot in zip(x_vals, y_vals, totals_t):
+                        for xv, yv, tot in zip(x_vals, y_vals, plot_totals):
                             plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
                         plt.title(f"Peak Performance | MaxTh={max_thresh:.2f}")
                         plt.xlabel("Threshold (%)")

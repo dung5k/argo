@@ -476,11 +476,23 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 try:
                     import matplotlib.pyplot as plt
                     chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}_{s_name}.png")
-                    plt.figure(figsize=(8, 4))
-                    x_vals = [t*100 for t in thresholds]
-                    y_vals = [w*100 for w in wrs]
+                    
+                    plot_thresholds = [round(0.50 + (max_thresh - 0.50) * i / 9, 4) for i in range(10)] if max_thresh > 0.50 else [0.50]
+                    plot_wrs, plot_totals = [], []
+                    for pt in plot_thresholds:
+                        plo = 1.0 - pt
+                        pb = probs_t > pt
+                        ps = probs_t < plo
+                        n = pb.sum().item() + ps.sum().item()
+                        correct = (labels_t[pb] == 1).sum().item() + (labels_t[ps] == 0).sum().item()
+                        plot_wrs.append(correct / n if n > 0 else 0)
+                        plot_totals.append(int(n))
+                        
+                    plt.figure(figsize=(10, 5))
+                    x_vals = [t*100 for t in plot_thresholds]
+                    y_vals = [w*100 for w in plot_wrs]
                     plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
-                    for xv, yv, tot in zip(x_vals, y_vals, totals_t):
+                    for xv, yv, tot in zip(x_vals, y_vals, plot_totals):
                         plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
                     plt.title(f"Peak [{s_name.upper()}] | MaxTh={max_thresh:.2f}")
                     plt.xlabel("Threshold (%)")
