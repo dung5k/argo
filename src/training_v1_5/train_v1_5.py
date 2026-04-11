@@ -472,7 +472,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     global_best_score[s_id] = best_cfg["score"]
 
                 thr_str = " | ".join(f">{t*100:.0f}%: {wrs[i]*100:.1f} ({totals_t[i]}L)" for i, t in enumerate(thresholds[-2:]))
-                print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {','.join(improved_strategies)} | Th>={max_thresh:.2f} | {thr_str} | VLoss: {avg_val_loss[s_id]:.4f}")
+                peak_msg = f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {','.join(improved_strategies)} | Th>={max_thresh:.2f} | {thr_str} | VLoss: {avg_val_loss[s_id]:.4f}"
                 try:
                     import matplotlib.pyplot as plt
                     chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}_{s_name}.png")
@@ -502,9 +502,12 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                     plt.tight_layout()
                     plt.savefig(chart_path)
                     plt.close()
-                    print(f"[CHART] {chart_path}")
+                    
+                    # In đồng thời
+                    print(f"{peak_msg}\n[CHART] {chart_path}")
                 except Exception as e:
-                    print(f"  [ERROR] Lỗi vẽ chart: {e}")
+                    print(f"{peak_msg}")
+                    print(f"[CHART_ERROR] {e}")
                 try:
                     import subprocess, time, sys
                     if time.time() - _last_hf_push_time > 60:

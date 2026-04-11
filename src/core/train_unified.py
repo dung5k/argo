@@ -489,8 +489,8 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                     )
                     thr_details = " | ".join(f">{t*100:.0f}%: {w*100:.1f}%({totals_t[i]}L)"
                                              for i, (t, w) in enumerate(zip(thresholds, wrs)))
-                    print(f"  🏆 ĐỈNH MỚI CHO TIÊU CHÍ: [{', '.join(improved_strategies)}] "
-                          f"MaxTh={max_thresh:.2f} | {thr_details}")
+                    peak_msg = (f"  🏆 ĐỈNH MỚI CHO TIÊU CHÍ: [{', '.join(improved_strategies)}] "
+                                f"MaxTh={max_thresh:.2f} | {thr_details}")
                     try:
                         import matplotlib.pyplot as plt
                         chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}.png")
@@ -512,8 +512,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                         plt.tight_layout()
                         plt.savefig(chart_path)
                         plt.close()
-                        print(f"[CHART] {chart_path}")
+                        
+                        # In đồng thời để tránh lỗi Agent đọc log bị "cắt khúc" và gửi sai/thiếu Chart
+                        print(f"{peak_msg}\n[CHART] {chart_path}")
                     except Exception as e:
+                        print(f"{peak_msg}")
                         print(f"  [ERROR] Lỗi vẽ chart: {e}")
                 else:
                     epochs_no_improve += 1
