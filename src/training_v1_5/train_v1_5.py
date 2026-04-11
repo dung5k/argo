@@ -56,29 +56,36 @@ from src.training_v1_5.curriculum_masking import apply_curriculum_mask, resolve_
 # Dataset V1.5: Lấy Labels V1 x Tách Phiên V2
 # ============================================================
 class TimeSeriesDatasetV1_5(Dataset):
-    def __init__(self, features: pd.DataFrame, targets: pd.DataFrame, window_size: int = 60):
+    def __init__(self, features: pd.DataFrame, targets: pd.DataFrame, window_size: int = 60, session_cfg: dict = None):
         self.window_size = window_size
-        
-        # Mapping Sessions
-        hours = features.index.tz_convert('UTC').hour.values
-        session_arr = np.zeros_like(hours, dtype=np.int64) # 0: Asia (0-7h)
-        session_arr[(hours >= 8) & (hours < 13)] = 1       # 1: London (8-12h)
-        session_arr[(hours >= 13)] = 2                     # 2: NY (13-23h)
-        
-        # Data tensors
         self.features_tensor = torch.tensor(features.values, dtype=torch.float32).to(device)
         self.labels_tensor = torch.tensor(targets['target'].values, dtype=torch.long).to(device)
-        self.session_tensor = torch.tensor(session_arr, dtype=torch.long).to(device)
+        
+        valid_start = window_size - 1
+        total_len = len(self.features_tensor)
+        
+        if session_cfg and "START" in session_cfg and "END" in session_cfg:
+            start_h = int(session_cfg["START"].split(':')[0])
+            end_h = int(session_cfg["END"].split(':')[0])
+            hours = features.index.tz_convert('UTC').hour.values
+            if start_h <= end_h:
+                mask = (hours >= start_h) & (hours < end_h)
+            else:
+                mask = (hours >= start_h) | (hours < end_h)
+            valid_indices = np.where(mask)[0]
+            self.indices = valid_indices[valid_indices >= valid_start]
+        else:
+            self.indices = np.arange(valid_start, total_len)
         
     def __len__(self):
-        return len(self.features_tensor) - self.window_size
+        return len(self.indices)
         
     def __getitem__(self, idx):
-        x = self.features_tensor[idx : idx + self.window_size]
-        target_idx = idx + self.window_size - 1
+        target_idx = self.indices[idx]
+        start_idx = target_idx - self.window_size + 1
+        x = self.features_tensor[start_idx : target_idx + 1]
         y = self.labels_tensor[target_idx]
-        s = self.session_tensor[target_idx]
-        return x, y, s
+        return x, y, 0
 
 # ============================================================
 # Phoenix Restarter (Modified for V1.5)
@@ -237,8 +244,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
     print(f"-> Train: {len(tr_feat):,} nến | Val: {len(val_feat):,} nến")
 
-    train_dataset = TimeSeriesDatasetV1_5(tr_feat, tr_targ, window_size)
-    val_dataset   = TimeSeriesDatasetV1_5(val_feat, val_targ, window_size)
+    session_cfg = cfg.get("SESSION_UTC", None)
+    train_dataset = TimeSeriesDatasetV1_5(tr_feat, tr_targ, window_size, session_cfg)
+    val_dataset   = TimeSeriesDatasetV1_5(val_feat, val_targ, window_size, session_cfg)
     train_loader  = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader    = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False)
 
@@ -275,16 +283,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     class_weights = torch.tensor([weight_sell, weight_buy], dtype=torch.float32).to(device)
     print(f"⚖️ [Class Balance] BUY={n_buy:,} (W:{weight_buy:.2f}) | SELL={n_sell:,} (W:{weight_sell:.2f})")
 
-    SESSION_MAP = {0: "as", 1: "ld", 2: "ny"}
-    SESSIONS = {}
-    if session == "all":
-        SESSIONS = {0: "as", 1: "ld", 2: "ny"}
-    else:
-        for k, v in SESSION_MAP.items():
-            if v == session:
-                SESSIONS[k] = v
-    if not SESSIONS: # fallback to NY
-        SESSIONS = {2: "ny"}
+    SESSIONS = {0: cfg.get("SESSION", "unified")}
     criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
     criterions = {s_id: FocalLoss(**criterion_kwargs, gamma=2.0).to(device) for s_id in SESSIONS}    # Khởi tạo Hệ thống Đa não bộ
     argo_data_dir = cfg.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
