@@ -126,7 +126,12 @@ echo [INFO] Dang cai dat moi truong (chi mat vai phut lan dau)...
 echo [INFO] Dang cai dat cac thu vien can thiet...
 "venv\Scripts\python.exe" -m pip install -q -r requirements.txt 2>nul
 if !errorlevel! neq 0 (
-    "venv\Scripts\python.exe" -m pip install -q torch pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
+    "venv\Scripts\python.exe" -c "import torch" 2>nul
+    if !errorlevel! neq 0 (
+        echo [INFO] Chua co PyTorch. Tien hanh tai PyTorch tu dong...
+        "venv\Scripts\python.exe" -m pip install -q torch
+    )
+    "venv\Scripts\python.exe" -m pip install -q pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
 )
 echo [OK] Thu vien san sang.
 echo.
