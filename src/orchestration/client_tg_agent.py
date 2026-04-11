@@ -632,9 +632,12 @@ class TelegramAgent:
     def _send(self, chat_id: int, text: str):
         self.bot.send_message(chat_id, text)
 
-    def _notify_all(self, text: str):
+    def _notify_all(self, text: str, photo_path: str = None):
         for cid in self.allowed_ids:
-            self._send(cid, text)
+            if photo_path and os.path.exists(photo_path):
+                self.bot.send_photo(cid, photo_path, caption=text)
+            else:
+                self._send(cid, text)
 
     def _handle_command(self, chat_id: int, text: str):
         parts = text.strip().split()
@@ -820,6 +823,9 @@ class TelegramAgent:
                 ver_lines = [l for l in lines if "[VERSION_INFO]" in l]
                 current_ver = ver_lines[-1] if ver_lines else ""
 
+                chart_lines = [l for l in lines if "[CHART]" in l]
+                current_chart = chart_lines[-1].split("[CHART]")[-1].strip() if chart_lines else None
+
                 git_err_lines = [l for l in lines if "[GIT LỖI PUSH]" in l or "[GIT LỖI THỰC THI THÊM]" in l]
                 current_git_err = git_err_lines[-1] if git_err_lines else ""
                 
@@ -858,6 +864,8 @@ class TelegramAgent:
                     send_msg = f"🏆 {pfx} TÌM THẤY MẪU MỚI!\n"
                     if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
                     send_msg += f"<pre>{html.escape(current_peak.strip())}</pre>\n"
+                    self._notify_all(send_msg, photo_path=current_chart)
+                    send_msg = ""  # ? g?i xong nn clear
                 elif epoch_num > 0 and epoch_num % self.progress_n == 0 and epoch_num != last_sent_epoch:
                     last_sent_epoch = epoch_num
                     send_msg = f"📈 {pfx} — Tiến độ (Epoch {epoch_num})\n"

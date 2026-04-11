@@ -491,6 +491,26 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                                              for i, (t, w) in enumerate(zip(thresholds, wrs)))
                     print(f"  🏆 ĐỈNH MỚI CHO TIÊU CHÍ: [{', '.join(improved_strategies)}] "
                           f"MaxTh={max_thresh:.2f} | {thr_details}")
+                    try:
+                        import matplotlib.pyplot as plt
+                        chart_path = os.path.join(run_dir, f"peak_chart_ep{total_epoch}.png")
+                        plt.figure(figsize=(8, 4))
+                        x_vals = [t*100 for t in thresholds]
+                        y_vals = [w*100 for w in wrs]
+                        plt.plot(x_vals, y_vals, marker='o', linestyle='-', color='indigo', linewidth=2)
+                        for xv, yv, tot in zip(x_vals, y_vals, totals_t):
+                            plt.text(xv, yv + 0.5, f"{yv:.1f}%\n({tot}L)", fontsize=8, ha='center', va='bottom')
+                        plt.title(f"Peak Performance | MaxTh={max_thresh:.2f}")
+                        plt.xlabel("Threshold (%)")
+                        plt.ylabel("Win Rate (%)")
+                        plt.grid(True, linestyle='--', alpha=0.6)
+                        plt.ylim(min(45, min(y_vals)-5), max(85, max(y_vals)+5))
+                        plt.tight_layout()
+                        plt.savefig(chart_path)
+                        plt.close()
+                        print(f"[CHART] {chart_path}")
+                    except Exception as e:
+                        print(f"  [ERROR] Lỗi vẽ chart: {e}")
                 else:
                     epochs_no_improve += 1
             else:
