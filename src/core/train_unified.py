@@ -300,6 +300,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         latest = ckpt_candidates[int(len(ckpt_candidates) > 1)]
         print(f"\n♻️  Checkpoint: {latest}")
         resumed = ckpt.load_transfer(model, latest)
+        model = model.to(device)
         if resumed:
             base_crit = FocalLoss(weight=class_weights, gamma=2.0, label_smoothing=0.15).to(device)
             bvloss, _, bprobs, blabels = _evaluate_epoch(model, val_loader, base_crit)

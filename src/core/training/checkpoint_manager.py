@@ -100,6 +100,7 @@ class CheckpointManager:
                     print(f"    ⚠️ Bỏ qua layer: {k} (kích thước đổi)")
             current.update(matched)
             model.load_state_dict(current)
+            model = model.to(self.device)
             print(f"    ✅ TRANSFER LEARNING: Kế thừa từ {checkpoint_path.parent.name}")
             return True
         except Exception as e:
