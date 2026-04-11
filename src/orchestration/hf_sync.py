@@ -169,32 +169,46 @@ def push_runs(logger=None):
         print(f"[HF] Không tìm thấy thư mục {runs_dir}")
         return False
 
-    pth_files = [os.path.join(r,f) for r,d,files in os.walk(runs_dir) for f in files if f.endswith('.pth')]
-    # log(f"[HF] Đang đẩy {len(pth_files)} trọng số (.pth) lên {repo_id}/runs/ ...")
+    # Chỉ upload từng file riêng lẻ, không dùng upload_folder để tránh cảnh báo "large folder"
+    pth_files = [
+        Path(os.path.join(r, f))
+        for r, d, files in os.walk(runs_dir)
+        for f in files
+        if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl') or f.endswith('.png')
+    ]
+
+    if not pth_files:
+        return True
 
     import time
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            api = HfApi()
-            api.create_repo(repo_id=repo_id, token=token, repo_type="dataset", private=True, exist_ok=True)
-            api.upload_folder(
-                folder_path=str(runs_dir),
-                path_in_repo="runs",
-                repo_id=repo_id,
-                repo_type="dataset",
-                token=token,
-                commit_message=f"Auto-sync training weights to HuggingFace (Attempt {attempt+1})"
-            )
-            # log(f"[HF] Đẩy {len(pth_files)} trọng số lên Đám mây thành công! 🚀")
-            return True
-        except Exception as e:
-            if attempt < max_retries - 1:
-                log(f"[HF] Cảnh báo: Lỗi đẩy runs lên HF (thử lại {attempt+2}/{max_retries}). Chi tiết mã lỗi: {e}")
-                time.sleep(10)
-            else:
-                log(f"[HF] Lỗi khi đẩy runs lên HF sau {max_retries} lần thử: {e}")
-                return False
+    api = HfApi()
+    try:
+        api.create_repo(repo_id=repo_id, token=token, repo_type="dataset", private=True, exist_ok=True)
+    except Exception:
+        pass
+
+    errors = 0
+    for file_path in pth_files:
+        rel_path = file_path.relative_to(Path(argo_logs_dir))
+        path_in_repo = str(rel_path).replace("\\", "/")
+        for attempt in range(3):
+            try:
+                api.upload_file(
+                    path_or_fileobj=str(file_path),
+                    path_in_repo=path_in_repo,
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    token=token,
+                    commit_message=f"Auto-sync: {file_path.name}",
+                )
+                break
+            except Exception as e:
+                if attempt < 2:
+                    time.sleep(5)
+                else:
+                    log(f"[HF] Lỗi upload {file_path.name}: {e}")
+                    errors += 1
+    return errors == 0
 
 
 def pull_runs(logger=None):
