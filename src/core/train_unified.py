@@ -617,7 +617,6 @@ if __name__ == "__main__":
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX} | SESSION: {session_arg.upper()}")
-    print(f"[VERSION_INFO] Tích hợp tính năng: {RUN_VERSION_DESC}")
 
     _proj_data = os.path.join(BASE_PROJ_DIR, "data")
     _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")
@@ -687,6 +686,7 @@ if __name__ == "__main__":
 
     sys.stdout = TeeLogger(os.path.join(run_dir, "train.log"))
     print(f"📁 Run dir: {run_name}")
+    print(f"[VERSION_INFO] Tích hợp tính năng: {RUN_VERSION_DESC}")
 
     # Copy scaler
     import shutil
