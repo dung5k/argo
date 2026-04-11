@@ -307,17 +307,24 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         models[s_id], base_lr=BASE_LR, max_phoenix=MAX_PHOENIX, max_stagnate=MAX_STAGNATE
     ) for s_id in SESSIONS}
 
-    CONFIG_NAMES = ["L3_1.4_L4_1.0", "L3_1.1_L4_1.0", "BEST_VLOSS"]
+    CONFIG_NAMES = ["BEST_VLOSS", "BEST_WR_SAFE", "BEST_WR_SHARP"]
     top_configs = {s_id: {k: None for k in CONFIG_NAMES} for s_id in SESSIONS}
 
     global_best_score = {s_id: 0.0 for s_id in SESSIONS}
     global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
 
-    def calc_strats(wrs_arr, avg_v_loss):
+    def calc_strats(wrs_arr, totals_arr, avg_v_loss):
+        """3 tieu chi phuc vu 3 muc dich thuc chien:
+        - BEST_VLOSS   : on dinh nhat — it overfit, dung lam baseline
+        - BEST_WR_SAFE : WR cao nhat tai nguong >=100 tin hieu — nhieu lenh, dung ban ngay
+        - BEST_WR_SHARP: WR cao nhat tai nguong >=30 tin hieu — chon loc, chinh xac cao
+        """
+        best_wr_safe  = max((wr for wr, tot in zip(wrs_arr, totals_arr) if tot >= 100), default=0.0)
+        best_wr_sharp = max((wr for wr, tot in zip(wrs_arr, totals_arr) if tot >= 30),  default=0.0)
         return {
-            "L3_1.4_L4_1.0": (1.4 * wrs_arr[2] + 1.0 * wrs_arr[3]) / 2.4,
-            "L3_1.1_L4_1.0": (1.1 * wrs_arr[2] + 1.0 * wrs_arr[3]) / 2.1,
-            "BEST_VLOSS": -avg_v_loss
+            "BEST_VLOSS":    -avg_v_loss,
+            "BEST_WR_SAFE":  best_wr_safe,
+            "BEST_WR_SHARP": best_wr_sharp,
         }
 
     # ── In diagnostic batch đầu tiên sau khi setup xong ─────
@@ -447,7 +454,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
             # L4 Statistically Valid
             is_valid = totals_t[3] >= min_signals_dict[s_id]
-            current_scores = calc_strats(wrs, avg_val_loss[s_id])
+            current_scores = calc_strats(wrs, totals_t, avg_val_loss[s_id])
             
             improved_strategies = []
             if is_valid:
@@ -541,8 +548,21 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 should_restart = phoenixes[s_id].notify_no_improve()
                 if should_restart:
                     valid = [c for c in top_configs[s_id].values() if c is not None]
-                    chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
-                    print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mạng {s_id} kẹt {phoenixes[s_id].max_stagnate} epoch. Tái sinh!")
+                    if len(valid) >= 2:
+                        # Weight Crossover: lai ghep 2 checkpoint tot nhat theo ty le ngau nhien
+                        alpha = random.uniform(0.3, 0.7)
+                        sd_a = valid[0]["state_dict"]
+                        sd_b = valid[-1]["state_dict"]
+                        chosen = {
+                            k: alpha * sd_a[k].float() + (1 - alpha) * sd_b[k].float()
+                            for k in sd_a
+                        }
+                        print(f"\n🧬 [CROSSOVER] Lai ghep 2 checkpoint (alpha={alpha:.2f}) -> khoi diem Phoenix #{phoenixes[s_id].phoenix_count}")
+                    elif valid:
+                        chosen = valid[0]["state_dict"]
+                    else:
+                        chosen = models[s_id].state_dict()
+                    print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mang {s_id} ket {phoenixes[s_id].max_stagnate} epoch. Tai sinh!")
                     action_str = phoenixes[s_id].apply_perturbation(
                         chosen, 
                         s_name=s_name, 
