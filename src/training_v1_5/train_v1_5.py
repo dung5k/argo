@@ -624,9 +624,9 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         action_type = act.get("action_type", "continue")
                         if action_type == "force_phoenix":
                             print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] 💀 AI 강제 PHOENIX!")
-                            if top_configs[s_id][CONFIG_ID] is not None:
+                            if top_configs[s_id]["BEST_VLOSS"] is not None:
                                 action_info = phoenixes[s_id].apply_perturbation(
-                                    top_configs[s_id][CONFIG_ID]["state_dict"], 
+                                    top_configs[s_id]["BEST_VLOSS"]["state_dict"], 
                                     s_name=SESSIONS[s_id], 
                                     history_buffer=history_buffer
                                 )
