@@ -24,22 +24,17 @@
             "USDCADm": "EXNESS",
             "USDJPYm": "EXNESS",
             "XAGUSDm": "EXNESS",
-            "VIXYm": "DEFAULT",
-            "NASDAQ_100": "EXNESS",
+            "VIXY": "DEFAULT",
+            "USTECm": "EXNESS",
             "US_10Y_YIELD": "MT5_2"
         },
         "TIMEFRAME": "M1",
         "CONTINUOUS_CONTRACTS": {
-            "NASDAQ_100": {
-                "PREFIX": "USTECm",
-                "BROKER": "EXNESS",
-                "IS_CFD": true
-            },
             "US_10Y_YIELD": {
                 "PREFIX": "Z10Y",
                 "BROKER": "MT5_2",
                 "IS_CFD": false,
-                "CONTRACT_MONTHS": ["J", "K", "M", "U", "Z", "H"],
+                "CONTRACT_MONTHS": ["H", "J", "K", "M", "U", "Q", "V", "X", "Z", "F", "G", "N"],
                 "INVERT_LOGIC": false
             }
         }
@@ -60,31 +55,7 @@
             "XAUUSD_ret_30m",
             "XAUUSD_ATR_ratio",
             "XAUUSD_open_log_ret",
-            "XAUUSD_high_log_ret",
-            "XAUUSD_low_log_ret",
-            "XAUUSD_close_log_ret",
-            "is_imputed_flag",
-            "NASDAQ_100_high_log_ret",
-            "NASDAQ_100_low_log_ret",
-            "NASDAQ_100_close_log_ret",
-            "US_10Y_YIELD_high_log_ret",
-            "US_10Y_YIELD_low_log_ret",
-            "US_10Y_YIELD_close_log_ret",
-            "VIXY_high_log_ret",
-            "VIXY_low_log_ret",
-            "VIXY_close_log_ret",
-            "EURUSD_high_log_ret",
-            "EURUSD_low_log_ret",
-            "EURUSD_close_log_ret",
-            "USDCAD_high_log_ret",
-            "USDCAD_low_log_ret",
-            "USDCAD_close_log_ret",
-            "USDJPY_high_log_ret",
-            "USDJPY_low_log_ret",
-            "USDJPY_close_log_ret",
-            "XAGUSD_high_log_ret",
-            "XAGUSD_low_log_ret",
-            "XAGUSD_close_log_ret"
+            "is_imputed_flag"
         ]
     },
     "TRAINING": {
