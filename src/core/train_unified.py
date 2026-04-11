@@ -234,9 +234,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     print(f"⚖️ SELL={class_weights[0]:.3f} BUY={class_weights[1]:.3f} "
           f"({n_sell:,} SELL | {n_buy:,} BUY)")
 
-    train_loader, val_loader, train_dataset, _ = make_dataloaders(
-        tr_feat, tr_tgt, val_feat, val_tgt, cfg.window_size, batch_size,
-    )
 
     # ── 3. Curriculum Masking setup ───────────────────────────────
     cm_enabled        = cfg.cm_enabled

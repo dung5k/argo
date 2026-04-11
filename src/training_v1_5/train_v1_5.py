@@ -181,7 +181,7 @@ class PhoenixRestartV1_5:
 # ============================================================
 # Main Training Function V1.5
 # ============================================================
-def train_unified_v1_5(features, targets, num_features, run_dir, config=None, target_prefix="XAU_USD"):
+def train_unified_v1_5(features, targets, num_features, run_dir, config=None, target_prefix="XAU_USD", session="all"):
     print("=======================================================")
     print(f"🧠 TRANSFORMER V1.5.1 [{target_prefix}]: MOE + CURRICULUM ")
     print("=======================================================")
@@ -275,7 +275,16 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     class_weights = torch.tensor([weight_sell, weight_buy], dtype=torch.float32).to(device)
     print(f"⚖️ [Class Balance] BUY={n_buy:,} (W:{weight_buy:.2f}) | SELL={n_sell:,} (W:{weight_sell:.2f})")
 
-    SESSIONS = {2: "ny"}
+    SESSION_MAP = {0: "as", 1: "ld", 2: "ny"}
+    SESSIONS = {}
+    if session == "all":
+        SESSIONS = {0: "as", 1: "ld", 2: "ny"}
+    else:
+        for k, v in SESSION_MAP.items():
+            if v == session:
+                SESSIONS[k] = v
+    if not SESSIONS: # fallback to NY
+        SESSIONS = {2: "ny"}
     criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
     criterions = {s_id: FocalLoss(**criterion_kwargs, gamma=2.0).to(device) for s_id in SESSIONS}    # Khởi tạo Hệ thống Đa não bộ
     argo_data_dir = cfg.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
@@ -852,4 +861,4 @@ if __name__ == "__main__":
     if os.path.exists(scaler_src):
         shutil.copy(scaler_src, os.path.join(run_dir, "scaler.pkl"))
 
-    train_unified_v1_5(features, targets, features.shape[1], run_dir, config=cfg, target_prefix=TARGET_PREFIX)
+    train_unified_v1_5(features, targets, features.shape[1], run_dir, config=cfg, target_prefix=TARGET_PREFIX, session=args.session)
