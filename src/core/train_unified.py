@@ -472,8 +472,10 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
                         best_max_thresh, best_thresholds, best_wrs, best_totals,
                         top_configs, target_prefix,
                     )
-                    print(f"  🏆 ĐỈNH MỚI [{', '.join(improved_strategies)}] "
-                          f"MaxTh={max_thresh:.2f}")
+                    thr_details = " | ".join(f">{t*100:.0f}%: {w*100:.1f}%({totals_t[i]}L)"
+                                             for i, (t, w) in enumerate(zip(thresholds, wrs)))
+                    print(f"  🏆 ĐỈNH MỚI CHO TIÊU CHÍ: [{', '.join(improved_strategies)}] "
+                          f"MaxTh={max_thresh:.2f} | {thr_details}")
                 else:
                     epochs_no_improve += 1
             else:
