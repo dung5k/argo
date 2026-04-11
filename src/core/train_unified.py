@@ -54,9 +54,11 @@ def _train_one_epoch(model, loader, criterion, optimizer,
                      cm_enabled, cm_active_window, cm_masked_indices, grad_clip_norm):
     """Train 1 epoch. Returns avg_train_loss (float)."""
     model.train()
+    dev = next(model.parameters()).device
     total_loss = 0.0
     for batch_x, batch_y in loader:
-        batch_y = batch_y.view(-1)
+        batch_x = batch_x.to(dev)
+        batch_y = batch_y.view(-1).to(dev)
         if cm_enabled:
             batch_x = apply_curriculum_mask(batch_x, cm_active_window, cm_masked_indices)
         optimizer.zero_grad()
@@ -72,11 +74,13 @@ def _train_one_epoch(model, loader, criterion, optimizer,
 def _evaluate_epoch(model, loader, criterion):
     """Validate 1 epoch. Returns (avg_val_loss, val_acc, all_probs, all_labels)."""
     model.eval()
+    dev = next(model.parameters()).device
     val_loss, correct, total = 0.0, 0, 0
     all_probs, all_labels = [], []
     with torch.no_grad():
         for batch_x, batch_y in loader:
-            batch_y = batch_y.view(-1)
+            batch_x = batch_x.to(dev)
+            batch_y = batch_y.view(-1).to(dev)
             out  = model(batch_x)
             loss = criterion(out, batch_y)
             val_loss += loss.item()

@@ -99,10 +99,12 @@ class CheckpointManager:
                 else:
                     print(f"    ⚠️ Bỏ qua layer: {k} (kích thước đổi)")
             model.load_state_dict(matched, strict=False)
-            # Ế p từng tensor về đúng device — cách duy nhất đáng tin cậy trên PyTorch đời cũ
-            for p in model.parameters():
+            # Ép in-place từng tensor về device — đảm bảo tuyệt đối trên PyTorch đời cũ
+            for name, p in model.named_parameters():
                 p.data = p.data.to(self.device)
-            for b in model.buffers():
+                if p.grad is not None:
+                    p.grad.data = p.grad.data.to(self.device)
+            for name, b in model.named_buffers():
                 b.data = b.data.to(self.device)
             print(f"    ✅ TRANSFER LEARNING: Kế thừa từ {checkpoint_path.parent.name}")
             return True
