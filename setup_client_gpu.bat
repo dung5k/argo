@@ -22,7 +22,7 @@ powershell -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3
 
 echo [2] Dang cai dat Python 3.9.13 tang ngam (Silent Install)...
 echo Vui long doi khoang 1-2 phut. Khong tat cua so nay!
-python-3.9.13-amd64.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
+start /wait python-3.9.13-amd64.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
 
 set PY39_PATH=%LocalAppData%\Programs\Python\Python39\python.exe
 
