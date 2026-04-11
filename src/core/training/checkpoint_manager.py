@@ -99,7 +99,11 @@ class CheckpointManager:
                 else:
                     print(f"    ⚠️ Bỏ qua layer: {k} (kích thước đổi)")
             model.load_state_dict(matched, strict=False)
-            model.cuda()
+            # Ế p từng tensor về đúng device — cách duy nhất đáng tin cậy trên PyTorch đời cũ
+            for p in model.parameters():
+                p.data = p.data.to(self.device)
+            for b in model.buffers():
+                b.data = b.data.to(self.device)
             print(f"    ✅ TRANSFER LEARNING: Kế thừa từ {checkpoint_path.parent.name}")
             return True
         except Exception as e:
