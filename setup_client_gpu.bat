@@ -39,7 +39,7 @@ if exist "venv" (
     rmdir /s /q venv
 )
 
-set ARGO_VENV=%LOCALAPPDATA%\Argo_Venv
+set ARGO_VENV=C:\argo\venv
 echo [4] Tao moi truong ao dung chung tai: %ARGO_VENV%...
 if exist "%ARGO_VENV%" rmdir /s /q "%ARGO_VENV%"
 "%PY39_PATH%" -m venv "%ARGO_VENV%"

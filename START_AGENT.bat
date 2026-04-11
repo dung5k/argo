@@ -110,8 +110,8 @@ echo.
 :: TAO MOI TRUONG PYTHON (VENV)
 :: =============================================================
 set TARGET_VENV=venv
-if exist "%LOCALAPPDATA%\Argo_Venv\Scripts\python.exe" (
-    set TARGET_VENV=%LOCALAPPDATA%\Argo_Venv
+if exist "C:\argo\venv\Scripts\python.exe" (
+    set TARGET_VENV=C:\argo\venv
     echo [INFO] Phat hien Moi truong VENV dung chung: !TARGET_VENV!
 )
 
