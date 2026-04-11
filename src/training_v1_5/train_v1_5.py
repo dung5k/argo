@@ -145,7 +145,7 @@ class PhoenixRestartV1_5:
                                 with open(tg_cfg_path, "r", encoding='utf-8') as f:
                                     tg_cfg = json.load(f)
                                 bot_token = tg_cfg.get("bot_token")
-                                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                                chat_ids = tg_cfg.get("allowed_chat_ids", [])
                                 if bot_token and chat_ids:
                                     tele_content = f"🤖 <b>[PHOENIX AI - {s_name.upper()}]</b>\n\n{tel_msg}"
                                     for chat_id in chat_ids:
@@ -329,7 +329,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 with open(tg_cfg_path, "r", encoding='utf-8') as f:
                     tg_cfg = json.load(f)
                 bot_token = tg_cfg.get("bot_token")
-                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                chat_ids = tg_cfg.get("allowed_chat_ids", [])
                 if bot_token and chat_ids:
                     tele_content = f"🚀 <b>[TRAINING V1.5 - {target_prefix} {s_name.upper()}]</b>\n\n{tg_msg}"
                     for chat_id in chat_ids:
@@ -637,7 +637,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                                 with open(tg_cfg_path, "r", encoding='utf-8') as f:
                                     tg_cfg = json.load(f)
                                 bot_token = tg_cfg.get("bot_token")
-                                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                                chat_ids = tg_cfg.get("allowed_chat_ids", [])
                                 if bot_token and chat_ids:
                                     # Format message beautifully
                                     tele_content = f"🤖 <b>[AI SUPERVISOR - {target_prefix}]</b>\n\n{tel_msg}"
