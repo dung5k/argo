@@ -23,6 +23,22 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+RUN_VERSION_DESC = "Focal Loss & Thông báo Telegram chi tiết (v1.5)"
+
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None, gamma=2.0, label_smoothing=0.0):
+        super().__init__()
+        self.weight = weight
+        self.gamma = gamma
+        self.label_smoothing = label_smoothing
+
+    def forward(self, inputs, targets):
+        ce_loss = F.cross_entropy(inputs, targets, weight=self.weight, reduction='none', label_smoothing=self.label_smoothing)
+        pt = torch.exp(-ce_loss)
+        focal_loss = ((1 - pt) ** self.gamma) * ce_loss
+        return focal_loss.mean()
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
@@ -261,9 +277,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
 
     SESSIONS = {2: "ny"}
     criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
-    criterions = {s_id: nn.CrossEntropyLoss(**criterion_kwargs).to(device) for s_id in SESSIONS}
-
-    # Khởi tạo Hệ thống Đa não bộ
+    criterions = {s_id: FocalLoss(**criterion_kwargs, gamma=2.0).to(device) for s_id in SESSIONS}    # Khởi tạo Hệ thống Đa não bộ
     argo_data_dir = cfg.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
     meta_path = os.path.join(argo_data_dir, f"feature_meta_{target_prefix}.json")
     num_xau_features = None
@@ -592,7 +606,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         if "label_smoothing" in act:
                             val = float(act["label_smoothing"])
                             if 0.0 <= val <= 0.5:
-                                criterions[s_id] = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=val).to(device)
+                                criterions[s_id] = FocalLoss(weight=class_weights, label_smoothing=val, gamma=2.0).to(device)
                                 print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] Đổi LABEL_SMOOTHING = {val}")
 
                         if "patience" in act:
@@ -759,6 +773,9 @@ if __name__ == "__main__":
             self.log.flush()
 
     sys.stdout = _TeeLogger(os.path.join(run_dir, "train_v1_5.log"))
+    
+    print(f"📁 Run dir: {run_name}")
+    print(f"[VERSION_INFO] Tích hợp tính năng: {RUN_VERSION_DESC}")
     
     # Copy scaler
     import shutil
