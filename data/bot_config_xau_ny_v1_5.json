@@ -55,6 +55,9 @@
             "XAUUSD_ret_30m",
             "XAUUSD_ATR_ratio",
             "XAUUSD_open_log_ret",
+            "XAUUSD_high_log_ret",
+            "XAUUSD_low_log_ret",
+            "XAUUSD_close_log_ret",
             "is_imputed_flag"
         ]
     },
