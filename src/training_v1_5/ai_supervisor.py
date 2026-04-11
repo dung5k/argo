@@ -45,6 +45,7 @@ Danh sách tham số bạn được phép điều chỉnh (tất cả đều opt
 - `min_signals`      : int, 10..100.      Ngưỡng tín hiệu tối thiểu để ghi nhận đỉnh WR. Giảm nếu model quá thận trọng.
 - `batch_size`       : int, 128/256/512/1024. Thay đổi batch size.
 - `grad_clip`        : float, 0.5..5.0.   Max-norm gradient clipping. Giảm nếu gradients nổ.
+- `active_criterion` : "BEST_VLOSS" | "BEST_WR" | "BALANCED". Lựa chọn tiêu chí gốc làm trọng tâm tối ưu (AI có quyền đổi tùy theo môi trường thị trường).
 - `action_type`      : "continue" | "stop" | "force_phoenix".  force_phoenix = kích hoạt tái sinh ngay lập tức. KIỂM TRA MỨC epochs_no_improve để dùng tính năng này.
 
 Format JSON trả về (STRICT - không markdown, không comment):
@@ -59,6 +60,7 @@ Format JSON trả về (STRICT - không markdown, không comment):
     "2": {
        "session_evaluation": "Mô tả TRỰC TIẾP LÝ DO tại sao lại lựa chọn quyết định đổi thông số hoặc force_phoenix dưới đây.",
        "action_type": "continue",
+       "active_criterion": "BALANCED",
        "new_lr": 0.0002,
        "base_lr": 0.0003,
        "weight_decay": 0.001,

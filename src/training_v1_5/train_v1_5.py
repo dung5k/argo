@@ -309,7 +309,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         s_name = SESSIONS[s_id]
         
         # Tìm file weight ở thư mục run CŨ MỚI NHẤT
-        candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_VLOSS_WR.pth"))
+        candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_BALANCED.pth"))
         if not candidate_paths:
             candidate_paths = glob.glob(os.path.join(os.path.dirname(run_dir), "*", f"{target_name}_{s_name}_weights_BEST_VLOSS.pth"))
         candidate_paths.sort(reverse=True)
@@ -355,20 +355,19 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         models[s_id], base_lr=BASE_LR, max_phoenix=MAX_PHOENIX, max_stagnate=MAX_STAGNATE
     ) for s_id in SESSIONS}
 
-    CONFIG_NAMES = ["VLOSS_WR"]
+    CONFIG_NAMES = ["BEST_VLOSS", "BEST_WR", "BALANCED"]
     top_configs = {s_id: {k: None for k in CONFIG_NAMES} for s_id in SESSIONS}
 
     global_best_score = {s_id: 0.0 for s_id in SESSIONS}
     global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
 
     def calc_strats(wrs_arr, totals_arr, avg_v_loss):
-        """Tiêu chí thực chiến:
-        - VLOSS_WR   : Kết hợp VLoss và WinRate (giảm trade-off stagnation)
-        """
         vloss_score = -avg_v_loss
         wr_score = wrs_arr[-1] if len(wrs_arr) > 0 else 0.0
         return {
-            "VLOSS_WR":    vloss_score + (wr_score * 0.5),
+            "BEST_VLOSS": vloss_score,
+            "BEST_WR": wr_score * 100,
+            "BALANCED": vloss_score + (wr_score * 0.5)
         }
 
     # ── In diagnostic batch đầu tiên sau khi setup xong ─────
@@ -390,6 +389,7 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         "current_cm_window": cm_active_window,
         "current_patience": MAX_STAGNATE,
         "current_label_smoothing": 0.15,
+        "active_criterion": "BEST_VLOSS",
         "previous_ai_actions": []
     } for s_id in SESSIONS}
 
@@ -592,12 +592,17 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
             else:
                 should_restart = phoenixes[s_id].notify_no_improve()
                 if should_restart:
-                    valid = [c for c in top_configs[s_id].values() if c is not None]
-                    if valid:
-                        chosen = valid[0]["state_dict"]
+                    active_crit = history_buffer[s_id].get("active_criterion", "BEST_VLOSS")
+                    valid_active = top_configs[s_id].get(active_crit)
+                    if valid_active is not None:
+                        chosen = valid_active["state_dict"]
                     else:
-                        chosen = models[s_id].state_dict()
-                    print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mang {s_id} ket {phoenixes[s_id].max_stagnate} epoch. Tai sinh!")
+                        valid = [c for c in top_configs[s_id].values() if c is not None]
+                        if valid:
+                            chosen = max(valid, key=lambda x: x["score"])["state_dict"]
+                        else:
+                            chosen = models[s_id].state_dict()
+                    print(f"\n[PHOENIX #{phoenixes[s_id].phoenix_count}] Mang {s_id} ket {phoenixes[s_id].max_stagnate} epoch. Tai sinh từ {active_crit}!")
                     action_str = phoenixes[s_id].apply_perturbation(
                         chosen, 
                         s_name=s_name, 
@@ -687,13 +692,20 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                         if len(history_buffer[s_id]["previous_ai_actions"]) > 3:
                             history_buffer[s_id]["previous_ai_actions"].pop(0)
                         
+                        if "active_criterion" in act and act["active_criterion"] in CONFIG_NAMES:
+                            old_crit = history_buffer[s_id].get("active_criterion")
+                            new_crit = act["active_criterion"]
+                            history_buffer[s_id]["active_criterion"] = new_crit
+                            if old_crit != new_crit:
+                                print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] AI thay đổi Trọng tâm Mục tiêu: {old_crit} -> {new_crit}")
                         
                         action_type = act.get("action_type", "continue")
                         if action_type == "force_phoenix":
-                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] 💀 AI 강제 PHOENIX!")
-                            if top_configs[s_id]["VLOSS_WR"] is not None:
+                            active_crit = history_buffer[s_id].get("active_criterion", "BEST_VLOSS")
+                            print(f"  ↪ [Phiên {SESSIONS[s_id].upper()}] 💀 AI 강제 PHOENIX từ {active_crit}!")
+                            if top_configs[s_id][active_crit] is not None:
                                 action_info = phoenixes[s_id].apply_perturbation(
-                                    top_configs[s_id]["VLOSS_WR"]["state_dict"], 
+                                    top_configs[s_id][active_crit]["state_dict"], 
                                     s_name=SESSIONS[s_id], 
                                     history_buffer=history_buffer
                                 )
