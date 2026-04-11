@@ -12,6 +12,8 @@ except ImportError:
 def _suppress_hf_progress():
     """Tắt progress bar % của huggingface_hub (do tqdm sinh ra trong stdout/stderr)."""
     try:
+        from huggingface_hub.utils import logging as hf_logging
+        hf_logging.set_verbosity_error()
         if _hf_disable_progress:
             _hf_disable_progress()
     except Exception:
