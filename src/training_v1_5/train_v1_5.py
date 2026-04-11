@@ -302,6 +302,46 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
         num_xau_features=num_xau_features,
     ).to(device) for s_id in SESSIONS}
 
+    # === LOAD TRỌNG SỐ & GỬI TELEGRAM ===
+    base_dir_app = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    for s_id in SESSIONS:
+        s_name = SESSIONS[s_id]
+        weight_path = os.path.join(run_dir, f"{target_name}_{s_name}_weights_BEST_VLOSS.pth")
+        
+        tg_msg = ""
+        if os.path.exists(weight_path):
+            try:
+                models[s_id].load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
+                tg_msg = f"♻️ [Khởi động] Kế thừa thành công trọng số cũ: {target_name}_{s_name}_weights_BEST_VLOSS.pth"
+                print(f"[INIT] {tg_msg}")
+            except Exception as e:
+                tg_msg = f"⚠️ [Khởi động] Lỗi load trọng số cũ {weight_path} ({e}) -> TẠO MỚI HOÀN TOÀN"
+                print(f"[INIT] {tg_msg}")
+        else:
+            tg_msg = f"✨ [Khởi động] TẠO MỚI HOÀN TOÀN (Không tìm thấy trọng số phụ trợ cũ để kế thừa)"
+            print(f"[INIT] {tg_msg}")
+
+        # Gửi Telegram
+        try:
+            tg_cfg_path = os.path.join(base_dir_app, "tg_config.json")
+            if os.path.exists(tg_cfg_path):
+                import json, requests
+                with open(tg_cfg_path, "r", encoding='utf-8') as f:
+                    tg_cfg = json.load(f)
+                bot_token = tg_cfg.get("bot_token")
+                chat_ids = tg_cfg.get("allowed_user_ids", [])
+                if bot_token and chat_ids:
+                    tele_content = f"🚀 <b>[TRAINING V1.5 - {target_prefix} {s_name.upper()}]</b>\n\n{tg_msg}"
+                    for chat_id in chat_ids:
+                        requests.post(
+                            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                            data={"chat_id": chat_id, "text": tele_content, "parse_mode": "HTML"},
+                            timeout=5
+                        )
+        except Exception as e:
+            print(f"[TELEGRAM ERROR] {e}")
+    # ====================================
+
     phoenixes = {s_id: PhoenixRestartV1_5(
         models[s_id], base_lr=BASE_LR, max_phoenix=MAX_PHOENIX, max_stagnate=MAX_STAGNATE
     ) for s_id in SESSIONS}
