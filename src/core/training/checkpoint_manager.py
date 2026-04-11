@@ -182,7 +182,7 @@ class CheckpointManager:
             if orch_dir not in sys.path:
                 sys.path.insert(0, orch_dir)
             from hf_sync import push_runs
-            ok = push_runs()
+            ok = push_runs(run_dir=self.run_dir)
             if ok:
                 print("    [HF] Đã đồng bộ trọng số mới lên HuggingFace.")
         except Exception:

@@ -149,9 +149,14 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         else: print(f"[HF] Lỗi khi kéo Data: {e}")
         return False
 
-def push_runs(logger=None):
-    """Đẩy toàn bộ thư mục runs/ (trọng số) lên HuggingFace"""
-    _suppress_hf_progress()
+def push_runs(logger=None, run_dir=None):
+    """Đẩy trọng số lên HuggingFace.
+    
+    Args:
+        run_dir: Nếu chỉ định, chỉ upload file trong thư mục run này (nhanh hơn).
+                 Nếu None, upload toàn bộ runs/ (dùng khi sync toàn bộ).
+    """
+    _suppress_hf_progress()
     cfg = _load_config()
     if not cfg or "hf_token" not in cfg or "hf_repo_id" not in cfg:
         msg = "Chưa cấu hình hf_token/hf_repo_id. Bỏ qua push runs."
@@ -162,22 +167,27 @@ def push_runs(logger=None):
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
     argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
-    runs_dir = Path(argo_logs_dir) / "runs"
     log = logger.info if logger else print
 
-    if not runs_dir.exists():
-        print(f"[HF] Không tìm thấy thư mục {runs_dir}")
+    # Nếu có run_dir cụ thể, chỉ scan thư mục đó — tránh log spam "No files modified"
+    if run_dir:
+        scan_dir = Path(run_dir)
+        base_for_rel = Path(argo_logs_dir)
+    else:
+        scan_dir = Path(argo_logs_dir) / "runs"
+        base_for_rel = Path(argo_logs_dir)
+
+    if not scan_dir.exists():
         return False
 
-    # Chỉ upload từng file riêng lẻ, không dùng upload_folder để tránh cảnh báo "large folder"
-    pth_files = [
+    target_files = [
         Path(os.path.join(r, f))
-        for r, d, files in os.walk(runs_dir)
+        for r, d, files in os.walk(scan_dir)
         for f in files
         if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl') or f.endswith('.png')
     ]
 
-    if not pth_files:
+    if not target_files:
         return True
 
     import time
@@ -188,8 +198,8 @@ def push_runs(logger=None):
         pass
 
     errors = 0
-    for file_path in pth_files:
-        rel_path = file_path.relative_to(Path(argo_logs_dir))
+    for file_path in target_files:
+        rel_path = file_path.relative_to(base_for_rel)
         path_in_repo = str(rel_path).replace("\\", "/")
         for attempt in range(3):
             try:
