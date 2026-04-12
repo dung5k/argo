@@ -772,26 +772,6 @@ if __name__ == "__main__":
     if os.path.exists(scaler_src):
         shutil.copy(scaler_src, os.path.join(run_dir, f"scaler_{CONFIG_ID}.pkl"))
         print(f"📦 Đóng gói scaler_{CONFIG_ID}.pkl vào run dir.")
-        try:
-            src_path = os.path.join(BASE_PROJ_DIR, "src")
-            if src_path not in sys.path:
-                sys.path.insert(0, src_path)
-            from orchestration.hf_sync import _load_config
-            from huggingface_hub import HfApi
-            hf_cfg = _load_config()
-            if hf_cfg and "hf_token" in hf_cfg and "hf_repo_id" in hf_cfg:
-                api = HfApi(token=hf_cfg["hf_token"])
-                repo_path = f"runs/{run_name}/scaler_{CONFIG_ID}.pkl"
-                api.upload_file(
-                    path_or_fileobj=os.path.join(run_dir, f"scaler_{CONFIG_ID}.pkl"),
-                    path_in_repo=repo_path,
-                    repo_id=hf_cfg["hf_repo_id"],
-                    repo_type="dataset",
-                    commit_message=f"bot: Push scaler {CONFIG_ID} ({run_name})",
-                )
-                print(f"✅ Đã tải nhanh scaler.pkl lên HuggingFace: '{repo_path}'")
-        except Exception as e:
-            print(f"❌ Lỗi upload scaler: {e}")
     else:
         print(f"⚠️ Không tìm thấy scaler: {scaler_src}")
 

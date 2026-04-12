@@ -235,7 +235,7 @@ def push_runs(logger=None, run_dir=None):
         Path(os.path.join(r, f))
         for r, d, files in os.walk(scan_dir)
         for f in files
-        if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl') or f.endswith('.png')
+        if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl')
     ]
 
     if not target_files:
@@ -248,27 +248,27 @@ def push_runs(logger=None, run_dir=None):
     except Exception:
         pass
 
-    errors = 0
-    for file_path in target_files:
-        rel_path = file_path.relative_to(base_for_rel)
-        path_in_repo = str(rel_path).replace("\\", "/")
-        for attempt in range(3):
-            try:
-                api.upload_file(
-                    path_or_fileobj=str(file_path),
-                    path_in_repo=path_in_repo,
-                    repo_id=repo_id,
-                    repo_type="dataset",
-                    token=token,
-                    commit_message=f"Auto-sync: {file_path.name}",
-                )
-                break
-            except Exception as e:
-                if attempt < 2:
-                    time.sleep(5)
-                else:
-                    log(f"[HF] Lỗi upload {file_path.name}: {e}")
-                    errors += 1
+    log(f"[HF] Uploading folder {scan_dir.name} (only .pth, .json, .pkl) as a batched commit...")
+    for attempt in range(3):
+        try:
+            api.upload_folder(
+                folder_path=str(scan_dir),
+                path_in_repo=f"runs/{scan_dir.name}",
+                repo_id=repo_id,
+                repo_type="dataset",
+                token=token,
+                allow_patterns=["*.pth", "*.json", "*.pkl"],
+                commit_message=f"Auto-sync runs folder: {scan_dir.name}"
+            )
+            log(f"[HF] Successfully synced {scan_dir.name} in one commit!")
+            return True
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(5)
+            else:
+                log(f"[HF] Lỗi upload folder: {e}")
+                
+    errors = 1
     return errors == 0
 
 
@@ -295,11 +295,23 @@ def pull_runs(logger=None, target_prefix=None, config_id=None):
         log(f"[HF] Đang kéo TOÀN BỘ trọng số từ {repo_id}/runs/ về (Cảnh báo: Tốn băng thông!)...")
 
     try:
+        if isinstance(pattern, str):
+            patterns = [
+                f"{pattern.replace('**', '')}*.pth",
+                f"{pattern.replace('**', '')}*.json",
+                f"{pattern.replace('**', '')}*.pkl"
+            ]
+        else:
+            patterns = ["**/*.pth", "**/*.json", "**/*.pkl"]
+
+        log(f"[HF] Mẫu tải xuống (bỏ qua PNG): {patterns}")
+        from huggingface_hub import snapshot_download
         snapshot_download(
             repo_id=repo_id,
             repo_type="dataset",
             token=token,
-            allow_patterns=pattern,
+            allow_patterns=patterns,
+            ignore_patterns=["**/*.png"],
             local_dir=str(argo_logs_dir),
             local_dir_use_symlinks=False,
             force_download=False
