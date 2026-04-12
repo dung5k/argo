@@ -94,8 +94,9 @@
         "VAL_END": "2026-04-08",
         "LEARNING_RATE": 1e-05,
         "MIN_LR": 1e-06,
-        "BATCH_SIZE": 128,
-        "EPOCHS": 20,
+        "BATCH_SIZE": 1024,
+        "EPOCHS": 500,
+        "training_end_time": "06:00",
         "PATIENCE": 6,
         "LOSS_FUNCTIONS": {
             "CLASSIFICATION": "FOCAL",
