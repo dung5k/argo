@@ -97,7 +97,7 @@
         "TRAIN_START": "2026-02-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-08",
-        "BATCH_SIZE": 256,
+        "BATCH_SIZE": 512,
         "ARCH": {
             "win": 60,
             "d_model": 256,
