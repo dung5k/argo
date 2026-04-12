@@ -419,8 +419,31 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     total_epoch        = 0
     need_reload_loader = False
 
+    import datetime
+    # Parser end time
+    end_time_str = train_config.get("training_end_time", "")
+    target_dt = None
+    if end_time_str:
+        try:
+            hr, mn = map(int, end_time_str.split(":"))
+            now = datetime.datetime.now()
+            target_dt = datetime.datetime(now.year, now.month, now.day, hr, mn)
+            if target_dt <= now:
+                target_dt += datetime.timedelta(days=1)
+        except Exception as e:
+            print(f"[WARN] Lỗi đọc training_end_time: {e}. Sẽ dùng mốc 3 tiếng.")
+            
+    if not target_dt:
+        target_dt = datetime.datetime.now() + datetime.timedelta(hours=3)
+        
+    print(f"\n[TIME-LIMIT] Tiến trình Train sẽ tự động ngắt vào lúc: {target_dt.strftime('%H:%M:%S %d/%m/%Y')}\n")
+
     try:
         while phoenix_count <= MAX_PHOENIX:
+            if datetime.datetime.now() >= target_dt:
+                print(f"\n⏰ [THỜI GIAN] Đã đến giờ kết thúc ({target_dt.strftime('%H:%M')}). Dừng training an toàn.")
+                break
+
             epoch_start = time.time()
 
             if need_reload_loader:
