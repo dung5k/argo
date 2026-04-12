@@ -169,7 +169,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         # --- [CLEANUP] Dọn rác các file Parquet/Pkl cũ không còn nằm trong REQUIRED_PARQUETS ---
         if required_parquets and clean_dir.exists():
             for local_file in clean_dir.glob("*"):
-                if local_file.suffix in [".parquet", ".pkl"]:
+                if local_file.suffix in [".parquet", ".pkl", ".json"]:
                     if local_file.name not in required_parquets:
                         try:
                             local_file.unlink()
@@ -178,7 +178,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
                         
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
-        parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl"))]
+        parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl") or f.endswith(".json"))]
         if required_parquets:
             parquet_files = [f for f in parquet_files if Path(f).name in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
