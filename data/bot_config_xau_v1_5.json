@@ -3,7 +3,7 @@
     "TARGET_PREFIX": "XAUUSD",
     "CONFIG_ID": "CFG_XAU_V1_5",
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260301_to_20260408",
+        "DATASET_SUFFIX": "20260201_to_20260408",
         "DATASET_REPO": "dung5k/argo_data",
         "MT5_PATH": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
         "BROKERS": {
