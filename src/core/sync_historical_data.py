@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import pandas as pd
+from src.core.data_adapters import BinanceAdapter
 import MetaTrader5 as mt5
 from mt5_data_manager import MT5DataManager
 
@@ -43,6 +44,22 @@ def sync_all_history():
         print(f"\n{'-'*50}")
         print(f"📥 Đang lấy lịch sử mã: {req_m} (Khớp trên sàn: {found_sym}) từ {path}...")
         
+        # --- XỬ LÝ SONG NGUỒN BINANCE ---
+        if path == "BINANCE" or "BINANCE" in path:
+            adapter = BinanceAdapter(log_callback=print)
+            df = adapter.fetch_historical_data(found_sym, 'M1', t_start_str, v_end_str)
+            if df is not None and not df.empty:
+                clean_req = req_m.replace('m', '').lower()
+                file_path = os.path.join(data_path, f"{clean_req}_mt5_1m_{date_suffix}.parquet")
+                # Giữ nguyên suffix _mt5_ để FeatureEngineering có thể nhận dạng chuẩn
+                df.to_parquet(file_path)
+                print(f"💾 Đã lưu Parquet (BINANCE) thành công tại {file_path}")
+                generated_files.append(file_path)
+            else:
+                print(f"⚠️ Lỗi: Không kéo được data cho {req_m} từ BINANCE")
+            continue
+            
+        # --- XỬ LÝ KHỐI MT5 NHƯ DEFAULT ---
         mt5.shutdown()
         if not mt5.initialize(path=path):
             print(f"Lỗi: Không thể khởi tạo MT5 tại {path}")

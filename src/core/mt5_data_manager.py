@@ -6,6 +6,10 @@ import MetaTrader5 as mt5
 from datetime import datetime, timezone
 import joblib
 
+from src.core.data_adapters import MT5Adapter, LocalAdapter, BinanceAdapter
+import os
+
+
 class MT5DataManager:
     def __init__(self, log_callback=print, target_sym="XAUUSD", config_path=None):
         self.log_message = log_callback
@@ -82,6 +86,17 @@ class MT5DataManager:
         self.gui_symbols = {}
         self.current_connected_path = None
         
+        # --- KHỞI TẠO ADAPTER REGISTRY ---
+        self.adapters = {}
+        for path_alias, path in self.MT5_PATHS.items():
+            if "terminal64.exe" in path:
+                self.adapters[path] = MT5Adapter(executable_path=path, log_callback=self.log_message)
+            elif path_alias == "LOCAL" or path == "LOCAL":
+                script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                self.adapters[path] = LocalAdapter(data_dir=os.path.join(script_dir, "data"), log_callback=self.log_message)
+            elif path_alias == "BINANCE" or path == "BINANCE":
+                self.adapters[path] = BinanceAdapter(log_callback=self.log_message)
+                
         self._load_features()
         self._build_active_mappings()
 
@@ -218,53 +233,33 @@ class MT5DataManager:
             path_groups[path].append((source_name, sym_m, mapped_name))
             
         for p, group in path_groups.items():
-            if "terminal64.exe" in p:
-                if self.current_connected_path != p:
-                    mt5.shutdown()
-                    if not mt5.initialize(path=p): 
-                        continue
-                    self.current_connected_path = p
-                    
+            adapter = self.adapters.get(p)
+            if not adapter:
+                # Tạo fallback adapter tại runtime nếu chưa có
+                if p == "LOCAL" or "LOCAL" in group[0][0]:
+                    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                    adapter = LocalAdapter(data_dir=os.path.join(script_dir, "data"), log_callback=self.log_message)
+                    self.adapters[p] = adapter
+                elif p == "BINANCE" or "BINANCE" in group[0][0]:
+                    adapter = BinanceAdapter(log_callback=self.log_message)
+                    self.adapters[p] = adapter
+                elif "terminal64.exe" in p:
+                    adapter = MT5Adapter(executable_path=p, log_callback=self.log_message)
+                    self.adapters[p] = adapter
+
             for source_name, sym_m, mapped_name in group:
                 df = pd.DataFrame()
-                if "terminal64.exe" in p:
-                    sym_clean = sym_m.replace("m", "")
-                    actual_sym = self.IN_MEMORY_SYMBOL_HINT.get(sym_m, sym_clean)
-                    
-                    if mt5.symbol_select(actual_sym, True):
-                        rates = mt5.copy_rates_from_pos(actual_sym, mt5.TIMEFRAME_M1, 0, window)
-                        if rates is not None and len(rates) > 0:
-                            df = pd.DataFrame(rates)
-                            tick = mt5.symbol_info_tick(actual_sym)
-                            offset_hours = 3
-                            if tick and tick.time > 0:
-                                diff_h = round((tick.time - int(time.time())) / 3600)
-                                if abs(diff_h) <= 14:
-                                    offset_hours = diff_h
-                            df['time'] = df['time'] - (offset_hours * 3600)
-                elif p == "LOCAL" or source_name == "LOCAL":
-                    # Đọc parquet files với window lấy n nến cuối
-                    script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                    clean_sym = sym_m.replace("m", "").lower()
-                    
-                    # Logic để tìm file local.
-                    sym_clean_upper = sym_m.replace("m", "").upper()
-                    # Mặc định lấy tên mã luôn, do routing JSON cấu hình chính xác: 'GOLD_1H_2025_2026.PARQUET'
-                    pq_name = sym_clean_upper
-                    pq_path = os.path.join(script_dir, "data", pq_name)
-                    if not os.path.exists(pq_path):
-                        pq_path_2 = os.path.join(script_dir, "data", f"{clean_sym}_mt5_1m_2026.parquet")
-                        if os.path.exists(pq_path_2): pq_path = pq_path_2
-                    
-                    if os.path.exists(pq_path):
-                        try:
-                            df = pd.read_parquet(pq_path)
-                            df = df.tail(window).copy()
-                            # Biến lại cột index thành chuỗi cột để chạy theo format chung (sau đó logic df['datetime'] sẽ build lại)
-                            if df.index.name == 'datetime' or isinstance(df.index, pd.DatetimeIndex):
-                                df['time'] = df.index.astype(int) / 10**9 # Convert index to unix timestamp
-                        except Exception as e:
-                            self.log_message(f"⚠️ Lỗi đọc LOCAL Parquet cho {sym_m}: {e}")
+                if adapter:
+                    # Truyền đúng symbol
+                    actual_sym = sym_m
+                    if isinstance(adapter, MT5Adapter):
+                        sym_clean = sym_m.replace("m", "")
+                        actual_sym = self.IN_MEMORY_SYMBOL_HINT.get(sym_m, sym_clean)
+                        
+                    try:
+                        df = adapter.fetch_live_data(actual_sym, 'M1', window)
+                    except Exception as e:
+                        self.log_message(f"⚠️ Lỗi đọc Adapter {p} cho {sym_m}: {e}")
 
                 if df.empty: continue
                 

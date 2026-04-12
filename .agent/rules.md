@@ -19,3 +19,7 @@ Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn
 - Sau khi code hoàn thành 1 hàm thì cần viết unit test để đảm bảo hàm đấy chạy đúng
 
 - Hạn chế hardcode, cần viết code cho bài toán tổng quát, các giá trị hardcode cần được đưa vào file config
+
+# Thực thi nhiệm vụ tạm thời (Temporary Tasks)
+- Mỗi khi thực hiện một nhiệm vụ TẠM THỜI mà yêu cầu sinh/tạo ra file code (để test thử, kiểm tra, cào dữ liệu nháp...), BẮT BUỘC phải tạo file đó trong thư mục `temp/`.
+- Sau khi chạy và có kết quả xong, BẮT BUỘC phải tự động XÓA file tạm đó đi để dọn dẹp sạch sẽ không gian làm việc.

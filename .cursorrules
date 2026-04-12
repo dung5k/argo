@@ -16,3 +16,7 @@ Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn
 
 # Kết xuất dữ liệu Telegram
 Mọi lệnh tôi nhờ bạn giải quyết, dù là gì đi chăng nữa, thì ngay khi xong việc bạn **BẮT BUỘC** phải dùng công cụ `write_to_file` xuất CÂU TRẢ LỜI/KẾT QUẢ của bạn (dạng text chay, không format màu mè) thẳng vào tệp `.agent/response.txt` nhé!
+
+# Thực thi nhiệm vụ tạm thời (Temporary Tasks)
+- Mỗi khi thực hiện một nhiệm vụ TẠM THỜI mà yêu cầu sinh/tạo ra file code (để test thử nghiệm, kiểm tra nghiệm thu, cào dữ liệu nháp...), BẮT BUỘC phải tạo file đó trong thư mục `temp/`.
+- Sau khi chạy và có kết quả xong, BẮT BUỘC phải tự động XÓA file tạm đó đi để dọn dẹp sạch sẽ không gian làm việc source code.
