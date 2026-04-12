@@ -33,9 +33,6 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
     - Winrate: `>50%: N/A | >62%: N/A | >73%: N/A | >85%: N/A` *(Chưa thu thập từ Log cũ)*
   - **Mô tả:** Chạy phân tích phiến Mỹ.
   - **Trạng thái:** Đã Stop ngang để nhường tài nguyên cho phiến Á. Nguy cơ mớm overfit ở mốc Ep 200.
-  - **Các đầu việc cần làm (Dành cho AI):**
-    + [ ] Đánh giá lại việc cắt giảm Learning Rate.
-    + [ ] Thử nghiệm load lại weights ở Ep 180 để chốt model (VLoss 0.19).
 
 ---
 
@@ -45,17 +42,18 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
 
 #### Lịch sử các lần chạy (Run History):
 
-- **Lần chạy: `20260412_225726_train`**
+- **Lần chạy: `run_20260413_000416_train` (Asian Session)**
   - **Máy trạm:** `client1`
-  - **Thời gian:** 12/04 22:56 đến 13/04 04:00 (Hẹn giờ tắt)
-  - **Tiến độ:** Ep 113+ (Tính đến 23:18)
+  - **Thời gian:** 12/04 23:58 đến 13/04 01:28
+  - **Tiến độ:** Hoàn tất (Ep 451, tái sinh 40 lần)
   - **Loss & Winrate:**
-    - Train Loss: `0.1334` | Val Loss: `0.2662` *(Sơ bộ)*
-    - Winrate: `>50%: 52.0% | >62%: 55.8% | >73%: 55.2% | >85%: 50.0%`
-  - **Mô tả:** Bắt đầu nhận config mới cứng `bot_config_xau_asian_v2.json`. Máy đã ngoạm tín hiệu và đăng nhập quá trình Train (MAX Mode) thành công.
+    - Train Loss: `0.1289` | Val Loss: `0.2723`
+    - Winrate: `>50%: 49.1% | >62%: 50.4% | >75%: 52.1% | >87%: 70.4%` (Best Score: 71.1%)
+  - **Mô tả:** Đã vượt qua bẫy tối ưu cục bộ nhờ LLM Supervisor tự động can thiệp nới rộng batch size, weight decay và label smoothing. Đã lưu trữ `xauusd_unified_weights_asian.pth` thành công lên HF.
+  - **Trạng thái:** HOÀN THÀNH.
   - **Các đầu việc cần làm (Dành cho AI):**
-    + [ ] Chờ đến khi hết giờ (04:00).
-    + [ ] Trích xuất log để cập nhật kết quả Epoch cuối cùng và tỷ lệ Winrate vào đây.
+    + [x] Chờ đến khi hết giờ hoặc hoàn thành chu kỳ Phoenix.
+    + [x] Trích xuất log và kết quả trên HF để cập nhật kết quả Epoch cuối cùng và tỷ lệ Winrate vào đây.
 
 ---
 
