@@ -96,7 +96,7 @@ echo.
 if exist ".git" (
     git --version >nul 2>&1
     if !errorlevel! equ 0 (
-        echo [GIT] Dang dong bo code moi nhat tu ARGO (Cuong che clear rac)...
+        echo [GIT] Dang dong bo code moi nhat tu ARGO [Cuong che clear rac]...
         git fetch origin
         git reset --hard origin/main
         git clean -fd
