@@ -420,8 +420,21 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     need_reload_loader = False
 
     import datetime
+    import json
+    import os
     # Parser end time
-    end_time_str = train_config.get("training_end_time", "")
+    end_time_str = ""
+    if config_path and os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                _jtcfg = json.load(f)
+                if "TRAINING" in _jtcfg:
+                    end_time_str = _jtcfg["TRAINING"].get("training_end_time", "")
+                else:
+                    end_time_str = _jtcfg.get("training_end_time", "")
+        except:
+            pass
+
     target_dt = None
     if end_time_str:
         try:
