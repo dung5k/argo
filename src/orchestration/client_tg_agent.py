@@ -29,18 +29,7 @@ import os
 import sys
 
 def ensure_dependencies():
-    try:
-        import flask
-        import requests
-        from pyngrok import ngrok
-    except ImportError:
-        print("[AGENT] Thiếu thư viện web/tunnel. Tự động cài đặt Flask, requests, pyngrok...")
-        import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "flask", "requests", "pyngrok"])
-        import site
-        from importlib import reload
-        reload(site)
-
+    pass
 ensure_dependencies()
 
 
@@ -345,64 +334,7 @@ class TelegramAgent:
             self.logger.warning("Không tìm thấy MqttHelper. Chạy chế độ Single-mode (Telegram only).")
 
         self.manager = TrainingManager(base_dir, client_id, self.logger, self.mqtt)
-        self._start_ngrok_log_server()
-
-    def _start_ngrok_log_server(self):
-        def _run_server():
-            import logging as syslogging
-            syslog = syslogging.getLogger('werkzeug')
-            syslog.setLevel(syslogging.ERROR)
-            
-            from flask import Flask, request, Response
-            from pyngrok import ngrok
-            
-            app = Flask(__name__)
-            unified_path = Path(ARGO_LOGS_DIR) / f"{self.client_id}_unified.log"
-            
-            @app.route("/log", methods=["GET"])
-            def express_log():
-                try:
-                    mins = int(request.args.get("minutes", 30))
-                    if not unified_path.exists():
-                        return "Log file empty.", 200
-                        
-                    cutoff = datetime.datetime.now() - datetime.timedelta(minutes=mins)
-                    lines_to_return = []
-                    
-                    with open(unified_path, "r", encoding="utf-8", errors="replace") as f:
-                        lines = f.readlines()
-                        # Fallback for fast parsing without date format logic
-                        for L in reversed(lines):
-                            lines_to_return.append(L)
-                            if len(lines_to_return) > mins * 50: # approx buffer based on minutes
-                                break
-                                
-                    lines_to_return.reverse()
-                    return Response("".join(lines_to_return), mimetype='text/plain')
-                except Exception as e:
-                    return str(e), 500
-
-            import socket
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(('127.0.0.1', 0))
-            port = sock.getsockname()[1]
-            sock.close()
-            
-            token = self.cfg.get("ngrok_token", "")
-            if token:
-                ngrok.set_auth_token(token)
-            
-            try:
-                public_url = ngrok.connect(port).public_url
-                self.logger.info(f"🌐 [NGROK SERVER] Unified Log API Mở tại: {public_url}")
-                if self.mqtt:
-                    import json
-                    self.mqtt.client.publish(f"argo_dungla_9213/{self.client_id}/ngrok_url", json.dumps({"url": public_url}), retain=True)
-            except Exception as e:
-                self.logger.error(f"❌ [NGROK SERVER] Không thể mớ hầm Ngrok: {e}")
-
-            app.run(host="0.0.0.0", port=port, use_reloader=False)
-        threading.Thread(target=_run_server, daemon=True, name="NgrokLogServer").start()
+        # Bỏ Ngrok Server vì đã chuyển sang dùng MQTT
 
     def _handle_mqtt_cmd(self, payload: dict):
         action = payload.get("cmd", "")
