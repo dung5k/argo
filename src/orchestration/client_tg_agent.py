@@ -570,12 +570,15 @@ class TelegramAgent:
         elif action == "pull_hf_runs":
             # Kéo thư mục runs/ (trọng số) từ HuggingFace về
             self.logger.info("  ➜ [PULL_HF_RUNS] Đang kéo trọng số từ HuggingFace...")
+            t_prefix = payload.get("target_prefix", None)
+            c_id = payload.get("config_id", None)
+            
             def _pull_runs():
                 try:
                     import sys as _sys
                     _sys.path.insert(0, str(self.base_dir / "src" / "orchestration"))
                     from hf_sync import pull_runs
-                    ok = pull_runs(self.logger)
+                    ok = pull_runs(self.logger, target_prefix=t_prefix, config_id=c_id)
                     if self.mqtt:
                         self.mqtt.send_log("INFO", "Kéo trọng số từ HF hoàn tất!" if ok else "Kéo trọng số HF thất bại!")
                 except Exception as e:

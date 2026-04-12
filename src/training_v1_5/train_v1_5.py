@@ -881,9 +881,11 @@ if __name__ == "__main__":
     try:
         sys.path.insert(0, os.path.join(_ROOT, "src", "orchestration"))
         from hf_sync import pull_data, pull_runs
-        print("☁️ [TRAIN] Kích hoạt đồng bộ HF theo cấu hình (REQUIRED_PARQUETS) và Runs...")
+        print("☁️ [TRAIN] Kích hoạt đồng bộ HF theo cấu hình (REQUIRED_PARQUETS) và Runs CỤ THỂ...")
         pull_data(config_path=config_path)
-        pull_runs()
+        
+        target_clean = TARGET_PREFIX.lower().replace("_", "")
+        pull_runs(target_prefix=target_clean, config_id=CONFIG_ID)
     except Exception as e:
         print(f"⚠️ [TRAIN] Bỏ qua kích hoạt đồng bộ HF (Không quan trọng): {e}")
 
