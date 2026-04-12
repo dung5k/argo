@@ -104,7 +104,7 @@ Ngách khai thác lợi nhuận bù đắp vào các ngày thứ Bảy, Chủ Nh
   - **Mô tả:** Chạy cấu hình Horizons 5-30m đánh dài.
   - **Trạng thái:** Chờ khởi động.
   - **Các đầu việc cần làm (Dành cho AI):**
-    + [ ] Gửi cấu hình định dạng mốc 5, 10, 15, 30 phút sang `clientGH`.
+    + [x] Gửi cấu hình định dạng mốc 5, 10, 15, 30 phút sang `clientGH`.
     + [ ] Giám sát quá trình chạy và nhét chỉ số Winrate mốc 5 phút vào Log.
 
 ---
