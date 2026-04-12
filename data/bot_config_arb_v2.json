@@ -39,7 +39,10 @@
             "BTCUSDT": "BINANCE",
             "ETHUSDT": "BINANCE",
             "OPUSDT":  "BINANCE",
-            "SOLUSDT": "BINANCE"
+            "SOLUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE",
+            "BNBUSDT": "BINANCE",
+            "LINKUSDT": "BINANCE"
         },
         "CONTINUOUS_CONTRACTS": {}
     },
@@ -74,11 +77,17 @@
             "ETHUSDT_volume",
             "OPUSDT_volume",
             "SOLUSDT_volume",
+            "DOGEUSDT_volume",
+            "BNBUSDT_volume",
+            "LINKUSDT_volume",
             
             "BTCUSDT_close_log_ret",
             "ETHUSDT_close_log_ret",
             "OPUSDT_close_log_ret",
-            "SOLUSDT_close_log_ret"
+            "SOLUSDT_close_log_ret",
+            "DOGEUSDT_close_log_ret",
+            "BNBUSDT_close_log_ret",
+            "LINKUSDT_close_log_ret"
         ]
     },
     "TRAINING": {
