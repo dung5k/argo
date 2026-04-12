@@ -23,7 +23,8 @@
         "REQUIRED_PARQUETS": [
             "final_features_CFG_XAU_ASIAN_V2.parquet",
             "target_direction_CFG_XAU_ASIAN_V2.parquet",
-            "scaler_CFG_XAU_ASIAN_V2.pkl"
+            "scaler_CFG_XAU_ASIAN_V2.pkl",
+            "feature_meta_CFG_XAU_ASIAN_V2.json"
         ]
     },
     "DATA_SOURCE": {

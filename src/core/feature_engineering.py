@@ -366,7 +366,7 @@ def create_stationary_features(df, is_live=False):
     
     # Lưu metadata ra JSON để train_final.py đọc
     import json
-    meta_path = os.path.join(data_path, f"feature_meta_{CONFIG_ID}.json")
+    meta_path = os.path.join(output_data_path, f"feature_meta_{CONFIG_ID}.json")
     with open(meta_path, "w") as f:
         json.dump({
             "num_xau_features": num_xau_features, 

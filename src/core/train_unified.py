@@ -257,7 +257,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     print("══" * 28 + "\n")
 
     # ── 4. Build model ────────────────────────────────────────────
-    meta_path = os.path.join(cfg.argo_data_dir, f"feature_meta_{target_prefix}.json")
+    meta_path = os.path.join(cfg.argo_data_dir, cfg.config_id, f"feature_meta_{cfg.config_id}.json")
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
     if os.path.exists(meta_path):
