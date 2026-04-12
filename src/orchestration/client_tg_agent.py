@@ -419,7 +419,7 @@ class TelegramAgent:
             perf_mode = payload.get("perf_mode", "MAX")
             session = payload.get("session", "all")
             config_content = payload.get("config_content", "")
-            config = CONFIG_MAP.get(symbol, f"data/bot_config_{symbol}.json")
+            config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
             self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}")
             res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session)
             if not res.get("ok"):

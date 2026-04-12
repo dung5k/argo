@@ -107,8 +107,8 @@ if not exist "!CLIENT_ID!\action_request" mkdir "!CLIENT_ID!\action_request"
 :: =============================================================
 :: BIEN MOI TRUONG ARGO
 :: =============================================================
-set ARGO_DATA_DIR=%cd%\data
-set ARGO_LOGS_DIR=%cd%\logs
+set ARGO_DATA_DIR=C:\argo\data
+set ARGO_LOGS_DIR=C:\argo\logs
 echo [INFO] ARGO_DATA_DIR = !ARGO_DATA_DIR!
 echo.
 
