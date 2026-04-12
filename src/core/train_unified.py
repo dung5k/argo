@@ -791,7 +791,17 @@ if __name__ == "__main__":
             pass
 
     # Train
-    train_unified_model(features, targets_data, num_features, run_dir, target_prefix=TARGET_PREFIX)
+    print("[INIT] Calling train_unified_model...")
+    sys.stdout.flush()
+    try:
+        train_unified_model(features, targets_data, num_features, run_dir, target_prefix=TARGET_PREFIX)
+    except Exception as e:
+        import traceback
+        msg = f"[CRASH DETECTED] {traceback.format_exc()}"
+        sys.__stderr__.write(msg)
+        sys.__stderr__.flush()
+        print(msg)
+        sys.exit(1)
 
     # Final HF sync
     print("☁️ KẾT THÚC TRAIN: Đồng bộ cuối lên HuggingFace...")
