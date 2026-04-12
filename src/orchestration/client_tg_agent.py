@@ -82,6 +82,7 @@ CONFIG_MAP = {
     "xau_v1_5": f"{ARGO_DATA_DIR}/bot_config_xau_v1_5.json",
     "xag_v1_5": f"{ARGO_DATA_DIR}/bot_config_xag_v1_5.json",
     "xau_v2": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
+    "xau_ny_v2": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
     "xag_v2": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
     "xau_v2_0": f"{ARGO_DATA_DIR}/bot_config_xau_v2.json",
     "xag_v2_0": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",

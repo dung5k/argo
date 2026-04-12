@@ -1,7 +1,13 @@
 {
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
-    "CONFIG_ID": "CFG_XAU_V2",
+    "CONFIG_ID": "CFG_XAU_NY_V2",
+    "SESSION": "ny",
+    "SESSION_UTC": {
+        "START": "13:00",
+        "END": "22:00",
+        "DESCRIPTION": "New York session - US market hours (20:00-05:00 VN time, 13:00-22:00 UTC)"
+    },
     "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "WEIGHT_FILE": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
     "WEIGHT_FILES": {
@@ -15,9 +21,9 @@
         "MODEL_REPO": "dung5k/trading_models",
         "SYNC_CHUNKS": true,
         "REQUIRED_PARQUETS": [
-            "final_features_CFG_XAU_V2.parquet",
-            "target_direction_CFG_XAU_V2.parquet",
-            "scaler_CFG_XAU_V2.pkl"
+            "final_features_CFG_XAU_NY_V2.parquet",
+            "target_direction_CFG_XAU_NY_V2.parquet",
+            "scaler_CFG_XAU_NY_V2.pkl"
         ]
     },
     "DATA_SOURCE": {
@@ -32,9 +38,7 @@
         },
         "ROUTING": {
             "XAUUSDm": "EXNESS",
-            "AUDUSDm": "EXNESS",
             "EURUSDm": "EXNESS",
-            "GBPUSDm": "EXNESS",
             "USDCADm": "EXNESS",
             "XAGUSDm": "EXNESS",
             "VIXYm": "DEFAULT",
@@ -88,8 +92,8 @@
             "XAUUSD_low_log_ret",
             "XAUUSD_close_log_ret",
             "is_imputed_flag",
-            "AUDUSD_close_log_ret",
             "EURUSD_close_log_ret",
+            "USDCAD_close_log_ret",
             "NASDAQ_100_close_log_ret",
             "US_10Y_YIELD_close_log_ret",
             "VIXY_close_log_ret",
