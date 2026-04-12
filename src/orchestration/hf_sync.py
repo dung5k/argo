@@ -48,10 +48,7 @@ def push_data(config_path=None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    if os.name == 'nt' and not os.environ.get("ARGO_DATA_DIR"):
-        argo_data_dir = "C:\\argo\\data"
-    else:
-        argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(_project_root() / "data"))
+    argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(_project_root() / "data"))
     data_dir = Path(argo_data_dir)
     
     if not data_dir.exists():
@@ -144,10 +141,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
     base_dir = _project_root()
-    if os.name == 'nt' and not os.environ.get("ARGO_DATA_DIR"):
-        argo_data_dir = "C:\\argo\\data"
-    else:
-        argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(_project_root() / "data"))
+    argo_data_dir = os.environ.get("ARGO_DATA_DIR", str(_project_root() / "data"))
     data_dir = Path(argo_data_dir)
     
     # Read OPTIONAL REQUIRED PARQUETS list from config
@@ -225,10 +219,7 @@ def push_runs(logger=None, run_dir=None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    if os.name == 'nt' and not os.environ.get("ARGO_LOGS_DIR"):
-        argo_logs_dir = "C:\\argo\\logs"
-    else:
-        argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
+    argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
 
     # Nếu không có run_dir, tìm thư mục được tạo gần nhất trong runs/
@@ -304,10 +295,7 @@ def pull_runs(logger=None, target_prefix=None, config_id=None):
 
     token = cfg["hf_token"]
     repo_id = cfg["hf_repo_id"]
-    if os.name == 'nt' and not os.environ.get("ARGO_LOGS_DIR"):
-        argo_logs_dir = "C:\\argo\\logs"
-    else:
-        argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
+    argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
 
     if target_prefix and config_id:

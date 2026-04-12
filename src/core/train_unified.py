@@ -665,9 +665,6 @@ if __name__ == "__main__":
 
     _proj_data = os.path.join(BASE_PROJ_DIR, "data")
     _proj_logs = os.path.join(BASE_PROJ_DIR, "logs")
-    if os.name == 'nt':
-        _proj_data = "C:\\argo\\data"
-        _proj_logs = "C:\\argo\\logs"
         
     ARGO_DATA_DIR = cfg_raw.get("ARGO_DATA_DIR",
                                 os.environ.get("ARGO_DATA_DIR", _proj_data))
