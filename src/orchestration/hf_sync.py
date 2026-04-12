@@ -102,26 +102,25 @@ def push_data(config_path=None):
         print("[HF] Không có file cần đẩy (final_features, target, scaler)!")
         return True
 
-    errors = 0
-    for f in target_files:
-        try:
-            print(f"  🚀 Uploading file độc lập: {f.name}")
-            api.upload_file(
-                path_or_fileobj=str(f),
-                path_in_repo=f"data/{f.name}",
-                repo_id=repo_id,
-                repo_type="dataset",
-                token=token,
-                commit_message=f"Auto-sync file: {f.name}"
-            )
-        except Exception as e:
-            print(f"[HF] Lỗi khi upload {f.name}: {e}")
-            errors += 1
-
-    if errors == 0:
+    # Sử dụng tính năng multi-thread mạnh mẽ của upload_folder kết hợp với blacklist whitelist
+    allowed_patterns = [f.name for f in target_files]
+    
+    try:
+        print(f"  🚀 Uploading qua Pipeline siêu tốc {len(allowed_patterns)} files...")
+        api.upload_folder(
+            folder_path=str(data_dir),
+            path_in_repo="data",
+            repo_id=repo_id,
+            repo_type="dataset",
+            token=token,
+            commit_message=f"Auto-sync {len(allowed_patterns)} files",
+            allow_patterns=allowed_patterns
+        )
         print("[HF] Đẩy Data thành công lên HuggingFace! 🚀")
         return True
-    return False
+    except Exception as e:
+        print(f"[HF] Lỗi khi upload: {e}")
+        return False
 
 def pull_data(logger: logging.Logger = None, config_path: str = None):
     """Kéo thư mục data/ mới nhất từ HuggingFace về (an toàn, không dùng snapshot_download)."""

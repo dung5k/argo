@@ -288,6 +288,36 @@ def create_stationary_features(df, is_live=False):
         if extra_cols:
             print(f"🛡️ [EXACT SHIELD] Loại bỏ {len(extra_cols)} Features nhiễu không có trong cấu hình EXACT_FEATURES (VD: {extra_cols[:5]}).")
             
+        # BÁO CÁO EXACT_FEATURES TRỰC QUAN CHO NGƯỜI DÙNG:
+        print("\n" + "="*80)
+        print("📊 BÁO CÁO CHUYÊN SÂU CHẤT LƯỢNG DỮ LIỆU ĐẦU RA (EXACT_FEATURES)")
+        print("="*80)
+        for idx, feat in enumerate(exact_features):
+            if feat == "is_imputed_flag":
+                ones_pct = (imputed_flags == 1).mean() * 100
+                print(f" [{idx+1:2d}] {feat:28s} | ✅ Cờ Đóng Băng: {ones_pct:.1f}% nến mượn giá (Vĩ mô ngủ)")
+            elif feat in missing_cols:
+                print(f" [{idx+1:2d}] {feat:28s} | ⚠️ Zero-Pad (Hoàn toàn LỖI/MẤT BẢN THỂ TỪ NGUỒN)")
+            else:
+                nan_count = feature_df[feat].isna().sum()
+                zero_pct = (feature_df[feat] == 0).mean() * 100
+                std_val = feature_df[feat].std()
+                
+                status = ""
+                if nan_count > 0:
+                    status = f"⚠️ LỖI: {nan_count} NaNs"
+                elif zero_pct == 100:
+                    status = f"❌ RÁC: 100% LÀ SỐ 0 (Không chứa thuộc tính thật)"
+                elif zero_pct > 30 and "volume" in feat:
+                    status = f"⚠️ Volume Ảo: {zero_pct:.1f}% là 0 (Có thể do sàn CFD hạn chế)"
+                elif std_val == 0:
+                    status = f"❌ Đóng băng: Đường thẳng tĩnh (Không biến động)"
+                else:
+                    status = f"✅ Tốt (Số 0: {zero_pct:.1f}%)"
+                    
+                print(f" [{idx+1:2d}] {feat:28s} | {status}")
+        print("="*80 + "\n")
+            
         # Sắp xếp và Gọt đúng kích thước Tensor
         feature_df = feature_df[exact_features]
     

@@ -134,7 +134,8 @@ class LLMSupervisor:
             ids  = tg_cfg.get("allowed_user_ids", [])
             if not tok or not ids:
                 return
-            full_msg = f"🤖 <b>[LLM SUPERVISOR - {self.target_prefix}]</b>\n\n{message}"
+            import socket
+            full_msg = f"🤖 <b>[LLM SUPERVISOR - {self.target_prefix} @ {socket.gethostname()}]</b>\n\n{message}"
             for chat_id in ids:
                 requests.post(
                     f"https://api.telegram.org/bot{tok}/sendMessage",

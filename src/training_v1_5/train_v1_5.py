@@ -25,7 +25,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-RUN_VERSION_DESC = "Focal Loss & Thông báo Telegram chi tiết (v1.5)"
+RUN_VERSION_DESC = "Hiển thị Tên Máy Chủ (Hostname) & LLM Supervisor OTA"
 
 class FocalLoss(nn.Module):
     def __init__(self, weight=None, gamma=2.0, label_smoothing=0.0):
@@ -147,7 +147,8 @@ class PhoenixRestartV1_5:
                                 bot_token = tg_cfg.get("bot_token")
                                 chat_ids = tg_cfg.get("allowed_chat_ids", [])
                                 if bot_token and chat_ids:
-                                    tele_content = f"🤖 <b>[PHOENIX AI - {s_name.upper()}]</b>\n\n{tel_msg}"
+                                    import socket
+                                    tele_content = f"🤖 <b>[PHOENIX AI - {s_name.upper()} @ {socket.gethostname()}]</b>\n\n{tel_msg}"
                                     for chat_id in chat_ids:
                                         requests.post(
                                             f"https://api.telegram.org/bot{bot_token}/sendMessage",
@@ -340,7 +341,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                 bot_token = tg_cfg.get("bot_token")
                 chat_ids = tg_cfg.get("allowed_chat_ids", [])
                 if bot_token and chat_ids:
-                    tele_content = f"🚀 <b>[TRAINING V1.5 - {target_prefix} {s_name.upper()}]</b>\n\n{tg_msg}"
+                    import socket
+                    tele_content = f"🚀 <b>[TRAINING V1.5 - {target_prefix} {s_name.upper()} @ {socket.gethostname()}]</b>\n\n{tg_msg}"
                     for chat_id in chat_ids:
                         requests.post(
                             f"https://api.telegram.org/bot{bot_token}/sendMessage",
@@ -657,7 +659,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
                                 chat_ids = tg_cfg.get("allowed_chat_ids", [])
                                 if bot_token and chat_ids:
                                     # Format message beautifully
-                                    tele_content = f"🤖 <b>[AI SUPERVISOR - {target_prefix}]</b>\n\n{tel_msg}"
+                                    import socket
+                                    tele_content = f"🤖 <b>[AI SUPERVISOR - {target_prefix} @ {socket.gethostname()}]</b>\n\n{tel_msg}"
                                     for chat_id in chat_ids:
                                         requests.post(
                                             f"https://api.telegram.org/bot{bot_token}/sendMessage",

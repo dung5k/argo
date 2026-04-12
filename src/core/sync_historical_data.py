@@ -248,67 +248,8 @@ def sync_all_history():
     print(f"   Tổng số file đã đồng bộ: {len(generated_files)}")
     print("="*60)
     
-    # --- BƯỚC UPLOAD LÊN HUGGING FACE ---
-    import json
-    tg_config_path = os.path.join(base_path, "tg_config.json")
-    hf_token = None
-    repo_id = None
-    if os.path.exists(tg_config_path):
-        with open(tg_config_path, "r", encoding="utf-8") as f:
-            try:
-                tg_config = json.load(f)
-                hf_token = tg_config.get("hf_token")
-                repo_id = tg_config.get("hf_repo_id")
-            except: pass
-            
-    hf_config = manager.config.get("HF_CLOUD", {})
-    if not repo_id:
-        repo_id = hf_config.get("DATASET_REPO")
-    if not hf_token:
-        token_env = hf_config.get("HF_API_TOKEN_ENV_VAR", "HF_TOKEN")
-        hf_token = os.environ.get(token_env)
-    
-    if repo_id:
-        if not hf_token:
-            print(f"⚠️ Cảnh báo: Đã cấu hình HF_CLOUD nhưng không tìm thấy biến môi trường {token_env}. Bỏ qua bước đẩy lên Cloud.")
-        else:
-            try:
-                from huggingface_hub import HfApi
-                print(f"☁️ Tích hợp Hugging Face Hub (Repo: {repo_id})...")
-                api = HfApi()
-                
-                # Check repo format exists
-                try:
-                    api.repo_info(repo_id=repo_id, repo_type="dataset", token=hf_token)
-                except Exception as e:
-                    print(f"Tạo mới Dataset Repo {repo_id}...")
-                    api.create_repo(repo_id=repo_id, repo_type="dataset", private=True, token=hf_token)
-                    
-                for f_path in generated_files:
-                    f_name = os.path.basename(f_path)
-                    print(f" 🚀 Đang tải {f_name} lên Hub...")
-                    api.upload_file(
-                        path_or_fileobj=f_path,
-                        path_in_repo=f"data/{f_name}",
-                        repo_id=repo_id,
-                        repo_type="dataset",
-                        token=hf_token
-                    )
-                    
-                    # (Optional) Xoá file Local sau khi up
-                    if not hf_config.get("KEEP_LOCAL_PARQUET", False):
-                        try:
-                            os.remove(f_path)
-                            print(f"    🗑️ Đã xoá file tạm local: {f_name}")
-                        except Exception as rm_err:
-                            print(f"    ⚠️ Lỗi khi xoá file {f_name}: {rm_err}")
-                print("🌟 SUCCESS: Đã đẩy toàn bộ Dataset M1 lên Hugging Face Cloud thành công!")
-            except ImportError:
-                print("Lỗi: Không tìm thấy thư viện `huggingface_hub`. Vui lòng pip install huggingface-hub")
-            except Exception as e:
-                print(f"❌ Lỗi trong quá trình upload HF: {e}")
-    else:
-        print("Trạng thái: Hoạt động chế độ OFFLINE. (Không upload HF).")
+    # --- LƯU Ý UPLOAD CHUYỂN SANG GIAI ĐOẠN SAU ---
+    print("\nLưu ý: Bạn cần chạy tiếp Feature Engineering để tạo file tổng hợp, sau đó dùng hf_sync.py push để tải lên đám mây!")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

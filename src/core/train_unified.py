@@ -45,7 +45,7 @@ from core.training.llm_supervisor import LLMSupervisor, TrainingState
 # Set bởi __main__
 is_reset: bool = False
 
-RUN_VERSION_DESC = "Focal Loss & Thông báo Telegram chi tiết"
+RUN_VERSION_DESC = "Hiển thị Tên Máy Chủ (Hostname) & LLM Supervisor OTA"
 
 
 # ─────────────────────────────────────────────────────────────────────
