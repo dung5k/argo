@@ -595,36 +595,17 @@ class TelegramAgent:
             threading.Thread(target=_pull_runs, daemon=True).start()
 
         elif action == "deploy_agent":
-            # Nhận code agent mới, backup bản cũ, ghi đè và restart
-            import base64, shutil, datetime
-            version   = payload.get("version", "unknown")
-            content   = payload.get("content_b64", "")
-            file_size = payload.get("size", 0)
-            if not content:
-                self.logger.error("  [DEPLOY] Thiếu content_b64!")
-                return
-
-            agent_path = Path(__file__).resolve()
-            versions_dir = agent_path.parent / "versions"
-            versions_dir.mkdir(parents=True, exist_ok=True)
-
-            # Backup bản hiện tại
-            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup = versions_dir / f"client_tg_agent_backup_{ts}.py"
-            shutil.copy2(agent_path, backup)
-            self.logger.info(f"  [DEPLOY] Đã backup bản cũ → {backup.name}")
-            if self.mqtt: self.mqtt.send_log("INFO", f"Backup agent cũ → {backup.name}")
-
-            # Ghi bản mới
-            raw_bytes = base64.b64decode(content)
-            with open(agent_path, "wb") as f:
-                f.write(raw_bytes)
-            msg = f"Deploy agent '{version}' ({file_size/1024:.1f}KB) thành công! Đang restart..."
-            self.logger.info(f"  [DEPLOY] {msg}")
-            if self.mqtt: self.mqtt.send_log("INFO", msg)
-
-            # Restart sau 2 giây
+            # Yêu cầu cập nhật Hard Reset từ GitHub Toàn Hệ Thống thay vì Base64
+            self.logger.info("  [DEPLOY] Thực hiện Hard Reset & Pull Cập Nhật Toàn Bộ Dự Án...")
+            if self.mqtt: self.mqtt.send_log("INFO", "Thực hiện Hard Reset & Pull Cập Nhật Toàn Bộ Agent...")
             def _restart():
+                try: 
+                    subprocess.run(["git", "fetch", "--all"], cwd=str(self.base_dir), timeout=20)
+                    subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(self.base_dir), timeout=20)
+                    subprocess.run(["git", "clean", "-fd", "runs/"], cwd=str(self.base_dir), timeout=20)
+                    subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+                except: pass
+                if self.mqtt: self.mqtt.send_log("INFO", "Git Pull xong! Tự động Restart...")
                 time.sleep(2)
                 self.manager.kill()
                 os._exit(69)

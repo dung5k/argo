@@ -324,7 +324,8 @@ def create_stationary_features(df, is_live=False):
     # Scale tất cả thành Mean=0, Std=1 để đẩy lưới Nơ-ron chạy hội tụ siêu tốc
     # KHOÁ LÕI SCALER (TRÁNH LỆCH PHA GIỮA TRAIN VÀ LIVE)
     script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    data_path = os.path.join(script_dir, "data")
+    data_path = os.path.join(script_dir, "data", CONFIG_ID)
+    os.makedirs(data_path, exist_ok=True)
     
     if is_live:
         scaler = joblib.load(os.path.join(data_path, f'scaler_{CONFIG_ID}.pkl'))
@@ -412,10 +413,12 @@ if __name__ == "__main__":
     is_live = len(sys.argv) > 1 and sys.argv[1] == "live"
     
     _root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    data_path = os.path.join(_root_dir, "data")
+    raw_data_path = os.path.join(_root_dir, "data")
+    output_data_path = os.path.join(_root_dir, "data", CONFIG_ID)
+    os.makedirs(output_data_path, exist_ok=True)
     
     # 1. Gộp toàn bộ Data
-    merged_df = load_and_align_data(data_path)
+    merged_df = load_and_align_data(raw_data_path)
     
     # Lưu giá Close của VÀNG (XAU) làm Cột Mục tiêu Chỉ Lối (Target)
     xau_usd_close = merged_df[f'{TARGET_PREFIX}_close']
@@ -455,14 +458,14 @@ if __name__ == "__main__":
         n_sell = (target_direction == 0).sum()
         print(f"-> [Momentum Label T+5] Tổng: {len(target_direction):,} | BUY: {n_buy:,} ({n_buy/len(target_direction)*100:.1f}%) | SELL: {n_sell:,} ({n_sell/len(target_direction)*100:.1f}%)")
         
-        target_direction.to_frame(name='target').to_parquet(os.path.join(data_path, f"target_direction_{CONFIG_ID}.parquet"))
+        target_direction.to_frame(name='target').to_parquet(os.path.join(output_data_path, f"target_direction_{CONFIG_ID}.parquet"))
     
     print(f"-> Dữ liệu Input cuối cùng: {final_features.shape}")
     if is_live:
-        final_features.to_parquet(os.path.join(data_path, f"live_features_{CONFIG_ID}.parquet"))
+        final_features.to_parquet(os.path.join(output_data_path, f"live_features_{CONFIG_ID}.parquet"))
         print(f"\n[OK] Feature Engineering (LIVE) hoàn tất! Sẵn sàng báo tín hiệu.")
     else:
-        final_features.to_parquet(os.path.join(data_path, f"final_features_{CONFIG_ID}.parquet"))
+        final_features.to_parquet(os.path.join(output_data_path, f"final_features_{CONFIG_ID}.parquet"))
         print(f"\n[OK] Feature Engineering (TRAIN) hoàn tất! Chuyển qua huấn luyện.")
 
 

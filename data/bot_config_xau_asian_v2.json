@@ -120,7 +120,7 @@
     },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
-        "ACTIVE_WINDOW_SIZE": 60,
+        "ACTIVE_WINDOW_SIZE": 30,
         "MASKED_FEATURES": []
     }
 }

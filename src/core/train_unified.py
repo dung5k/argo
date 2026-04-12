@@ -709,11 +709,11 @@ if __name__ == "__main__":
         print(f"⚠️ [INIT] Lỗi khi kiểm tra cấu hình kế thừa: {e}")
     # ==================================
 
-    features_path = os.path.join(data_path, f"final_features_{CONFIG_ID}.parquet")
-    target_path   = os.path.join(data_path, f"target_direction_{CONFIG_ID}.parquet")
+    features_path = os.path.join(data_path, CONFIG_ID, f"final_features_{CONFIG_ID}.parquet")
+    target_path   = os.path.join(data_path, CONFIG_ID, f"target_direction_{CONFIG_ID}.parquet")
 
     if not os.path.exists(target_path):
-        fallback = os.path.join(data_path, "target_direction.parquet")
+        fallback = os.path.join(data_path, CONFIG_ID, "target_direction.parquet")
         if os.path.exists(fallback):
             target_path = fallback
 
@@ -772,7 +772,7 @@ if __name__ == "__main__":
 
     # Copy scaler
     import shutil
-    scaler_src = os.path.join(data_path, f"scaler_{CONFIG_ID}.pkl")
+    scaler_src = os.path.join(data_path, CONFIG_ID, f"scaler_{CONFIG_ID}.pkl")
     if os.path.exists(scaler_src):
         shutil.copy(scaler_src, os.path.join(run_dir, f"scaler_{CONFIG_ID}.pkl"))
         print(f"📦 Đóng gói scaler_{CONFIG_ID}.pkl vào run dir.")

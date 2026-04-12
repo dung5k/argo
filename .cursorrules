@@ -1,0 +1,18 @@
+# Git Commit Policy
+
+**MANDATORY RULE FOR AI AGENT:**
+Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn của dự án này, Agent **BẮT BUỘC** phải tự động gọi lệnh Terminal để Git Commit và Git Push (nếu môi trường cho phép) thay đổi đó trước khi báo cáo kết quả lại cho User.
+
+**Workflow Action:**
+1. Call `git add <file(s)>`
+2. Call `git commit -m "bot: <mô tả ngắn gọn tiếng Việt>"`
+3. Call `git push` (optional: continue if it fails due to branching)
+
+
+# Nguyên tắc code
+- Việc code luôn luôn cần tách thành class và hàm có tính năng và nhiệm vụ động lập, có input và output đơn giản
+- Sau khi code hoàn thành 1 hàm thì cần viết unit test để đảm bảo hàm đấy chạy đúng
+- Hạn chế hardcode, cần viết code cho bài toán tổng quát, các giá trị hardcode cần được đưa vào file config
+
+# Kết xuất dữ liệu Telegram
+Mọi lệnh tôi nhờ bạn giải quyết, dù là gì đi chăng nữa, thì ngay khi xong việc bạn **BẮT BUỘC** phải dùng công cụ `write_to_file` xuất CÂU TRẢ LỜI/KẾT QUẢ của bạn (dạng text chay, không format màu mè) thẳng vào tệp `.agent/response.txt` nhé!

@@ -82,9 +82,13 @@ def push_data(config_path=None):
                     config_id = bot_cfg.get("CONFIG_ID", "")
                     
                     if config_id:
-                        f1 = data_dir / f"final_features_{config_id}.parquet"
-                        f2 = data_dir / f"target_direction_{config_id}.parquet"
-                        f3 = data_dir / f"scaler_{config_id}.pkl"
+                        config_dir = data_dir / config_id
+                        f1 = config_dir / f"final_features_{config_id}.parquet"
+                        f2 = config_dir / f"target_direction_{config_id}.parquet"
+                        f3 = config_dir / f"scaler_{config_id}.pkl"
+                        
+                        target_dir_for_upload = config_dir
+                        upload_path_in_repo = f"data/{config_id}"
                         
                         if f1.exists(): target_files.append(f1)
                         if f2.exists(): target_files.append(f2)
@@ -94,8 +98,10 @@ def push_data(config_path=None):
         else:
             print(f"[HF] Config {config_path} không tồn tại!")
     else:
+        target_dir_for_upload = data_dir
+        upload_path_in_repo = "data"
         # Lọc cụ thể các file cần đẩy thay vì đẩy nguyên folder
-        for f in data_dir.glob("*"):
+        for f in data_dir.rglob("*"):
             if f.suffix in [".parquet", ".pkl", ".json"]:
                 # Chỉ pick các file config và kết quả feature engineering
                 if f.name.startswith("final_features") or f.name.startswith("target_direction") or f.name.startswith("scaler") or f.name.startswith("bot_config"):
@@ -111,8 +117,8 @@ def push_data(config_path=None):
     try:
         print(f"  🚀 Uploading qua Pipeline siêu tốc {len(allowed_patterns)} files...")
         api.upload_folder(
-            folder_path=str(data_dir),
-            path_in_repo="data",
+            folder_path=str(target_dir_for_upload),
+            path_in_repo=upload_path_in_repo,
             repo_id=repo_id,
             repo_type="dataset",
             token=token,
@@ -146,14 +152,19 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
     
     # Read OPTIONAL REQUIRED PARQUETS list from config
     required_parquets = None
+    config_id = None
     if config_path:
         import json
         try:
             with open(config_path, 'r', encoding='utf-8') as cf:
                 bot_cfg = json.load(cf)
                 required_parquets = bot_cfg.get("HF_CLOUD", {}).get("REQUIRED_PARQUETS", None)
+                config_id = bot_cfg.get("CONFIG_ID", None)
         except Exception as e:
             pass
+            
+    # Set the target clean directory if config_id exists
+    clean_dir = data_dir / config_id if config_id else data_dir
             
     log = logger.info if logger else print
     log(f"[HF] Bắt đầu tải Parquet data từ {repo_id} (Safe HTTP Method)...")
@@ -162,8 +173,8 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         from huggingface_hub import HfApi, hf_hub_download
         
         # --- [CLEANUP] Dọn rác các file Parquet/Pkl cũ không còn nằm trong REQUIRED_PARQUETS ---
-        if required_parquets and data_dir.exists():
-            for local_file in data_dir.glob("*"):
+        if required_parquets and clean_dir.exists():
+            for local_file in clean_dir.glob("*"):
                 if local_file.suffix in [".parquet", ".pkl"]:
                     if local_file.name not in required_parquets:
                         try:
@@ -175,7 +186,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
         parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl"))]
         if required_parquets:
-            parquet_files = [f for f in parquet_files if f.replace("data/", "") in required_parquets]
+            parquet_files = [f for f in parquet_files if Path(f).name in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
         
         target_dir = str(data_dir.parent)

@@ -206,45 +206,15 @@ class HostController:
 
     def deploy_agent(self, version: str = "latest"):
         """
-        Deploy một version cụ thể của agent sang Client.
-        - version='latest' → dùng file hiện tại
-        - version='v1.3.5' → dùng file trong versions/client_tg_agent_v1.3.5.py
+        Gửi lệnh Deploy Mới: Yêu cầu Client thực hiện Hard Reset và Pull từ GitHub thay vì nhận Base64!
         """
         self._wait_connected()
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        versions_dir = os.path.join(base_dir, "versions")
-        agent_src = os.path.join(base_dir, "client_tg_agent.py")
-
-        if version == "latest":
-            target_file = agent_src
-            ver_label = "latest"
-        else:
-            target_file = os.path.join(versions_dir, f"client_tg_agent_{version}.py")
-            ver_label = version
-
-        if not os.path.exists(target_file):
-            print(f"[LỖI] Không tìm thấy file: {target_file}")
-            print(f"[INFO] Các version hiện có:")
-            if os.path.exists(versions_dir):
-                for f in sorted(os.listdir(versions_dir)):
-                    print(f"  - {f}")
-            return
-
-        with open(target_file, "rb") as f:
-            raw_bytes = f.read()
-        import base64
-        b64 = base64.b64encode(raw_bytes).decode("utf-8")
-        file_size = len(raw_bytes)
-
         payload = json.dumps({
-            "cmd": "deploy_agent",
-            "version": ver_label,
-            "content_b64": b64,
-            "size": file_size
+            "cmd": "deploy_agent"
         })
         self.client.publish(self.cmd_topic, payload, qos=1)
-        print(f"[HOST] 🚀 Deploy agent {ver_label} ({file_size/1024:.1f}KB) → {self.client_id} (client sẽ tự restart)")
+        print(f"[HOST] 🚀 Gửi lệnh [Deploy Toàn Hệ Thống] → {self.client_id} (Client sẽ Hard Reset GitHub và Restart)")
 
     @staticmethod
     def save_version(tag: str = ""):
