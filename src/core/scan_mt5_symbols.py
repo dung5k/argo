@@ -15,6 +15,7 @@ MT5_TERMINALS = {
     "DEFAULT":  r"C:\Program Files\MetaTrader 5\terminal64.exe",
     "MT5_2":    r"C:\Program Files\MetaTrader 5 - 2\terminal64.exe",
     "MTRADING": r"C:\Program Files\Mtrading MetaTrader 5\terminal64.exe",
+    "ICMARKETS": r"C:\Program Files\MetaTrader 5 - ICMarkets\terminal64.exe",
 }
 
 # Map CALC_MODE -> loại tài sản dễ đọc
