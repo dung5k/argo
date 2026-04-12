@@ -65,16 +65,16 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
 
 #### Lịch sử các lần chạy (Run History):
 
-- **Lần chạy: (Đang lên lịch, chưa khởi chạy)**
+- **Lần chạy: `run_london_inprogress`**
   - **Máy trạm:** `client1`
-  - **Thời gian:** 13/04 04:00+ (Sau khi ngắt Asian)
-  - **Mô tả:** Đào tạo phiến London để tóm Fakeout.
-  - **Trạng thái:** Chờ tới giờ kích nổ.
+  - **Thời gian:** 13/04 06:12 - Hẹn mặc định (3 tiếng)
+  - **Mô tả:** Đào tạo phiến London để tóm Fakeout, áp dụng Batch_Size 1024, MAX mode.
+  - **Trạng thái:** ĐANG CHẠY (Huấn luyện đang diễn ra trực tiếp trên Client1).
   - **Các đầu việc cần làm (Dành cho AI):**
     + [x] Khởi chạy quy trình trích xuất Dataset 100% MT5 lọc chuẩn biên độ thời gian [07h00 - 12h30 UTC] (Đã tạo `CFG_XAU_LONDON_V2` và Push kho dữ liệu lên HF).
-    + [ ] Đóng gói và gửi config mới `bot_config_xau_london_v2.json` cho `client1`.
-    + [ ] Gửi yêu cầu `client1` training v2 XAU London.
-    + [ ] Báo cáo cập nhật kết quả training vào file `TRAINING_PLAN.md`.
+    + [x] Đóng gói và gửi config mới `bot_config_xau_london_v2.json` cho `client1`.
+    + [x] Gửi yêu cầu `client1` training v2 XAU London.
+    + [ ] Báo cáo cập nhật kết quả training vào file `TRAINING_PLAN.md` sau khi hoàn tất.
 
 ---
 
