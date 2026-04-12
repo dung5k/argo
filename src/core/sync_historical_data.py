@@ -179,55 +179,69 @@ def sync_all_history():
     print("="*60)
     
     all_ok = True
+    
+    # Phân loại báo cáo
+    categories = {
+        "KIM LOẠI (Metals)": ["XAUUSD", "XAGUSD", "XCUUSD", "XPTUSD", "XPDUSD"],
+        "NGOẠI HỐI (Forex)": ["EURUSD", "USDJPY", "USDCAD", "USDCHF", "GBPUSD", "AUDUSD", "DXY"],
+        "CHỨNG KHOÁN (Indices)": ["NASDAQ", "US500", "US30", "VIXY", "USTEC", "NASDAQ_100"],
+        "NĂNG LƯỢNG (Energy)": ["USOIL", "XNGUSD", "UKOIL", "BRENT"],
+        "TRÁI PHIẾU (Bonds)": ["US_10Y_YIELD", "Z10Y"],
+        "TIỀN MÃ HÓA (Crypto)": ["BTCUSD", "ETHUSD"]
+    }
+    grouped_reports = {k: [] for k in categories}
+    grouped_reports["KHÁC (Others)"] = []
+    
     for fp in generated_files:
         sym_name = os.path.basename(fp).split("_mt5_")[0].upper()
+        if sym_name == "NASDAQ": sym_name = "NASDAQ_100"
+        
+        # Determine category
+        cat_found = "KHÁC (Others)"
+        for cat, keywords in categories.items():
+            if any(k in sym_name for k in keywords):
+                cat_found = cat
+                break
+                
         try:
             check_df = pd.read_parquet(fp)
             rows = len(check_df)
             cols = list(check_df.columns)
             
-            # Kiểm tra khoảng thời gian
             t_min = check_df.index.min()
             t_max = check_df.index.max()
-            
-            # Kiểm tra giá trị NaN
             null_pct = check_df.isnull().mean().max() * 100
             
-            # Kiểm tra real_volume
             rv_col = 'real_volume'
             has_real_vol = rv_col in cols
             real_vol_sum = check_df[rv_col].sum() if has_real_vol else 0
-            real_vol_status = (
-                f"✅ {int(real_vol_sum):,}" if (has_real_vol and real_vol_sum > 0)
-                else (f"⚠️  =0 (Forex CFD - bình thường)" if has_real_vol else "❌ Không có cột")
-            )
+            real_vol_status = f"✅ {int(real_vol_sum):,}" if (has_real_vol and real_vol_sum > 0) else (f"⚠️ =0 (Forex CFD)" if has_real_vol else "❌ Không có")
             
-            # Kiểm tra gap lớn (nhiều hơn 60 phút liên tiếp không có nến)
             if len(check_df) > 1:
                 time_diffs = check_df.index.to_series().diff().dt.total_seconds() / 60
                 max_gap_min = time_diffs.max()
-                gap_status = f"⚠️  {max_gap_min:.0f} phút" if max_gap_min > 120 else f"✅ {max_gap_min:.0f} phút"
+                gap_status = f"⚠️ {max_gap_min:.0f}p" if max_gap_min > 120 else f"✅ {max_gap_min:.0f}p"
             else:
                 max_gap_min = 0
-                gap_status = "❓ Không đủ dữ liệu"
-            
-            # Tổng trạng thái
-            status = "✅ OK" if (rows >= 10000 and null_pct < 20 and max_gap_min < 1440) else "⚠️  CẦN KIỂM TRA"
+                gap_status = "❓ Thiếu data"
+                
+            status = "✅ OK" if (rows >= 10000 and null_pct < 20 and max_gap_min < 1440) else "⚠️ CẨN THẬN"
             if rows < 1000:
-                status = "❌ THIẾU DỮ LIỆU NGHIÊM TRỌNG"
+                status = "❌ THIẾU NGHIÊM TRỌNG"
                 all_ok = False
-            
-            print(f"\n[{sym_name}] {status}")
-            print(f"  📅 Từ: {t_min} → {t_max}")
-            print(f"  📈 Số nến M1: {rows:,}")
-            print(f"  📊 Cột dữ liệu: {cols}")
-            print(f"  🔢 real_volume tổng: {real_vol_status}")
-            print(f"  ⏱️  Gap lớn nhất: {gap_status}")
-            print(f"  🚫 NaN tối đa: {null_pct:.1f}%")
+                
+            report_str = f"  [{sym_name:12s}] {status:15s} | Nến: {rows:<7,} | GapMax: {gap_status:8s} | T: {t_min.strftime('%m/%d')}->{t_max.strftime('%m/%d')} | Vol: {real_vol_status}"
+            grouped_reports[cat_found].append(report_str)
             
         except Exception as e:
-            print(f"\n[{sym_name}] ❌ LỖI ĐỌC FILE: {e}")
+            grouped_reports[cat_found].append(f"  [{sym_name:12s}] ❌ LỖI ĐỌC FILE: {e}")
             all_ok = False
+            
+    for cat, reports in grouped_reports.items():
+        if reports:
+            print(f"\n[{cat}]")
+            for r in reports:
+                print(r)
     
     print("\n" + "="*60)
     print(f"📝 TỔNG KẾT: {'✅ TẤT CẢ DỮ LIỆU HỢP LỆ' if all_ok else '⚠️  CÓ VẤN ĐỀ CẦN XEM XÉT'}")
