@@ -23,10 +23,19 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
   - Khắc phục lỗi API Gemini 400 (do IP khu vực) của AI Supervisor nhúng trong đợt đánh giá mỗi 200 epochs để khỏi rác log.
 
 #### Lịch sử các lần chạy (Run History):
-| Lần chạy (Run ID) | Máy Trạm (Node) | Thời gian | Epochs Đạt được | Train Loss | Val Loss | Tình trạng & Ghi chú |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `20260412_181628_train` | `client1` | 12/04 18:16 - 22:30 | Ep 200+ | ~0.1414 | ~0.2416 | Bị ngắt (Stop Train) để chuẩn bị chuyển qua Asian. Có dấu hiệu Val_Loss hơi với (nguy cơ mớm overfit). Lời khuyên: Giảm Learning Rate hoặc chốt model sớm mốc Ep 180 (Val: 0.19). |
-| `20260411_...` | `clientGH` | 11/04 | Ep 100+ | - | - | Bị kẹt lỗi đụng độ Git Pull do rác hệ thống (Đã xử lý cơ chế cưỡng chế Hard Reset + Clean). |
+
+- **Lần chạy: `20260412_181628_train`**
+  - **Máy trạm:** `client1`
+  - **Thời gian:** 12/04 18:16 - 22:30
+  - **Tiến độ:** Ep 200+
+  - **Loss:** Train `~0.1414` | Val `~0.2416`
+  - **Ghi chú:** Bị ngắt (Stop Train) để chuẩn bị chuyển qua Asian. Có dấu hiệu Val_Loss hơi với (nguy cơ mớm overfit). Lời khuyên: Giảm Learning Rate hoặc chốt model sớm mốc Ep 180 (Val: 0.19).
+
+- **Lần chạy: `20260411_...`**
+  - **Máy trạm:** `clientGH`
+  - **Thời gian:** 11/04
+  - **Tiến độ:** Ep 100+
+  - **Ghi chú:** Bị kẹt lỗi đụng độ Git Pull do rác hệ thống (Đã xử lý cơ chế cưỡng chế Hard Reset + Clean).
 
 ---
 
@@ -35,9 +44,13 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
   - Vừa mới mồi lửa cấu hình. Biên độ phiên Á rất hẹp, Loss dự kiến sẽ giảm dốc đứng nhưng phải cẩn thận bẫy vấp thanh khoản (Wash Trading).
 
 #### Lịch sử các lần chạy (Run History):
-| Lần chạy (Run ID) | Máy Trạm (Node) | Thời gian | Epochs Đạt được | Train Loss | Val Loss | Tình trạng & Ghi chú |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| (Vừa khởi động) | `client1` | 12/04 22:56+ | Đang chạy | (Đang thu thập) | (Đang thu thập) | Bắt đầu nhận config mới cứng `bot_config_xau_asian_v2.json`. Máy đã ngoạm tín hiệu và đăng nhập quá trình Train (MAX Mode) thành công. File Json được nhét trơn tru vào kho `C:\argo\data`. |
+
+- **Lần chạy: (Vừa khởi động)**
+  - **Máy trạm:** `client1`
+  - **Thời gian:** 12/04 22:56+
+  - **Tiến độ:** Đang chạy
+  - **Loss:** Đang thu thập
+  - **Ghi chú:** Bắt đầu nhận config mới cứng `bot_config_xau_asian_v2.json`. Máy đã ngoạm tín hiệu và đăng nhập quá trình Train (MAX Mode) thành công. File Json được nhét trơn tru vào kho `C:\argo\data`.
 
 ---
 
@@ -50,10 +63,17 @@ Ngách khai thác lợi nhuận bù đắp vào các ngày thứ Bảy, Chủ Nh
   - Phế bỏ hoàn toàn những lệnh cố gắng ăn xổi (Scalp) 1-3 phút vì đã có bài nghiên cứu chứng minh nó vướng rào cản Spread/Phí (Chỉ có ~13% - 28% tỷ lệ thắng phí). Xoay trục cấu trúc sang đánh dồn tụ dài hạn: Horizons `[5, 10, 15, 30]` phút.
 
 #### Lịch sử các lần chạy (Run History):
-| Lần chạy (Run ID) | Máy Trạm (Node) | Thời gian | Epochs Đạt được | Train Loss | Val Loss | Tình trạng & Ghi chú |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `demo_arb_run1` | `clientGH` | 12/04 21:30 | Thu thập tệp parquet | N/A | N/A | Quá trình tải tệp từ HuggingFace qua Safe HTTP hoàn tất nhưng bộ lọc ban đầu báo vớt được `0/3 file`. Đã khắc phục việc lộ đường viền Config và bắt Agent quy về đít `C:\argo`. |
-| `demo_arb_run2` | `clientGH` | Sắp chạy... | Dành cho cuối tuần sau | - | - | Chờ nạp bản Config mới với bộ Horzion 5-30m để kiểm chứng kết quả thực chiến vào dịp T7 tới. |
+
+- **Lần chạy: `demo_arb_run1`**
+  - **Máy trạm:** `clientGH`
+  - **Thời gian:** 12/04 21:30
+  - **Tiến độ:** Thu thập tệp parquet
+  - **Ghi chú:** Quá trình tải tệp từ HuggingFace qua Safe HTTP hoàn tất nhưng bộ lọc ban đầu báo vớt được `0/3 file`. Đã khắc phục việc lộ đường viền Config và bắt Agent quy về ổ cứng `C:\argo`.
+
+- **Lần chạy: `demo_arb_run2`**
+  - **Máy trạm:** `clientGH`
+  - **Thời gian:** Sắp chạy...
+  - **Ghi chú:** Chờ nạp bản Config mới với bộ Horzion 5-30m để kiểm chứng kết quả thực chiến vào dịp T7 tới.
 
 ---
 
