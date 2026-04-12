@@ -27,12 +27,12 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
 - **Lần chạy: `20260412_181628_train`**
   - **Máy trạm:** `client1`
   - **Thời gian:** 12/04 18:16 - 22:30
-  - **Tiến độ:** Ep 200+
-  - **Loss & Winrate:**
-    - Train Loss: `~0.1414` | Val Loss: `~0.2416`
-    - Winrate: `>50%: N/A | >62%: N/A | >73%: N/A | >85%: N/A` *(Chưa thu thập từ Log cũ)*
+  - **Tiến độ:** Dừng tại Ep 308 (Đã Push lên HuggingFace)
+  - **Loss & Winrate (Tốt nhất tại Ep 306):**
+    - Val Loss: `0.1731` (Best VLoss ghi nhận ở Ep 105)
+    - Winrate (Điểm 81.8): `>50%: 49.9% | >51%: 50.5% | >52%: 53.2% | >54%: 81.8%`
   - **Mô tả:** Chạy phân tích phiến Mỹ.
-  - **Trạng thái:** Đã Stop ngang để nhường tài nguyên cho phiến Á. Nguy cơ mớm overfit ở mốc Ep 200.
+  - **Trạng thái:** Đã Stop ngang để nhường tài nguyên cho phiến Á. Nguy cơ mớm overfit ở mốc Ep 308.
 
 ---
 
