@@ -66,26 +66,28 @@ class HostController:
         config_content = ""
         if cmd == "train":
             LOCAL_CONFIG_MAP = {
-                "xauusd": "data/bot_config_xau_v2.json",
-                "xau"   : "data/bot_config_xau_v2.json",
-                "xagusd": "data/bot_config_xag_v2.json",
-                "xag"   : "data/bot_config_xag_v2.json",
-                "xau_v1_5": "data/bot_config_xau_v1_5.json",
-                "xag_v1_5": "data/bot_config_xag_v1_5.json",
-                "xau_v2": "data/bot_config_xau_v2.json",
-                "xag_v2": "data/bot_config_xag_v2.json",
-                "ltc"   : "data/bot_config_ltc.json",
-                "oil"   : "data/bot_config_oil.json",
-                "arb_v2": "data/bot_config_arb_v2.json",
+                "xauusd"      : "bot_config_xau_v2.json",
+                "xau"         : "bot_config_xau_v2.json",
+                "xagusd"      : "bot_config_xag_v2.json",
+                "xag"         : "bot_config_xag_v2.json",
+                "xau_v1_5"    : "bot_config_xau_v1_5.json",
+                "xag_v1_5"    : "bot_config_xag_v1_5.json",
+                "xau_v2"      : "bot_config_xau_v2.json",
+                "xag_v2"      : "bot_config_xag_v2.json",
+                "ltc"         : "bot_config_ltc.json",
+                "oil"         : "bot_config_oil.json",
+                "arb_v2"      : "bot_config_arb_v2.json",
+                "xau_asian_v2": "bot_config_xau_asian_v2.json",
+                "xau_ny_v2"   : "bot_config_xau_ny_v2.json"
             }
             local_cfg = LOCAL_CONFIG_MAP.get(symbol)
             if local_cfg:
                 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                local_cfg_path = os.path.join(base_dir, local_cfg)
+                local_cfg_path = os.path.join(base_dir, "data", local_cfg)
                 if os.path.exists(local_cfg_path):
-                    with open(local_cfg_path, "r", encoding="utf-8") as f:
-                        config_content = f.read()
-                    print(f"[HOST] Đã đính kèm cấu hình {local_cfg} ({len(config_content)} bytes) vào lệnh train.")
+                    print(f"[HOST] Đang đẩy tệp cấu hình mới ({local_cfg}) sang Client trước khi Train...")
+                    self.send_file(local_cfg_path, local_cfg)  # Dest se la C:\argo\data\bot_config_...
+                    time.sleep(1.5)  # Cho client thoi gian ghi file
                 else:
                     print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
                     
@@ -104,8 +106,7 @@ class HostController:
                 "symbol": symbol, 
                 "script": script,
                 "session": session.lower(),
-                "perf_mode": mode.upper(),
-                "config_content": config_content
+                "perf_mode": mode.upper()
             })
             
         self.client.publish(self.cmd_topic, payload, qos=1)
