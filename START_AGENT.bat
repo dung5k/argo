@@ -139,7 +139,7 @@ if !errorlevel! neq 0 (
         echo [INFO] Chua co PyTorch. Tien hanh tai PyTorch tu dong...
         "!TARGET_VENV!\Scripts\python.exe" -m pip install -q torch
     )
-    "!TARGET_VENV!\Scripts\python.exe" -m pip install -q pandas numpy pyarrow scikit-learn paho-mqtt huggingface_hub
+    "!TARGET_VENV!\Scripts\python.exe" -m pip install -q pandas "numpy<2.0.0" pyarrow scikit-learn paho-mqtt huggingface_hub requests psutil
 )
 echo [OK] Thu vien san sang.
 echo.
