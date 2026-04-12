@@ -91,8 +91,10 @@ echo.
 if exist ".git" (
     git --version >nul 2>&1
     if !errorlevel! equ 0 (
-        echo [GIT] Dang dong bo code moi nhat...
-        git pull --rebase
+        echo [GIT] Dang dong bo code moi nhat tu ARGO (Cuong che clear rac)...
+        git fetch origin
+        git reset --hard origin/main
+        git clean -fd
     )
 )
 echo.
@@ -101,8 +103,7 @@ echo.
 :: CHAY AGENT #2 VOI CLIENT-ID RIENG BIET
 :: Bien ARGO_AGENT_INSTANCE=2 dung de debug nhanh neu can
 :: =============================================================
-if not exist "!CLIENT_ID!\logs" mkdir "!CLIENT_ID!\logs"
-if not exist "!CLIENT_ID!\action_request" mkdir "!CLIENT_ID!\action_request"
+:: Khong tao thu muc log trong thu muc hien hanh nua (Dung C:\argo)
 
 :: =============================================================
 :: BIEN MOI TRUONG ARGO

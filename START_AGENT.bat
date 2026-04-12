@@ -96,8 +96,10 @@ echo.
 if exist ".git" (
     git --version >nul 2>&1
     if !errorlevel! equ 0 (
-        echo [GIT] Dang dong bo code moi nhat tu ARGO...
-        git pull --rebase
+        echo [GIT] Dang dong bo code moi nhat tu ARGO (Cuong che clear rac)...
+        git fetch origin
+        git reset --hard origin/main
+        git clean -fd
     ) else (
         echo [CANH BAO] Khong the chay git pull. Chua cai Git
     )
@@ -145,8 +147,7 @@ echo.
 :: =============================================================
 :: CHAY TRAM LANG NGHE TELEGRAM BOT LUU THONG TIN
 :: =============================================================
-if not exist "!CLIENT_ID!\logs" mkdir "!CLIENT_ID!\logs"
-if not exist "!CLIENT_ID!\action_request" mkdir "!CLIENT_ID!\action_request"
+:: Khong tao thu muc log trong thu muc hien hanh nua (Dung C:\argo)
 
 :run_agent
 echo ============================================================
