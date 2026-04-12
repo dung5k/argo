@@ -565,7 +565,7 @@ class TelegramAgent:
                     local_path = hf_hub_download(
                         repo_id=cfg["hf_repo_id"], repo_type="dataset",
                         token=cfg["hf_token"], filename=hf_path,
-                        local_dir=str(self.base_dir), local_dir_use_symlinks=False
+                        local_dir=str(self.base_dir)
                     )
                     msg = f"Đã kéo file '{hf_path}' từ HF về '{local_path}'"
                     self.logger.info(f"  [PULL_HF_FILE] {msg}")

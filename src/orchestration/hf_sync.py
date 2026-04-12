@@ -191,8 +191,7 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
                 filename=f,
                 repo_type="dataset",
                 token=token,
-                local_dir=target_dir,
-                local_dir_use_symlinks=False
+                local_dir=target_dir
             )
             
         log("[HF] Tải Dữ Liệu Hoàn Tất! Sẵn sàng huấn luyện. ✅")
@@ -324,7 +323,6 @@ def pull_runs(logger=None, target_prefix=None, config_id=None):
             allow_patterns=patterns,
             ignore_patterns=["**/*.png"],
             local_dir=str(argo_logs_dir),
-            local_dir_use_symlinks=False,
             force_download=False
         )
         log("[HF] Kéo trọng số hoàn tất! Sẵn sàng kế thừa. ✅")

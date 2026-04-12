@@ -166,7 +166,7 @@ class FocalLoss(nn.Module):
 # Main training function
 # ─────────────────────────────────────────────────────────────────────
 
-def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD"):
+def train_unified_model(features, targets, num_features, run_dir, target_prefix="XAU_USD", config_path=None):
     """
     Train 1 Transformer model Unified V2.
 
@@ -176,6 +176,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         num_features  : Số features (features.shape[1]).
         run_dir       : Thư mục lưu kết quả run hiện tại.
         target_prefix : Tên symbol (VD: 'XAUUSD').
+        config_path   : Đường dẫn tuyệt đối đến bot_config.json.
     """
     import time
 
@@ -199,7 +200,7 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
         pass
 
     # ── 1. Load Config ────────────────────────────────────────────
-    cfg = TrainingConfig.load(base_proj=str(_ROOT))
+    cfg = TrainingConfig.load(config_path=config_path, base_proj=str(_ROOT))
     for i, a in enumerate(sys.argv):
         if a == "--session" and i + 1 < len(sys.argv):
             cfg.session = sys.argv[i + 1].lower()
@@ -795,7 +796,7 @@ if __name__ == "__main__":
     print("[INIT] Calling train_unified_model...")
     sys.stdout.flush()
     try:
-        train_unified_model(features, targets_data, num_features, run_dir, target_prefix=TARGET_PREFIX)
+        train_unified_model(features, targets_data, num_features, run_dir, target_prefix=TARGET_PREFIX, config_path=config_path)
     except Exception as e:
         import traceback
         msg = f"[CRASH DETECTED] {traceback.format_exc()}"
