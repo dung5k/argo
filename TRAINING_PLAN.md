@@ -54,6 +54,23 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
 
 ---
 
+### 2.3. XAU Phiên Âu (London Session)
+- **Tình trạng/Kế hoạch sắp tới:** 
+  - Đóng gói file cấu hình rập khuôn `bot_config_xau_london_v2.json`.
+  - Mục tiêu đào tạo là tóm các nhịp Breakout giả (Fakeout) và dòng tiền dẫn dắt (Smart money injection) chuẩn bị gối đầu sang phiên Mỹ.
+  - Sẽ trích xuất Dataset lọc chuẩn khung giờ từ 14:00 đến 19:30 (Giờ VN). Sẽ yêu cầu `clientGH` gánh phần khung giờ này vào trong rạng sáng các ngày trong tuần.
+
+#### Lịch sử các lần chạy (Run History):
+
+- **Lần chạy: (Đang lên lịch, chưa khởi chạy)**
+  - **Máy trạm:** Dự kiến `clientGH` hoặc `client1` sau khi nhả phiên Á.
+  - **Thời gian:** N/A
+  - **Tiến độ:** N/A
+  - **Loss:** N/A
+  - **Ghi chú:** Đang chờ hoàn tất việc gọt Dataset.
+
+---
+
 ## 3. TRAINING V2 ARB (CRYPTO CUỐI TUẦN)
 
 Ngách khai thác lợi nhuận bù đắp vào các ngày thứ Bảy, Chủ Nhật khi dòng tiền Fiat nghỉ xả hơi. Arbitrum (ARB) có thanh khoản tương đối nén với biên độ sóng ăn sâu.
