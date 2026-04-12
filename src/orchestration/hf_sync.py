@@ -179,7 +179,9 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
         parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl") or f.endswith(".json"))]
+        log(f"       => Đã tìm thấy {len(parquet_files)} file hợp lệ có trong HF Repo ({repo_id})")
         if required_parquets:
+            log(f"       => Yêu cầu từ config: {required_parquets}")
             parquet_files = [f for f in parquet_files if Path(f).name in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
         
