@@ -419,9 +419,6 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     total_epoch        = 0
     need_reload_loader = False
 
-    import datetime
-    import json
-    import os
     # Parser end time
     end_time_str = ""
     if config_path and os.path.exists(config_path):
