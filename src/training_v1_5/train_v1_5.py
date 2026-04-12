@@ -288,7 +288,8 @@ def train_unified_v1_5(features, targets, num_features, run_dir, config=None, ta
     criterion_kwargs = {"weight": class_weights, "label_smoothing": 0.15}
     criterions = {s_id: FocalLoss(**criterion_kwargs, gamma=2.0).to(device) for s_id in SESSIONS}    # Khởi tạo Hệ thống Đa não bộ
     argo_data_dir = cfg.get("ARGO_DATA_DIR", os.environ.get("ARGO_DATA_DIR", "C:/argo/data"))
-    meta_path = os.path.join(argo_data_dir, f"feature_meta_{target_prefix}.json")
+    config_id = cfg.get("CONFIG_ID", "DEFAULT")
+    meta_path = os.path.join(argo_data_dir, config_id, f"feature_meta_{config_id}.json")
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
     if os.path.exists(meta_path):
@@ -876,7 +877,8 @@ if __name__ == "__main__":
 
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
-    DATA_PATH     = ARGO_DATA_DIR
+    # Tự động trỏ DATA_PATH vào thư mục con chứa CONFIG_ID
+    DATA_PATH     = os.path.join(ARGO_DATA_DIR, CONFIG_ID) if CONFIG_ID != "DEFAULT" else ARGO_DATA_DIR
     
     validate_startup_configs(cfg, _ROOT)
     
