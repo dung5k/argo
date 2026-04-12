@@ -82,7 +82,7 @@
         "TRAIN_START": "2026-03-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-08",
-        "BATCH_SIZE": 2048,
+        "BATCH_SIZE": 512,
         "ARCH": {
             "win": 40,
             "d_model": 256,
@@ -132,7 +132,8 @@
         "REQUIRED_PARQUETS": [
             "final_features_CFG_XAU_V1_5.parquet",
             "target_direction_CFG_XAU_V1_5.parquet",
-            "scaler_CFG_XAU_V1_5.pkl"
+            "scaler_CFG_XAU_V1_5.pkl",
+            "feature_meta_CFG_XAU_V1_5.json"
         ]
     }
 }
