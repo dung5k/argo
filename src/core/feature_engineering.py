@@ -48,7 +48,7 @@ def load_and_align_data(data_path):
     
     if USE_MT5_DATA:
         print(">> Chế độ: ĐANG ĐỌC NGUỒN DỮ LIỆU MT5 TỔNG HỢP <<")
-        files = [f for f in os.listdir(data_path) if f.endswith('.parquet') and 'usdt' not in f.lower() and 'target_' not in f.lower() and 'final_' not in f.lower()]
+        files = [f for f in os.listdir(data_path) if f.endswith('.parquet') and 'target_' not in f.lower() and 'final_' not in f.lower()]
         
         # Nếu đang train/trade XAUUSD, dọn dẹp các mã gây nhiễu và ÉP NGHIÊM NGẶT dùng list của LIVE
         mt5_symbols = config.get("MT5_SYMBOLS", [])

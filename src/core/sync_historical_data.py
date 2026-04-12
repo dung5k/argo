@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from src.core.data_adapters import BinanceAdapter
 import MetaTrader5 as mt5
-from mt5_data_manager import MT5DataManager
+from src.core.mt5_data_manager import MT5DataManager
 
 def sync_all_history():
     print("🚀 BẮT ĐẦU ĐỒNG BỘ DỮ LIỆU LỊCH SỬ TỪ CẤU HÌNH LIVE (UNIFIED CONFIG) 🚀")
@@ -21,6 +21,8 @@ def sync_all_history():
         print("❌ Lỗi: Không thể map được bất kỳ mã nào từ cấu hình MT5!")
         return
         
+    manager.scan_terminals_and_map()
+    # Lấy map MT5 Paths để query config. json
     router = manager.GLOBAL_MT5_ROUTER_MAP
     hints = manager.IN_MEMORY_SYMBOL_HINT
     

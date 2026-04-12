@@ -44,7 +44,8 @@ class BinanceAdapter(BaseDataAdapter):
             
         # Chuẩn hoá mã "BTCUSDm" (của config) thành format của Binance "BTC/USDT"
         # config routing thường để dict như: "BTCUSD": "BINANCE". Target là symbol gốc từ MT5 mapping
-        binance_sym = symbol.replace("USDm", "/USDT").replace("USD", "/USDT").upper()
+        base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
+        binance_sym = base_sym + "/USDT"
         
         # Xử lý timeframe (MT5 gọi M1, CCXT gọi 1m)
         if timeframe == 'M1': 
@@ -83,7 +84,8 @@ class BinanceAdapter(BaseDataAdapter):
         if not self.exchange:
             if not self.connect(): return pd.DataFrame()
             
-        binance_sym = symbol.replace("USDm", "/USDT").replace("USD", "/USDT").upper()
+        base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
+        binance_sym = base_sym + "/USDT"
         
         # Format time
         from dateutil import parser

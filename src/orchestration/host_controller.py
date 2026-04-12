@@ -76,6 +76,7 @@ class HostController:
                 "xag_v2": "data/bot_config_xag_v2.json",
                 "ltc"   : "data/bot_config_ltc.json",
                 "oil"   : "data/bot_config_oil.json",
+                "arb_v2": "data/bot_config_arb_v2.json",
             }
             local_cfg = LOCAL_CONFIG_MAP.get(symbol)
             if local_cfg:

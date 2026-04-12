@@ -94,7 +94,7 @@
         "VAL_END": "2026-04-08",
         "LEARNING_RATE": 1e-05,
         "MIN_LR": 1e-06,
-        "BATCH_SIZE": 512,
+        "BATCH_SIZE": 128,
         "EPOCHS": 20,
         "PATIENCE": 6,
         "LOSS_FUNCTIONS": {

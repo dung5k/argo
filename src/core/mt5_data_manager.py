@@ -181,6 +181,13 @@ class MT5DataManager:
             if not syms_for_this_path:
                 continue
 
+            if path_alias == "LOCAL" or path_alias == "BINANCE" or path == "LOCAL" or path == "BINANCE":
+                for req_m in syms_for_this_path:
+                    self.GLOBAL_MT5_ROUTER_MAP[req_m] = path
+                    self.IN_MEMORY_SYMBOL_HINT[req_m] = req_m
+                    self.log_message(f"   => Khớp Sensor [{req_m}] vào [{path_alias}] (Không cần check MT5)")
+                continue
+
             mt5.shutdown()
             if mt5.initialize(path=path):
                 syms = mt5.symbols_get()
