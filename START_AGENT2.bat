@@ -104,6 +104,14 @@ echo.
 if not exist "!CLIENT_ID!\logs" mkdir "!CLIENT_ID!\logs"
 if not exist "!CLIENT_ID!\action_request" mkdir "!CLIENT_ID!\action_request"
 
+:: =============================================================
+:: BIEN MOI TRUONG ARGO
+:: =============================================================
+set ARGO_DATA_DIR=%cd%\data
+set ARGO_LOGS_DIR=%cd%\logs
+echo [INFO] ARGO_DATA_DIR = !ARGO_DATA_DIR!
+echo.
+
 :run_agent2
 echo ============================================================
 echo   [!CLIENT_ID!] AGENT #2 DANG KET NOI LEN SERVER ARGO...
