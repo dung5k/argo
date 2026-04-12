@@ -57,6 +57,7 @@ class MT5DataManager:
             "XPDUSDm": ["XPDUSDm", "XPDUSD", "PALLADIUM", "PALLADIUMm"],
             "XPBUSDm": ["XPBUSDm", "XPBUSD", "LEAD", "LEADm"],
             "USDJPYm": ["USDJPYm", "USDJPY", "USDJPY.a"],
+            "USDCHFm": ["USDCHFm", "USDCHF", "USDCHF.a"],
             "USDCADm": ["USDCADm", "USDCAD", "USDCAD.a"],
             "EURUSDm": ["EURUSDm", "EURUSD", "EURUSD.a"],
             "GBPUSDm": ["GBPUSDm", "GBPUSD", "GBPUSD.a"],
