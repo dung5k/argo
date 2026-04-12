@@ -1,0 +1,119 @@
+{
+    "TARGET_SYMBOL": "ARBUSDT",
+    "TARGET_PREFIX": "ARBUSDT",
+    "CONFIG_ID": "CFG_ARB_V2",
+    "SESSION": "24h",
+    "SESSION_UTC": {
+        "START": "00:00",
+        "END": "24:00",
+        "DESCRIPTION": "Crypto trades 24/7"
+    },
+    "MT5_PATH": "BINANCE",
+    "WEIGHT_FILE": "arb_v2_weights.pth",
+    "WEIGHT_FILES": {
+        "asian": "arb_v2_weights.pth",
+        "european": "arb_v2_weights.pth",
+        "us": "arb_v2_weights.pth"
+    },
+    "HF_RUN_ID": "run_ARB_V2_init",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_data",
+        "MODEL_REPO": "dung5k/trading_models",
+        "SYNC_CHUNKS": true,
+        "REQUIRED_PARQUETS": [
+            "final_features_CFG_ARB_V2.parquet",
+            "target_direction_CFG_ARB_V2.parquet",
+            "scaler_CFG_ARB_V2.pkl",
+            "feature_meta_CFG_ARB_V2.json"
+        ]
+    },
+    "DATA_SOURCE": {
+        "DATASET_SUFFIX": "20260201_to_20260408_crypto",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "BINANCE": "BINANCE",
+            "LOCAL": "LOCAL"
+        },
+        "ROUTING": {
+            "ARBUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "OPUSDT":  "BINANCE",
+            "SOLUSDT": "BINANCE"
+        },
+        "CONTINUOUS_CONTRACTS": {}
+    },
+    "FEATURE_ENGINEERING": {
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
+        "FILL_LIMIT": 120,
+        "EXACT_FEATURES": [
+            "ARBUSDT_RSI",
+            "ARBUSDT_EMA9_dist",
+            "ARBUSDT_EMA21_dist",
+            "ARBUSDT_Body",
+            "ARBUSDT_Upper_Shadow",
+            "ARBUSDT_Lower_Shadow",
+            "ARBUSDT_ret_5m",
+            "ARBUSDT_ret_10m",
+            "ARBUSDT_ret_30m",
+            "ARBUSDT_ATR_ratio",
+            "ARBUSDT_open_log_ret",
+            "ARBUSDT_high_log_ret",
+            "ARBUSDT_low_log_ret",
+            "ARBUSDT_close_log_ret",
+            "ARBUSDT_volume",
+            "is_imputed_flag",
+            
+            "BTCUSDT_volume",
+            "ETHUSDT_volume",
+            "OPUSDT_volume",
+            "SOLUSDT_volume",
+            
+            "BTCUSDT_close_log_ret",
+            "ETHUSDT_close_log_ret",
+            "OPUSDT_close_log_ret",
+            "SOLUSDT_close_log_ret"
+        ]
+    },
+    "TRAINING": {
+        "PERFORMANCE_MODE": "MAX",
+        "TRAIN_START": "2026-02-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-08",
+        "LEARNING_RATE": 1e-05,
+        "MIN_LR": 1e-06,
+        "BATCH_SIZE": 512,
+        "EPOCHS": 20,
+        "PATIENCE": 6,
+        "LOSS_FUNCTIONS": {
+            "CLASSIFICATION": "FOCAL",
+            "REGRESSION": "HUBER",
+            "UNCERTAINTY": "LOG_COSH"
+        },
+        "FOCAL_ALPHA": 0.35,
+        "FOCAL_GAMMA": 2.5
+    },
+    "MODEL_ARCHITECTURE": {
+        "D_MODEL": 256,
+        "NHEAD": 8,
+        "NUM_LAYERS": 4,
+        "DIM_FEEDFORWARD": 768,
+        "DROPOUT": 0.25,
+        "BATCH_FIRST": true,
+        "NORM_FIRST": true,
+        "MOE_NUM_EXPERTS": 4,
+        "MOE_TOP_K": 2
+    },
+    "CURRICULUM_LEARNING": {
+        "ENABLED": true,
+        "INITIAL_WINDOW": 30,
+        "FINAL_WINDOW": 60,
+        "STEP_EPOCHS": 5
+    }
+}
