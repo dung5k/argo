@@ -43,7 +43,9 @@
             "XAGUSDm": "EXNESS",
             "VIXYm": "DEFAULT",
             "NASDAQ_100": "EXNESS",
-            "US_10Y_YIELD": "MT5_2"
+            "US_10Y_YIELD": "MT5_2",
+            "BTCUSDm": "EXNESS",
+            "ETHUSDm": "EXNESS"
         },
         "CONTINUOUS_CONTRACTS": {
             "NASDAQ_100": {
@@ -97,7 +99,9 @@
             "NASDAQ_100_close_log_ret",
             "US_10Y_YIELD_close_log_ret",
             "VIXY_close_log_ret",
-            "XAGUSD_close_log_ret"
+            "XAGUSD_close_log_ret",
+            "BTCUSD_close_log_ret",
+            "ETHUSD_close_log_ret"
         ]
     },
     "TRAINING": {
