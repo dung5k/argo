@@ -921,7 +921,7 @@ if __name__ == "__main__":
     
     run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     target_clean = TARGET_PREFIX.lower().replace("_", "")
-    run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V1_5"
+    run_name = f"run_{run_timestamp}_{os.getpid()}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V1_5"
     run_dir  = os.path.join(ARGO_LOGS_DIR, "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
     

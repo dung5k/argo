@@ -373,7 +373,12 @@ class TelegramAgent:
                 except Exception as e:
                     return str(e), 500
 
-            port = 8780
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('127.0.0.1', 0))
+            port = sock.getsockname()[1]
+            sock.close()
+            
             token = self.cfg.get("ngrok_token", "")
             if token:
                 ngrok.set_auth_token(token)
