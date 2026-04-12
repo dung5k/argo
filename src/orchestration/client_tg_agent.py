@@ -450,7 +450,10 @@ class TelegramAgent:
                 self.logger.error("  [RECV_FILE] Thiếu dest hoặc content_b64!")
                 return
             try:
-                dest_path = self.base_dir / dest
+                if dest.startswith("data/"):
+                    dest_path = Path(ARGO_DATA_DIR) / dest[5:]
+                else:
+                    dest_path = self.base_dir / dest
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 raw_bytes = base64.b64decode(content)
                 with open(dest_path, "wb") as f:

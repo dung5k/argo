@@ -86,7 +86,7 @@ class HostController:
                 local_cfg_path = os.path.join(base_dir, "data", local_cfg)
                 if os.path.exists(local_cfg_path):
                     print(f"[HOST] Đang đẩy tệp cấu hình mới ({local_cfg}) sang Client trước khi Train...")
-                    self.send_file(local_cfg_path, local_cfg)  # Dest se la C:\argo\data\bot_config_...
+                    self.send_file(local_cfg_path, f"data/{local_cfg}")  # Prefix "data/" de Client nhan dien va luu vao C:\argo\data
                     time.sleep(1.5)  # Cho client thoi gian ghi file
                 else:
                     print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
