@@ -18,6 +18,10 @@
         "MTRADING": {
             "path": "C:\\Program Files\\Mtrading MetaTrader 5\\terminal64.exe",
             "description": "MTrading MT5 - dự phòng"
+        },
+        "ICMARKETS": {
+            "path": "C:\\Program Files\\MetaTrader 5 - ICMarkets\\terminal64.exe",
+            "description": "ICMarkets MT5 - báo giá chuẩn cho Forex CFD, chứng khoán, năng lượng"
         }
     },
 
@@ -84,6 +88,14 @@
                     "available_features": ["close_log_ret"],
                     "sessions": ["asian", "london"],
                     "note": "Safe-haven signal, quan trọng cho Asian"
+                },
+                "USDCHFm": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["USDCHFm", "USDCHF", "USDCHF.a"],
+                    "feature_prefix": "USDCHF",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny", "london"],
+                    "note": "Safe-haven châu Âu, phản ứng mạnh ở phiên NY khi có biến cố vĩ mô"
                 }
             }
         },
@@ -121,6 +133,16 @@
                     "available_features": ["close_log_ret"],
                     "sessions": ["ny"],
                     "note": "Fear index - phản ánh tâm lý phố Wall"
+                },
+                "US500m": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["US500m", "US500", "SP500", "SPX500"],
+                    "is_continuous_contract": false,
+                    "is_cfd": true,
+                    "feature_prefix": "US500",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Đại diện tổng quát nhất cho chứng khoán Mỹ, đối nghịch với vàng khi Risk-on"
                 }
             }
         },
@@ -145,6 +167,28 @@
                     "note": "Ethereum - tech/DeFi sentiment, bổ sung góc nhìn risk appetite thị trường"
                 }
             }
+        },
+
+        "commodities": {
+            "description": "Năng lượng & Hàng hóa (Tác động lạm phát)",
+            "items": {
+                "USOILm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["USOILm", "USOIL", "WTI", "WTICRUDEm"],
+                    "feature_prefix": "USOIL",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny", "london"],
+                    "note": "Dầu WTI - Đại diện số 1 cho kỳ vọng lạm phát toàn cầu"
+                },
+                "XNGUSDm": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["XNGUSDm", "XNGUSD", "NATGAS", "NATGASm"],
+                    "feature_prefix": "XNGUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Khí gas tự nhiên - Cú sốc năng lượng, biến động sát với giờ Mỹ"
+                }
+            }
         }
     },
 
@@ -152,7 +196,7 @@
         "ny": {
             "utc": "13:00-22:00",
             "vn_time": "20:00-05:00",
-            "recommended_symbols": ["XAUUSDm", "XAGUSDm", "EURUSDm", "USDCADm", "NASDAQ_100", "US_10Y_YIELD", "VIXYm", "BTCUSDm", "ETHUSDm"],
+            "recommended_symbols": ["XAUUSDm", "XAGUSDm", "EURUSDm", "USDCADm", "USDCHFm", "NASDAQ_100", "US500m", "US_10Y_YIELD", "VIXYm", "XNGUSDm", "BTCUSDm", "ETHUSDm"],
             "avoid": ["AUDUSDm", "GBPUSDm", "USDJPYm"],
             "reason": "Tập trung USD strength, lãi suất Mỹ, và risk sentiment phố Wall"
         },
