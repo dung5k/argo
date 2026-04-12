@@ -260,6 +260,11 @@ def train_unified_model(features, targets, num_features, run_dir, target_prefix=
     meta_path = os.path.join(cfg.argo_data_dir, cfg.config_id, f"feature_meta_{cfg.config_id}.json")
     num_xau_features = None
     target_name = target_prefix.lower().replace("_", "")
+    print(f"DEBUG_META: meta_path={meta_path}, exists={os.path.exists(meta_path)}")
+    try:
+        print(f"DEBUG_LISTDIR: {os.listdir(os.path.join(cfg.argo_data_dir, cfg.config_id))}")
+    except Exception as e:
+        print(f"DEBUG_LISTDIR ERR: {e}")
     if os.path.exists(meta_path):
         with open(meta_path) as f:
             meta = json.load(f)
