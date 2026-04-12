@@ -53,10 +53,17 @@ def sync_all_history():
         df = None
         
         # Lấy Offset Time chuẩn từ mã đang Active
-        selected_hint = mt5.symbol_select(found_sym, True)
-        tick = mt5.symbol_info_tick(found_sym) if selected_hint else None
-        offset_sec = (tick.time - int(time.time())) if (tick and tick.time > 0) else 0
-        offset_hours = round(offset_sec / 3600)
+        # Thử lần lượt: mã chính → EURUSD → USDJPY → mặc định 0
+        _candidates_offset = [found_sym, "EURUSDm", "EURUSD", "USDJPYm", "USDJPY"]
+        offset_hours = 0
+        for _cand in _candidates_offset:
+            if mt5.symbol_select(_cand, True):
+                _tick = mt5.symbol_info_tick(_cand)
+                if _tick and _tick.time > 0:
+                    _diff = _tick.time - int(time.time())
+                    if abs(_diff) < 14 * 3600:
+                        offset_hours = round(_diff / 3600)
+                        break
         
         timeframe = mt5.TIMEFRAME_M1
         
@@ -67,20 +74,24 @@ def sync_all_history():
             invert_logic = continuous_config.get("INVERT_LOGIC", False)
             
             all_dfs = []
+            delta_days = (dt_end - dt_start).days + 3
+            max_bars = delta_days * 24 * 60  # ~1440 nến M1/ngày
             for y in [24, 25, 26]:
                 for m in months:
                     c_sym = f"{prefix}{m}{y}"
                     if mt5.symbol_select(c_sym, True):
-                        rates = mt5.copy_rates_range(c_sym, timeframe, dt_start, dt_end)
+                        # Dùng from_pos thay range để tránh lỗi timezone của MT5 server
+                        rates = mt5.copy_rates_from_pos(c_sym, timeframe, 0, max_bars)
                         if rates is not None and len(rates) > 0:
                             c_df = pd.DataFrame(rates)
-                            # Nếu đây là Trái phiếu và yêu cầu Nghịch đảo (Tính Yield thủ công từ giá)
-                            # Price = 100 - Yield (?) Thực ra Invert Logic chỉ đơn giản là Yield_Log_Ret = -Price_Log_Ret
-                            # Nhưng vì chúng ta cần chuẩn dòng dữ liệu thô, tốt nhất cứ đảo ngược giá thô: e.g. 1/Price hoặc Max_Price - Price. 
-                            # Tuy nhiên theo tiêu chuẩn ML, Mạng nơ-ron tự học được chiều âm dương. Chỉ cần Invert c_df nếu muốn.
-                            # Mặc định cứ giữ nguyên Raw Giá đóng cửa.
-                            all_dfs.append(c_df)
-                            print(f"  => Tải được {len(c_df):,} nến từ hợp đồng {c_sym}")
+                            # Lọc theo khoảng thời gian sau khi chuẩn hoá về UTC
+                            c_df['_dt'] = pd.to_datetime(c_df['time'] - offset_hours * 3600, unit='s')
+                            c_df = c_df[(c_df['_dt'] >= pd.to_datetime(dt_start)) &
+                                        (c_df['_dt'] <= pd.to_datetime(dt_end))]
+                            if len(c_df) > 0:
+                                c_df = c_df.drop(columns=['_dt'])
+                                all_dfs.append(c_df)
+                                print(f"  => Tải được {len(c_df):,} nến từ hợp đồng {c_sym}")
                             
             if all_dfs:
                 df = pd.concat(all_dfs)

@@ -27,7 +27,7 @@
         ]
     },
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260301_to_20260408",
+        "DATASET_SUFFIX": "20260201_to_20260408",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
@@ -62,12 +62,18 @@
                 "BROKER": "MT5_2",
                 "IS_CFD": false,
                 "CONTRACT_MONTHS": [
+                    "F",
+                    "G",
+                    "H",
                     "J",
                     "K",
                     "M",
+                    "N",
+                    "Q",
                     "U",
-                    "Z",
-                    "H"
+                    "V",
+                    "X",
+                    "Z"
                 ],
                 "INVERT_LOGIC": false
             }
@@ -114,7 +120,7 @@
     },
     "TRAINING": {
         "PERFORMANCE_MODE": "MAX",
-        "TRAIN_START": "2026-03-01",
+        "TRAIN_START": "2026-02-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-08",
         "BATCH_SIZE": 1024,
@@ -141,7 +147,7 @@
     },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
-        "ACTIVE_WINDOW_SIZE": 20,
+        "ACTIVE_WINDOW_SIZE": 60,
         "MASKED_FEATURES": []
     }
 }
