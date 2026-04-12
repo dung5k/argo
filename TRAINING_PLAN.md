@@ -67,8 +67,8 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
 
 - **Lần chạy: `run_london_inprogress`**
   - **Máy trạm:** `client1`
-  - **Thời gian:** 13/04 06:12 - Hẹn mặc định (3 tiếng)
-  - **Mô tả:** Đào tạo phiến London để tóm Fakeout, áp dụng Batch_Size 1024, MAX mode.
+  - **Thời gian:** 13/04 06:12 - Hẹn mặc định (3 tiếng).
+  - **Mô tả:** Đào tạo phiến London để tóm Fakeout, áp dụng Batch_Size 1024, MAX mode (Đã chỉnh lý lùi TRAIN_END về `2026-03-24` để tăng thêm 1 tuần Validation theo lệnh).
   - **Trạng thái:** ĐANG CHẠY (Huấn luyện đang diễn ra trực tiếp trên Client1).
   - **Các đầu việc cần làm (Dành cho AI):**
     + [x] Khởi chạy quy trình trích xuất Dataset 100% MT5 lọc chuẩn biên độ thời gian [07h00 - 12h30 UTC] (Đã tạo `CFG_XAU_LONDON_V2` và Push kho dữ liệu lên HF).
