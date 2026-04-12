@@ -71,7 +71,7 @@ Mảng cốt lõi được chia theo múi giờ, vì hành vi Market Maker đán
   - **Mô tả:** Đào tạo phiến London để tóm Fakeout.
   - **Trạng thái:** Chờ tới giờ kích nổ.
   - **Các đầu việc cần làm (Dành cho AI):**
-    + [ ] Khởi chạy quy trình trích xuất Dataset 100% MT5 lọc chuẩn biên độ thời gian [07h00 - 12h30 UTC].
+    + [x] Khởi chạy quy trình trích xuất Dataset 100% MT5 lọc chuẩn biên độ thời gian [07h00 - 12h30 UTC] (Đã tạo `CFG_XAU_LONDON_V2` và Push kho dữ liệu lên HF).
     + [ ] Đóng gói và gửi config mới `bot_config_xau_london_v2.json` cho `client1`.
     + [ ] Gửi yêu cầu `client1` training v2 XAU London.
     + [ ] Báo cáo cập nhật kết quả training vào file `TRAINING_PLAN.md`.

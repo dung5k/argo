@@ -78,6 +78,7 @@ class HostController:
                 "oil"         : "bot_config_oil.json",
                 "arb_v2"      : "bot_config_arb_v2.json",
                 "xau_asian_v2": "bot_config_xau_asian_v2.json",
+                "xau_london_v2": "bot_config_xau_london_v2.json",
                 "xau_ny_v2"   : "bot_config_xau_ny_v2.json"
             }
             local_cfg = LOCAL_CONFIG_MAP.get(symbol)
