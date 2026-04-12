@@ -40,6 +40,9 @@ class TimeSeriesDataset(Dataset):
                 mask = (hours >= 8) & (hours < 13)
             elif session.lower() == "ny":
                 mask = (hours >= 13)
+            elif session.lower() == "weekend":
+                days = features_df.index.dayofweek.values
+                mask = (days >= 5)
             else:
                 mask = np.ones_like(hours, dtype=bool)
                 

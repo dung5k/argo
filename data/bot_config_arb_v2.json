@@ -2,7 +2,7 @@
     "TARGET_SYMBOL": "ARBUSDT",
     "TARGET_PREFIX": "ARBUSDT",
     "CONFIG_ID": "CFG_ARB_V2",
-    "SESSION": "24h",
+    "SESSION": "weekend",
     "SESSION_UTC": {
         "START": "00:00",
         "END": "24:00",
@@ -23,12 +23,11 @@
         "REQUIRED_PARQUETS": [
             "final_features_CFG_ARB_V2.parquet",
             "target_direction_CFG_ARB_V2.parquet",
-            "scaler_CFG_ARB_V2.pkl",
-            "feature_meta_CFG_ARB_V2.json"
+            "scaler_CFG_ARB_V2.pkl"
         ]
     },
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260201_to_20260408_crypto",
+        "DATASET_SUFFIX": "20260101_to_20260408",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "BINANCE": "BINANCE",
@@ -38,7 +37,7 @@
             "ARBUSDT": "BINANCE",
             "BTCUSDT": "BINANCE",
             "ETHUSDT": "BINANCE",
-            "OPUSDT":  "BINANCE",
+            "OPUSDT": "BINANCE",
             "SOLUSDT": "BINANCE",
             "DOGEUSDT": "BINANCE",
             "BNBUSDT": "BINANCE",
@@ -72,7 +71,6 @@
             "ARBUSDT_close_log_ret",
             "ARBUSDT_volume",
             "is_imputed_flag",
-            
             "BTCUSDT_volume",
             "ETHUSDT_volume",
             "OPUSDT_volume",
@@ -80,7 +78,6 @@
             "DOGEUSDT_volume",
             "BNBUSDT_volume",
             "LINKUSDT_volume",
-            
             "BTCUSDT_close_log_ret",
             "ETHUSDT_close_log_ret",
             "OPUSDT_close_log_ret",
@@ -92,7 +89,7 @@
     },
     "TRAINING": {
         "PERFORMANCE_MODE": "MAX",
-        "TRAIN_START": "2026-02-01",
+        "TRAIN_START": "2026-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-08",
         "LEARNING_RATE": 1e-05,
