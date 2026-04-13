@@ -8,11 +8,12 @@ class V2ConfigLoader:
     def __init__(self, main_config_path: str, schedule_path: str):
         self.main_config_path = main_config_path
         self.schedule_path = schedule_path
+        self.last_logged_thr = None
         
     def load_base_config(self) -> dict:
         """Đọc file config json chính (vd: bot_config_xau_london_v2.json)."""
         try:
-            with open(self.main_config_path, "r", encoding="utf-8") as f:
+            with open(self.main_config_path, "r", encoding="utf-8-sig") as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -23,7 +24,7 @@ class V2ConfigLoader:
             if not os.path.exists(self.schedule_path): 
                 return None, None, None
                 
-            with open(self.schedule_path, "r", encoding="utf-8") as fs:
+            with open(self.schedule_path, "r", encoding="utf-8-sig") as fs:
                 full_data = json.load(fs)
                 sched = full_data.get("schedule", {})
                 global_mt5_path = full_data.get("mt5_path")
@@ -92,5 +93,11 @@ class V2ConfigLoader:
                 config["LIVE_TRADING"] = {}
             config["LIVE_TRADING"]["BUY_ENTRY_THR"] = max_thr
             config["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - max_thr
+            
+        # Logging Only When Threshold Changes
+        current_thr = config.get("LIVE_TRADING", {}).get("BUY_ENTRY_THR")
+        if current_thr is not None and self.last_logged_thr != current_thr:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔥 [CONFIG LOADER] Đã nạp thành công Ngưỡng BUY/SELL mới: BUY>{current_thr*100}% | SELL<{(1.0 - current_thr)*100}%")
+            self.last_logged_thr = current_thr
             
         return config
