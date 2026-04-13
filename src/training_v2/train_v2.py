@@ -745,6 +745,7 @@ if __name__ == "__main__":
 
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
+    print(f"[RUN] {TARGET_PREFIX} | {CONFIG_ID} | V2.0")
 
     # ── Đọc features đã có (từ feature_engineering.py V1) ─────
     features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")

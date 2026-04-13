@@ -774,8 +774,13 @@ class TelegramAgent:
                     if "v1_5" in run_name.lower(): v_name = "v1.5"
                     elif "v2" in run_name.lower() or "V2" in run_name: v_name = "v2.0"
                     
-                    if "xau" in run_name.lower(): t_name = "XAUUSD"
-                    elif "xag" in run_name.lower(): t_name = "XAGUSD"
+                    if "CFG_" in run_name:
+                        for p in run_name.split("|"):
+                            if "CFG_" in p:
+                                t_name = p.strip()
+                    else:
+                        if "xau" in run_name.lower(): t_name = "XAUUSD"
+                        elif "xag" in run_name.lower(): t_name = "XAGUSD"
 
                 pfx = f"<b>{self.client_id}</b> [Ver: {v_name} | Mã: {t_name}]"
                 
