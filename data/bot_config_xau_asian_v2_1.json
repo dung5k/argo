@@ -39,15 +39,28 @@
             "XAGUSDm": "EXNESS",
             "USDJPYm": "EXNESS",
             "AUDUSDm": "EXNESS",
-            "NZDUSDm": "EXNESS",
-            "EURJPYm": "EXNESS",
-            "DXYm": "EXNESS",
-            "JP225m": "EXNESS",
-            "HK50m": "EXNESS",
+            "XNGUSD": "ICMARKETS",
+            "VIXYm": "ICMARKETS",
+            "NASDAQ_100": "EXNESS",
+            "US500": "ICMARKETS",
+            "US_10Y_YIELD": "ICMARKETS",
             "BTCUSDm": "EXNESS",
             "ETHUSDm": "EXNESS"
         },
-        "CONTINUOUS_CONTRACTS": {}
+        "CONTINUOUS_CONTRACTS": {
+            "VIXYm": {
+                "PREFIX": "VIX_",
+                "BROKER": "ICMARKETS",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": ["F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"]
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "UST10Y_",
+                "BROKER": "ICMARKETS",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": ["H", "M", "U", "Z"]
+            }
+        }
     },
     "FEATURE_ENGINEERING": {
         "EMA_PERIODS": [
