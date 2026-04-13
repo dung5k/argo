@@ -80,11 +80,11 @@ trade_manager = V2TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_noti
 
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG
-    print("[BOT] Đang kích hoạt OOP Modules...")
+    print("[BOT] ===== Khởi động OOP Modules V2.0 =====")
     
-    # Init Classes
-    cloud = V2CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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")
-    engine = V2InferenceEngine()
+    # Init Classes - truyền log_callback vào từng sub-component
+    cloud = V2CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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", log_callback=print)
+    engine = V2InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
     trade_manager.init_mt5()
     processor = None
@@ -100,39 +100,47 @@ def bot_background_loop():
     num_attn_layers = arch.get("layers", 3)
     dropout_rate    = arch.get("dropout", 0.2)
     
+    mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+    print(f"[BOT] Kết nối MT5 tại: {mt5_init_path}")
     gui_status = "Đang kết nối MT5..."
-    if not trade_manager.mt5.initialize(path=CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")):
+    if not trade_manager.mt5.initialize(path=mt5_init_path):
         gui_status = "❌ Mất Kết Nối MT5 Terminal!"
+        print("[BOT] ❌ FATAL: Không thể khởi tạo kết nối MT5.")
         return
         
     last_tick_err_time = 0
     brain_loaded = False
     processor = None
     active_run_id = None
+    cycle_count = 0
+    print("[BOT] ✅ MT5 đã kết nối. Bắt đầu vòng lặp chính...")
     
     while True:
+        cycle_count += 1
         gui_time = datetime.now().strftime('%H:%M:%S')
+        print(f"\n[BOT] ────── Chu kỳ #{cycle_count} | {gui_time} ──────")
         
-        # --- HOT RELOAD CONFIGURATION ---
+        # ── STEP 1: Hot Reload Config ──
         CONFIG = config_loader.load_base_config()
         target_sess_name, target_sinfo, global_mt5_path = config_loader.get_current_schedule()
         CONFIG = config_loader.apply_schedule_overrides(CONFIG, target_sinfo, global_mt5_path)
-        
         trade_manager.config = CONFIG
         trade_manager.update_gui_threshold()
-        mt5_manager.config = CONFIG # Cấp config chuẩn cho trình quét Data
+        mt5_manager.config = CONFIG
+        print(f"[BOT] STEP 1 Config ↻ | phiên='{target_sess_name}'")
             
         if not target_sess_name:
             target_sess_name = "UNIFIED"
             
         target_run_id = target_sinfo.get("run_id") if target_sinfo else None
         
-        # NẾU Session chỉ định bộ não MỚI, Yêu cầu tải lại NÃo ngay lập tức!
+        # ── STEP 2: Kiểm tra thay não ──
         if target_run_id and target_run_id != active_run_id:
-            print(f"[SES-SCHED] Phát hiện Chuyển Sinh Phiên {target_sess_name.upper()}! Yêu Cầu Thay Não: {target_run_id}")
+            print(f"[BOT] STEP 2 Phát hiện Não mới! {active_run_id} → {target_run_id}")
             brain_loaded = False
             
         if not brain_loaded:
+            print(f"[BOT] STEP 2 Bắt đầu tải não cho phiên '{target_sess_name.upper()}'...")
             try:
                 loc_config_id = CONFIG.get("CONFIG_ID", TARGET_PREFIX)
                 
@@ -141,6 +149,7 @@ def bot_background_loop():
                     run_id = target_sinfo.get("run_id")
                     w_file = target_sinfo.get("weight_file")
                     cfg_id = target_sinfo.get("config_id")
+                    print(f"[BOT] STEP 2 Sync explicit | run={run_id} weight={w_file} cfg={cfg_id}")
                     
                     m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_explicit_model(run_id, w_file, cfg_id)
                     active_run_id = run_id
@@ -148,30 +157,36 @@ def bot_background_loop():
                     loc_config_id = cfg_id
                 else:
                     gui_session = "UNIFIED [Đang kéo Cloud...]"
+                    print("[BOT] STEP 2 Sync session UNIFIED")
                     m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(WEIGHT_FILE, "unified")
                     gui_session = f"UNIFIED [{a_name[:20]}]"
                     active_run_id = "unified"
                 
+                print(f"[BOT] STEP 2 Load weights | n_feat={n_feat} n_xau={num_xau}")
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, dropout_rate, num_xau)
                 
                 scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{loc_config_id}.pkl")
-                processor = V2DataProcessor(scaler_path, i_feats, window_size)
+                print(f"[BOT] STEP 2 Init DataProcessor | scaler={os.path.basename(scaler_path)}")
+                processor = V2DataProcessor(scaler_path, i_feats, window_size, log_callback=print)
                 
-                # BẮT BUỘC MT5 Data Manager PHẢI ĐỔI LƯỚI QUÉT DỮ LIỆU THEO BIẾN CỦA NÃO MỚI!
+                print(f"[BOT] STEP 2 Đồng bộ MT5DataManager với {len(i_feats)} features")
                 mt5_manager.force_reload_dynamic_features(i_feats)
                 
                 brain_loaded = True
                 gui_status = f"✅ Lắp Ráp NÃO [{target_sess_name.upper()}] Thành Công!"
+                print(f"[BOT] STEP 2 ✅ Não sẵn sàng | session='{target_sess_name.upper()}'")
             except Exception as ce:
                 gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
-                print(f"Lỗi Thay Não: {ce}")
+                print(f"[BOT] STEP 2 ❌ Lỗi tải não: {ce}")
+                import traceback; print(traceback.format_exc())
                 time.sleep(5)
                 continue
                 
-        # 2. Rà Soát Máy Chủ (Session Guards)
+        # ── STEP 3: Scan & Guard MT5 Connection ──
+        print("[BOT] STEP 3 Scan terminals...")
         mt5_manager.scan_terminals_and_map()
         
-        # Luôn đảm bảo kết nối toàn cục MT5 đang hướng về Sàn Giao Dịch thực thi (Vì mt5_manager có thể đã nhảy sàn)
+        # Bảo đảm kết nối MT5 đang trỏ về Trading Terminal (không phải broker data)
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
             trade_manager.mt5.shutdown()
@@ -184,7 +199,7 @@ def bot_background_loop():
         tick = trade_manager.mt5.symbol_info_tick(actual_sym)
         if tick is None:
             if time.time() - last_tick_err_time > 10:
-                print(f"⚠️ LỖI TICK: {actual_sym} không tồn tại (None!).")
+                print(f"[BOT] ⚠️ LỖI TICK: {actual_sym} = None! Kiểm tra kết nối MT5.")
                 last_tick_err_time = time.time()
             time.sleep(1)
             continue
@@ -192,53 +207,73 @@ def bot_background_loop():
         staleness_secs = time.time() - tick.time
         if staleness_secs > 300:
             gui_status = f"Giá Freeze ({int(staleness_secs/60)}p)..."
+            print(f"[BOT] ⚠️ Giá {actual_sym} bị stale {int(staleness_secs)}s! Đang chờ...")
             time.sleep(10)
             continue
+        
+        print(f"[BOT] STEP 3 Tick OK | sym={actual_sym} bid={tick.bid} ask={tick.ask} delay={staleness_secs:.1f}s")
 
-        # 3. Kéo Số Liệu Nguyên Sinh (In-memory)
+        # ── STEP 4: Kéo Dữ Liệu MT5 ──
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
+        print(f"[BOT] STEP 4 Pull MT5 data | window=120")
         merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
         
-        # FIX CỰC KỲ QUAN TRỌNG: MT5Adapter nội bộ đã vấy bẩn (nhảy mạng) Global State của MT5.
-        # Ta BẮT BUỘC phải reset cờ nhớ ảo này để ép các khối sau (như Đặt Lệnh và Loop Lịch) RE-INIT lại MT5 chính Giao dịch!
+        # QUAN TRỌNG: reset flag sau khi cào data đa-sàn
         mt5_manager.current_connected_path = None
         
         if err_msg:
             gui_status = err_msg
+            print(f"[BOT] STEP 4 ❌ Dữ liệu lỗi: {err_msg}")
+            time.sleep(2)
+            continue
+        
+        if merged_df is None or len(merged_df) == 0:
+            gui_status = "Dữ liệu rỗng (Empty DataFrame)"
+            print("[BOT] STEP 4 ⚠️ merged_df rỗng!")
             time.sleep(2)
             continue
             
+        print(f"[BOT] STEP 4 Dữ liệu OK | rows={len(merged_df)} syms={len(sym_data)}")
         gui_market_data = sorted(sym_data, key=lambda x: x[0])
         
-        # 4. Pipeline Tiền Xử Lý Lượng Tử
+        # ── STEP 5: Feature Pipeline ──
         gui_status = "Chạy Pipeline Giải thuật V2..."
+        print("[BOT] STEP 5 DataProcessor.ingest_and_scale...")
         t_seq, p_err = processor.ingest_and_scale(merged_df)
         if p_err:
-            gui_status = f"Pipeline Từ Chối: {p_err[:30]}"
-            print(f"⚠️ Pipeline Lỗi: {p_err}")
+            gui_status = f"Pipeline Từ Chối: {p_err[:40]}"
+            print(f"[BOT] STEP 5 ❌ Pipeline lỗi: {p_err}")
             time.sleep(2)
             continue
+        
+        print(f"[BOT] STEP 5 ✅ Pipeline xong | tensor_shape={getattr(t_seq, 'shape', 'N/A')}")
             
-        # 5. Suy Diễn & Trích Tỷ Lệ Thắng
+        # ── STEP 6: Inference ──
         gui_status = "Đang Trích Xuất Lực Cầu (Pytorch)..."
+        print("[BOT] STEP 6 Inference Engine predict...")
         pred, logits = engine.predict(t_seq)
         if pred is None:
             gui_status = "Động Cơ Torch Sập (No Preds)"
+            print("[BOT] STEP 6 ❌ Inference trả về None!")
             time.sleep(2)
             continue
             
         gui_prediction = f"{pred*100:.2f}%"
-        print(f"[{gui_time}] 🧠 LOGITS: {logits}. Lực Bò: {gui_prediction}")
+        print(f"[BOT] STEP 6 ✅ | LOGITS={logits} | Lực Bò={gui_prediction}")
         
-        # 6. Mở Van Bắn Lệnh (Trade Sniper)
+        # ── STEP 7: Re-guard MT5 rồi thực thi lệnh ──
+        print("[BOT] STEP 7 Guard MT5 connection trước khi thực thi lệnh...")
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
+            print(f"[BOT] STEP 7 Re-init MT5 Trading Terminal → {trading_path}")
             trade_manager.mt5.shutdown()
             trade_manager.mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
             
+        print(f"[BOT] STEP 7 manage_mt5_positions | sym={actual_sym} pred={pred:.4f}")
         trade_manager.manage_mt5_positions(pred, actual_target_sym=actual_sym)
         gui_status = "Khóa Mốc. Hoàn tất chu kỳ."
+        print(f"[BOT] STEP 7 ✅ Hoàn tất chu kỳ #{cycle_count} | action='{trade_manager.gui_action}'")
         
         time.sleep(3)
 
