@@ -72,7 +72,7 @@ class V2ConfigLoader:
             close_thr = trading_config.get("close_thresh")
             if close_thr is not None:
                 config["LIVE_TRADING"]["CLOSE_BUY_THR"] = close_thr
-                config["LIVE_TRADING"]["CLOSE_SELL_THR"] = close_thr
+                config["LIVE_TRADING"]["CLOSE_SELL_THR"] = 1.0 - close_thr
                 
             lot_size = trading_config.get("lot_size")
             if lot_size is not None:
