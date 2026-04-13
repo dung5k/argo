@@ -162,6 +162,13 @@ class MT5DataManager:
         self.GLOBAL_MT5_ROUTER_MAP.clear() # Bắt buộc quét lại vì mã mới có thể xuất hiện
         self.log_message(f"[DATA MANAGER] Đã ánh xạ {len(self.active_mappings)} đường dẫn nội bộ.")
 
+    def force_reload_dynamic_features(self, explicit_features: list):
+        """Buộc trình quản lý chỉ quét MT5 để cào các mã được Model yêu cầu (Dynamic Load)."""
+        self.features = explicit_features
+        self._build_active_mappings()
+        self.GLOBAL_MT5_ROUTER_MAP.clear()
+        self.log_message(f"🌐 [DYNAMIC MANAGER] Đã đồng bộ lưới cào MT5 khớp hoàn toàn với {len(explicit_features)} giác quan của NÃO AI.")
+
     def scan_terminals_and_map(self):
         if len(self.GLOBAL_MT5_ROUTER_MAP) > 0:
             return # Already scanned

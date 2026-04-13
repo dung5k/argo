@@ -157,6 +157,9 @@ def bot_background_loop():
                 scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{loc_config_id}.pkl")
                 processor = V2DataProcessor(scaler_path, i_feats, window_size)
                 
+                # BẮT BUỘC MT5 Data Manager PHẢI ĐỔI LƯỚI QUÉT DỮ LIỆU THEO BIẾN CỦA NÃO MỚI!
+                mt5_manager.force_reload_dynamic_features(i_feats)
+                
                 brain_loaded = True
                 gui_status = f"✅ Lắp Ráp NÃO [{target_sess_name.upper()}] Thành Công!"
             except Exception as ce:
