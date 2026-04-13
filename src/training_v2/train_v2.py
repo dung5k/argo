@@ -50,6 +50,8 @@ from src.training_v2.feature_pipeline_v2 import FeaturePipelineV2
 from src.training_v2.focal_loss import build_focal_loss
 from src.training_v2.phoenix_v2 import PhoenixRestartV2
 from src.training_v2.evaluator_v2 import EVEvaluator, EpochEvalResult
+from src.training_v2.eval_plotter import plot_and_notify_chart
+from src.training_v2.eval_plotter import plot_and_notify_chart
 
 
 # ============================================================
@@ -800,6 +802,24 @@ if __name__ == "__main__":
     
     validate_startup_configs(cfg, BASE_PROJ)
 
+    # Validate data
+    output_dir = cfg['FEATURE_ENGINEERING']['OUTPUT_DIR']
+    sub_dir = os.path.join(output_dir, cfg['CONFIG_ID'])
+    
+    # Check if features are in sub_dir (new feature_engineering approach)
+    features_path = os.path.join(sub_dir, f"final_features_{cfg['CONFIG_ID']}.parquet")
+    target_path = os.path.join(sub_dir, f"target_direction_{cfg['CONFIG_ID']}.parquet")
+    
+    # Fallback to output_dir
+    if not os.path.exists(features_path) or not os.path.exists(target_path):
+        features_path = os.path.join(output_dir, f"final_features_{cfg['CONFIG_ID']}.parquet")
+        target_path = os.path.join(output_dir, f"target_direction_{cfg['CONFIG_ID']}.parquet")
+
+    if not os.path.exists(features_path) or not os.path.exists(target_path):
+        print(f"[ERROR] Chưa có file features: {features_path}")
+        print(f"Hãy chạy feature_engineering.py trước để tạo dữ liệu.")
+        sys.exit(1)
+
     print(f"[INIT] Config: {config_path}")
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
     print(f"[RUN] {TARGET_PREFIX} | {CONFIG_ID} | V2.0")
@@ -807,8 +827,6 @@ if __name__ == "__main__":
     target_horizon = cfg.get("FEATURE_ENGINEERING", {}).get("TARGET_HORIZON", 5)
 
     # ── Đọc features đã có (từ feature_engineering.py V1) ─────
-    # Ưu tiên kiểm tra trong thư mục con CONFIG_ID giống hf_sync, nếu không có thì tìm ở thư mục cha
-    features_path_sub = os.path.join(DATA_PATH, str(CONFIG_ID), f"final_features_{CONFIG_ID}.parquet")
     features_path_parent = os.path.join(DATA_PATH, f"final_features_{CONFIG_ID}.parquet")
     features_path = features_path_sub if os.path.exists(features_path_sub) else features_path_parent
     
