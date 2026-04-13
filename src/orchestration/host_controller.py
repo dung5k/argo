@@ -79,7 +79,10 @@ class HostController:
                 "arb_v2"      : "bot_config_arb_v2.json",
                 "xau_asian_v2": "bot_config_xau_asian_v2.json",
                 "xau_london_v2": "bot_config_xau_london_v2.json",
-                "xau_ny_v2"   : "bot_config_xau_ny_v2.json"
+                "xau_ny_v2"   : "bot_config_xau_ny_v2.json",
+                "xau_asian_v2_1": "bot_config_xau_asian_v2_1.json",
+                "xau_london_v2_1": "bot_config_xau_london_v2_1.json",
+                "xau_ny_v2_1"   : "bot_config_xau_ny_v2_1.json"
             }
             local_cfg = LOCAL_CONFIG_MAP.get(symbol)
             if local_cfg:
