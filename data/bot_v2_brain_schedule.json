@@ -10,7 +10,7 @@
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
-                "entry_thresh": 0.581,
+                "entry_thresh": 0.61,
                 "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 600,
@@ -24,7 +24,7 @@
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
-                "entry_thresh": 0.58,
+                "entry_thresh": 0.61,
                 "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 500,
@@ -38,7 +38,7 @@
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_NY_V2",
             "trading_config": {
-                "entry_thresh": 0.58,
+                "entry_thresh": 0.61,
                 "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 700,
