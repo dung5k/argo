@@ -196,6 +196,10 @@ def bot_background_loop():
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
         merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
         
+        # FIX CỰC KỲ QUAN TRỌNG: MT5Adapter nội bộ đã vấy bẩn (nhảy mạng) Global State của MT5.
+        # Ta BẮT BUỘC phải reset cờ nhớ ảo này để ép các khối sau (như Đặt Lệnh và Loop Lịch) RE-INIT lại MT5 chính Giao dịch!
+        mt5_manager.current_connected_path = None
+        
         if err_msg:
             gui_status = err_msg
             time.sleep(2)
