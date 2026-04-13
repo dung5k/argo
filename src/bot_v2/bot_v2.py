@@ -111,6 +111,7 @@ def bot_background_loop():
         CONFIG = config_loader.apply_schedule_overrides(CONFIG, target_sinfo, global_mt5_path)
         
         trade_manager.config = CONFIG
+        trade_manager.update_gui_threshold()
         mt5_manager.config = CONFIG # Cấp config chuẩn cho trình quét Data
             
         if not target_sess_name:
