@@ -283,7 +283,7 @@ def start_overlay_dashboard():
     root.bind("<ButtonRelease-1>", stop_move)
     root.bind("<B1-Motion>", do_move)
     
-    tk.Label(root, text=f"🔥 {TARGET_SYMBOL} OOP TERMINATOR 🔥", fg="#ffcc00", bg="#121212", font=("Helvetica", 11, "bold")).pack(pady=2)
+    tk.Label(root, text=f"🔥 {TARGET_SYMBOL} OOP TERMINATOR [v2.0] 🔥", fg="#ffcc00", bg="#121212", font=("Helvetica", 11, "bold")).pack(pady=2)
     lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#cc88ff", bg="#121212", font=("Helvetica", 9, "bold"))
     lbl_session.pack()
     lbl_pred = tk.Label(root, text="🧠 THỜI CƠ (Lực): N/A", fg="#cccccc", bg="#121212", font=("Helvetica", 10, "bold"))
