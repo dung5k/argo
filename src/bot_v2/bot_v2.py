@@ -119,6 +119,27 @@ def bot_background_loop():
     print("[BOT] 🔄 Sync lệnh đang có trên sàn (nếu có)...")
     trade_manager.sync_existing_positions()
 
+    # Gửi thông báo khởi động lên Telegram
+    live_cfg_startup = CONFIG.get("LIVE_TRADING", {})
+    startup_msg = (
+        f"🤖 [BOT KHỚI ĐỘNG]"
+        f"\n⏰ Thời gian: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+        f"\n💹 Mã: {TARGET_SYMBOL} | Config: {config_file}"
+        f"\n📌 Cấu hình giao dịch:"
+        f"\n  - Ngưỡng MUA: {live_cfg_startup.get('BUY_ENTRY_THR', '?')}"
+        f"\n  - Ngưỡng BÁN: {live_cfg_startup.get('SELL_ENTRY_THR', '?')}"
+        f"\n  - Đóng BUY khi pred < {live_cfg_startup.get('CLOSE_BUY_THR', '?')}"
+        f"\n  - Đóng SELL khi pred > {live_cfg_startup.get('CLOSE_SELL_THR', '?')}"
+        f"\n  - Lot size: {live_cfg_startup.get('lot_size', '?')}"
+        f"\n  - SL: {live_cfg_startup.get('sl_pips', '?')} pips | TP: {live_cfg_startup.get('tp_pips', '?')} pips"
+        f"\n📊 Lệnh sẵn có: {len(trade_manager.active_trade_loggers)} lệnh"
+    )
+    print(f"[BOT] {startup_msg}")
+    tg_notify(startup_msg)
+
+    # Snapshot config để detect thay đổi
+    _last_live_cfg_snapshot = dict(live_cfg_startup)
+
     while True:
         cycle_count += 1
         gui_time = datetime.now().strftime('%H:%M:%S')
@@ -132,7 +153,24 @@ def bot_background_loop():
         trade_manager.update_gui_threshold()
         mt5_manager.config = CONFIG
         print(f"[BOT] STEP 1 Config ↻ | phiên='{target_sess_name}'")
-            
+
+        # ── Kiểm tra thay đổi config LIVE_TRADING ──
+        current_live_cfg = CONFIG.get("LIVE_TRADING", {})
+        changed_keys = [
+            k for k in current_live_cfg
+            if current_live_cfg.get(k) != _last_live_cfg_snapshot.get(k)
+        ]
+        if changed_keys:
+            lines = [f"  - {k}: {_last_live_cfg_snapshot.get(k, 'N/A')} → {current_live_cfg[k]}" for k in changed_keys]
+            change_msg = (
+                f"❗ [CẤU HÌNH THAY ĐỔI]"
+                f"\n⏰ {datetime.now().strftime('%H:%M:%S')} | Phiên: {target_sess_name}"
+                f"\n" + "\n".join(lines)
+            )
+            print(f"[BOT] CONFIG DIFF: {changed_keys}")
+            tg_notify(change_msg)
+            _last_live_cfg_snapshot = dict(current_live_cfg)
+
         if not target_sess_name:
             target_sess_name = "UNIFIED"
             
