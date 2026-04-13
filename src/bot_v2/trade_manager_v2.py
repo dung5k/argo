@@ -27,6 +27,17 @@ class V2TradeManager:
             self.log_callback("❌ Module MetaTrader5 không tồn tại (Có thể đang chạy test enviroment)")
             return False
 
+    def _get_daily_pnl(self):
+        """Tính tổng PnL trong ngày hôm nay."""
+        if not self.mt5: return 0.0
+        from datetime import datetime, time
+        now = datetime.now()
+        dt_from = datetime.combine(now.date(), time(0, 0, 0))
+        deals = self.mt5.history_deals_get(dt_from, now)
+        if deals:
+            return sum(d.profit for d in deals)
+        return 0.0
+
     def close_mt5_position(self, position):
         """Đóng khẩn cấp một vị thế MT5 đang sống (Cắt trạng thái hoàn toàn)."""
         if not self.mt5: return False
@@ -59,11 +70,15 @@ class V2TradeManager:
         if result is None or result.retcode != self.mt5.TRADE_RETCODE_DONE:
             return False
             
+        if position.ticket in self.active_trade_loggers:
+            del self.active_trade_loggers[position.ticket]
+            
         try:
             o_type = "MUA" if position.type == self.mt5.ORDER_TYPE_BUY else "BÁN"
             pnl = getattr(position, 'profit', 0)
             icon = "💰" if pnl > 0 else "🩸"
-            self.tg_notify(f"🔴 [ĐÓNG LỆNH] AI vừa chốt lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {position.ticket}\n* Lợi nhuận: {icon} {pnl:.2f} USD")
+            daily_pnl = self._get_daily_pnl()
+            self.tg_notify(f"🔴 [ĐÓNG LỆNH AI] Chốt lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {position.ticket}\n* Lợi nhuận: {icon} {pnl:.2f} USD\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD")
         except: pass
         
         return True
@@ -105,17 +120,23 @@ class V2TradeManager:
         result = self.mt5.order_send(request)
         if result is not None and getattr(result, 'retcode', -1) == self.mt5.TRADE_RETCODE_DONE:
             ticket = result.order
-            try:
-                o_type = "MUA (BUY)" if order_type == self.mt5.ORDER_TYPE_BUY else "BÁN (SELL)"
-                self.tg_notify(f"🟢 [VÀO LỆNH] AI Đã thực hiện lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {ticket}\n* Tỉ lệ Vượt Cản: {prediction*100:.2f}%")
-            except: pass
             
             # Khởi tạo log (giản lược)
+            import time
             self.active_trade_loggers[ticket] = {
                 "status": "OPEN",
                 "entry_price": float(request['price']),
-                "order_type": "BUY" if order_type == self.mt5.ORDER_TYPE_BUY else "SELL",
+                "order_type": "MUA" if order_type == self.mt5.ORDER_TYPE_BUY else "BÁN",
+                "entry_time": time.time(),
+                "notified_1min": False
             }
+            
+            try:
+                o_type = "MUA (BUY)" if order_type == self.mt5.ORDER_TYPE_BUY else "BÁN (SELL)"
+                daily_pnl = self._get_daily_pnl()
+                self.tg_notify(f"🟢 [VÀO LỆNH] AI Đã thực hiện lệnh {o_type}\n* Mã: {symbol}\n* Ticket: {ticket}\n* Giá: {request['price']}\n* Khối lượng: {request['volume']} lot\n* Tỉ lệ Vượt Cản: {prediction*100:.2f}%\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD")
+            except: pass
+            
             return ticket
         else:
             self.log_callback(f"Lỗi MT5 Bắn Lệnh: {getattr(result, 'comment', 'N/A')}")
@@ -144,8 +165,40 @@ class V2TradeManager:
         self.update_gui_threshold()
         
         positions = self.mt5.positions_get(symbol=symbol)
+        active_tickets = {pos.ticket: pos for pos in (positions or [])}
         has_open_position = False
         
+        # Checking PNL 1-min and Auto-close tracking
+        import time
+        for tkt in list(self.active_trade_loggers.keys()):
+            log_data = self.active_trade_loggers[tkt]
+            
+            if tkt in active_tickets:
+                pos = active_tickets[tkt]
+                if not log_data.get('notified_1min', False) and (time.time() - log_data['entry_time'] >= 60):
+                    pnl = getattr(pos, 'profit', 0)
+                    icon = "💰" if pnl > 0 else "🩸"
+                    daily_pnl = self._get_daily_pnl()
+                    try:
+                        self.tg_notify(f"⏳ [CẬP NHẬT 1 PHÚT]\n* Mã: {symbol}\n* Ticket: {tkt}\n* Trạng thái lãi lỗ: {icon} {pnl:.2f} USD\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD")
+                    except: pass
+                    log_data['notified_1min'] = True
+            else:
+                # Ticket was closed by SL/TP auto
+                deals = self.mt5.history_deals_get(position=tkt)
+                deal_pnl = 0.0
+                if deals:
+                    deal_pnl = sum(d.profit for d in deals if d.entry == self.mt5.DEAL_ENTRY_OUT)
+                
+                icon = "💰" if deal_pnl > 0 else "🩸"
+                o_type = log_data.get('order_type', 'UNKNOWN')
+                daily_pnl = self._get_daily_pnl()
+                try:
+                    self.tg_notify(f"🔴 [ĐÃ ĐÓNG LỆNH] Lệnh {o_type} đóng (SL/TP sàn)\n* Mã: {symbol}\n* Ticket: {tkt}\n* Lãi/Lỗ lệnh: {icon} {deal_pnl:.2f} USD\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD")
+                except: pass
+                
+                del self.active_trade_loggers[tkt]
+
         just_closed = False
         if positions:
             for pos in positions:
