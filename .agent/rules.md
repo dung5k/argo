@@ -5,21 +5,27 @@ description: Auto Git Commit and Push Rule
 # Git Commit Policy
 
 **MANDATORY RULE FOR AI AGENT:**
-Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn của dự án này, Agent **BẮT BUỘC** phải tự động gọi lệnh Terminal để Git Commit và Git Push (nếu môi trường cho phép) thay đổi đó trước khi báo cáo kết quả lại cho User.
+Sau khi thá»±c hiá»‡n báº¥t ká»³ thay Ä‘á»•i nÃ o (Code Edits) trÃªn mÃ£ nguá»“n cá»§a dá»± Ã¡n nÃ y, Agent **Báº®T BUá»˜C** pháº£i tá»± Ä‘á»™ng gá»i lá»‡nh Terminal Ä‘á»ƒ Git Commit vÃ  Git Push (náº¿u mÃ´i trÆ°á»ng cho phÃ©p) thay Ä‘á»•i Ä‘Ã³ trÆ°á»›c khi bÃ¡o cÃ¡o káº¿t quáº£ láº¡i cho User.
 
 **Workflow Action:**
 1. Call `git add <file(s)>`
-2. Call `git commit -m "bot: <mô tả ngắn gọn tiếng Việt>"`
+2. Call `git commit -m "bot: <mÃ´ táº£ ngáº¯n gá»n tiáº¿ng Viá»‡t>"`
 3. Call `git push` (optional: continue if it fails due to branching)
 
 
-# Nguyên tắc code
-- Việc code luôn luôn cần tách thành class và hàm có tính năng và nhiệm vụ động lập, có input và output đơn giản
+# NguyÃªn táº¯c code
+- Viá»‡c code luÃ´n luÃ´n cáº§n tÃ¡ch thÃ nh class vÃ  hÃ m cÃ³ tÃ­nh nÄƒng vÃ  nhiá»‡m vá»¥ Ä‘á»™ng láº­p, cÃ³ input vÃ  output Ä‘Æ¡n giáº£n
 
-- Sau khi code hoàn thành 1 hàm thì cần viết unit test để đảm bảo hàm đấy chạy đúng
+- Sau khi code hoÃ n thÃ nh 1 hÃ m thÃ¬ cáº§n viáº¿t unit test Ä‘á»ƒ Ä‘áº£m báº£o hÃ m Ä‘áº¥y cháº¡y Ä‘Ãºng
 
-- Hạn chế hardcode, cần viết code cho bài toán tổng quát, các giá trị hardcode cần được đưa vào file config
+- Háº¡n cháº¿ hardcode, cáº§n viáº¿t code cho bÃ i toÃ¡n tá»•ng quÃ¡t, cÃ¡c giÃ¡ trá»‹ hardcode cáº§n Ä‘Æ°á»£c Ä‘Æ°a vÃ o file config
 
-# Thực thi nhiệm vụ tạm thời (Temporary Tasks)
-- Mỗi khi thực hiện một nhiệm vụ TẠM THỜI mà yêu cầu sinh/tạo ra file code (để test thử, kiểm tra, cào dữ liệu nháp...), BẮT BUỘC phải tạo file đó trong thư mục `temp/`.
-- Sau khi chạy và có kết quả xong, BẮT BUỘC phải tự động XÓA file tạm đó đi để dọn dẹp sạch sẽ không gian làm việc.
+# Thá»±c thi nhiá»‡m vá»¥ táº¡m thá»i (Temporary Tasks)
+- Má»—i khi thá»±c hiá»‡n má»™t nhiá»‡m vá»¥ Táº M THá»œI mÃ  yÃªu cáº§u sinh/táº¡o ra file code (Ä‘á»ƒ test thá»­, kiá»ƒm tra, cÃ o dá»¯ liá»‡u nhÃ¡p...), Báº®T BUá»˜C pháº£i táº¡o file Ä‘Ã³ trong thÆ° má»¥c `temp/`.
+- Sau khi cháº¡y vÃ  cÃ³ káº¿t quáº£ xong, Báº®T BUá»˜C pháº£i tá»± Ä‘á»™ng XÃ“A file táº¡m Ä‘Ã³ Ä‘i Ä‘á»ƒ dá»n dáº¹p sáº¡ch sáº½ khÃ´ng gian lÃ m viá»‡c.
+
+
+# Quáº£n lÃ½ Tiáº¿n trÃ¬nh (Process Management)
+- Táº¯t á»©ng dá»¥ng / bot má»™t cÃ¡ch AN TOÃ€N (Safe Stop).
+- NGHIÃŠM Cáº¤M sá» dá»¥ng biá»‡n phÃ¡p kill tiáº¿n trÃ¬nh python má»™t cÃ¡ch thÃ´ báº¡o (vd: Get-Process python | Stop-Process) vÃ¬ mÃ¡y tÃ­nh cÃ²n cháº¡y nhiá» u á»©ng dá»¥ng python khÃ¡c.
+- Ä á»ƒ táº¯t má»™t bot, cáº§n tÃ¬m chÃ­nh xÃ¡c process thÃ´ng qua CommandLine (vd: wmic process where "name='python.exe' and commandline like '%tÃªn_script.py%'" call terminate).
