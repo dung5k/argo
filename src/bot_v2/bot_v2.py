@@ -25,6 +25,25 @@ from src.bot_v2.data_processor_v2 import V2DataProcessor
 from src.bot_v2.inference_engine_v2 import V2InferenceEngine
 from src.bot_v2.trade_manager_v2 import V2TradeManager
 from src.core.mt5_data_manager import MT5DataManager
+import logging
+
+os.makedirs(os.path.join(safe_script_dir, "logs"), exist_ok=True)
+log_file = os.path.join(safe_script_dir, "logs", f"trade_bot_v2_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(message)s',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+def custom_print(*args, **kwargs):
+    msg = " ".join(map(str, args))
+    # Hack to avoid double printing if logging already prints to stdout, but we used basicConfig with StreamHandler
+    # Actually basicConfig with StreamHandler will print to console!
+    logging.info(msg)
+
+print = custom_print
 
 # ----- THIẾT LẬP TELEGRAM BOT NOTIFIER -----
 try:
