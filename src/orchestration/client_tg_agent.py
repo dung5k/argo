@@ -545,7 +545,7 @@ class TelegramAgent:
                 if self.mqtt: self.mqtt.send_log("INFO", "Git Pull xong! Tự động Restart...")
                 time.sleep(2)
                 self.manager.kill()
-
+                os._exit(69)
             threading.Thread(target=_restart, daemon=True).start()
 
 
@@ -559,7 +559,7 @@ class TelegramAgent:
                 except: pass
                 if self.mqtt: self.mqtt.send_log("INFO", "Tự động Khởi động lại theo lệnh Update...")
                 self.manager.kill()
-
+                os._exit(69)
             threading.Thread(target=_do_update, daemon=True).start()
 
 
@@ -670,7 +670,7 @@ class TelegramAgent:
                     subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
                 except: pass
                 self.manager.kill()
-
+                os._exit(69)
             threading.Thread(target=_do_update_tg, daemon=True).start()
 
     def _poll_loop(self):
