@@ -12,6 +12,7 @@ if safe_script_dir not in sys.path:
     sys.path.insert(0, safe_script_dir)
 
 from src.bot_v2.cloud_manager_v2 import V2CloudManager
+from src.bot_v2.config_loader_v2 import V2ConfigLoader
 from src.bot_v2.data_processor_v2 import V2DataProcessor
 from src.bot_v2.inference_engine_v2 import V2InferenceEngine
 from src.bot_v2.trade_manager_v2 import V2TradeManager
@@ -80,6 +81,9 @@ def bot_background_loop():
     trade_manager.init_mt5()
     processor = None
     
+    sched_path = os.path.join(safe_script_dir, "data", "bot_v2_brain_schedule.json")
+    config_loader = V2ConfigLoader(main_config_path=config_file, schedule_path=sched_path)
+    
     # Lấy kiến trúc cố định (Base config)
     arch = CONFIG.get("TRAINING", {}).get("ARCH", {})
     window_size     = arch.get("win", 60)
@@ -98,89 +102,26 @@ def bot_background_loop():
     processor = None
     active_run_id = None
     
-    # Hàm Helper check giờ
-    def get_current_session_brain():
-        try:
-            sched_path = os.path.join(safe_script_dir, "data", "bot_v2_brain_schedule.json")
-            if not os.path.exists(sched_path): return None, None
-            with open(sched_path, "r", encoding="utf-8") as fs:
-                full_data = json.load(fs)
-                sched = full_data.get("schedule", {})
-                global_mt5_path = full_data.get("mt5_path")
-            now_utc = datetime.now(timezone.utc)
-            hm = now_utc.strftime("%H:%M")
-            for sess_name, sinfo in sched.items():
-                start = sinfo["start"]
-                end = sinfo["end"]
-                if start <= end:
-                    if start <= hm < end: return sess_name, sinfo, global_mt5_path
-                else: 
-                    if hm >= start or hm < end: return sess_name, sinfo, global_mt5_path
-        except: pass
-        return None, None, None
-
     while True:
         gui_time = datetime.now().strftime('%H:%M:%S')
         
-        try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                CONFIG = json.load(f)
-                trade_manager.config = CONFIG
-                mt5_manager.config = CONFIG # Cấp config chuẩn cho trình quét Data
-        except Exception:
-            pass
-            
-        # --- CHECK SCHEDULE ---
-        sess_tuple = get_current_session_brain()
-        target_sinfo = None
-        target_sess_name = "UNIFIED"
-        global_mt5_path = None
+        # --- HOT RELOAD CONFIGURATION ---
+        CONFIG = config_loader.load_base_config()
+        target_sess_name, target_sinfo, global_mt5_path = config_loader.get_current_schedule()
+        CONFIG = config_loader.apply_schedule_overrides(CONFIG, target_sinfo, global_mt5_path)
         
-        if sess_tuple[0]:
-            target_sess_name, target_sinfo, global_mt5_path = sess_tuple
-            target_run_id = target_sinfo.get("run_id")
-            # NẾU Session chỉ định bộ não MỚI, Yêu cầu tải lại NÃo ngay lập tức!
-            if target_run_id and target_run_id != active_run_id:
-                print(f"[SES-SCHED] Phát hiện Chuyển Sinh Phiên {target_sess_name.upper()}! Yêu Cầu Thay Não: {target_run_id}")
-                brain_loaded = False
+        trade_manager.config = CONFIG
+        mt5_manager.config = CONFIG # Cấp config chuẩn cho trình quét Data
             
-            if global_mt5_path:
-                CONFIG["MT5_PATH"] = global_mt5_path
-                
-            # ĐỒNG BỘ TRADING_CONFIG NÓNG MỖI NHỊP TICK
-            trading_config = target_sinfo.get("trading_config")
-            if trading_config:
-                if "LIVE_TRADING" not in CONFIG: CONFIG["LIVE_TRADING"] = {}
-                entry_thr = trading_config.get("entry_thresh")
-                if entry_thr is not None:
-                    CONFIG["LIVE_TRADING"]["BUY_ENTRY_THR"] = entry_thr
-                    CONFIG["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - entry_thr
-                
-                close_thr = trading_config.get("close_thresh")
-                if close_thr is not None:
-                    CONFIG["LIVE_TRADING"]["CLOSE_BUY_THR"] = close_thr
-                    CONFIG["LIVE_TRADING"]["CLOSE_SELL_THR"] = close_thr
-                    
-                lot_size = trading_config.get("lot_size")
-                if lot_size is not None:
-                    CONFIG["LIVE_TRADING"]["lot_size"] = lot_size
-                    
-                tp_pips = trading_config.get("tp_pips")
-                if tp_pips is not None:
-                    CONFIG["LIVE_TRADING"]["tp_pips"] = tp_pips
-                    
-                sl_pips = trading_config.get("sl_pips")
-                if sl_pips is not None:
-                    CONFIG["LIVE_TRADING"]["sl_pips"] = sl_pips
-                    
-                trade_manager.config = CONFIG # Cập nhật nóng
-            # (Fallback ngược tương thích cũ)
-            elif target_sinfo.get("max_thresh_override") is not None:
-                max_thr = target_sinfo.get("max_thresh_override")
-                if "LIVE_TRADING" not in CONFIG: CONFIG["LIVE_TRADING"] = {}
-                CONFIG["LIVE_TRADING"]["BUY_ENTRY_THR"] = max_thr
-                CONFIG["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - max_thr
-                trade_manager.config = CONFIG # Cập nhật nóng
+        if not target_sess_name:
+            target_sess_name = "UNIFIED"
+            
+        target_run_id = target_sinfo.get("run_id") if target_sinfo else None
+        
+        # NẾU Session chỉ định bộ não MỚI, Yêu cầu tải lại NÃo ngay lập tức!
+        if target_run_id and target_run_id != active_run_id:
+            print(f"[SES-SCHED] Phát hiện Chuyển Sinh Phiên {target_sess_name.upper()}! Yêu Cầu Thay Não: {target_run_id}")
+            brain_loaded = False
             
         if not brain_loaded:
             try:
