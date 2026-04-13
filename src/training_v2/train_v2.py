@@ -739,7 +739,7 @@ if __name__ == "__main__":
     cfg = _load_config(config_path) if config_path else {}
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
-    DATA_PATH     = os.path.join(BASE_PROJ, "data")
+    DATA_PATH     = os.environ.get("ARGO_DATA_DIR", os.path.join(BASE_PROJ, "data"))
     
     validate_startup_configs(cfg, BASE_PROJ)
 
@@ -836,7 +836,8 @@ if __name__ == "__main__":
     run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     target_clean  = TARGET_PREFIX.lower().replace("_", "")
     run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V2"
-    run_dir  = os.path.join(BASE_PROJ, "runs", run_name)
+    log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(BASE_PROJ, "logs"))
+    run_dir  = os.path.join(log_base, "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
 
     # Logger
