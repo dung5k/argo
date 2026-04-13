@@ -82,18 +82,16 @@ class V2CloudManager:
                     repo_id="dung5k/argo_data", repo_type="dataset", token=self.hf_token,
                     filename=f"runs/{latest_run}/training_metrix_v2.json"
                 )
-                with open(metrix_path, "r", encoding='utf-8') as fm:
-                    metrix = json.load(fm)
                 shutil.copy(metrix_path, os.path.join(self.data_dir, "training_metrix_v2.json"))
-                inference_feats = metrix.get("data_features", [])
-                if inference_feats:
+                
+                # EXTRACT INFO DYNAMICALLY FROM SCALER!
+                import joblib
+                scaler_obj = joblib.load(scaler_local)
+                if hasattr(scaler_obj, "feature_names_in_"):
+                    inference_feats = list(scaler_obj.feature_names_in_)
                     num_features = len(inference_feats)
-                # Override via dimensions if present (tương thích training_metrix cập nhật)
-                dims = metrix.get("dimensions", {})
-                if dims:
-                    num_xau_features = dims.get("num_features_target", num_xau_features)
-                    num_macro = dims.get("num_features_macro", num_features - num_xau_features)
-                    num_features = num_xau_features + num_macro
+                    num_xau_features = sum(1 for f in inference_feats if f.startswith(self.target_symbol))
+                
             except Exception as e:
                 self.log_callback(f" ├─ ⚠️ Lỗi tải Metrix V2: {e}")
                 
@@ -124,7 +122,7 @@ class V2CloudManager:
         self.log_callback(f"[CloudManager] Nạp thành công: {model_path}")
         return model_path, active_brain_name, num_xau_features, num_features, inference_feats
 
-    def sync_explicit_model(self, run_id: str, weight_filename: str) -> tuple:
+    def sync_explicit_model(self, run_id: str, weight_filename: str, config_id: str) -> tuple:
         """Đồng bộ model chính xác dựa trên Run ID và Tên File."""
         active_brain_name = run_id
         model_path = ""
@@ -142,29 +140,32 @@ class V2CloudManager:
             try:
                 scaler_cloud_path = hf_hub_download(
                     repo_id="dung5k/argo_data", repo_type="dataset", token=self.hf_token,
-                    filename=f"runs/{run_id}/scaler_v2.pkl"
+                    filename=f"runs/{run_id}/scaler_{config_id}.pkl"
                 )
-                scaler_local = os.path.join(self.data_dir, "scaler_v2.pkl")
+                scaler_local = os.path.join(self.data_dir, f"scaler_{config_id}.pkl")
+                import shutil
                 shutil.copy(scaler_cloud_path, scaler_local)
             except Exception as e:
-                self.log_callback(f" ├─ ⚠️ Lỗi tải Scaler V2: {e}")
+                self.log_callback(f" ├─ ⚠️ Lỗi tải Scaler: {e}")
                 
             try:
                 metrix_path = hf_hub_download(
                     repo_id="dung5k/argo_data", repo_type="dataset", token=self.hf_token,
-                    filename=f"runs/{run_id}/training_metrix_v2.json"
+                    filename=f"runs/{run_id}/training_metrix.json"
                 )
                 with open(metrix_path, "r", encoding='utf-8') as fm:
                     metrix = json.load(fm)
                 shutil.copy(metrix_path, os.path.join(self.data_dir, "training_metrix_v2.json"))
-                inference_feats = metrix.get("data_features", [])
-                if inference_feats:
+                shutil.copy(metrix_path, os.path.join(self.data_dir, "training_metrix_v2.json"))
+                
+                # EXTRACT INFO DYNAMICALLY FROM SCALER!
+                import joblib
+                scaler_obj = joblib.load(scaler_local)
+                if hasattr(scaler_obj, "feature_names_in_"):
+                    inference_feats = list(scaler_obj.feature_names_in_)
                     num_features = len(inference_feats)
-                dims = metrix.get("dimensions", {})
-                if dims:
-                    num_xau_features = dims.get("num_features_target", num_xau_features)
-                    num_macro = dims.get("num_features_macro", num_features - num_xau_features)
-                    num_features = num_xau_features + num_macro
+                    num_xau_features = sum(1 for f in inference_feats if f.startswith(self.target_symbol))
+                
             except Exception as e:
                 self.log_callback(f" ├─ ⚠️ Lỗi tải Metrix V2: {e}")
                 

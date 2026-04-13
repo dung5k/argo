@@ -76,7 +76,7 @@ def bot_background_loop():
     # Init Classes
     cloud = V2CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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")
     engine = V2InferenceEngine()
-    mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL)
+    mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
     trade_manager.init_mt5()
     processor = None
     
@@ -102,20 +102,22 @@ def bot_background_loop():
     def get_current_session_brain():
         try:
             sched_path = os.path.join(safe_script_dir, "data", "bot_v2_brain_schedule.json")
-            if not os.path.exists(sched_path): return None
+            if not os.path.exists(sched_path): return None, None
             with open(sched_path, "r", encoding="utf-8") as fs:
-                sched = json.load(fs).get("schedule", {})
+                full_data = json.load(fs)
+                sched = full_data.get("schedule", {})
+                global_mt5_path = full_data.get("mt5_path")
             now_utc = datetime.now(timezone.utc)
             hm = now_utc.strftime("%H:%M")
             for sess_name, sinfo in sched.items():
                 start = sinfo["start"]
                 end = sinfo["end"]
                 if start <= end:
-                    if start <= hm < end: return sess_name, sinfo
+                    if start <= hm < end: return sess_name, sinfo, global_mt5_path
                 else: 
-                    if hm >= start or hm < end: return sess_name, sinfo
+                    if hm >= start or hm < end: return sess_name, sinfo, global_mt5_path
         except: pass
-        return None
+        return None, None, None
 
     while True:
         gui_time = datetime.now().strftime('%H:%M:%S')
@@ -124,6 +126,7 @@ def bot_background_loop():
             with open(config_file, "r", encoding="utf-8") as f:
                 CONFIG = json.load(f)
                 trade_manager.config = CONFIG
+                mt5_manager.config = CONFIG # Cấp config chuẩn cho trình quét Data
         except Exception:
             pass
             
@@ -131,14 +134,18 @@ def bot_background_loop():
         sess_tuple = get_current_session_brain()
         target_sinfo = None
         target_sess_name = "UNIFIED"
+        global_mt5_path = None
         
-        if sess_tuple:
-            target_sess_name, target_sinfo = sess_tuple
+        if sess_tuple[0]:
+            target_sess_name, target_sinfo, global_mt5_path = sess_tuple
             target_run_id = target_sinfo.get("run_id")
             # NẾU Session chỉ định bộ não MỚI, Yêu cầu tải lại NÃo ngay lập tức!
             if target_run_id and target_run_id != active_run_id:
                 print(f"[SES-SCHED] Phát hiện Chuyển Sinh Phiên {target_sess_name.upper()}! Yêu Cầu Thay Não: {target_run_id}")
                 brain_loaded = False
+            
+            if global_mt5_path:
+                CONFIG["MT5_PATH"] = global_mt5_path
             
         if not brain_loaded:
             try:
@@ -151,7 +158,7 @@ def bot_background_loop():
                     cfg_id = target_sinfo.get("config_id")
                     max_thr = target_sinfo.get("max_thresh_override")
                     
-                    m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_explicit_model(run_id, w_file)
+                    m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_explicit_model(run_id, w_file, cfg_id)
                     active_run_id = run_id
                     gui_session = f"{target_sess_name.upper()} [{a_name[:15]}...]"
                     loc_config_id = cfg_id
@@ -181,11 +188,6 @@ def bot_background_loop():
                         sl_pips = trading_config.get("sl_pips")
                         if sl_pips is not None:
                             CONFIG["LIVE_TRADING"]["sl_pips"] = sl_pips
-                            
-                        mt5_path = trading_config.get("mt5_path")
-                        if mt5_path is not None:
-                            CONFIG["MT5_PATH"] = mt5_path
-                            print(f"[SES-SCHED] Cập nhật MT5 Path: {mt5_path}")
                             
                         trade_manager.config = CONFIG # Cập nhật nóng
                     # (Fallback ngược tương thích cũ)

@@ -183,7 +183,10 @@ class FeaturePipelineV2:
         else:
             # Backward compat: file cũ chỉ lưu scaler trực tiếp
             self.scaler = save_obj
-            self._feature_names = []
+            if hasattr(self.scaler, "feature_names_in_"):
+                self._feature_names = list(self.scaler.feature_names_in_)
+            else:
+                self._feature_names = []
         print(f"[PipelineV2] Đã load scaler từ: {self._scaler_path}")
         return self
 

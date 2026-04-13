@@ -44,7 +44,12 @@ class V2DataProcessor:
             # 1. Feature Engineering (Kế thừa Scaling từ V1, yêu cầu is_live=True để dùng chung scaler.pkl)
             try:
                 from src.core import feature_engineering as fe
-                fe_raw_df, _ = fe.create_stationary_features(raw_df.copy(), is_live=True)
+                
+                # Ép kiểu TARGET_PREFIX để không bị lệ thuộc vào config V1 cũ
+                if "XAUUSD_close" in raw_df.columns:
+                    fe.TARGET_PREFIX = "XAUUSD"
+                
+                fe_raw_df, _ = fe.create_stationary_features(raw_df.copy(), is_live=True, apply_scaling=False)
             except ImportError:
                 return None, "Import feature_engineering failed"
                 

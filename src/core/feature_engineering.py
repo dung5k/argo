@@ -206,7 +206,7 @@ def load_and_align_data(data_path):
 
 import joblib
 
-def create_stationary_features(df, is_live=False):
+def create_stationary_features(df, is_live=False, apply_scaling=True):
     print("2. Chuyển đổi dữ liệu sang dạng dừng (Stationary) bằng Log Returns & Đúc T.A cho XAUUSD...")
     new_features = {}
     
@@ -322,7 +322,11 @@ def create_stationary_features(df, is_live=False):
         feature_df = feature_df[exact_features]
     
     # Scale tất cả thành Mean=0, Std=1 để đẩy lưới Nơ-ron chạy hội tụ siêu tốc
-    # KHOÁ LÕI SCALER (TRÁNH LỆCH PHA GIỮA TRAIN VÀ LIVE)
+    
+    if not apply_scaling:
+        print("-> [PIPELINE V2] Bypass V1 Scaling. Trả về RAW Features.")
+        return feature_df, None
+        
     script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     data_path = os.path.join(script_dir, "data", CONFIG_ID)
     os.makedirs(data_path, exist_ok=True)

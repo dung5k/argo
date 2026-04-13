@@ -375,8 +375,6 @@ class MT5DataManager:
             
             if not any(s[0] == sym_clean for s in sym_data):
                 sym_data.append((sym_clean, p_curr, change, time_str, source_name, is_delayed))
-        else:
-            if not any(s[0] == sym_clean for s in sym_data):
-                sym_data.append((sym_clean, 0.0, 0.0, "N/A", source_name, True))
+                    
                     
         return sym_data
