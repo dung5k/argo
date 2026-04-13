@@ -1,0 +1,30 @@
+{
+    "description": "Lịch trình thay thế bộ não siêu việt theo phiên (UTC Time)",
+    "timezone": "UTC",
+    "schedule": {
+        "asian": {
+            "start": "00:00",
+            "end": "07:00",
+            "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
+            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
+            "config_id": "CFG_XAU_ASIAN_V2",
+            "max_thresh_override": 0.84
+        },
+        "european": {
+            "start": "07:00",
+            "end": "12:30",
+            "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
+            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
+            "config_id": "CFG_XAU_ASIAN_V2",
+            "max_thresh_override": 0.84
+        },
+        "ny": {
+            "start": "13:00",
+            "end": "22:00",
+            "run_id": "run_20260412_095135_xauusd_CFG_XAU_NY_V2_TRANSFORMER",
+            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
+            "config_id": "CFG_XAU_NY_V2",
+            "max_thresh_override": 0.63
+        }
+    }
+}

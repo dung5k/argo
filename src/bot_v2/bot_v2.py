@@ -96,6 +96,26 @@ def bot_background_loop():
     last_tick_err_time = 0
     brain_loaded = False
     processor = None
+    active_run_id = None
+    
+    # Hàm Helper check giờ
+    def get_current_session_brain():
+        try:
+            sched_path = os.path.join(safe_script_dir, "data", "bot_v2_brain_schedule.json")
+            if not os.path.exists(sched_path): return None
+            with open(sched_path, "r", encoding="utf-8") as fs:
+                sched = json.load(fs).get("schedule", {})
+            now_utc = datetime.now(timezone.utc)
+            hm = now_utc.strftime("%H:%M")
+            for sess_name, sinfo in sched.items():
+                start = sinfo["start"]
+                end = sinfo["end"]
+                if start <= end:
+                    if start <= hm < end: return sess_name, sinfo
+                else: 
+                    if hm >= start or hm < end: return sess_name, sinfo
+        except: pass
+        return None
 
     while True:
         gui_time = datetime.now().strftime('%H:%M:%S')
@@ -107,21 +127,58 @@ def bot_background_loop():
         except Exception:
             pass
             
+        # --- CHECK SCHEDULE ---
+        sess_tuple = get_current_session_brain()
+        target_sinfo = None
+        target_sess_name = "UNIFIED"
+        
+        if sess_tuple:
+            target_sess_name, target_sinfo = sess_tuple
+            target_run_id = target_sinfo.get("run_id")
+            # NẾU Session chỉ định bộ não MỚI, Yêu cầu tải lại NÃo ngay lập tức!
+            if target_run_id and target_run_id != active_run_id:
+                print(f"[SES-SCHED] Phát hiện Chuyển Sinh Phiên {target_sess_name.upper()}! Yêu Cầu Thay Não: {target_run_id}")
+                brain_loaded = False
+            
         if not brain_loaded:
             try:
-                gui_session = "UNIFIED [Đang kéo Cloud...]"
-                m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(WEIGHT_FILE, "unified")
-                gui_session = f"UNIFIED [{a_name[:20]}]"
+                loc_config_id = CONFIG.get("CONFIG_ID", TARGET_PREFIX)
+                
+                if target_sinfo:
+                    gui_session = f"{target_sess_name.upper()} [Đang kéo Cloud...]"
+                    run_id = target_sinfo.get("run_id")
+                    w_file = target_sinfo.get("weight_file")
+                    cfg_id = target_sinfo.get("config_id")
+                    max_thr = target_sinfo.get("max_thresh_override")
+                    
+                    m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_explicit_model(run_id, w_file)
+                    active_run_id = run_id
+                    gui_session = f"{target_sess_name.upper()} [{a_name[:15]}...]"
+                    loc_config_id = cfg_id
+                    
+                    # Cập nhật ngưỡng an toàn cực đại
+                    if max_thr is not None:
+                        # Ghi đè vào CONFIG để TradeManager dùng
+                        if "LIVE_TRADING" not in CONFIG: CONFIG["LIVE_TRADING"] = {}
+                        CONFIG["LIVE_TRADING"]["BUY_ENTRY_THR"] = max_thr
+                        CONFIG["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - max_thr
+                        trade_manager.config = CONFIG # Cập nhật nóng
+                else:
+                    gui_session = "UNIFIED [Đang kéo Cloud...]"
+                    m_path, a_name, num_xau, n_feat, i_feats = cloud.sync_session_model(WEIGHT_FILE, "unified")
+                    gui_session = f"UNIFIED [{a_name[:20]}]"
+                    active_run_id = "unified"
                 
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, dropout_rate, num_xau)
                 
-                scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{CONFIG_ID}.pkl")
+                scaler_path = os.path.join(safe_script_dir, "data", f"scaler_{loc_config_id}.pkl")
                 processor = V2DataProcessor(scaler_path, i_feats, window_size)
                 
                 brain_loaded = True
-                gui_status = "✅ Nhất thể hóa Trọng Số (Unified Brain) thành công!"
+                gui_status = f"✅ Lắp Ráp NÃO [{target_sess_name.upper()}] Thành Công!"
             except Exception as ce:
-                gui_status = f"❌ Cloud Sync Lỗi: {str(ce)[:30]}"
+                gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
+                print(f"Lỗi Thay Não: {ce}")
                 time.sleep(5)
                 continue
                 
