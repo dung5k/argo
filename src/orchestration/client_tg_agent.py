@@ -238,8 +238,8 @@ class TrainingManager:
                 _sys.path.insert(0, str(self.base_dir / 'src' / 'orchestration'))
                 from hf_sync import pull_data
                 pull_data(self.logger, config_path=config_abs if config_path else None)
-                except Exception as hf_ex:
-                    self.logger.warning(f"  [HF] ⚠ Lỗi đồng bộ data từ HF: {hf_ex} (tiếp tục)")
+            except Exception as hf_ex:
+                self.logger.warning(f"  [HF] ⚠ Lỗi đồng bộ data từ HF: {hf_ex} (tiếp tục)")
 
             # ── BƯỚC 2: Chạy training ──
             try:
