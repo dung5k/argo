@@ -14,6 +14,20 @@ if sys.stdout is not None:
 import tkinter as tk
 from datetime import datetime, timezone
 
+def kill_zombie_bots():
+    """Tự động dọn dẹp các phiên bản bot cũ trước khi khởi động."""
+    import subprocess
+    current_pid = os.getpid()
+    try:
+        # Sử dụng luật SAFE STOP (WMI) để chỉ kill chính xác bot_v2 cũ, không đụng chạm Python khác
+        ps_cmd = f"Get-CimInstance Win32_Process | Where-Object {{ $_.CommandLine -match 'bot_v2.py' -and $_.ProcessId -ne {current_pid} }} | Invoke-CimMethod -MethodName Terminate"
+        subprocess.run(["powershell", "-Command", ps_cmd], capture_output=True, creationflags=0x08000000)
+    except Exception:
+        pass
+
+# Khủng bố các bot ngầm bị kẹt
+kill_zombie_bots()
+
 # Thêm đường dẫn gốc tự động
 safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if safe_script_dir not in sys.path:
