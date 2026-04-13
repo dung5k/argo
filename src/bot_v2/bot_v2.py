@@ -1,8 +1,16 @@
 import os
 import sys
+import io
 import time
 import json
 import threading
+
+# Ép hệ thống xuất Text tiếng Việt không bị Crash Console (Bắt buột trên Windows)
+if sys.stdout is not None:
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    except Exception:
+        pass
 import tkinter as tk
 from datetime import datetime, timezone
 
