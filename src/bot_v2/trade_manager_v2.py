@@ -141,7 +141,7 @@ class V2TradeManager:
         cfg_sl_pips = live_cfg.get("sl_pips", sl_pips)
         cfg_tp_pips = live_cfg.get("tp_pips", tp_pips)
             
-        self.gui_thr_text = f"⚖️ Ngưỡng: BUY>{int(BUY_ENTRY_THR*100)}% | SELL<{int(SELL_ENTRY_THR*100)}%"
+        self.gui_thr_text = f"🔥 V2 Ngưỡng: BUY>{int(BUY_ENTRY_THR*100)}% | SELL<{int(SELL_ENTRY_THR*100)}%"
         
         positions = self.mt5.positions_get(symbol=symbol)
         has_open_position = False
