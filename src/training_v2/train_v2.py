@@ -750,7 +750,7 @@ if __name__ == "__main__":
     target_horizon = cfg.get("FEATURE_ENGINEERING", {}).get("TARGET_HORIZON", 5)
 
     # ── Đọc features đã có (từ feature_engineering.py V1) ─────
-    features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")
+    features_path = os.path.join(DATA_PATH, f"final_features_{CONFIG_ID}.parquet")
     raw_price_path = None  # giá thô để tính label
 
     # Tìm file parquet chứa giá Close gốc (trước khi log-return transform)
