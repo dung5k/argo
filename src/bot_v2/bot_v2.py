@@ -182,6 +182,11 @@ def bot_background_loop():
                         if sl_pips is not None:
                             CONFIG["LIVE_TRADING"]["sl_pips"] = sl_pips
                             
+                        mt5_path = trading_config.get("mt5_path")
+                        if mt5_path is not None:
+                            CONFIG["MT5_PATH"] = mt5_path
+                            print(f"[SES-SCHED] Cập nhật MT5 Path: {mt5_path}")
+                            
                         trade_manager.config = CONFIG # Cập nhật nóng
                     # (Fallback ngược tương thích cũ)
                     elif max_thr is not None:
