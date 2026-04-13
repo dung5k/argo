@@ -207,6 +207,7 @@ class V2TradeManager:
 
         self.log_callback(f"[TradeManager] ✅ Đóng lệnh #{ticket} thành công. retcode={result.retcode}")
         self.active_trade_loggers.pop(ticket, None)
+        self.last_close_time = time.time()
 
         pnl = getattr(position, 'profit', 0.0)
         daily_pnl = self._get_daily_pnl()
@@ -406,6 +407,7 @@ class V2TradeManager:
                     self.log_callback(f"[TradeManager] ⚠️ Lỗi gửi Telegram auto-close: {e}")
 
                 self.active_trade_loggers.pop(tkt, None)
+                self.last_close_time = now
 
     # -------------------------------------------------------------------------
     # THRESHOLD DECISION  (pure business logic, no MT5 calls – fully UT-able)
@@ -499,17 +501,25 @@ class V2TradeManager:
         # 5. Mở lệnh mới nếu không có vị thế
         if not has_open and not just_closed:
             action = self._decide_action(prediction, live_cfg)
-            if action == "BUY_ENTRY":
-                self.gui_action = "🔥 ĐÃ BẮN LỆNH MUA (BUY)!"
-                self.log_callback(f"[TradeManager] 🔥 Mở BUY | pred={prediction:.4f} >= buy_entry threshold")
-                self.open_new_mt5_trade(symbol, self.mt5.ORDER_TYPE_BUY, cfg_lot, cfg_sl, cfg_tp, prediction)
-            elif action == "SELL_ENTRY":
-                self.gui_action = "🔥 ĐÃ BẮN LỆNH BÁN (SELL)!"
-                self.log_callback(f"[TradeManager] 🔥 Mở SELL | pred={prediction:.4f} <= sell_entry threshold")
-                self.open_new_mt5_trade(symbol, self.mt5.ORDER_TYPE_SELL, cfg_lot, cfg_sl, cfg_tp, prediction)
+            
+            # Anti-Spam / Whip-saw mechanism
+            now = time.time()
+            last_close = getattr(self, "last_close_time", 0)
+            if (now - last_close) < 60:
+                self.gui_action = f"Chờ Cooldown 60s để vào lệnh..."
+                self.log_callback(f"[TradeManager] ⏳ Cooldown active (còn {60 - (now - last_close):.0f}s). Bỏ qua {action}.")
             else:
-                self.gui_action = "Thị trường Lưỡng Lự (Quan Sát)"
-                self.log_callback(f"[TradeManager] 👁 Không có tín hiệu rõ ràng. Quan sát.")
+                if action == "BUY_ENTRY":
+                    self.gui_action = "🔥 ĐÃ BẮN LỆNH MUA (BUY)!"
+                    self.log_callback(f"[TradeManager] 🔥 Mở BUY | pred={prediction:.4f} >= buy_entry threshold")
+                    self.open_new_mt5_trade(symbol, self.mt5.ORDER_TYPE_BUY, cfg_lot, cfg_sl, cfg_tp, prediction)
+                elif action == "SELL_ENTRY":
+                    self.gui_action = "🔥 ĐÃ BẮN LỆNH BÁN (SELL)!"
+                    self.log_callback(f"[TradeManager] 🔥 Mở SELL | pred={prediction:.4f} <= sell_entry threshold")
+                    self.open_new_mt5_trade(symbol, self.mt5.ORDER_TYPE_SELL, cfg_lot, cfg_sl, cfg_tp, prediction)
+                else:
+                    self.gui_action = "Thị trường Lưỡng Lự (Quan Sát)"
+                    self.log_callback(f"[TradeManager] 👁 Không có tín hiệu rõ ràng. Quan sát.")
 
         self.log_callback(f"[TradeManager] ✔ Kết thúc chu kỳ | action='{self.gui_action}'")
 
