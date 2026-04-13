@@ -27,8 +27,10 @@ from src.bot_v2.trade_manager_v2 import V2TradeManager
 from src.core.mt5_data_manager import MT5DataManager
 import logging
 
-os.makedirs(os.path.join(safe_script_dir, "logs"), exist_ok=True)
-log_file = os.path.join(safe_script_dir, "logs", f"trade_bot_v2_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
+# Move logs to data/logs instead of root to keep source code clean
+log_dir = os.path.join(safe_script_dir, "data", "logs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"trade_bot_v2_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(message)s',
