@@ -735,6 +735,10 @@ if __name__ == "__main__":
         "--max-epoch", type=int, default=None,
         help="Giới hạn số epoch (dùng để smoke test)"
     )
+    parser.add_argument(
+        "--session", type=str, default="all",
+        help="Session mode for compatibility with training agent orchestration"
+    )
     args = parser.parse_args()
 
     # ── Tìm config ────────────────────────────────────────────
