@@ -747,6 +747,8 @@ if __name__ == "__main__":
     print(f"[INIT] TARGET_PREFIX: {TARGET_PREFIX}")
     print(f"[RUN] {TARGET_PREFIX} | {CONFIG_ID} | V2.0")
 
+    target_horizon = cfg.get("FEATURE_ENGINEERING", {}).get("TARGET_HORIZON", 5)
+
     # ── Đọc features đã có (từ feature_engineering.py V1) ─────
     features_path = os.path.join(DATA_PATH, f"final_features_{TARGET_PREFIX}.parquet")
     raw_price_path = None  # giá thô để tính label
@@ -803,7 +805,7 @@ if __name__ == "__main__":
         close_col = [c for c in raw_df.columns if 'close' in c.lower()]
         close_series = raw_df[close_col[0]] if close_col else raw_df.iloc[:, 3]
 
-        label_gen = SoftLabelGenerator(k=50.0, min_move_pct=0.0002, forecast_horizon=5)
+        label_gen = SoftLabelGenerator(k=50.0, min_move_pct=0.0002, forecast_horizon=target_horizon)
         soft_labels, log_returns = label_gen.generate(close_series)
     elif os.path.exists(target_path):
         # Fallback: đọc target cũ, convert sang soft labels đọc từ parquet

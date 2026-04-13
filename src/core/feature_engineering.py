@@ -433,8 +433,8 @@ if __name__ == "__main__":
     # Cân bằng index do hàm tạo Log Return làm mất 1 dòng đầu tiên
     target_aligned = xau_usd_close.loc[scaled_features.index]
     
-    print("3. Khởi tạo Target Momentum T+5 (Close[T+5] > Close[T])...")
-    lookahead_minutes = 5
+    lookahead_minutes = config.get("FEATURE_ENGINEERING", {}).get("TARGET_HORIZON", 5)
+    print(f"3. Khởi tạo Target Momentum T+{lookahead_minutes} (Close[T+{lookahead_minutes}] > Close[T])...")
     
     # [LIVE MODE FIX]
     if is_live:
@@ -460,7 +460,7 @@ if __name__ == "__main__":
         
         n_buy = (target_direction == 1).sum()
         n_sell = (target_direction == 0).sum()
-        print(f"-> [Momentum Label T+5] Tổng: {len(target_direction):,} | BUY: {n_buy:,} ({n_buy/len(target_direction)*100:.1f}%) | SELL: {n_sell:,} ({n_sell/len(target_direction)*100:.1f}%)")
+        print(f"-> [Momentum Label T+{lookahead_minutes}] Tổng: {len(target_direction):,} | BUY: {n_buy:,} ({n_buy/len(target_direction)*100:.1f}%) | SELL: {n_sell:,} ({n_sell/len(target_direction)*100:.1f}%)")
         
         target_direction.to_frame(name='target').to_parquet(os.path.join(output_data_path, f"target_direction_{CONFIG_ID}.parquet"))
     
