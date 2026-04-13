@@ -57,7 +57,6 @@ class V2TradeManager:
             for pos in positions:
                 if pos.ticket not in self.active_trade_loggers:
                     o_type = "MUA" if pos.type == self.mt5.ORDER_TYPE_BUY else "BÁN"
-                    # entry_time = thời điểm mở lệnh gốc (từ MT5) hoặc now nếu không có
                     open_time_ts = getattr(pos, 'time', time.time())
                     self.active_trade_loggers[pos.ticket] = {
                         "status": "OPEN",
@@ -185,7 +184,7 @@ class V2TradeManager:
     # CLOSE POSITION
     # -------------------------------------------------------------------------
 
-    def close_mt5_position(self, position) -> bool:
+    def close_mt5_position(self, position, close_reason: str = "AI Signal") -> bool:
         """Đóng một vị thế MT5 đang sống. Trả về True nếu đóng thành công."""
         if not self.mt5:
             self.log_callback("[TradeManager] ❌ close_mt5_position: MT5 chưa được khởi tạo.")
@@ -194,7 +193,7 @@ class V2TradeManager:
         symbol = position.symbol
         ticket = position.ticket
         o_type_str = "MUA" if position.type == self.mt5.ORDER_TYPE_BUY else "BÁN"
-        self.log_callback(f"[TradeManager] 🔄 Đang đóng lệnh {o_type_str} #{ticket} ({symbol})...")
+        self.log_callback(f"[TradeManager] 🔄 Đang đóng lệnh {o_type_str} #{ticket} ({symbol}) | Lý do: {close_reason}")
 
         try:
             request = self._build_close_request(position)
@@ -213,11 +212,12 @@ class V2TradeManager:
         daily_pnl = self._get_daily_pnl()
         icon = "💰" if pnl > 0 else "🩸"
         msg = (
-            f"🔴 [ĐÓNG LỆNH AI] Chốt lệnh {o_type_str}\n"
-            f"* Mã: {symbol}\n"
-            f"* Ticket: {ticket}\n"
-            f"* Lợi nhuận: {icon} {pnl:.2f} USD\n"
-            f"📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
+            f"🔴 [ĐÓNG LỆNH] Chốt lệnh {o_type_str}"
+            f"\n* Mã: {symbol}"
+            f"\n* Ticket: {ticket}"
+            f"\n* Lý do: ⚠️ {close_reason}"
+            f"\n* Lợi nhuận: {icon} {pnl:.2f} USD"
+            f"\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
         )
         self.log_callback(f"[TradeManager] 📨 Gửi TG: {msg[:80]}...")
         try:
@@ -287,7 +287,7 @@ class V2TradeManager:
         return ticket
 
     # -------------------------------------------------------------------------
-    # POSITION TRACKER (1-min notify & auto-close detect)
+    # POSITION TRACKER (periodic PnL notify & auto-close detect)
     # -------------------------------------------------------------------------
 
     def _track_open_positions(self, symbol: str, active_tickets: dict, prediction: float = None):
@@ -348,11 +348,30 @@ class V2TradeManager:
                 # Lệnh biến mất khỏi danh sách đang chạy → bị sàn đóng (SL/TP)
                 self.log_callback(f"[TradeManager] 🔍 Ticket #{tkt} không còn trong active_tickets → Kiểm tra lịch sử...")
                 deal_pnl = 0.0
+                close_reason_auto = "Sàn đóng (SL/TP)"
                 try:
                     deals = self.mt5.history_deals_get(position=tkt)
                     if deals:
-                        deal_pnl = sum(d.profit for d in deals if d.entry == self.mt5.DEAL_ENTRY_OUT)
+                        exit_deals = [d for d in deals if d.entry == self.mt5.DEAL_ENTRY_OUT]
+                        deal_pnl = sum(d.profit for d in exit_deals)
                         self.log_callback(f"[TradeManager] 📋 Tìm thấy {len(deals)} deals cho #{tkt}, PnL={deal_pnl:.2f}")
+
+                        # Xác định lý do đóng từ DEAL_REASON của MT5
+                        if exit_deals:
+                            mt5_reason = exit_deals[-1].reason
+                            if mt5_reason == self.mt5.DEAL_REASON_SL:
+                                close_reason_auto = "🛑 Dừng lỗ SL (Stop Loss)"
+                            elif mt5_reason == self.mt5.DEAL_REASON_TP:
+                                close_reason_auto = "🎯 Chốt lãi TP (Take Profit)"
+                            elif mt5_reason == self.mt5.DEAL_REASON_EXPERT:
+                                close_reason_auto = "🧠 Expert Advisor đóng"
+                            elif mt5_reason == self.mt5.DEAL_REASON_CLIENT:
+                                close_reason_auto = "👤 Người dùng đóng thủ công"
+                            elif mt5_reason == self.mt5.DEAL_REASON_MARGIN:
+                                close_reason_auto = "⚠️ Margin Call (Ký quỹ không đủ)"
+                            else:
+                                close_reason_auto = f"Sàn đóng (reason_code={mt5_reason})"
+                            self.log_callback(f"[TradeManager] 🔍 Lý do đóng #{tkt}: {close_reason_auto}")
                     else:
                         self.log_callback(f"[TradeManager] ⚠️ Không tìm thấy deals lịch sử cho #{tkt}")
                 except Exception as e:
@@ -360,15 +379,21 @@ class V2TradeManager:
 
                 icon = "💰" if deal_pnl > 0 else "🩸"
                 o_type = log_data.get('order_type', 'UNKNOWN')
+                entry_price = log_data.get('entry_price', 0.0)
+                open_time_str = datetime.fromtimestamp(
+                    log_data.get('entry_time', now)
+                ).strftime('%H:%M:%S')
                 daily_pnl = self._get_daily_pnl()
                 msg = (
-                    f"🔴 [ĐÃ ĐÓNG LỆNH] Lệnh {o_type} đóng (SL/TP sàn)\n"
-                    f"* Mã: {symbol}\n"
-                    f"* Ticket: {tkt}\n"
-                    f"* Lãi/Lỗ lệnh: {icon} {deal_pnl:.2f} USD\n"
-                    f"📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
+                    f"🔴 [ĐÃ ĐÓNG LỆNH]"
+                    f"\n* Mã: {symbol}"
+                    f"\n* Ticket: {tkt} ({o_type})"
+                    f"\n* Mở lúc: {open_time_str} @ {entry_price}"
+                    f"\n* Lý do: {close_reason_auto}"
+                    f"\n* Lãi/Lỗ lệnh: {icon} {deal_pnl:.2f} USD"
+                    f"\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
                 )
-                self.log_callback(f"[TradeManager] 🔴 Auto-close detected #{tkt} deal_pnl={deal_pnl:.2f}")
+                self.log_callback(f"[TradeManager] 🔴 Auto-close #{tkt} reason='{close_reason_auto}' pnl={deal_pnl:.2f}")
                 try:
                     self.tg_notify(msg)
                 except Exception as e:
@@ -445,15 +470,19 @@ class V2TradeManager:
         for pos in positions:
             action = self._decide_action(prediction, live_cfg)
             if pos.type == self.mt5.ORDER_TYPE_BUY and action == "CLOSE_BUY":
+                close_buy_thr = live_cfg.get('CLOSE_BUY_THR', 0.45)
+                reason = f"AI đảo chiều: pred={prediction*100:.1f}% < ngưỡng đóng BUY ({close_buy_thr*100:.0f}%)"
                 self.gui_action = f"ĐÃ CHỐT BIÊN BUY (#{pos.ticket})"
-                self.log_callback(f"[TradeManager] 📉 Đóng BUY #{pos.ticket} vì pred={prediction:.4f} <= close_buy threshold")
-                if self.close_mt5_position(pos):
+                self.log_callback(f"[TradeManager] 📉 Đóng BUY #{pos.ticket} | {reason}")
+                if self.close_mt5_position(pos, close_reason=reason):
                     has_open = False
                     just_closed = True
             elif pos.type == self.mt5.ORDER_TYPE_SELL and action == "CLOSE_SELL":
+                close_sell_thr = live_cfg.get('CLOSE_SELL_THR', 0.55)
+                reason = f"AI đảo chiều: pred={prediction*100:.1f}% > ngưỡng đóng SELL ({close_sell_thr*100:.0f}%)"
                 self.gui_action = f"ĐÃ CHỐT BIÊN SELL (#{pos.ticket})"
-                self.log_callback(f"[TradeManager] 📈 Đóng SELL #{pos.ticket} vì pred={prediction:.4f} >= close_sell threshold")
-                if self.close_mt5_position(pos):
+                self.log_callback(f"[TradeManager] 📈 Đóng SELL #{pos.ticket} | {reason}")
+                if self.close_mt5_position(pos, close_reason=reason):
                     has_open = False
                     just_closed = True
             elif pos.type == self.mt5.ORDER_TYPE_BUY:
