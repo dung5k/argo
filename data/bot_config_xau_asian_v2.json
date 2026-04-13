@@ -45,9 +45,34 @@
             "JP225m": "EXNESS",
             "HK50m": "EXNESS",
             "BTCUSDm": "EXNESS",
-            "ETHUSDm": "EXNESS"
+            "ETHUSDm": "EXNESS",
+            "VIXYm": "ICMARKETS",
+            "US_10Y_YIELD": "ICMARKETS"
         },
-        "CONTINUOUS_CONTRACTS": {}
+        "CONTINUOUS_CONTRACTS": {
+            "VIXYm": {
+                "PREFIX": "VIX_",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": [
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "M",
+                    "N",
+                    "Q",
+                    "U",
+                    "V",
+                    "X",
+                    "Z"
+                ]
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "UST10Y_",
+                "IS_CFD": false
+            }
+        }
     },
     "FEATURE_ENGINEERING": {
         "EMA_PERIODS": [

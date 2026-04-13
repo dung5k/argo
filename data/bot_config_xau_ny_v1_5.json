@@ -31,10 +31,10 @@
             "DXYm": "EXNESS",
             "USOILm": "EXNESS",
             "XNGUSD": "ICMARKETS",
-            "VIXYm": "DEFAULT",
+            "VIXYm": "ICMARKETS",
             "NASDAQ_100": "EXNESS",
             "US500": "ICMARKETS",
-            "US_10Y_YIELD": "MT5_2",
+            "US_10Y_YIELD": "ICMARKETS",
             "BTCUSDm": "EXNESS",
             "ETHUSDm": "EXNESS"
         },
@@ -45,24 +45,26 @@
                 "IS_CFD": true
             },
             "US_10Y_YIELD": {
-                "PREFIX": "Z10Y",
-                "BROKER": "MT5_2",
+                "PREFIX": "UST10Y_",
+                "IS_CFD": false
+            },
+            "VIXYm": {
+                "PREFIX": "VIX_",
                 "IS_CFD": false,
                 "CONTRACT_MONTHS": [
+                    "F",
+                    "G",
                     "H",
                     "J",
                     "K",
                     "M",
-                    "U",
+                    "N",
                     "Q",
+                    "U",
                     "V",
                     "X",
-                    "Z",
-                    "F",
-                    "G",
-                    "N"
-                ],
-                "INVERT_LOGIC": false
+                    "Z"
+                ]
             }
         }
     },

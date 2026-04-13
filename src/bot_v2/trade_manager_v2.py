@@ -459,6 +459,14 @@ class V2TradeManager:
                 if current_sl == 0.0 or (current_sl - calc_sl) > step_min:
                     new_sl = calc_sl
                     updated = True
+        
+        # Log liên tục trạng thái phai nhạt của ST theo chu kỳ 10 giây để quan sát
+        if hasattr(self, '_last_trace_st') and (time.time() - self._last_trace_st < 10):
+            pass
+        else:
+            self._last_trace_st = time.time()
+            profit_pips = ((current_price - entry_price) if pos.type == self.mt5.ORDER_TYPE_BUY else (entry_price - current_price)) / pip_value
+            self.log_callback(f"[TradeManager] ⏱️ Trailing Động (#{pos.ticket}): Lãi {profit_pips:.1f} pips | Ngưỡng ST chờ = {ST_dong/pip_value:.1f} pips")
                     
         if updated:
             request = {

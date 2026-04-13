@@ -285,7 +285,17 @@ def train_v2(
     NUM_ATTN_LAYERS  = 3
     DROPOUT_RATE     = 0.2
     BASE_LR          = 1e-4
-    BATCH_SIZE       = 512
+    
+    # [GPU MAXIMIZATION] Auto-scale Batch Size theo cấu hình hoặc đẩy thẳng lên 4096 để ép cháy cuda cores
+    if cfg and cfg.get("TRAINING", {}).get("BATCH_SIZE"):
+        BATCH_SIZE = cfg["TRAINING"]["BATCH_SIZE"]
+    else:
+        BATCH_SIZE = 512 if perf_mode == "LIGHT" else 4096
+        
+    # [GPU MAXIMIZATION] Bật bộ tối ưu tĩnh CUDNN để Pytorch tự compile hàm tích chập (Convolution) tối ưu nhất theo phần cứng
+    if torch.cuda.is_available() and perf_mode != "LIGHT":
+        torch.backends.cudnn.benchmark = True
+        
     MAX_STAGNATE     = 10
     MAX_PHOENIX      = 40
     MIN_SIGNALS      = 30

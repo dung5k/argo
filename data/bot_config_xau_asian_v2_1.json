@@ -50,15 +50,25 @@
         "CONTINUOUS_CONTRACTS": {
             "VIXYm": {
                 "PREFIX": "VIX_",
-                "BROKER": "ICMARKETS",
                 "IS_CFD": false,
-                "CONTRACT_MONTHS": ["F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"]
+                "CONTRACT_MONTHS": [
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "M",
+                    "N",
+                    "Q",
+                    "U",
+                    "V",
+                    "X",
+                    "Z"
+                ]
             },
             "US_10Y_YIELD": {
                 "PREFIX": "UST10Y_",
-                "BROKER": "ICMARKETS",
-                "IS_CFD": false,
-                "CONTRACT_MONTHS": ["H", "M", "U", "Z"]
+                "IS_CFD": false
             }
         }
     },
