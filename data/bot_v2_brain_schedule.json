@@ -11,7 +11,7 @@
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
                 "entry_thresh": 0.581,
-                "close_thresh": 0.45,
+                "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 600,
                 "sl_pips": 1200
@@ -25,7 +25,7 @@
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
                 "entry_thresh": 0.58,
-                "close_thresh": 0.45,
+                "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 500,
                 "sl_pips": 1100
@@ -39,7 +39,7 @@
             "config_id": "CFG_XAU_NY_V2",
             "trading_config": {
                 "entry_thresh": 0.58,
-                "close_thresh": 0.45,
+                "close_thresh": 0.60,
                 "lot_size": 0.01,
                 "tp_pips": 700,
                 "sl_pips": 1500
