@@ -1,5 +1,5 @@
 {
-    "description": "Lá»‹ch trÃ¬nh thay tháº¿ bá»™ nÃ£o siÃªu viá»‡t theo phiÃªn (UTC Time)",
+    "description": "L\u00e1\u00bb\u2039ch tr\u00c3\u00acnh thay th\u00e1\u00ba\u00bf b\u00e1\u00bb\u2122 n\u00c3\u00a3o si\u00c3\u00aau vi\u00e1\u00bb\u2021t theo phi\u00c3\u00aan (UTC Time)",
     "timezone": "UTC",
     "mt5_path": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "schedule": {
@@ -11,38 +11,38 @@
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
                 "entry_thresh": 0.61,
-                "close_thresh": 0.60,
+                "close_thresh": 0.5,
                 "lot_size": 0.01,
                 "tp_pips": 600,
-                "sl_pips": 1200
+                "sl_pips": 300
             }
         },
         "european": {
             "start": "07:00",
             "end": "12:30",
-            "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
-            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
+            "run_id": "run_20260413_143324_xauusd_CFG_XAU_LONDON_V2_TRANSFORMER",
+            "weight_file": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2",
             "trading_config": {
-                "entry_thresh": 0.61,
-                "close_thresh": 0.60,
+                "entry_thresh": 0.54,
+                "close_thresh": 0.44,
                 "lot_size": 0.01,
-                "tp_pips": 500,
-                "sl_pips": 1100
+                "tp_pips": 1000,
+                "sl_pips": 500
             }
         },
         "ny": {
             "start": "13:00",
             "end": "22:00",
-            "run_id": "run_20260412_095135_xauusd_CFG_XAU_NY_V2_TRANSFORMER",
+            "run_id": "run_20260412_103946_xauusd_CFG_XAU_NY_V2_TRANSFORMER",
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_NY_V2",
             "trading_config": {
-                "entry_thresh": 0.61,
-                "close_thresh": 0.60,
+                "entry_thresh": 0.55,
+                "close_thresh": 0.45,
                 "lot_size": 0.01,
-                "tp_pips": 700,
-                "sl_pips": 1500
+                "tp_pips": 1000,
+                "sl_pips": 500
             }
         }
     }
