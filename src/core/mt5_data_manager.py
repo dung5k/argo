@@ -207,9 +207,12 @@ class MT5DataManager:
                             expanded_candidates = {} # Dùng dict để bảo toàn thứ tự add vào (thay cho set)
                             if continuous_config:
                                 active_contract = self.get_front_month_contract(continuous_config)
+                                active_contract_1digit = active_contract[:-2] + active_contract[-1]
                                 expanded_candidates[active_contract] = True
                                 expanded_candidates[active_contract + "m"] = True
                                 expanded_candidates[active_contract + ".a"] = True
+                                expanded_candidates[active_contract_1digit] = True
+                                expanded_candidates[active_contract_1digit + "m"] = True
                             else:
                                 s_clean = req_m.replace("m", "")
                                 candidates = self.MT5_FALLBACK_NAMES.get(req_m, [req_m, s_clean])
