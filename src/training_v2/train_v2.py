@@ -384,7 +384,7 @@ def train_v2(
                 dummy_model.train()
                 dummy_optimizer.zero_grad()
                 out = dummy_model(x)
-                loss = F.mse_loss(out.squeeze(), y)
+                loss = out.sum()
                 loss.backward()
                 dummy_optimizer.step()
                 
