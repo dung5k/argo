@@ -8,7 +8,13 @@
             "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2",
-            "max_thresh_override": 0.84
+            "trading_config": {
+                "entry_thresh": 0.84,
+                "close_thresh": 0.50,
+                "lot_size": 0.01,
+                "tp_pips": 1000,
+                "sl_pips": 500
+            }
         },
         "european": {
             "start": "07:00",
@@ -16,7 +22,13 @@
             "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2",
-            "max_thresh_override": 0.84
+            "trading_config": {
+                "entry_thresh": 0.84,
+                "close_thresh": 0.50,
+                "lot_size": 0.01,
+                "tp_pips": 1500,
+                "sl_pips": 700
+            }
         },
         "ny": {
             "start": "13:00",
@@ -24,7 +36,13 @@
             "run_id": "run_20260412_095135_xauusd_CFG_XAU_NY_V2_TRANSFORMER",
             "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_NY_V2",
-            "max_thresh_override": 0.63
+            "trading_config": {
+                "entry_thresh": 0.63,
+                "close_thresh": 0.50,
+                "lot_size": 0.01,
+                "tp_pips": 2000,
+                "sl_pips": 1000
+            }
         }
     }
 }

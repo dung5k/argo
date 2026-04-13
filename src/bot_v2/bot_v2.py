@@ -156,9 +156,35 @@ def bot_background_loop():
                     gui_session = f"{target_sess_name.upper()} [{a_name[:15]}...]"
                     loc_config_id = cfg_id
                     
-                    # Cập nhật ngưỡng an toàn cực đại
-                    if max_thr is not None:
-                        # Ghi đè vào CONFIG để TradeManager dùng
+                    # Cập nhật thông số Trading theo phiên
+                    trading_config = target_sinfo.get("trading_config")
+                    if trading_config:
+                        if "LIVE_TRADING" not in CONFIG: CONFIG["LIVE_TRADING"] = {}
+                        entry_thr = trading_config.get("entry_thresh")
+                        if entry_thr is not None:
+                            CONFIG["LIVE_TRADING"]["BUY_ENTRY_THR"] = entry_thr
+                            CONFIG["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - entry_thr
+                        
+                        close_thr = trading_config.get("close_thresh")
+                        if close_thr is not None:
+                            CONFIG["LIVE_TRADING"]["CLOSE_BUY_THR"] = close_thr
+                            CONFIG["LIVE_TRADING"]["CLOSE_SELL_THR"] = close_thr
+                            
+                        lot_size = trading_config.get("lot_size")
+                        if lot_size is not None:
+                            CONFIG["LIVE_TRADING"]["lot_size"] = lot_size
+                            
+                        tp_pips = trading_config.get("tp_pips")
+                        if tp_pips is not None:
+                            CONFIG["LIVE_TRADING"]["tp_pips"] = tp_pips
+                            
+                        sl_pips = trading_config.get("sl_pips")
+                        if sl_pips is not None:
+                            CONFIG["LIVE_TRADING"]["sl_pips"] = sl_pips
+                            
+                        trade_manager.config = CONFIG # Cập nhật nóng
+                    # (Fallback ngược tương thích cũ)
+                    elif max_thr is not None:
                         if "LIVE_TRADING" not in CONFIG: CONFIG["LIVE_TRADING"] = {}
                         CONFIG["LIVE_TRADING"]["BUY_ENTRY_THR"] = max_thr
                         CONFIG["LIVE_TRADING"]["SELL_ENTRY_THR"] = 1.0 - max_thr
