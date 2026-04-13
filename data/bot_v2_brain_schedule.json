@@ -12,8 +12,8 @@
                 "entry_thresh": 0.84,
                 "close_thresh": 0.50,
                 "lot_size": 0.01,
-                "tp_pips": 1000,
-                "sl_pips": 500
+                "tp_pips": 600,
+                "sl_pips": 1200
             }
         },
         "european": {
@@ -26,8 +26,8 @@
                 "entry_thresh": 0.84,
                 "close_thresh": 0.50,
                 "lot_size": 0.01,
-                "tp_pips": 1500,
-                "sl_pips": 700
+                "tp_pips": 500,
+                "sl_pips": 1100
             }
         },
         "ny": {
@@ -40,8 +40,8 @@
                 "entry_thresh": 0.63,
                 "close_thresh": 0.50,
                 "lot_size": 0.01,
-                "tp_pips": 2000,
-                "sl_pips": 1000
+                "tp_pips": 700,
+                "sl_pips": 1500
             }
         }
     }
