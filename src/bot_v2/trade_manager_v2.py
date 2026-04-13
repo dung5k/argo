@@ -18,13 +18,16 @@ class V2TradeManager:
         self.log_callback = log_callback or print
         self.tg_notify = tg_notify_callback or (lambda x: None)
 
-        # ticket → {status, entry_price, order_type, entry_time, notified_1min}
+        # ticket → {status, entry_price, order_type, entry_time, last_pnl_notify_time}
         self.active_trade_loggers: dict = {}
         self.gui_action: str = "-"
         self.gui_thr_text: str = "-"
 
         # Late-import MT5 để có thể chạy UT trên môi trường không có Windows
         self.mt5 = None
+
+        # Track to prevent spam: kỳ gửi notify khởi động lần đầu
+        self._positions_synced = False
 
     # -------------------------------------------------------------------------
     # INIT
@@ -40,6 +43,40 @@ class V2TradeManager:
         except ImportError:
             self.log_callback("[TradeManager] ❌ Module MetaTrader5 không tồn tại (môi trường test?).")
             return False
+
+    def sync_existing_positions(self, symbol: str = None):
+        """Quét các lệnh đang tồn tại trên sàn và đăng ký vào active_trade_loggers nếu chưa có.
+        Gọi 1 lần sau khi bot khởi động để không bỏ sót các lệnh đã có sẵn.
+        """
+        if not self.mt5:
+            return
+        sym = symbol or self.target_symbol
+        try:
+            positions = self.mt5.positions_get(symbol=sym) or []
+            new_count = 0
+            for pos in positions:
+                if pos.ticket not in self.active_trade_loggers:
+                    o_type = "MUA" if pos.type == self.mt5.ORDER_TYPE_BUY else "BÁN"
+                    # entry_time = thời điểm mở lệnh gốc (từ MT5) hoặc now nếu không có
+                    open_time_ts = getattr(pos, 'time', time.time())
+                    self.active_trade_loggers[pos.ticket] = {
+                        "status": "OPEN",
+                        "entry_price": float(getattr(pos, 'price_open', 0.0)),
+                        "order_type": o_type,
+                        "entry_time": float(open_time_ts),
+                        "last_pnl_notify_time": 0.0,  # 0 → sẽ gửi ngay trong chu kỳ tiếp theo
+                    }
+                    new_count += 1
+                    self.log_callback(
+                        f"[TradeManager] 🔄 Đăng ký lệnh sẵn có #{pos.ticket} "
+                        f"{o_type} @ {pos.price_open} vol={pos.volume}"
+                    )
+            if new_count:
+                self.log_callback(f"[TradeManager] 📢 Sync xong: đăng ký {new_count} lệnh sẵn có để track PnL.")
+            else:
+                self.log_callback(f"[TradeManager] ℹ️ Không có lệnh mới cần sync (total tracked={len(self.active_trade_loggers)}).")
+        except Exception as e:
+            self.log_callback(f"[TradeManager] ⚠️ sync_existing_positions lỗi: {e}")
 
     # -------------------------------------------------------------------------
     # DAILY PnL
@@ -228,7 +265,7 @@ class V2TradeManager:
             "entry_price": float(request['price']),
             "order_type": "MUA" if order_type == self.mt5.ORDER_TYPE_BUY else "BÁN",
             "entry_time": time.time(),
-            "notified_1min": False,
+            "last_pnl_notify_time": time.time(),  # Khởi đầu = now, notify đầu tiên sau 60s
         }
 
         daily_pnl = self._get_daily_pnl()
@@ -254,31 +291,44 @@ class V2TradeManager:
     # -------------------------------------------------------------------------
 
     def _track_open_positions(self, symbol: str, active_tickets: dict):
-        """Kiểm tra PnL sau 1 phút và phát hiện lệnh bị sàn tự đóng (SL/TP)."""
+        """Kiểm tra PnL theo chu kỳ 1 phút (lặp lại mãi) và phát hiện lệnh bị sàn tự đóng (SL/TP)."""
+        now = time.time()
         for tkt in list(self.active_trade_loggers.keys()):
             log_data = self.active_trade_loggers[tkt]
 
             if tkt in active_tickets:
-                # Lệnh vẫn đang sống – kiểm tra 1-min notify
+                # Lệnh vẫn đang sống – kiểm tra có đến kỳ gửi notify chưa
                 pos = active_tickets[tkt]
-                elapsed = time.time() - log_data.get('entry_time', time.time())
-                if not log_data.get('notified_1min', False) and elapsed >= 60:
+                last_notify = log_data.get('last_pnl_notify_time', 0.0)
+                elapsed_since_notify = now - last_notify
+
+                if elapsed_since_notify >= 60:
                     pnl = getattr(pos, 'profit', 0.0)
                     icon = "💰" if pnl > 0 else "🩸"
                     daily_pnl = self._get_daily_pnl()
+                    open_time_str = datetime.fromtimestamp(
+                        log_data.get('entry_time', now)
+                    ).strftime('%H:%M:%S')
                     msg = (
-                        f"⏳ [CẬP NHẬT 1 PHÚT]\n"
+                        f"⏳ [CẬP NHẬT PnL]\n"
                         f"* Mã: {symbol}\n"
-                        f"* Ticket: {tkt}\n"
+                        f"* Ticket: {tkt} ({log_data.get('order_type','?')})\n"
+                        f"* Mở lúc: {open_time_str}\n"
                         f"* Trạng thái lãi lỗ: {icon} {pnl:.2f} USD\n"
                         f"📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
                     )
-                    self.log_callback(f"[TradeManager] ⏳ 1-min notify #{tkt} PnL={pnl:.2f}")
+                    self.log_callback(
+                        f"[TradeManager] ⏳ Notify PnL #{tkt} | pnl={pnl:.2f} | elapsed={elapsed_since_notify:.0f}s"
+                    )
                     try:
                         self.tg_notify(msg)
                     except Exception as e:
                         self.log_callback(f"[TradeManager] ⚠️ Lỗi gửi Telegram 1-min: {e}")
-                    log_data['notified_1min'] = True
+                    log_data['last_pnl_notify_time'] = now  # reset đồng hồ cho lần sau
+                else:
+                    self.log_callback(
+                        f"[TradeManager] ⏳ #{tkt} PnL notify trong {60 - elapsed_since_notify:.0f}s nữa..."
+                    )
             else:
                 # Lệnh biến mất khỏi danh sách đang chạy → bị sàn đóng (SL/TP)
                 self.log_callback(f"[TradeManager] 🔍 Ticket #{tkt} không còn trong active_tickets → Kiểm tra lịch sử...")

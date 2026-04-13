@@ -114,7 +114,11 @@ def bot_background_loop():
     active_run_id = None
     cycle_count = 0
     print("[BOT] ✅ MT5 đã kết nối. Bắt đầu vòng lặp chính...")
-    
+
+    # Quét ngay lập tức các lệnh đang sẵn có trên sàn để track PnL từ đầu
+    print("[BOT] 🔄 Sync lệnh đang có trên sàn (nếu có)...")
+    trade_manager.sync_existing_positions()
+
     while True:
         cycle_count += 1
         gui_time = datetime.now().strftime('%H:%M:%S')
