@@ -177,3 +177,9 @@ class V2TradeManager:
                 self.open_new_mt5_trade(symbol, self.mt5.ORDER_TYPE_SELL, cfg_lot_size, cfg_sl_pips, cfg_tp_pips, prediction)
             else:
                 self.gui_action = "Thị trường Lưỡng Lự (Quan Sát)"
+
+    def update_gui_threshold(self):
+        live_cfg = self.config.get("LIVE_TRADING", {})
+        BUY_ENTRY_THR  = live_cfg.get("BUY_ENTRY_THR", 0.60)
+        SELL_ENTRY_THR = live_cfg.get("SELL_ENTRY_THR", 0.40)
+        self.gui_thr_text = f"🔥 V2 Ngưỡng: BUY>{int(BUY_ENTRY_THR*100)}% | SELL<{int(SELL_ENTRY_THR*100)}%"
