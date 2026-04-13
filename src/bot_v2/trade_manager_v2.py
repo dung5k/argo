@@ -290,7 +290,7 @@ class V2TradeManager:
     # POSITION TRACKER (1-min notify & auto-close detect)
     # -------------------------------------------------------------------------
 
-    def _track_open_positions(self, symbol: str, active_tickets: dict):
+    def _track_open_positions(self, symbol: str, active_tickets: dict, prediction: float = None):
         """Kiểm tra PnL theo chu kỳ 1 phút (lặp lại mãi) và phát hiện lệnh bị sàn tự đóng (SL/TP)."""
         now = time.time()
         for tkt in list(self.active_trade_loggers.keys()):
@@ -309,16 +309,31 @@ class V2TradeManager:
                     open_time_str = datetime.fromtimestamp(
                         log_data.get('entry_time', now)
                     ).strftime('%H:%M:%S')
+
+                    # Xây dựng cấu trúc AI signal line
+                    if prediction is not None:
+                        buy_thr  = self.config.get("LIVE_TRADING", {}).get("BUY_ENTRY_THR", 0.60)
+                        sell_thr = self.config.get("LIVE_TRADING", {}).get("SELL_ENTRY_THR", 0.40)
+                        if prediction >= buy_thr:
+                            ai_signal = f"🟢 BÒ ({prediction*100:.1f}%)"
+                        elif prediction <= sell_thr:
+                            ai_signal = f"🔴 GẤU ({prediction*100:.1f}%)"
+                        else:
+                            ai_signal = f"⚪ LƯỢNG LỰ ({prediction*100:.1f}%)"
+                    else:
+                        ai_signal = "N/A"
+
                     msg = (
-                        f"⏳ [CẬP NHẬT PnL]\n"
-                        f"* Mã: {symbol}\n"
-                        f"* Ticket: {tkt} ({log_data.get('order_type','?')})\n"
-                        f"* Mở lúc: {open_time_str}\n"
-                        f"* Trạng thái lãi lỗ: {icon} {pnl:.2f} USD\n"
-                        f"📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
+                        f"⏳ [CẬP NHẬT PnL]"
+                        f"\n* Mã: {symbol}"
+                        f"\n* Ticket: {tkt} ({log_data.get('order_type','?')})"
+                        f"\n* Mở lúc: {open_time_str}"
+                        f"\n* Lãi/lỗ: {icon} {pnl:.2f} USD"
+                        f"\n🧠 AI hiện tại: {ai_signal}"
+                        f"\n📊 Lãi/Lỗ ngày: {daily_pnl:.2f} USD"
                     )
                     self.log_callback(
-                        f"[TradeManager] ⏳ Notify PnL #{tkt} | pnl={pnl:.2f} | elapsed={elapsed_since_notify:.0f}s"
+                        f"[TradeManager] ⏳ Notify PnL #{tkt} | pnl={pnl:.2f} | ai={ai_signal} | elapsed={elapsed_since_notify:.0f}s"
                     )
                     try:
                         self.tg_notify(msg)
@@ -419,7 +434,7 @@ class V2TradeManager:
         self.log_callback(f"[TradeManager] 📊 Đang có {len(positions)} vị thế mở cho {symbol}.")
 
         # 2. Theo dõi PnL & phát hiện SL/TP tự đóng
-        self._track_open_positions(symbol, active_tickets)
+        self._track_open_positions(symbol, active_tickets, prediction=prediction)
 
         # 3. Cập nhật lại positions sau khi _track có thể đã xóa
         positions = self.mt5.positions_get(symbol=symbol) or []
