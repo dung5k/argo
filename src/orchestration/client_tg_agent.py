@@ -179,7 +179,7 @@ class TrainingManager:
             if config_path and "v1_5" in config_path:
                 train_script = str(self.base_dir / "src" / "training_v1_5" / "train_v1_5.py")
             else:
-                train_script = str(self.base_dir / "src" / "core" / "train_unified.py")
+                train_script = str(self.base_dir / "src" / "training_v2" / "train_v2.py")
 
         cmd = [python, train_script]
         
@@ -215,7 +215,7 @@ class TrainingManager:
         else:
             env["PERFORMANCE_MODE"] = "MAX"
         env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"})
-        # Đảm bảo train_unified.py và hf_sync.pull_data dùng cùng data path
+        # Đảm bảo train_v2.py và hf_sync.pull_data dùng cùng data path
         if os.name == 'nt':
             os.environ["ARGO_DATA_DIR"] = "C:\\argo\\data"
             os.environ["ARGO_LOGS_DIR"] = "C:\\argo\\logs"

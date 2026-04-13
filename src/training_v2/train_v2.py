@@ -40,7 +40,11 @@ _ROOT = str(Path(__file__).resolve().parent.parent.parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-from src.legacy.train_ga import TransformerModel, device
+from src.core.models.transformer import TransformerModel
+import torch
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 from src.training_v2.label_generator import SoftLabelGenerator
 from src.training_v2.feature_pipeline_v2 import FeaturePipelineV2
 from src.training_v2.focal_loss import build_focal_loss

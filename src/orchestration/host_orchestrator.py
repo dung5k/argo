@@ -155,7 +155,7 @@ class HostOrchestrator:
         """
         task_id = task_id or self._make_task_id("train")
         # Dùng path tương đối → Client tự resolve theo base_dir của mình
-        train_script = "src/train_unified.py"
+        train_script = "src/training_v2/train_v2.py"
         # config_path: client gọi sẽ resolve, đảm bảo là relative
         config_rel = self._make_relative(config_path) if Path(config_path).is_absolute() else config_path
         action = {

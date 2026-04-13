@@ -23,7 +23,7 @@ class V2InferenceEngine:
             if safe_script_dir not in sys.path:
                 sys.path.insert(0, safe_script_dir)
                 
-            from src.legacy.train_ga import TransformerModel
+            from src.core.models.transformer import TransformerModel
             
             # 2. Khởi tạo
             self.model = TransformerModel(
