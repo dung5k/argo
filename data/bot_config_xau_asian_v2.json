@@ -108,19 +108,6 @@
             "dropout": 0.2
         }
     },
-    "LIVE_TRADING": {
-        "SYNC_SCALER": false,
-        "BUY_ENTRY_THR": 0.56,
-        "SELL_ENTRY_THR": 0.44,
-        "CLOSE_BUY_THR": 0.42,
-        "CLOSE_SELL_THR": 0.58,
-        "lot_size": 0.01,
-        "sl_pips": 100,
-        "tp_pips": 200,
-        "SESSION_GUARD_ENABLED": true,
-        "MARKET_OPEN": "00:05",
-        "MARKET_CLOSE": "08:55"
-    },
     "CURRICULUM_MASKING": {
         "ENABLE": true,
         "ACTIVE_WINDOW_SIZE": 30,
