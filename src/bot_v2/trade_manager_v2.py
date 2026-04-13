@@ -345,18 +345,19 @@ class V2TradeManager:
                         f"[TradeManager] ⏳ #{tkt} PnL notify trong {60 - elapsed_since_notify:.0f}s nữa..."
                     )
             else:
-                # Lệnh biến mất khỏi danh sách đang chạy → bị sàn đóng (SL/TP)
+                # Lệnh biến mất khỏi danh sách đang chạy → bị sàn đóng (SL/TP) hoặc do MT5 API bị trễ
                 self.log_callback(f"[TradeManager] 🔍 Ticket #{tkt} không còn trong active_tickets → Kiểm tra lịch sử...")
                 deal_pnl = 0.0
                 close_reason_auto = "Sàn đóng (SL/TP)"
+                deals_found = False
                 try:
                     deals = self.mt5.history_deals_get(position=tkt)
                     if deals:
+                        deals_found = True
                         exit_deals = [d for d in deals if d.entry == self.mt5.DEAL_ENTRY_OUT]
                         deal_pnl = sum(d.profit for d in exit_deals)
                         self.log_callback(f"[TradeManager] 📋 Tìm thấy {len(deals)} deals cho #{tkt}, PnL={deal_pnl:.2f}")
 
-                        # Xác định lý do đóng từ DEAL_REASON của MT5
                         if exit_deals:
                             mt5_reason = exit_deals[-1].reason
                             if mt5_reason == self.mt5.DEAL_REASON_SL:
@@ -377,12 +378,17 @@ class V2TradeManager:
                 except Exception as e:
                     self.log_callback(f"[TradeManager] ❌ Lỗi truy vấn deals #{tkt}: {e}")
 
+                # MT5 Sync Lag check: Nếu chưa có deal lịch sử và lệnh vừa mới được tạo < 20 giây -> Có thể do MT5 API trả chậm
+                if not deals_found:
+                    elapsed_since_open = now - log_data.get('entry_time', now)
+                    if elapsed_since_open < 30:
+                        self.log_callback(f"[TradeManager] ⏳ Lệnh #{tkt} vừa mở {elapsed_since_open:.1f}s trước, nhưng MT5 chưa cập nhật. Chờ đồng bộ (Grace Period)...")
+                        continue
+
                 icon = "💰" if deal_pnl > 0 else "🩸"
                 o_type = log_data.get('order_type', 'UNKNOWN')
                 entry_price = log_data.get('entry_price', 0.0)
-                open_time_str = datetime.fromtimestamp(
-                    log_data.get('entry_time', now)
-                ).strftime('%H:%M:%S')
+                open_time_str = datetime.fromtimestamp(log_data.get('entry_time', now)).strftime('%H:%M:%S')
                 daily_pnl = self._get_daily_pnl()
                 msg = (
                     f"🔴 [ĐÃ ĐÓNG LỆNH]"
@@ -463,7 +469,7 @@ class V2TradeManager:
 
         # 3. Cập nhật lại positions sau khi _track có thể đã xóa
         positions = self.mt5.positions_get(symbol=symbol) or []
-        has_open = bool(positions)
+        has_open = bool(positions) or (len(self.active_trade_loggers) > 0)
         just_closed = False
 
         # 4. Kiểm tra đóng lệnh theo tín hiệu AI
