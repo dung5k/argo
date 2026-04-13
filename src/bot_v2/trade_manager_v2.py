@@ -407,7 +407,73 @@ class V2TradeManager:
                     self.log_callback(f"[TradeManager] ⚠️ Lỗi gửi Telegram auto-close: {e}")
 
                 self.active_trade_loggers.pop(tkt, None)
-                self.last_close_time = now
+    # -------------------------------------------------------------------------
+    # DYNAMIC TRAILING STOP
+    # -------------------------------------------------------------------------
+
+    def _dynamic_trailing_stop(self, pos, live_cfg: dict):
+        """Tính toán và gửi lệnh kéo Cắt Lỗ (Trailing SL) dồn ép theo thời gian."""
+        sl_pips = live_cfg.get("sl_pips", 50)
+        # Ngưỡng trailing tối thiểu (ST min), mặc định 15 pips nếu không có config
+        min_sl_pips = live_cfg.get("min_sl_pips", 15)
+        
+        point_info = self.mt5.symbol_info(pos.symbol)
+        if not point_info:
+            return
+            
+        point = point_info.point
+        pip_value = 10 * point
+        
+        ST_nguong_raw = sl_pips * pip_value
+        ST_min_raw = min_sl_pips * pip_value
+        
+        elapsed_time = time.time() - pos.time
+        
+        # Công thức: ST_dong = ST_nguong - (ST_nguong / 600) * elapsed
+        # Sau 10 phút (600s), ST_dong = 0
+        ST_dong = ST_nguong_raw - (ST_nguong_raw / 600.0) * elapsed_time
+        
+        if ST_dong < ST_min_raw:
+            ST_dong = ST_min_raw
+            
+        current_price = pos.price_current
+        entry_price = pos.price_open
+        current_sl = pos.sl
+        
+        # Step độ nhạy tối thiểu cho MT5 (Tránh dời SL nhỏ giọt spam quá nhiều)
+        step_min = 3 * pip_value 
+        updated = False
+        new_sl = current_sl
+        
+        if pos.type == self.mt5.ORDER_TYPE_BUY:
+            if (current_price - entry_price) > ST_dong:
+                calc_sl = current_price - ST_dong
+                # SL chỉ được phép tăng lên (dời lên để bảo vệ lãi)
+                if current_sl == 0.0 or (calc_sl - current_sl) > step_min:
+                    new_sl = calc_sl
+                    updated = True
+        else: # ORDER_TYPE_SELL
+            if (entry_price - current_price) > ST_dong:
+                calc_sl = current_price + ST_dong
+                # SL chỉ được phép giảm xuống (dời xuống bảo vệ lãi)
+                if current_sl == 0.0 or (current_sl - calc_sl) > step_min:
+                    new_sl = calc_sl
+                    updated = True
+                    
+        if updated:
+            request = {
+                "action": self.mt5.TRADE_ACTION_SLTP,
+                "position": pos.ticket,
+                "symbol": pos.symbol,
+                "sl": float(new_sl),
+                "tp": float(pos.tp),
+                "magic": self.MAGIC_NUMBER
+            }
+            success, result = self._send_order(request)
+            if success:
+                self.log_callback(f"[TradeManager] 🛡️ Dời Cắt Lỗ Động lệnh #{pos.ticket} thành công! Lãi bị khóa SL mới: {new_sl:.4f} (ST_dong={ST_dong/pip_value:.1f} pips)")
+            else:
+                self.log_callback(f"[TradeManager] ⚠️ Dời Cắt Lỗ Động thất bại cho #{pos.ticket}. Retcode={result.retcode}")
 
     # -------------------------------------------------------------------------
     # THRESHOLD DECISION  (pure business logic, no MT5 calls – fully UT-able)
@@ -476,6 +542,9 @@ class V2TradeManager:
 
         # 4. Kiểm tra đóng lệnh theo tín hiệu AI
         for pos in positions:
+            # Trailing Stop Động
+            self._dynamic_trailing_stop(pos, live_cfg)
+
             action = self._decide_action(prediction, live_cfg)
             if pos.type == self.mt5.ORDER_TYPE_BUY and action == "CLOSE_BUY":
                 close_buy_thr = live_cfg.get('CLOSE_BUY_THR', 0.45)
