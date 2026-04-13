@@ -369,11 +369,11 @@ def train_v2(
     print(f"\n[GPU AUTO-TUNE] Bắt đầu dò chuẩn Batch Size tối đa cho VRAM (Mặc định: {BATCH_SIZE})...")
     _test_batch = BATCH_SIZE
     try:
-        num_target_features = num_features # approximate for dummy
+        num_target_features = sum(1 for c in features.columns if target_prefix in c)
         dummy_model = TransformerModel(
             num_features, d_model=D_MODEL, nhead=NHEAD,
             num_layers=NUM_ATTN_LAYERS, dropout_rate=DROPOUT_RATE,
-            num_xau_features=38, # DUMMY
+            num_xau_features=num_target_features,
         ).to(device)
         dummy_optimizer = torch.optim.Adam(dummy_model.parameters(), lr=1e-4)
         while _test_batch >= 128:
