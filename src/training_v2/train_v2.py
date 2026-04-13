@@ -803,7 +803,6 @@ if __name__ == "__main__":
 
     # ── Tạo Soft Labels từ giá thô ────────────────────────────
     print("\n[LABEL] Tạo Soft Labels (sigmoid return)...")
-    target_path = os.path.join(DATA_PATH, f"target_direction_{TARGET_PREFIX}.parquet")
 
     if raw_price_path and os.path.exists(raw_price_path):
         raw_df = pd.read_parquet(raw_price_path)
