@@ -230,9 +230,9 @@ def train_v2(
     num_features: int,
     run_dir: str,
     target_prefix: str = "XAUUSD",
-    config: dict | None = None,
-    max_epoch_override: int | None = None,
-    config_path: str | None = None,
+    config = None,
+    max_epoch_override = None,
+    config_path = None,
 ):
     """
     Huấn luyện Transformer V2 với 5 cải tiến toán học.
