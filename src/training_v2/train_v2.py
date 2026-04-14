@@ -693,7 +693,7 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
     
     for s_id, s_name in {0: "asia", 1: "london", 2: "ny"}.items():
         sess_data = {}
-        for k, v in top_configs[s_id].items():
+        for k, v in top_configs.get(s_id, {}).items():
             if v is not None:
                 eval_res = v.get("eval_result")
                 if eval_res:
