@@ -195,8 +195,25 @@ class MT5DataManager:
                     self.log_message(f"   => Khớp Sensor [{req_m}] vào [{path_alias}] (Không cần check MT5)")
                 continue
 
+            import subprocess
+            import time
             mt5.shutdown()
-            if mt5.initialize(path=path):
+            
+            # Helper: Khởi động dứt điểm MT5 Terminal
+            def _ensure_mt5(exe_path, timeout=60000):
+                if mt5.initialize(path=exe_path, timeout=timeout):
+                    return True
+                self.log_message(f"   => [CẢNH BÁO] Không thể kết nối MT5. Ép mở {exe_path} qua Popen...")
+                try:
+                    # Bắt buộc khởi động tiến trình, bất chấp đang treo
+                    subprocess.Popen([exe_path])
+                    time.sleep(15) # Chờ 15s để Terminal load giao diện và Plugins
+                    return mt5.initialize(path=exe_path, timeout=timeout)
+                except Exception as e:
+                    self.log_message(f"   => [LỖI KHỞI ĐỘNG CỨNG] {e}")
+                    return False
+
+            if _ensure_mt5(path):
                 syms = mt5.symbols_get()
                 if syms:
                     avail = {s.name for s in syms}
