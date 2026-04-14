@@ -837,12 +837,7 @@ if __name__ == "__main__":
     target_horizon = cfg.get("FEATURE_ENGINEERING", {}).get("TARGET_HORIZON", 5)
 
     # ── Đọc features đã có (từ feature_engineering.py V1) ─────
-    features_path_parent = os.path.join(DATA_PATH, f"final_features_{CONFIG_ID}.parquet")
-    features_path = features_path_sub if os.path.exists(features_path_sub) else features_path_parent
-    
-    target_path_sub = os.path.join(DATA_PATH, str(CONFIG_ID), f"target_direction_{CONFIG_ID}.parquet")
-    target_path_parent = os.path.join(DATA_PATH, f"target_direction_{CONFIG_ID}.parquet")
-    target_path = target_path_sub if os.path.exists(target_path_sub) else target_path_parent
+    # Removed redundant path resolution as features_path and target_path are already validated
     raw_price_path = None  # giá thô để tính label
 
     # Tìm file parquet chứa giá Close gốc (trước khi log-return transform)
