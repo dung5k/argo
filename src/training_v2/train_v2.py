@@ -810,7 +810,10 @@ if __name__ == "__main__":
     validate_startup_configs(cfg, BASE_PROJ)
 
     # Validate data
-    output_dir = cfg.get('FEATURE_ENGINEERING', {}).get('OUTPUT_DIR', 'data')
+    raw_out = cfg.get('FEATURE_ENGINEERING', {}).get('OUTPUT_DIR', DATA_PATH)
+    if raw_out == 'data':
+        raw_out = DATA_PATH
+    output_dir = raw_out if os.path.isabs(raw_out) else os.path.join(BASE_PROJ, raw_out)
     sub_dir = os.path.join(output_dir, cfg['CONFIG_ID'])
     
     # Check if features are in sub_dir (new feature_engineering approach)
