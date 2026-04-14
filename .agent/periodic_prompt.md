@@ -8,7 +8,8 @@ Nhiệm vụ của bạn MỖI KHI ĐƯỢC GỌI là ĐỌC CÁC MỐC THỜI G
 2. Nếu thời gian hiện tại **≥ Next Run Time**:
    - Mở file prompt tương ứng (`.agent/[Tên File]`) và **THỰC THI TOÀN BỘ YÊU CẦU** của file đó.
    - Ghi lại quá trình + kết quả chung vào file `.agent/response.txt`.
-   - **BẮT BUỘC:** Bạn phải TỰ ĐỘNG chỉnh sửa lại chính file `periodic_prompt.md` này để cộng thêm thời gian (Interval) cho mốc `Next Run Time` ở Task tương ứng đó. (Ví dụ: +10 phút, +30 phút tính từ thời gian hiện tại).
+   - **BẮT BUỘC:** Bạn phải TỰ ĐỘNG chỉnh sửa lại chính file `periodic_prompt.md` này để cộng thêm thời gian (Interval) cho mốc `Next Run Time` ở Task tương ứng đó. (Ví dụ: +10 phút, +30 phút tính từ thời gian hiện tại). 
+   - **NGOẠI LỆ:** Nếu trong báo cáo của file prompt có dòng chữ xuất hiện `"CẦN ĐIỀU TRA LẠI SAU 5 PHÚT"`, bạn BẮT BUỘC phải cộng `+5 phút` thay vì cộng chu kỳ mặc định của Task đó.
 3. Nếu thời gian hiện tại vẫn `< Next Run Time` của một Task nào đó, hãy tảng lờ (bỏ qua) Task đó và chờ đến chu kỳ 10 phút tiếp theo.
 4. Nếu chưa đến mốc thời gian của *bất kỳ* Task nào, chỉ cần giữ im lặng và xuất dòng "Chờ đến mốc thời gian tiếp theo" vào `.agent/response.txt`.
 

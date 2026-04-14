@@ -4,6 +4,7 @@ Nhiệm vụ kiểm tra Tiến độ (Distributed Training Diagnostic Task):
 3. Nếu 1 trong 2 máy rảnh, thực hiện điều tra thành tích tốt nhất của các bộ trọng số tương ứng với các phiên giao dịch Asian, London, NY của version 2.1 (đọc log, phân tích WR/EV từ runs/ trên nền tảng HF).
 4. Xem thành tích phiên nào kém nhất thì yêu cầu client rảnh thực hiện training bộ đấy.
 5. Khi client bắt đầu training thì cần nghe log để fix bug nếu cần.
-6. XUẤT KẾT QUẢ BÁO CÁO TOÀN BỘ (MARKDOWN) VÀO TỆP `.agent/response.txt`.
+6. **LƯU Ý QUAN TRỌNG:** Nếu trong quá trình kiểm tra, bạn có thực hiện lệnh khởi động lại bot, cập nhật code (git pull), sửa lỗi trên client, hoặc gán task mới, bạn BẮT BUỘC phải ghi trúng dòng chú thích `"CẦN ĐIỀU TRA LẠI SAU 5 PHÚT"` vào cuối báo cáo để hệ thống điều phối biết đường giảm chu kỳ và tái kiểm tra ngay lập tức.
+7. XUẤT KẾT QUẢ BÁO CÁO TOÀN BỘ (MARKDOWN) VÀO TỆP `.agent/response.txt`.
 
 __(Lệnh hệ thống định kỳ: BẮT BUỘC dùng công cụ write_to_file xuất kết quả Markdown thẳng vào tệp '.agent/response.txt' nhé!)__
