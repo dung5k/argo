@@ -16,12 +16,18 @@ class MT5Adapter(BaseDataAdapter):
         self.is_connected = False
         
     def connect(self) -> bool:
-        if self.is_connected:
+        # Check current global mt5 state to avoid cross-terminal bleeding
+        term_info = mt5.terminal_info()
+        expected_dir = os.path.dirname(self.terminal_path).lower()
+        
+        if term_info is not None and getattr(term_info, "path", "").lower() == expected_dir:
+            self.is_connected = True
             return True
             
         mt5.shutdown()
         if not mt5.initialize(path=self.terminal_path):
             self.log_message(f"❌ [MT5] Không thể khởi tạo MT5 tại {self.terminal_path}")
+            self.is_connected = False
             return False
             
         self.is_connected = True

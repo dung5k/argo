@@ -1,0 +1,138 @@
+{
+    "TARGET_SYMBOL": "XAUUSDm",
+    "TARGET_PREFIX": "XAUUSD",
+    "CONFIG_ID": "CFG_XAU_V1_5",
+    "DATA_SOURCE": {
+        "DATASET_SUFFIX": "20260301_to_20260408",
+        "DATASET_REPO": "dung5k/argo_data",
+        "MT5_PATH": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+        "BROKERS": {
+            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "MT5_2": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe",
+            "LOCAL": "LOCAL"
+        },
+        "ROUTING": {
+            "XAUUSDm": "EXNESS",
+            "AUDUSDm": "EXNESS",
+            "EURUSDm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "VIXYm": "DEFAULT",
+            "NASDAQ_100": "EXNESS",
+            "US_10Y_YIELD": "MT5_2"
+        },
+        "TIMEFRAME": "M1",
+        "CONTINUOUS_CONTRACTS": {
+            "NASDAQ_100": {
+                "PREFIX": "USTECm",
+                "BROKER": "EXNESS",
+                "IS_CFD": true
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "Z10Y",
+                "BROKER": "MT5_2",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": [
+                    "J",
+                    "K",
+                    "M",
+                    "U",
+                    "Z",
+                    "H"
+                ],
+                "INVERT_LOGIC": false
+            }
+        }
+    },
+    "FEATURE_ENGINEERING": {
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
+        "FILL_LIMIT": 120,
+        "EXACT_FEATURES": [
+            "XAUUSD_RSI",
+            "XAUUSD_EMA9_dist",
+            "XAUUSD_EMA21_dist",
+            "XAUUSD_Body",
+            "XAUUSD_Upper_Shadow",
+            "XAUUSD_Lower_Shadow",
+            "XAUUSD_ret_5m",
+            "XAUUSD_ret_10m",
+            "XAUUSD_ret_30m",
+            "XAUUSD_ATR_ratio",
+            "XAUUSD_open_log_ret",
+            "XAUUSD_high_log_ret",
+            "XAUUSD_low_log_ret",
+            "XAUUSD_close_log_ret",
+            "is_imputed_flag",
+            "AUDUSD_close_log_ret",
+            "EURUSD_close_log_ret",
+            "NASDAQ_100_close_log_ret",
+            "US_10Y_YIELD_close_log_ret",
+            "VIXY_close_log_ret",
+            "XAGUSD_close_log_ret"
+        ]
+    },
+    "TRAINING": {
+        "PERFORMANCE_MODE": "MAX",
+        "TRAIN_START": "2026-03-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-08",
+        "BATCH_SIZE": 1024,
+        "ARCH": {
+            "win": 40,
+            "d_model": 256,
+            "heads": 8,
+            "layers": 3,
+            "dropout": 0.2
+        }
+    },
+    "LIVE_TRADING": {
+        "HF_RUN_ID": "run_20260409_171613_xauusd_CFG_XAU_V1_5_TRANSFORMER_V1_5",
+        "SESSIONS": {
+            "asian": {
+                "WEIGHT_FILE": "xauusd_asia_weights_L3_1.4_L4_1.0.pth",
+                "ENTRY_THR": 0.6,
+                "CLOSE_THR": 0.48
+            },
+            "european": {
+                "WEIGHT_FILE": "xauusd_london_weights_L3_1.4_L4_1.0.pth",
+                "ENTRY_THR": 0.64,
+                "CLOSE_THR": 0.45
+            },
+            "us": {
+                "WEIGHT_FILE": "xauusd_ny_weights_BEST_VLOSS.pth",
+                "ENTRY_THR": 0.55,
+                "CLOSE_THR": 0.49
+            }
+        },
+        "SYNC_SCALER": false,
+        "BUY_ENTRY_THR": 0.64,
+        "SELL_ENTRY_THR": 0.36,
+        "CLOSE_BUY_THR": 0.45,
+        "CLOSE_SELL_THR": 0.55,
+        "lot_size": 0.01,
+        "sl_pips": 100,
+        "tp_pips": 200,
+        "SESSION_GUARD_ENABLED": true,
+        "MARKET_OPEN": "01:05",
+        "MARKET_CLOSE": "23:55"
+    },
+    "CURRICULUM_MASKING": {
+        "ENABLE": true,
+        "ACTIVE_WINDOW_SIZE": 20,
+        "MASKED_FEATURES": []
+    },
+    "HF_CLOUD": {
+        "KEEP_LOCAL_PARQUET": true,
+        "REQUIRED_PARQUETS": [
+            "final_features_CFG_XAU_V1_5.parquet",
+            "target_direction_CFG_XAU_V1_5.parquet",
+            "scaler_CFG_XAU_V1_5.pkl"
+        ]
+    }
+}

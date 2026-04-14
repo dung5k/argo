@@ -262,8 +262,9 @@ def bot_background_loop():
         tick = trade_manager.mt5.symbol_info_tick(actual_sym)
         if tick is None:
             if time.time() - last_tick_err_time > 10:
-                print(f"[BOT] ⚠️ LỖI TICK: {actual_sym} = None! Kiểm tra kết nối MT5.")
+                print(f"[BOT] ⚠️ LỖI TICK: {actual_sym} = None! Kiểm tra kết nối MT5. Force reconnect...")
                 last_tick_err_time = time.time()
+            mt5_manager.current_connected_path = None # Force re-init in next loop
             time.sleep(1)
             continue
             

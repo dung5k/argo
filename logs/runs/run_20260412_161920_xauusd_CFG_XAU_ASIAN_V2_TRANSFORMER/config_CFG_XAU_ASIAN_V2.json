@@ -1,0 +1,126 @@
+{
+    "TARGET_SYMBOL": "XAUUSDm",
+    "TARGET_PREFIX": "XAUUSD",
+    "CONFIG_ID": "CFG_XAU_ASIAN_V2",
+    "SESSION": "asian",
+    "SESSION_UTC": {
+        "START": "00:00",
+        "END": "09:00",
+        "DESCRIPTION": "Asian session - Tokyo/Sydney market hours (07:00-16:00 VN time, 00:00-09:00 UTC)"
+    },
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "WEIGHT_FILE": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
+    "WEIGHT_FILES": {
+        "asian": "xauusd_asian_weights_EV_L3_1.4_L4_1.0.pth",
+        "european": "xauusd_asian_weights_EV_L3_1.4_L4_1.0.pth",
+        "us": "xauusd_asian_weights_EV_L3_1.4_L4_1.0.pth"
+    },
+    "HF_RUN_ID": "run_20260412_xauusd_CFG_02_ASIAN_V2",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_data",
+        "MODEL_REPO": "dung5k/trading_models",
+        "SYNC_CHUNKS": true,
+        "REQUIRED_PARQUETS": [
+            "final_features_CFG_XAU_ASIAN_V2.parquet",
+            "target_direction_CFG_XAU_ASIAN_V2.parquet",
+            "scaler_CFG_XAU_ASIAN_V2.pkl"
+        ]
+    },
+    "DATA_SOURCE": {
+        "DATASET_SUFFIX": "20260201_to_20260408",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAUUSDm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "USDJPYm": "EXNESS",
+            "AUDUSDm": "EXNESS",
+            "NZDUSDm": "EXNESS",
+            "EURJPYm": "EXNESS",
+            "DXYm": "EXNESS",
+            "JP225m": "EXNESS",
+            "HK50m": "EXNESS",
+            "BTCUSDm": "EXNESS",
+            "ETHUSDm": "EXNESS"
+        },
+        "CONTINUOUS_CONTRACTS": {}
+    },
+    "FEATURE_ENGINEERING": {
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
+        "FILL_LIMIT": 120,
+        "EXACT_FEATURES": [
+            "XAUUSD_RSI",
+            "XAUUSD_EMA9_dist",
+            "XAUUSD_EMA21_dist",
+            "XAUUSD_Body",
+            "XAUUSD_Upper_Shadow",
+            "XAUUSD_Lower_Shadow",
+            "XAUUSD_ret_5m",
+            "XAUUSD_ret_10m",
+            "XAUUSD_ret_30m",
+            "XAUUSD_ATR_ratio",
+            "XAUUSD_open_log_ret",
+            "XAUUSD_close_log_ret",
+            "XAUUSD_volume",
+            "is_imputed_flag",
+            "USDJPY_volume",
+            "AUDUSD_volume",
+            "NZDUSD_volume",
+            "EURJPY_volume",
+            "JP225_volume",
+            "HK50_volume",
+            "DXY_volume",
+            "USDJPY_close_log_ret",
+            "AUDUSD_close_log_ret",
+            "NZDUSD_close_log_ret",
+            "EURJPY_close_log_ret",
+            "JP225_close_log_ret",
+            "HK50_close_log_ret",
+            "DXY_close_log_ret",
+            "XAGUSD_close_log_ret",
+            "BTCUSD_close_log_ret",
+            "ETHUSD_close_log_ret"
+        ]
+    },
+    "TRAINING": {
+        "PERFORMANCE_MODE": "MAX",
+        "TRAIN_START": "2026-02-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-08",
+        "BATCH_SIZE": 1024,
+        "ARCH": {
+            "win": 60,
+            "d_model": 256,
+            "heads": 8,
+            "layers": 3,
+            "dropout": 0.2
+        }
+    },
+    "LIVE_TRADING": {
+        "SYNC_SCALER": false,
+        "BUY_ENTRY_THR": 0.53,
+        "SELL_ENTRY_THR": 0.47,
+        "CLOSE_BUY_THR": 0.48,
+        "CLOSE_SELL_THR": 0.52,
+        "lot_size": 0.01,
+        "sl_pips": 100,
+        "tp_pips": 200,
+        "SESSION_GUARD_ENABLED": true,
+        "MARKET_OPEN": "00:05",
+        "MARKET_CLOSE": "08:55"
+    },
+    "CURRICULUM_MASKING": {
+        "ENABLE": true,
+        "ACTIVE_WINDOW_SIZE": 30,
+        "MASKED_FEATURES": []
+    }
+}

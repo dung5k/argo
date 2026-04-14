@@ -1,0 +1,131 @@
+{
+    "TARGET_SYMBOL": "XAUUSDm",
+    "TARGET_PREFIX": "XAUUSD",
+    "CONFIG_ID": "CFG_XAU_V2",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "WEIGHT_FILE": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
+    "WEIGHT_FILES": {
+        "asian": "xauusd_ny_weights_EV_L3_1.4_L4_1.0.pth",
+        "european": "xauusd_ny_weights_EV_L3_1.4_L4_1.0.pth",
+        "us": "xauusd_ny_weights_EV_L3_1.4_L4_1.0.pth"
+    },
+    "HF_RUN_ID": "run_20260410_154329_xauusd_CFG_02_TRANSFORMER_V2",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_data",
+        "MODEL_REPO": "dung5k/trading_models",
+        "SYNC_CHUNKS": true,
+        "REQUIRED_PARQUETS": [
+            "final_features_CFG_XAU_V2.parquet",
+            "target_direction_CFG_XAU_V2.parquet",
+            "scaler_CFG_XAU_V2.pkl"
+        ]
+    },
+    "DATA_SOURCE": {
+        "DATASET_SUFFIX": "20260301_to_20260408",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "MTRADING": "C:\\Program Files\\Mtrading MetaTrader 5\\terminal64.exe",
+            "MT5_2": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe",
+            "LOCAL": "LOCAL"
+        },
+        "ROUTING": {
+            "XAUUSDm": "EXNESS",
+            "AUDUSDm": "EXNESS",
+            "EURUSDm": "EXNESS",
+            "GBPUSDm": "EXNESS",
+            "USDCADm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "VIXYm": "DEFAULT",
+            "NASDAQ_100": "EXNESS",
+            "US_10Y_YIELD": "MT5_2"
+        },
+        "CONTINUOUS_CONTRACTS": {
+            "NASDAQ_100": {
+                "PREFIX": "USTECm",
+                "BROKER": "EXNESS",
+                "IS_CFD": true
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "Z10Y",
+                "BROKER": "MT5_2",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": [
+                    "J",
+                    "K",
+                    "M",
+                    "U",
+                    "Z",
+                    "H"
+                ],
+                "INVERT_LOGIC": false
+            }
+        }
+    },
+    "FEATURE_ENGINEERING": {
+        "EMA_PERIODS": [
+            9,
+            21
+        ],
+        "RSI_PERIODS": [
+            14
+        ],
+        "FILL_LIMIT": 120,
+        "EXACT_FEATURES": [
+            "XAUUSD_RSI",
+            "XAUUSD_EMA9_dist",
+            "XAUUSD_EMA21_dist",
+            "XAUUSD_Body",
+            "XAUUSD_Upper_Shadow",
+            "XAUUSD_Lower_Shadow",
+            "XAUUSD_ret_5m",
+            "XAUUSD_ret_10m",
+            "XAUUSD_ret_30m",
+            "XAUUSD_ATR_ratio",
+            "XAUUSD_open_log_ret",
+            "XAUUSD_high_log_ret",
+            "XAUUSD_low_log_ret",
+            "XAUUSD_close_log_ret",
+            "is_imputed_flag",
+            "AUDUSD_close_log_ret",
+            "EURUSD_close_log_ret",
+            "NASDAQ_100_close_log_ret",
+            "US_10Y_YIELD_close_log_ret",
+            "VIXY_close_log_ret",
+            "XAGUSD_close_log_ret"
+        ]
+    },
+    "TRAINING": {
+        "PERFORMANCE_MODE": "MAX",
+        "TRAIN_START": "2026-03-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-08",
+        "BATCH_SIZE": 1024,
+        "ARCH": {
+            "win": 60,
+            "d_model": 256,
+            "heads": 8,
+            "layers": 3,
+            "dropout": 0.2
+        }
+    },
+    "LIVE_TRADING": {
+        "SYNC_SCALER": false,
+        "BUY_ENTRY_THR": 0.53,
+        "SELL_ENTRY_THR": 0.47,
+        "CLOSE_BUY_THR": 0.48,
+        "CLOSE_SELL_THR": 0.52,
+        "lot_size": 0.01,
+        "sl_pips": 100,
+        "tp_pips": 200,
+        "SESSION_GUARD_ENABLED": true,
+        "MARKET_OPEN": "01:05",
+        "MARKET_CLOSE": "23:55"
+    },
+    "CURRICULUM_MASKING": {
+        "ENABLE": true,
+        "ACTIVE_WINDOW_SIZE": 20,
+        "MASKED_FEATURES": []
+    }
+}

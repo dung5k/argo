@@ -1,0 +1,82 @@
+{
+    "target": "xauusd",
+    "version": "Independent_Multi_Session_v1.5",
+    "epochs_trained": 1,
+    "dimensions": {
+        "num_features_target": 0,
+        "num_features_macro": 38
+    },
+    "sessions": {
+        "asia": {
+            "BEST_VLOSS": {
+                "epoch": 0,
+                "composite_score": -0.17333065569400788,
+                "max_thresh": 0.54,
+                "thresholds": [
+                    0.5,
+                    0.5133,
+                    0.5267,
+                    0.54
+                ],
+                "win_rates": [
+                    50.96073517126148,
+                    51.76565008025682,
+                    56.015037593984964,
+                    59.09090909090909
+                ],
+                "totals": [
+                    2394,
+                    1246,
+                    266,
+                    44
+                ]
+            },
+            "BEST_WR": {
+                "epoch": 0,
+                "composite_score": 59.09090909090909,
+                "max_thresh": 0.54,
+                "thresholds": [
+                    0.5,
+                    0.5133,
+                    0.5267,
+                    0.54
+                ],
+                "win_rates": [
+                    50.96073517126148,
+                    51.76565008025682,
+                    56.015037593984964,
+                    59.09090909090909
+                ],
+                "totals": [
+                    2394,
+                    1246,
+                    266,
+                    44
+                ]
+            },
+            "BALANCED": {
+                "epoch": 0,
+                "composite_score": 0.12212388976053759,
+                "max_thresh": 0.54,
+                "thresholds": [
+                    0.5,
+                    0.5133,
+                    0.5267,
+                    0.54
+                ],
+                "win_rates": [
+                    50.96073517126148,
+                    51.76565008025682,
+                    56.015037593984964,
+                    59.09090909090909
+                ],
+                "totals": [
+                    2394,
+                    1246,
+                    266,
+                    44
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,1 @@
+﻿import paho.mqtt.publish as p; import os, json; out = json.dumps({'sub_dir': os.path.exists('data/CFG_XAU_NY_V2_1'), 'files': os.listdir('data/CFG_XAU_NY_V2_1') if os.path.exists('data/CFG_XAU_NY_V2_1') else []}); p.single('argo_dungla_9213/clientGH/run_out', out, hostname='broker.emqx.io')

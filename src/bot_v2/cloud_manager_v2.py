@@ -61,17 +61,29 @@ class V2CloudManager:
         """
         try:
             scaler_obj = joblib.load(scaler_path)
+            feats = []
             if hasattr(scaler_obj, "feature_names_in_"):
                 feats = list(scaler_obj.feature_names_in_)
+            elif isinstance(scaler_obj, dict) and "feature_names" in scaler_obj:
+                feats = list(scaler_obj["feature_names"])
+            
+            if feats:
+                # Add back is_imputed_flag because scaler doesn't contain it but train_v2.py used it
+                if 'is_imputed_flag' not in feats:
+                    feats.append('is_imputed_flag')
                 n_feat = len(feats)
-                n_xau  = sum(1 for f in feats if f.startswith(self.target_symbol))
+                # WORKAROUND: train_v2.py did not pass num_xau_features to TransformerModel,
+                # therefore TransformerModel defaulted to max(1, num_features // 3).
+                # We MUST match this exactly so the model weights align.
+                n_xau = max(1, n_feat // 3)
+                
                 self.log_callback(
-                    f"[CloudManager] 🧬 Trích xuất từ Scaler: {n_feat} features, "
-                    f"{n_xau} XAU features."
+                    f"[CloudManager] 🧬 Trích xuất từ Scaler: {n_feat} features "
+                    f"(đã vá lỗi is_imputed_flag), {n_xau} XAU features (ẩn theo lỗi train_v2.py để load được weight)."
                 )
                 return feats, n_feat, n_xau
             else:
-                self.log_callback("[CloudManager] ⚠️ Scaler không có feature_names_in_ → dùng fallback defaults.")
+                self.log_callback("[CloudManager] ⚠️ Scaler không có danh sách biến → dùng fallback defaults.")
         except Exception as e:
             self.log_callback(f"[CloudManager] ❌ Lỗi đọc Scaler: {e}")
         return [], 86, 8
@@ -113,13 +125,13 @@ class V2CloudManager:
     # PRIVATE – Core sync logic (dùng chung cho cả session và explicit mode)
     # -------------------------------------------------------------------------
 
-    def _sync_model(self, run_id: str, weight_filename: str, scaler_filename: str,
+    def _sync_model(self, run_id: str, weight_filename: str, remote_scaler_filename: str, local_scaler_filename: str,
                     metrix_filename: str) -> tuple:
         """Core: download model + scaler + metrix từ run_id chỉ định.
         Returns: (model_path, brain_name, num_xau_features, num_features, inference_feats)
         """
         self.log_callback(
-            f"[CloudManager] ▶ Bắt đầu sync | run={run_id} | weight={weight_filename} | scaler={scaler_filename}"
+            f"[CloudManager] ▶ Bắt đầu sync | run={run_id} | weight={weight_filename} | scaler={remote_scaler_filename} -> {local_scaler_filename}"
         )
 
         # 1. Download model weights
@@ -128,8 +140,8 @@ class V2CloudManager:
         # 2. Download + save scaler
         inference_feats, num_features, num_xau = [], 86, 8
         try:
-            scaler_cloud = self._download_file(f"runs/{run_id}/{scaler_filename}")
-            scaler_local = self._save_to_data_dir(scaler_cloud, scaler_filename)
+            scaler_cloud = self._download_file(f"runs/{run_id}/{remote_scaler_filename}")
+            scaler_local = self._save_to_data_dir(scaler_cloud, local_scaler_filename)
             inference_feats, num_features, num_xau = self._extract_features_from_scaler(scaler_local)
         except Exception as e:
             self.log_callback(f"[CloudManager] ⚠️ Không tải được Scaler: {e}")
@@ -176,9 +188,10 @@ class V2CloudManager:
 
         Returns: (model_path, brain_name, num_xau_features, num_features, inference_feats)
         """
-        scaler_filename = f"scaler_{config_id}.pkl"
+        local_scaler_filename = f"scaler_{config_id}.pkl"
+        remote_scaler_filename = "scaler_v2.pkl"
         try:
-            return self._sync_model(run_id, weight_filename, scaler_filename, "training_metrix.json")
+            return self._sync_model(run_id, weight_filename, remote_scaler_filename, local_scaler_filename, "training_metrix_v2.json")
         except Exception as e:
             self.log_callback(f"[CloudManager] ❌ sync_explicit_model thất bại ({e}). Raise lại lỗi.")
             raise
@@ -202,7 +215,7 @@ class V2CloudManager:
         try:
             api = HfApi(token=self.hf_token)
             run_id = self._get_latest_run_id(api, weight_file)
-            return self._sync_model(run_id, weight_file, "scaler_v2.pkl", "training_metrix_v2.json")
+            return self._sync_model(run_id, weight_file, "scaler_v2.pkl", "scaler_v2.pkl", "training_metrix_v2.json")
         except Exception as e:
             self.log_callback(f"[CloudManager] ⚠️ Cloud sync thất bại ({e}). Chuyển sang local cache...")
             try:

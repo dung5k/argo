@@ -1,0 +1,430 @@
+{
+    "target": "xauusd",
+    "version": "Independent_Multi_Session_v2.0",
+    "dimensions": {
+        "num_features_xau": 15,
+        "num_features_macro": 41
+    },
+    "sessions": {
+        "asia": {
+            "EV_L3_1.4_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 3.234091489194568e-05,
+                "session_evs": {},
+                "best_ev": 3.234091489194568e-05,
+                "val_loss": 0.17330361819929546,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    }
+                ]
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 3.234091489194568e-05,
+                "session_evs": {},
+                "best_ev": 3.234091489194568e-05,
+                "val_loss": 0.17330361819929546,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    }
+                ]
+            },
+            "BEST_VLOSS": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": -0.17330361819929546,
+                "session_evs": {},
+                "best_ev": 3.234091489194568e-05,
+                "val_loss": 0.17330361819929546,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4104,
+                        "win_rate": 50.53606237816764,
+                        "avg_win_return": 0.0014539838302880526,
+                        "avg_loss_return": 0.0014201159356161952,
+                        "ev_score": 3.234091489194568e-05,
+                        "sharpe_score": 1.0227009325259984
+                    }
+                ]
+            }
+        },
+        "london": {
+            "EV_L3_1.4_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 3.82912222460308e-05,
+                "session_evs": {},
+                "best_ev": 3.82912222460308e-05,
+                "val_loss": 0.17332305610179902,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    }
+                ]
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 3.82912222460308e-05,
+                "session_evs": {},
+                "best_ev": 3.82912222460308e-05,
+                "val_loss": 0.17332305610179902,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    }
+                ]
+            },
+            "BEST_VLOSS": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": -0.17332305610179902,
+                "session_evs": {},
+                "best_ev": 3.82912222460308e-05,
+                "val_loss": 0.17332305610179902,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 2528,
+                        "win_rate": 51.93829113924051,
+                        "avg_win_return": 0.0013960457872599363,
+                        "avg_loss_return": 0.0014289777027443051,
+                        "ev_score": 3.82912222460308e-05,
+                        "sharpe_score": 0.8364857543539421
+                    }
+                ]
+            }
+        },
+        "ny": {
+            "EV_L3_1.4_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 5.154823153996266e-05,
+                "session_evs": {},
+                "best_ev": 5.154823153996266e-05,
+                "val_loss": 0.17343949408907638,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    }
+                ]
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": 5.154823153996266e-05,
+                "session_evs": {},
+                "best_ev": 5.154823153996266e-05,
+                "val_loss": 0.17343949408907638,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    }
+                ]
+            },
+            "BEST_VLOSS": {
+                "epoch": -1,
+                "max_threshold": 0.5,
+                "composite_score": -0.17343949408907638,
+                "session_evs": {},
+                "best_ev": 5.154823153996266e-05,
+                "val_loss": 0.17343949408907638,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    },
+                    {
+                        "threshold": 0.5,
+                        "total_signals": 4718,
+                        "win_rate": 51.29292072912251,
+                        "avg_win_return": 0.0013869606191292405,
+                        "avg_loss_return": 0.0013547607231885195,
+                        "ev_score": 5.154823153996266e-05,
+                        "sharpe_score": 1.937497045538549
+                    }
+                ]
+            }
+        }
+    }
+}

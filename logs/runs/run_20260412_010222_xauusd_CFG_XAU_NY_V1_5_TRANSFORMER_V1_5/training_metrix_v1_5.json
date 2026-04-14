@@ -1,0 +1,82 @@
+{
+    "target": "xauusd",
+    "version": "Independent_Multi_Session_v1.5",
+    "epochs_trained": 426,
+    "dimensions": {
+        "num_features_target": 0,
+        "num_features_macro": 36
+    },
+    "sessions": {
+        "asia": {
+            "BEST_VLOSS": {
+                "epoch": 16,
+                "composite_score": -0.1729517380396525,
+                "max_thresh": 0.55,
+                "thresholds": [
+                    0.5,
+                    0.5167,
+                    0.5333,
+                    0.55
+                ],
+                "win_rates": [
+                    54.09334353481255,
+                    54.09334353481255,
+                    55.444305381727155,
+                    66.66666666666666
+                ],
+                "totals": [
+                    1307,
+                    1307,
+                    799,
+                    42
+                ]
+            },
+            "BEST_WR_SAFE": {
+                "epoch": 58,
+                "composite_score": 0.6435643564356436,
+                "max_thresh": 0.53,
+                "thresholds": [
+                    0.5,
+                    0.51,
+                    0.52,
+                    0.53
+                ],
+                "win_rates": [
+                    50.803366488140774,
+                    55.15320334261838,
+                    59.09090909090909,
+                    64.35643564356435
+                ],
+                "totals": [
+                    1307,
+                    718,
+                    330,
+                    101
+                ]
+            },
+            "BEST_WR_SHARP": {
+                "epoch": 195,
+                "composite_score": 0.8125,
+                "max_thresh": 0.56,
+                "thresholds": [
+                    0.5,
+                    0.52,
+                    0.54,
+                    0.56
+                ],
+                "win_rates": [
+                    51.03289977046672,
+                    53.441295546558706,
+                    58.3941605839416,
+                    81.25
+                ],
+                "totals": [
+                    1307,
+                    494,
+                    137,
+                    32
+                ]
+            }
+        }
+    }
+}

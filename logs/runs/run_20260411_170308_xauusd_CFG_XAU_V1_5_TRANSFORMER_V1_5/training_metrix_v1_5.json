@@ -1,0 +1,12 @@
+{
+    "target": "xauusd",
+    "version": "Independent_Multi_Session_v1.5",
+    "epochs_trained": 3135,
+    "dimensions": {
+        "num_features_target": 0,
+        "num_features_macro": 21
+    },
+    "sessions": {
+        "london": {}
+    }
+}

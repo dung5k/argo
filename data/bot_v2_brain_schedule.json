@@ -6,12 +6,12 @@
         "asian": {
             "start": "00:00",
             "end": "07:00",
-            "run_id": "run_20260413_000416_xauusd_CFG_XAU_ASIAN_V2_TRANSFORMER",
-            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
-            "config_id": "CFG_XAU_ASIAN_V2",
+            "run_id": "run_20260414_131632_xauusd_CFG_XAU_ASIAN_V2_1_TRANSFORMER_V2",
+            "weight_file": "xauusd_asia_weights_BEST_VLOSS.pth",
+            "config_id": "CFG_XAU_ASIAN_V2_1",
             "trading_config": {
-                "entry_thresh": 0.61,
-                "close_thresh": 0.5,
+                "entry_thresh": 0.53,
+                "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 600,
                 "sl_pips": 300
@@ -20,9 +20,9 @@
         "european": {
             "start": "07:00",
             "end": "12:30",
-            "run_id": "run_20260413_143324_xauusd_CFG_XAU_LONDON_V2_TRANSFORMER",
-            "weight_file": "xauusd_unified_weights_L3_1.4_L4_1.0.pth",
-            "config_id": "CFG_XAU_LONDON_V2",
+            "run_id": "run_20260414_195352_xauusd_CFG_XAU_LONDON_V2_1_TRANSFORMER_V2",
+            "weight_file": "xauusd_london_weights_BEST_VLOSS.pth",
+            "config_id": "CFG_XAU_LONDON_V2_1",
             "trading_config": {
                 "entry_thresh": 0.54,
                 "close_thresh": 0.44,
@@ -34,12 +34,12 @@
         "ny": {
             "start": "13:00",
             "end": "22:00",
-            "run_id": "run_20260412_103946_xauusd_CFG_XAU_NY_V2_TRANSFORMER",
-            "weight_file": "xauusd_unified_weights_L3_1.1_L4_1.0.pth",
-            "config_id": "CFG_XAU_NY_V2",
+            "run_id": "run_20260414_000528_xauusd_CFG_XAU_NY_V2_1_TRANSFORMER_V2",
+            "weight_file": "xauusd_ny_weights_BEST_VLOSS.pth",
+            "config_id": "CFG_XAU_NY_V2_1",
             "trading_config": {
-                "entry_thresh": 0.55,
-                "close_thresh": 0.45,
+                "entry_thresh": 0.54,
+                "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
                 "sl_pips": 500

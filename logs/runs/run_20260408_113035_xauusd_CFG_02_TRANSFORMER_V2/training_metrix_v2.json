@@ -1,0 +1,14 @@
+{
+    "architecture_v2": {
+        "version": "Independent_Multi_Session_v2.0",
+        "dimensions": {
+            "num_features_xau": 15,
+            "num_features_macro": 41
+        }
+    },
+    "sessions": {
+        "asia": {},
+        "london": {},
+        "ny": {}
+    }
+}

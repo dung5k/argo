@@ -1,0 +1,53 @@
+{
+    "architecture_v2": {
+        "version": "Independent_Multi_Session_v2.0",
+        "dimensions": {
+            "num_features_xau": 15,
+            "num_features_macro": 41
+        }
+    },
+    "sessions": {
+        "asia": {
+            "EV_L3_1.4_L4_1.0": {
+                "score": 0.00014319001428692675,
+                "epoch": 2
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "score": 0.00016401354058583615,
+                "epoch": 2
+            },
+            "BEST_VLOSS": {
+                "score": -0.17330361902713776,
+                "epoch": 4
+            }
+        },
+        "london": {
+            "EV_L3_1.4_L4_1.0": {
+                "score": 6.622865512787327e-05,
+                "epoch": -1
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "score": 6.622865512787327e-05,
+                "epoch": -1
+            },
+            "BEST_VLOSS": {
+                "score": -0.17332305510838827,
+                "epoch": 4
+            }
+        },
+        "ny": {
+            "EV_L3_1.4_L4_1.0": {
+                "score": 5.154823153996266e-05,
+                "epoch": 4
+            },
+            "EV_L3_1.1_L4_1.0": {
+                "score": 5.154823153996266e-05,
+                "epoch": 4
+            },
+            "BEST_VLOSS": {
+                "score": -0.17331805119388982,
+                "epoch": 2
+            }
+        }
+    }
+}
