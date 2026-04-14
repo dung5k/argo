@@ -438,6 +438,13 @@ def train_v2(
     
     # Session ID maps: 0: Asia, 1: London, 2: NY
     SESSIONS = {0: "asia", 1: "london", 2: "ny"}
+    session_cfg = cfg.get("SESSION", "all").lower()
+    if session_cfg in ["asian", "asia"]:
+        SESSIONS = {0: "asia"}
+    elif session_cfg in ["european", "london"]:
+        SESSIONS = {1: "london"}
+    elif session_cfg in ["ny", "us"]:
+        SESSIONS = {2: "ny"}
     
     # 1. Models
     models = {s_id: TransformerModel(
