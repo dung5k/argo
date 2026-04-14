@@ -630,6 +630,13 @@ def train_v2(
                         l3_str = f"L3(>55): WR {l3.win_rate*100:.1f}% ({l3.total_signals} lệnh) EV {l3.ev_score:.5f}" if l3 else ""
                         l4_str = f"L4(>57): WR {l4.win_rate*100:.1f}% ({l4.total_signals} lệnh) EV {l4.ev_score:.5f}" if l4 else ""
                         print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {cfg_name} | {l3_str} | {l4_str} | VLoss: {avg_val_loss[s_id]:.5f}")
+                        plot_and_notify_chart(
+                            eval_res=result,
+                            session_name=s_name,
+                            cfg_name=cfg_name,
+                            epoch=total_epoch,
+                            run_dir=run_dir
+                        )
 
                 phx = phoenixes[s_id]
                 action_str = ""
