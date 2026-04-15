@@ -299,9 +299,9 @@ def train_v2(
         torch.backends.cudnn.benchmark = True
         
     MAX_STAGNATE     = 10
-    MAX_PHOENIX      = 40
+    MAX_PHOENIX      = 999999
     MIN_SIGNALS      = 30
-    EPOCHS           = max_epoch_override or 10000
+    EPOCHS           = max_epoch_override or 99999900
 
     print(
         f"[V2 ARCH] d_model={D_MODEL}, nhead={NHEAD}, "
