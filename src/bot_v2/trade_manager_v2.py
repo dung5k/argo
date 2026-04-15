@@ -579,21 +579,6 @@ class V2TradeManager:
         if not has_open and not just_closed:
             action = self._decide_action(prediction, live_cfg)
             
-            # [Tính Năng Mới]: Bộ lọc nến cuối cùng thân phải vượt quá nửa
-            if action in ["BUY_ENTRY", "SELL_ENTRY"]:
-                rates = self.mt5.copy_rates_from_pos(symbol, self.mt5.TIMEFRAME_M1, 0, 1)
-                if rates is not None and len(rates) > 0:
-                    last_candle = rates[0]
-                    total_len = last_candle['high'] - last_candle['low']
-                    body = abs(last_candle['close'] - last_candle['open'])
-                    point_info = self.mt5.symbol_info(symbol)
-                    pip_size = point_info.point * 10 if point_info else 0.001
-                    
-                    if total_len > pip_size * 2:  # Bỏ qua nến quá nhỏ
-                        if (body / total_len) <= 0.5:
-                            self.log_callback(f"[TradeManager] ⛔ Hủy {action} do râu quá dài (nến không vượt quá nửa, body/len <= 50%)")
-                            action = "HOLD"
-                            
             # Anti-Spam / Whip-saw mechanism
             now = time.time()
             last_close = getattr(self, "last_close_time", 0)

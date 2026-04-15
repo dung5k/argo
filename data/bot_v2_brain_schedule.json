@@ -11,7 +11,7 @@
             "config_id": "CFG_XAU_ASIAN_V2_1",
             "_metrix": "composite=0.000542 | WR=59.14% | Sharpe=3.20 | signals=301 | thr=0.7067",
             "trading_config": {
-                "entry_thresh": 0.7067,
+                "entry_thresh": 0.51,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 600,
@@ -26,7 +26,7 @@
             "config_id": "CFG_XAU_LONDON_V2_1",
             "_metrix": "composite=0.000213 | WR=64.52% | Sharpe=1.66 | signals=31 | thr=0.81 (BEST_VLOSS bi loai: EV am toan bo)",
             "trading_config": {
-                "entry_thresh": 0.81,
+                "entry_thresh": 0.51,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
@@ -41,7 +41,7 @@
             "config_id": "CFG_XAU_NY_V2_1",
             "_metrix": "composite=0.000293 | WR=62.77% | Sharpe=2.99 | signals=137 | thr=0.5467",
             "trading_config": {
-                "entry_thresh": 0.5467,
+                "entry_thresh": 0.51,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
