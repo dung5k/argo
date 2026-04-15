@@ -821,16 +821,16 @@ if __name__ == "__main__":
     if raw_out == 'data':
         raw_out = DATA_PATH
     output_dir = raw_out if os.path.isabs(raw_out) else os.path.join(BASE_PROJ, raw_out)
-    sub_dir = os.path.join(output_dir, cfg['CONFIG_ID'])
+    sub_dir = os.path.join(output_dir, CONFIG_ID)
     
     # Check if features are in sub_dir (new feature_engineering approach)
-    features_path = os.path.join(sub_dir, f"final_features_{cfg['CONFIG_ID']}.parquet")
-    target_path = os.path.join(sub_dir, f"target_direction_{cfg['CONFIG_ID']}.parquet")
+    features_path = os.path.join(sub_dir, f"final_features_{CONFIG_ID}.parquet")
+    target_path = os.path.join(sub_dir, f"target_direction_{CONFIG_ID}.parquet")
     
     # Fallback to output_dir
     if not os.path.exists(features_path) or not os.path.exists(target_path):
-        features_path = os.path.join(output_dir, f"final_features_{cfg['CONFIG_ID']}.parquet")
-        target_path = os.path.join(output_dir, f"target_direction_{cfg['CONFIG_ID']}.parquet")
+        features_path = os.path.join(output_dir, f"final_features_{CONFIG_ID}.parquet")
+        target_path = os.path.join(output_dir, f"target_direction_{CONFIG_ID}.parquet")
 
     if not os.path.exists(features_path) or not os.path.exists(target_path):
         print(f"[ERROR] Chưa có file features: {features_path}")
