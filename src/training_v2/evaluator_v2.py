@@ -38,12 +38,16 @@ class ThresholdMetrics:
     ev_score: float            # Expected Value
     sharpe_score: float = 0.0  # Sharpe-like score (optional)
 
+    n_buy: int = 0
+    n_sell: int = 0
+
     def __str__(self) -> str:
+        b_ratio = min(self.n_buy, self.n_sell) / max(1, max(self.n_buy, self.n_sell))
         return (
             f">={self.threshold*100:.0f}%: "
             f"WR={self.win_rate*100:.1f}% | "
             f"EV={self.ev_score*10000:.2f}pip | "
-            f"N={self.total_signals}"
+            f"N={self.total_signals} ({self.n_buy}B/{self.n_sell}S Bal:{b_ratio:.2f})"
         )
 
 
@@ -136,7 +140,9 @@ class EVEvaluator:
         wrong_buy    = buy_mask  & (hard_labels == 0)
         wrong_sell   = sell_mask & (hard_labels == 1)
 
-        n_signals = buy_mask.sum().item() + sell_mask.sum().item()
+        n_buy = buy_mask.sum().item()
+        n_sell = sell_mask.sum().item()
+        n_signals = n_buy + n_sell
         n_correct = correct_buy.sum().item() + correct_sell.sum().item()
 
         win_rate = n_correct / n_signals if n_signals > 0 else 0.0
@@ -152,6 +158,14 @@ class EVEvaluator:
 
         ev = win_rate * avg_win_ret - (1.0 - win_rate) * avg_loss_ret
 
+        # Áp dụng phạt Mất Cân Bằng (Balance Penalty)
+        # Giảm điểm EV nếu model dự đoán lệch tỷ trọng BUY/SELL quá lớn
+        if ev > 0 and n_signals > 0:
+            balance_ratio = min(n_buy, n_sell) / max(n_buy, n_sell)
+            # Hệ số điều tiết: Nếu 1 chiều tịt ngòi (0:100) -> EV bị phạt chỉ còn 10%
+            balance_factor = 0.1 + 0.9 * balance_ratio
+            ev = ev * balance_factor
+
         # Sharpe-like: EV / std(log_return của signals)
         signal_rets = log_returns[buy_mask | sell_mask]
         std_ret = signal_rets.std().item() if len(signal_rets) > 1 else 1e-9
@@ -160,6 +174,8 @@ class EVEvaluator:
         return ThresholdMetrics(
             threshold=threshold,
             total_signals=n_signals,
+            n_buy=n_buy,
+            n_sell=n_sell,
             win_rate=win_rate,
             avg_win_return=avg_win_ret,
             avg_loss_return=avg_loss_ret,
