@@ -60,7 +60,7 @@ class HostController:
                 if self.connected: break
                 time.sleep(0.1)
 
-    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw=False, config_path: str = "", mode: str = "MAX", session: str = "all"):
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw=False, config_path: str = "", mode: str = "MAX", session: str = "all", scratch: bool = False):
         self._wait_connected()
         
         config_content = ""
@@ -110,7 +110,8 @@ class HostController:
                 "symbol": symbol, 
                 "script": script,
                 "session": session.lower(),
-                "perf_mode": mode.upper()
+                "perf_mode": mode.upper(),
+                "scratch": scratch
             })
             
         self.client.publish(self.cmd_topic, payload, qos=1)
@@ -284,7 +285,8 @@ def main():
     parser.add_argument("--tag", default="", help="Tag version khi lưu (VD: v1.3.5). Mặc định: timestamp")
     parser.add_argument("--mode", "-m", default="MAX", choices=["MAX", "LIGHT", "max", "light"], help="Chế độ hiệu suất khi train (Tối đa hoặc Nhẹ nhàng)")
     parser.add_argument("--time", "-t", type=int, default=15)
-    parser.add_argument("--minutes", type=int, default=60, help="Số phút Log muốn lấy (dành cho getlog)")
+    parser.add_argument("--minutes", type=int, default=10, help="Số phút Log muốn lấy (dành cho getlog)")
+    parser.add_argument("--scratch", action="store_true", help="Bắt đầu train lại từ đầu (bỏ qua Git pull)")
     
     args = parser.parse_args()
 
@@ -327,7 +329,7 @@ def main():
     elif args.cmd in ["train", "kill", "run", "update"]:
         mode_val = getattr(args, 'mode', 'MAX')
         cfg_path = args.file if args.cmd == "train" and args.file else ""
-        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'))
+        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False))
         host.listen_logs(args.time)
     elif args.cmd == "getlog":
         host.getlog(getattr(args, 'minutes', 60))

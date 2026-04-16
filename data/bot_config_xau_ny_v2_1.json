@@ -139,8 +139,8 @@
     "TRAINING": {
         "PERFORMANCE_MODE": "MAX",
         "TRAIN_START": "2026-02-01",
-        "TRAIN_END": "2026-03-31",
-        "VAL_END": "2026-04-08",
+        "TRAIN_END": "2026-03-10",
+        "VAL_END": "2026-03-31",
         "BATCH_SIZE": 1024,
         "ARCH": {
             "win": 60,

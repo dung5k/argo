@@ -428,7 +428,7 @@ if __name__ == "__main__":
     xau_usd_close = merged_df[f'{TARGET_PREFIX}_close']
     
     # 2. Xử lý tính năng tĩnh (Stationary Log Returns & Scaling)
-    scaled_features, scaler = create_stationary_features(merged_df, is_live=is_live)
+    scaled_features, scaler = create_stationary_features(merged_df, is_live=is_live, apply_scaling=False)
     
     # Cân bằng index do hàm tạo Log Return làm mất 1 dòng đầu tiên
     target_aligned = xau_usd_close.loc[scaled_features.index]

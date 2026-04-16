@@ -27,7 +27,7 @@
         ]
     },
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260201_to_20260408",
+        "DATASET_SUFFIX": "20260101_to_20260408",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
@@ -139,8 +139,8 @@
     "TRAINING": {
         "PERFORMANCE_MODE": "MAX",
         "TRAIN_START": "2026-02-01",
-        "TRAIN_END": "2026-03-24",
-        "VAL_END": "2026-04-08",
+        "TRAIN_END": "2026-03-10",
+        "VAL_END": "2026-03-31",
         "BATCH_SIZE": 1024,
         "ARCH": {
             "win": 60,
