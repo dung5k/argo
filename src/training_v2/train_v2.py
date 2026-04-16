@@ -717,7 +717,9 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
                             "avg_win_return": m.avg_win_return,
                             "avg_loss_return": m.avg_loss_return,
                             "ev_score": m.ev_score,
-                            "sharpe_score": getattr(m, 'sharpe_score', 0.0)
+                            "sharpe_score": getattr(m, 'sharpe_score', 0.0),
+                            "total_buy": m.n_buy,
+                            "total_sell": m.n_sell
                         })
                     
                     sess_data[k] = {
