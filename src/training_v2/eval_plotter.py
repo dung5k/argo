@@ -23,6 +23,8 @@ def plot_and_notify_chart(
     win_rates = [m.win_rate * 100 for m in eval_res.threshold_metrics]
     ev_scores = [m.ev_score * 10000 for m in eval_res.threshold_metrics] # In pips
     signals = [m.total_signals for m in eval_res.threshold_metrics]
+    buys = [m.n_buy for m in eval_res.threshold_metrics]
+    sells = [m.n_sell for m in eval_res.threshold_metrics]
     
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
@@ -53,7 +55,8 @@ def plot_and_notify_chart(
     
     # Add number of signals as text annotation near points mapping WR
     for i, txt in enumerate(signals):
-        ax1.annotate(f"N={txt}", (thresholds[i], win_rates[i]), textcoords="offset points", xytext=(0,10), ha='center', fontsize=8)
+        label = f"N={txt}\n({buys[i]}B/{sells[i]}S)"
+        ax1.annotate(label, (thresholds[i], win_rates[i]), textcoords="offset points", xytext=(0,10), ha='center', fontsize=8)
 
     # Save
     chart_name = f"chart_{session_name}_{cfg_name}.png"
