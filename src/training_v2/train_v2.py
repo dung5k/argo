@@ -426,13 +426,13 @@ def train_v2(
 
     # ── Build 3 Independent Models ─────────────────────────────
     meta_path = os.path.join(
-        _ROOT, "data", f"feature_meta_{target_prefix}.json"
+        _ROOT, "data", f"feature_meta_{target_prefix}_v2.json"
     )
-    num_target_features = None
+    num_target_features = 13 # Fallback an toàn cho ASIAN/LONDON/NY
     if os.path.exists(meta_path):
         with open(meta_path) as f:
             meta = json.load(f)
-            num_target_features = meta.get("num_xau_features") or meta.get("num_target_features")
+            num_target_features = meta.get("num_xau_features") or meta.get("num_target_features", 13)
 
     target_name = target_prefix.lower().replace("_", "")
     
