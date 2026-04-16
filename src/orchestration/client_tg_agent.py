@@ -357,7 +357,17 @@ class TelegramAgent:
             session = payload.get("session", "all")
             scratch = payload.get("scratch", False)
             config_content = payload.get("config_content", "")
-            config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
+            # [FIX] Ưu tiên config từ payload (host đã gửi tên file cấu hình cụ thể)
+            # Chỉ fallback về CONFIG_MAP nếu host không cung cấp
+            config_from_payload = payload.get("config", "")
+            if config_from_payload:
+                # Đảm bảo dùng đường dẫn tuyệt đối trên client
+                if not os.path.isabs(config_from_payload):
+                    config = os.path.join(ARGO_DATA_DIR, os.path.basename(config_from_payload))
+                else:
+                    config = config_from_payload
+            else:
+                config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
             self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}, scratch={scratch}")
             res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session, scratch=scratch)
             if not res.get("ok"):
