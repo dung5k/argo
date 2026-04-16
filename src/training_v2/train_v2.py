@@ -478,6 +478,10 @@ def train_v2(
     import glob
     print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa...")
     for s_id, s_name in SESSIONS.items():
+        if args.scratch:
+            print(f"  ↪ Mạng {s_id} ({s_name.upper()}): Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!")
+            continue
+
         pattern = os.path.join(_ROOT, "runs", "**", f"{target_name}_{s_name}_weights_*.pth")
         all_files = glob.glob(pattern, recursive=True)
         if all_files:
@@ -805,6 +809,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--session", type=str, default="all",
         help="Session mode for compatibility with training agent orchestration"
+    )
+    parser.add_argument(
+        "--scratch", action="store_true",
+        help="Buộc đào tạo lại từ đầu, bỏ qua việc tự động kế thừa bộ trọng số cũ"
     )
     args = parser.parse_args()
 

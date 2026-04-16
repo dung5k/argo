@@ -200,6 +200,9 @@ class TrainingManager:
         if session and session.lower() != "all":
             cmd.extend(["--session", session.lower()])
 
+        if kwargs.get("scratch"):
+            cmd.append("--scratch")
+
         env = os.environ.copy()
         perf_mode = kwargs.get("perf_mode", "MAX").upper()
         if perf_mode == "LIGHT":
@@ -352,10 +355,11 @@ class TelegramAgent:
             script = payload.get("script", "")
             perf_mode = payload.get("perf_mode", "MAX")
             session = payload.get("session", "all")
+            scratch = payload.get("scratch", False)
             config_content = payload.get("config_content", "")
             config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
-            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}")
-            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session)
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}, scratch={scratch}")
+            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session, scratch=scratch)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:
