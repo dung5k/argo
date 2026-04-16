@@ -472,6 +472,7 @@ def train_v2(
 
     global_best_ev   = {s_id: 0.0 for s_id in SESSIONS}
     global_best_vloss = {s_id: float('inf') for s_id in SESSIONS}
+    last_notified_time = {s_id: {k: 0.0 for k in CONFIG_NAMES} for s_id in SESSIONS}
     
     # 5. Kế thừa trọng số cũ
     import glob
@@ -630,13 +631,16 @@ def train_v2(
                         l3_str = f"L3(>55): WR {l3.win_rate*100:.1f}% ({l3.n_buy}B/{l3.n_sell}S) EV {l3.ev_score:.5f}" if l3 else ""
                         l4_str = f"L4(>57): WR {l4.win_rate*100:.1f}% ({l4.n_buy}B/{l4.n_sell}S) EV {l4.ev_score:.5f}" if l4 else ""
                         print(f"[{s_name.upper()}] ⭐ ĐỈNH MỚI: {cfg_name} | {l3_str} | {l4_str} | VLoss: {avg_val_loss[s_id]:.5f}")
-                        plot_and_notify_chart(
-                            eval_res=result,
-                            session_name=s_name,
-                            cfg_name=cfg_name,
-                            epoch=total_epoch,
-                            run_dir=run_dir
-                        )
+                        current_t = time.time()
+                        if current_t - last_notified_time[s_id][cfg_name] >= 300: # Max 1 chart per 5 mins
+                            plot_and_notify_chart(
+                                eval_res=result,
+                                session_name=s_name,
+                                cfg_name=cfg_name,
+                                epoch=total_epoch,
+                                run_dir=run_dir
+                            )
+                            last_notified_time[s_id][cfg_name] = current_t
 
                 phx = phoenixes[s_id]
                 action_str = ""
