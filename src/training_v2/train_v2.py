@@ -657,7 +657,8 @@ def train_v2(
                         valid = [c for c in top_configs[s_id].values() if c is not None]
                         import random
                         chosen = random.choice(valid)["state_dict"] if valid else models[s_id].state_dict()
-                        print(f"\n[PHOENIX #{phx.phoenix_count}] Mạng {s_id} kẹt {phx.max_stagnate} epoch. Tái sinh! (còn {phx.remaining} lần)")
+                        # Bỏ hiển thị log Tái sinh theo yêu cầu user
+                        # print(f"\n[PHOENIX #{phx.phoenix_count}] Mạng {s_id} kẹt {phx.max_stagnate} epoch. Tái sinh! (còn {phx.remaining} lần)")
                         phx.apply_perturbation(chosen)
                         action_str = "PERTURB TRIGGERED"
                     
@@ -746,11 +747,12 @@ def _trigger_phoenix(phoenix, top_configs, best_state_dict, train_dataset, batch
     """Helper: chọn config tốt nhất rồi trigger phoenix perturbation."""
     valid = [c for c in top_configs.values() if c is not None]
     chosen = random.choice(valid)["state_dict"] if valid else best_state_dict
-    print(
-        f"\n[PHOENIX #{phoenix.phoenix_count}] "
-        f"Kẹt {phoenix.max_stagnate} epoch. Tái sinh... "
-        f"(còn {phoenix.remaining} lần)"
-    )
+    # Bỏ tắt log tái sinh
+    # print(
+    #     f"\n[PHOENIX #{phoenix.phoenix_count}] "
+    #     f"Kẹt {phoenix.max_stagnate} epoch. Tái sinh... "
+    #     f"(còn {phoenix.remaining} lần)"
+    # )
     need_reload, new_batch = phoenix.apply_perturbation(chosen)
 
 

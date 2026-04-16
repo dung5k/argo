@@ -796,9 +796,10 @@ class TelegramAgent:
                     send_msg += f"<pre>{html.escape(current_ver.strip())}</pre>"
                 elif current_event and current_event != getattr(self, "_last_tg_event", ""):
                     self._last_tg_event = current_event
-                    send_msg = f"🔥 {pfx} PHÁT HIỆN SỰ KIỆN MỚI!\n"
-                    if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
-                    send_msg += f"<pre>{html.escape(current_event.strip())}</pre>"
+                    # Tắt tin nhắn sự kiện mới theo yêu cầu
+                    # send_msg = f"🔥 {pfx} PHÁT HIỆN SỰ KIỆN MỚI!\n"
+                    # if last_line: send_msg += f"<pre>{html.escape(last_line.strip())}</pre>\n"
+                    # send_msg += f"<pre>{html.escape(current_event.strip())}</pre>"
                 elif current_peak and current_peak != last_peak_line:
                     last_peak_line = current_peak
                     send_msg = f"🏆 {pfx} TÌM THẤY MẪU MỚI!\n"
