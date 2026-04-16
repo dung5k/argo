@@ -2,6 +2,8 @@ import json, os, traceback
 import numpy as np
 from huggingface_hub import HfApi
 
+VERSION_SUFFIX = "V2_2"
+
 def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
     print("🚀 Bắt đầu quá trình nội suy lấy Brain tốt nhất từ HuggingFace...")
     
@@ -16,12 +18,12 @@ def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
     api = HfApi(token=HF_TOKEN)
     files = list(api.list_repo_files(repo_id=REPO_ID, repo_type="dataset"))
 
-    v2_1_runs = set()
+    v2_runs = set()
     for f in files:
-        if f.startswith("runs/") and "_V2_1" in f:
-            v2_1_runs.add(f.split('/')[1])
+        if f.startswith("runs/") and f"_{VERSION_SUFFIX}".upper() in f.upper():
+            v2_runs.add(f.split('/')[1])
 
-    print(f"✅ Tìm thấy {len(v2_1_runs)} bản run phiên bản V2.1 trên Cloud.")
+    print(f"✅ Tìm thấy {len(v2_runs)} bản run phiên bản {VERSION_SUFFIX} trên Cloud.")
 
     sessions_map = {
         "asian": "CFG_XAU_ASIAN_V2_1",
@@ -33,7 +35,7 @@ def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
 
     for sess_key, cfg_id in sessions_map.items():
         print(f"\n================== 📊 Phiên {sess_key.upper()} ==================")
-        sess_runs = [r for r in v2_1_runs if cfg_id in r]
+        sess_runs = [r for r in v2_runs if cfg_id.upper() in r.upper()]
         
         best_wr_target = -1
         best_run = None

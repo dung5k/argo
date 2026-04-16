@@ -934,7 +934,11 @@ if __name__ == "__main__":
     # ── Tạo thư mục run ────────────────────────────────────────
     run_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     target_clean  = TARGET_PREFIX.lower().replace("_", "")
-    run_name = f"run_{run_timestamp}_{target_clean}_{CONFIG_ID}_TRANSFORMER_V2_2"
+    config_clean = CONFIG_ID
+    if "_V2_1" in config_clean: config_clean = config_clean.replace("_V2_1", "")
+    if "_V2_2" in config_clean: config_clean = config_clean.replace("_V2_2", "")
+
+    run_name = f"run_{run_timestamp}_{target_clean}_{config_clean}_TRANSFORMER_V2_2"
     log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(BASE_PROJ, "logs"))
     run_dir  = os.path.join(log_base, "runs", run_name)
     os.makedirs(run_dir, exist_ok=True)
