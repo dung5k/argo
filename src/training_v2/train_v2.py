@@ -818,6 +818,8 @@ if __name__ == "__main__":
 
     # ── Tìm config ────────────────────────────────────────────
     config_path = args.config
+    print(f"[DEBUG] args.config = {args.config}")
+    
     if not config_path:
         for candidate in ["data/bot_config_xau.json", "data/bot_config.json"]:
             p = os.path.join(BASE_PROJ, candidate)
@@ -826,6 +828,10 @@ if __name__ == "__main__":
                 break
 
     cfg = _load_config(config_path) if config_path else {}
+    print(f"[DEBUG] config_path resolved = {config_path}")
+    print(f"[DEBUG] cfg contents length: {len(cfg)}")
+    print(f"[DEBUG] CONFIG_ID in cfg: {cfg.get('CONFIG_ID', 'MISSING')}")
+    
     TARGET_PREFIX = cfg.get("TARGET_PREFIX", "XAUUSD")
     CONFIG_ID     = cfg.get("CONFIG_ID", "DEFAULT")
     DATA_PATH     = os.environ.get("ARGO_DATA_DIR", os.path.join(BASE_PROJ, "data"))

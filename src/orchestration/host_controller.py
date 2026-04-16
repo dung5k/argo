@@ -65,37 +65,28 @@ class HostController:
         
         config_content = ""
         if cmd == "train":
-            LOCAL_CONFIG_MAP = {
-                "xauusd"      : "bot_config_xau_v2.json",
-                "xau"         : "bot_config_xau_v2.json",
-                "xagusd"      : "bot_config_xag_v2.json",
-                "xag"         : "bot_config_xag_v2.json",
-                "xau_v1_5"    : "bot_config_xau_v1_5.json",
-                "xag_v1_5"    : "bot_config_xag_v1_5.json",
-                "xau_v2"      : "bot_config_xau_v2.json",
-                "xag_v2"      : "bot_config_xag_v2.json",
-                "ltc"         : "bot_config_ltc.json",
-                "oil"         : "bot_config_oil.json",
-                "arb_v2"      : "bot_config_arb_v2.json",
-                "xau_asian_v2": "bot_config_xau_asian_v2.json",
-                "xau_london_v2": "bot_config_xau_london_v2.json",
-                "xau_ny_v2"   : "bot_config_xau_ny_v2.json",
-                "xau_asian_v2_1": "bot_config_xau_asian_v2_1.json",
-                "xau_london_v2_1": "bot_config_xau_london_v2_1.json",
-                "xau_ny_v2_1"   : "bot_config_xau_ny_v2_1.json"
-            }
-            local_cfg = LOCAL_CONFIG_MAP.get(symbol)
+            local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(symbol)
             if local_cfg:
                 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                local_cfg_path = os.path.join(base_dir, "data", local_cfg)
+                local_cfg_path = os.path.join(base_dir, "data", os.path.basename(local_cfg))
                 if os.path.exists(local_cfg_path):
-                    print(f"[HOST] Đang đẩy tệp cấu hình mới ({local_cfg}) sang Client trước khi Train...")
-                    self.send_file(local_cfg_path, f"data/{local_cfg}")  # Prefix "data/" de Client nhan dien va luu vao C:\argo\data
+                    print(f"[HOST] Đang đẩy tệp cấu hình mới ({os.path.basename(local_cfg)}) sang Client trước khi Train...")
+                    self.send_file(local_cfg_path, f"data/{os.path.basename(local_cfg)}")  # Prefix "data/" de Client nhan dien va luu vao C:\argo\data
                     time.sleep(1.5)  # Cho client thoi gian ghi file
                 else:
                     print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
-                    
-        if cmd == "run" and raw and script:
+            
+            # [FIX] Đưa config vào payload kèm absolute path C:/argo/data để client_tg_agent không trỏ nhầm về tự thư mục local cũ
+            payload = json.dumps({
+                "cmd": cmd,
+                "symbol": symbol,
+                "config": f"C:/argo/data/{os.path.basename(local_cfg)}" if local_cfg else "",
+                "mode": mode,
+                "session": session,
+                "scratch": scratch
+            })
+            
+        elif cmd == "run" and raw and script:
             try:
                 with open(script, "r", encoding="utf-8") as f:
                     code_content = f.read()
@@ -329,7 +320,7 @@ def main():
     elif args.cmd in ["train", "kill", "run", "update"]:
         mode_val = getattr(args, 'mode', 'MAX')
         cfg_path = args.file if args.cmd == "train" and args.file else ""
-        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False))
+        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False), config_path=cfg_path)
         host.listen_logs(args.time)
     elif args.cmd == "getlog":
         host.getlog(getattr(args, 'minutes', 60))
