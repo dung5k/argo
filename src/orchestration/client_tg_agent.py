@@ -733,6 +733,18 @@ class TelegramAgent:
                     except ImportError:
                         pass
                     
+                    try:
+                        import subprocess
+                        smi = subprocess.check_output(['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total', '--format=csv,noheader,nounits'], encoding='utf-8', timeout=2)
+                        if smi.strip():
+                            parts = smi.strip().split('\n')[0].split(',')
+                            gpu_util = parts[0].strip()
+                            vram_used = parts[1].strip()
+                            vram_total = parts[2].strip()
+                            status += f" GPU: {gpu_util}% VRAM: {vram_used}/{vram_total}MB"
+                    except Exception:
+                        pass
+                    
                     # Bổ sung Timestamp lần cuối có mặt (Last Seen)
                     import datetime
                     ts = datetime.datetime.now().strftime("%H:%M:%S %d/%m")
