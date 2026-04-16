@@ -67,6 +67,12 @@ class TransformerModel(nn.Module):
         )
 
     def forward(self, x):
+        # [SAFETY SHIELD] Kiểm tra an toàn Shape
+        actual_features = x.size(2)
+        expected_features = self.num_xau_features + self.num_macro_features
+        if actual_features != expected_features:
+            raise RuntimeError(f"[FATAL] Tensor Input có {actual_features} features, nhưng Model được cấu hình đón {expected_features} features (XAU: {self.num_xau_features}, Macro: {self.num_macro_features}). CHẶN SẬP HỆ THỐNG!")
+            
         xau_feats = x[:, :, :self.num_xau_features]
         macro_feats = x[:, -1, self.num_xau_features:]
         
