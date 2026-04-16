@@ -205,7 +205,7 @@ def _save_blackbox(
 
     data = {
         "target": target_name,
-        "version": "V2",
+        "version": "V2.2",
         "status": "STOPPED" if is_interrupted else "RUNNING_OR_DONE",
         "epochs_trained": current_epoch,
         "best_ev_composite_pip": best_ev * 10000,
@@ -694,7 +694,7 @@ def _save_blackbox_multi(run_dir, target_name, top_configs, num_target_features,
     meta_file = os.path.join(run_dir, "training_metrix_v2.json")
     out = {
         "target": target_name,
-        "version": "Independent_Multi_Session_v2.0",
+        "version": "Independent_Multi_Session_v2.2",
         "dimensions": {
             "num_features_target": num_target_features or 0,
             "num_features_macro": (num_features - num_target_features) if num_target_features is not None else num_features,
