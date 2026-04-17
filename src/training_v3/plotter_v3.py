@@ -80,7 +80,8 @@ def plot_and_notify_v3(
             bot = TelegramBot(cfg["bot_token"])
             chat_id = cfg["allowed_chat_ids"][0]
             
-            pfx = f"🔥 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục!"
+            client_id = os.environ.get("ARGO_CLIENT_ID", "UnknownClient")
+            pfx = f"🚀 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
             caption = (
                 f"{pfx}\n"
                 f"🔹 <b>Epoch:</b> {epoch}\n"

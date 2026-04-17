@@ -230,6 +230,8 @@ class TrainingManager:
             env["ARGO_DATA_DIR"] = str(self.base_dir / "data")
             env["ARGO_LOGS_DIR"] = str(self.base_dir / "logs")
 
+        env["ARGO_CLIENT_ID"] = self.client_id
+
         self.logger.info(f"▶ START TRAIN task={task_id}")
         self._on_done_cb = on_done
 
