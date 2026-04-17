@@ -187,6 +187,9 @@ def main():
     log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
     out_dir = os.path.join(log_base, "runs", run_name)
     os.makedirs(out_dir, exist_ok=True)
+    
+    import shutil
+    shutil.copy(config_path, os.path.join(out_dir, os.path.basename(config_path)))
 
     class _TeeLogger:
         def __init__(self, filename):
@@ -232,7 +235,10 @@ def main():
             model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
             torch.save(model.state_dict(), model_export_path)
             
-            # Upload HuggingFace
+            # Đẩy Chart Telegram
+            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
+            
+            # Upload HuggingFace nguyên kiện (Logs, Charts, Config, Model)
             try:
                 import sys as _sys
                 _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
@@ -241,12 +247,9 @@ def main():
                 from hf_sync import push_runs
                 
                 push_runs(run_dir=out_dir)
-                print(f"  ☁️ Upload dữ liệu thư mục {out_dir} lên HF (argo_data/runs) thành công!", flush=True)
+                print(f"  ☁️ Upload dữ liệu nguyên kiện thư mục {out_dir} lên HF thành công!", flush=True)
             except Exception as e:
                 print(f"  ❌ Lỗi Push HF: {e}", flush=True)
-                
-            # Đẩy Chart Telegram
-            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
             
             if phoenix:
                 phoenix.notify_improved()
