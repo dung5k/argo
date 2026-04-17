@@ -180,6 +180,32 @@ def main():
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
     
+    # Môi trường log giống V2
+    import shutil
+    run_timestamp = time.strftime("%Y%m%d_%H%M%S")
+    run_name = f"run_{run_timestamp}_{cfg_id}_AAMT_V3"
+    log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
+    out_dir = os.path.join(log_base, "runs", run_name)
+    os.makedirs(out_dir, exist_ok=True)
+
+    class _TeeLogger:
+        def __init__(self, filename):
+            self.terminal = sys.stdout
+            self.log = open(filename, "w", encoding="utf-8")
+        def write(self, message):
+            self.terminal.write(message)
+            self.log.write(message)
+        def flush(self):
+            self.terminal.flush()
+            self.log.flush()
+
+    sys.stdout = _TeeLogger(os.path.join(out_dir, "train_v3.log"))
+    
+    scaler_src = f"data/{cfg_id}/scaler_{cfg_id}.pkl"
+    if os.path.exists(scaler_src):
+        shutil.copy(scaler_src, os.path.join(out_dir, f"scaler_{cfg_id}.pkl"))
+        print(f"[PACK] Kèm theo scaler file vào: {out_dir}", flush=True)
+
     # 4. PHASE 2 FINE-TUNING (Vòng lặp vĩnh cửu)
     print("--- 🚀 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
     epoch = 0
@@ -187,9 +213,6 @@ def main():
     api = HfApi(token=hf_token)
     model_repo = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
     api.create_repo(repo_id=model_repo, exist_ok=True, private=True)
-    
-    out_dir = "models_v3"
-    os.makedirs(out_dir, exist_ok=True)
     
     while True:
         epoch += 1
