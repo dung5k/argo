@@ -168,7 +168,8 @@ def main():
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     if 'PhoenixRestartV2' in globals():
-        phoenix = PhoenixRestartV2(model, optimizer, max_phoenix=15, weight_decay=1e-4)
+        phoenix = PhoenixRestartV2(model, base_lr=lr, max_phoenix=15, weight_decay=1e-4)
+        optimizer = phoenix.optimizer
     else:
         phoenix = None
     
@@ -192,7 +193,8 @@ def main():
     
     while True:
         epoch += 1
-        tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, optimizer, device)
+        current_optimizer = phoenix.optimizer if phoenix else optimizer
+        tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
         eval_res = evaluate_val_set(model, val_loader, criterion, device)
         
         comp_score = eval_res.composite_score()
