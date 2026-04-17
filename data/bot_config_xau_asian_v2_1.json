@@ -32,23 +32,45 @@
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
-            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
-            "ICMARKETS": "C:\\Program Files\\MetaTrader 5 - ICMarkets\\terminal64.exe"
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe"
         },
         "ROUTING": {
             "XAUUSDm": "EXNESS",
             "XAGUSDm": "EXNESS",
             "USDJPYm": "EXNESS",
             "AUDUSDm": "EXNESS",
-            "NZDUSDm": "EXNESS",
-            "EURJPYm": "EXNESS",
-            "JP225m": "EXNESS",
-            "HK50m": "EXNESS",
-            "DXYm": "EXNESS",
+            "XNGUSD": "ICMARKETS",
+            "VIXYm": "ICMARKETS",
+            "NASDAQ_100": "EXNESS",
+            "US500": "ICMARKETS",
+            "US_10Y_YIELD": "ICMARKETS",
             "BTCUSDm": "EXNESS",
             "ETHUSDm": "EXNESS"
         },
-        "CONTINUOUS_CONTRACTS": {}
+        "CONTINUOUS_CONTRACTS": {
+            "VIXYm": {
+                "PREFIX": "VIX_",
+                "IS_CFD": false,
+                "CONTRACT_MONTHS": [
+                    "F",
+                    "G",
+                    "H",
+                    "J",
+                    "K",
+                    "M",
+                    "N",
+                    "Q",
+                    "U",
+                    "V",
+                    "X",
+                    "Z"
+                ]
+            },
+            "US_10Y_YIELD": {
+                "PREFIX": "UST10Y_",
+                "IS_CFD": false
+            }
+        }
     },
     "FEATURE_ENGINEERING": {
         "EMA_PERIODS": [
