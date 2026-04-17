@@ -68,11 +68,6 @@ def plot_and_notify_v3(
     os.makedirs(run_dir, exist_ok=True)
     chart_path = os.path.join(run_dir, f"chart_v3_{cfg_name}_ep{epoch}.png")
     plt.savefig(chart_path, dpi=120)
-    
-    # Buffer cho Telegram
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=120)
-    buf.seek(0)
     plt.close()
     
     # ==========================
@@ -93,6 +88,6 @@ def plot_and_notify_v3(
                 f"🔹 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n"
                 f"<pre>{eval_res.format_summary()}</pre>"
             )
-            bot.send_photo_buffer(chat_id, buf.getvalue(), caption=caption)
+            bot.send_photo(chat_id, photo_path=chart_path, caption=caption)
         except Exception as e:
             print(f"  ❌ Lỗi gửi Telegram Plot: {e}")
