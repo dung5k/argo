@@ -11,7 +11,7 @@
             "config_id": "CFG_XAU_ASIAN_V2_1",
             "_metrix": "Auto-selected (Target: 100 signals) -> WR=53.66% | thresh=0.7867 | Signals=2581 | Epoch=921",
             "trading_config": {
-                "entry_thresh": 0.7867,
+                "entry_thresh": 0.90,
                 "close_thresh": 0.43,
                 "lot_size": 0.01,
                 "tp_pips": 600,

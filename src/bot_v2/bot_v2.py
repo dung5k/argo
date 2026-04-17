@@ -134,6 +134,7 @@ def bot_background_loop():
     processor = None
     active_run_id = None
     cycle_count = 0
+    last_candle_time = None  # Track timestamp nến M1 cuối cùng đã xử lý
     print("[BOT] ✅ MT5 đã kết nối. Bắt đầu vòng lặp chính...")
 
     # Quét ngay lập tức các lệnh đang sẵn có trên sàn để track PnL từ đầu
@@ -277,6 +278,22 @@ def bot_background_loop():
         
         print(f"[BOT] STEP 3 Tick OK | sym={actual_sym} bid={tick.bid} ask={tick.ask} delay={staleness_secs:.1f}s")
 
+        # ── STEP 3.5: Chờ Nến M1 Mới (New Bar Filter) ──
+        current_bars = trade_manager.mt5.copy_rates_from_pos(actual_sym, 1, 0, 1)  # TIMEFRAME_M1=1
+        if current_bars is not None and len(current_bars) > 0:
+            current_candle_time = int(current_bars[0][0])  # timestamp nến hiện tại
+        else:
+            current_candle_time = None
+
+        if current_candle_time is not None and current_candle_time == last_candle_time:
+            # Chưa có nến mới — bỏ qua chu kỳ này, chờ đến khi nến đóng
+            time.sleep(1)
+            continue
+
+        if current_candle_time is not None:
+            last_candle_time = current_candle_time
+            print(f"[BOT] STEP 3.5 🕒 Nến M1 Mới | candle_time={datetime.utcfromtimestamp(current_candle_time).strftime('%H:%M')} UTC")
+
         # ── STEP 4: Kéo Dữ Liệu MT5 ──
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
         print(f"[BOT] STEP 4 Pull MT5 data | window=120")
@@ -339,7 +356,7 @@ def bot_background_loop():
         gui_status = "Khóa Mốc. Hoàn tất chu kỳ."
         print(f"[BOT] STEP 7 ✅ Hoàn tất chu kỳ #{cycle_count} | action='{trade_manager.gui_action}'")
         
-        time.sleep(3)
+        time.sleep(1)  # Nghỉ ngắn, vòng lặp sẽ tự chờ nến mới ở STEP 3.5
 
 def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
     if lbl_target: lbl_target.config(text=gui_target_text)
