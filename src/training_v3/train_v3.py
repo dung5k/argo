@@ -234,13 +234,14 @@ def main():
             
             # Upload HuggingFace
             try:
-                api.upload_file(
-                    path_or_fileobj=model_export_path,
-                    path_in_repo=f"aamt_v3_{cfg_id}_final.pth",
-                    repo_id=model_repo,
-                    commit_message=f"Update V3 Weights (Score={best_score:.4f})"
-                )
-                print(f"  ☁️ Upload mây {model_repo} thành công!", flush=True)
+                import sys as _sys
+                _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
+                if _hf_script_dir not in _sys.path:
+                    _sys.path.insert(0, _hf_script_dir)
+                from hf_sync import push_runs
+                
+                push_runs(run_dir=out_dir)
+                print(f"  ☁️ Upload dữ liệu thư mục {out_dir} lên HF (argo_data/runs) thành công!", flush=True)
             except Exception as e:
                 print(f"  ❌ Lỗi Push HF: {e}", flush=True)
                 
