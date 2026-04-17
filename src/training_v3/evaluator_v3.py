@@ -30,7 +30,7 @@ class ThresholdMetricsV3:
 @dataclass
 class EpochEvalResultV3:
     threshold_metrics: List[ThresholdMetricsV3] = field(default_factory=list)
-    max_threshold: float = 0.50
+    max_threshold: float = 0.53
     best_score: float = 0.0
     val_loss: float = float("inf")
     val_mse: float = float("inf")
@@ -60,8 +60,8 @@ class WinRateEvaluatorV3:
         self.n_thresholds = n_thresholds
 
     def _find_max_threshold(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor) -> float:
-        max_thresh = 0.50
-        for t_int in range(99, 51, -1):
+        max_thresh = 0.53
+        for t_int in range(99, 53, -1):
             t = t_int / 100.0
             n_buy  = (prob_buy > t).sum().item()
             n_sell = (prob_sell > t).sum().item()
@@ -109,8 +109,8 @@ class WinRateEvaluatorV3:
         prob_buy = probs[:, 2]
 
         max_thresh = self._find_max_threshold(prob_sell, prob_buy)
-        step = (max_thresh - 0.50) / 3 if max_thresh > 0.50 else 0.0
-        thresholds = [round(0.50 + step * i, 4) for i in range(self.n_thresholds)]
+        step = (max_thresh - 0.53) / 3 if max_thresh > 0.53 else 0.0
+        thresholds = [round(0.53 + step * i, 4) for i in range(self.n_thresholds)]
 
         metrics_list = []
         for t in thresholds:
