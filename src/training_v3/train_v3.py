@@ -167,11 +167,13 @@ def main():
     # 2. Sinh mạng neural AAMTV3
     model = AAMT_Model(input_dim=X.shape[2], seq_len=X.shape[1])
     
+    msg = ""
     # -------------------------------------
     # Kế thừa trọng số cũ
     # -------------------------------------
     if args.scratch:
-        print("\n[INHERIT] Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!", flush=True)
+        msg = "Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!"
+        print(f"\n[INHERIT] {msg}", flush=True)
     else:
         print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ HF...", flush=True)
         import sys as _sys
@@ -191,11 +193,26 @@ def main():
             latest_file = max(all_files, key=os.path.getmtime)
             try:
                 model.load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
-                print(f"  👉 Kế thừa Model: {os.path.basename(latest_file)} từ \n  {latest_file}", flush=True)
+                msg = f"👉 Kế thừa Model: {os.path.basename(latest_file)}"
+                print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:
-                print(f"  ❌ Lỗi kế thừa Model: {e}", flush=True)
+                msg = f"❌ Lỗi kế thừa Model: {e}"
+                print(f"  {msg}", flush=True)
         else:
-            print(f"  ❌ Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!", flush=True)
+            msg = f"❌ Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!"
+            print(f"  {msg}", flush=True)
+            
+    try:
+        tg_config_path = os.path.join(_ROOT, ".agent", "telegram_bot.json")
+        with open(tg_config_path, "r", encoding="utf-8") as f:
+            tcfg = json.load(f)
+        from src.orchestration.tg_helper import TelegramBot
+        tbot = TelegramBot(tcfg["bot_token"])
+        chat_id = tcfg["allowed_chat_ids"][0]
+        client_id = os.environ.get("ARGO_CLIENT_ID", "Unknown")
+        tbot.send_message(chat_id, f"⚙️ <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
+    except Exception as e:
+        pass
     
     model.to(device)
     
