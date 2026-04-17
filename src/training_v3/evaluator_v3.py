@@ -45,6 +45,14 @@ class EpochEvalResultV3:
         l4 = self.threshold_metrics[3].balanced_score
         return (1.4 * l3 + 1.0 * l4) / 2.4
 
+    def format_summary(self) -> str:
+        parts = [str(m) for m in self.threshold_metrics]
+        composite = self.composite_score()
+        return (
+            f"V3 Score [{composite:.3f}] - Loss(MSE:{self.val_mse:.4f}/CE:{self.val_loss-self.val_mse:.4f})\n"
+            + "  " + " | ".join(parts)
+        )
+
 
 class WinRateEvaluatorV3:
     def __init__(self, min_signals: int = 30, n_thresholds: int = 4):
@@ -119,10 +127,4 @@ class WinRateEvaluatorV3:
             val_mse=val_mse
         )
 
-    def format_summary(self, result: EpochEvalResultV3) -> str:
-        parts = [str(m) for m in result.threshold_metrics]
-        composite = result.composite_score()
-        return (
-            f"V3 Score [{composite:.3f}] - Loss(MSE:{result.val_mse:.4f}/CE:{result.val_loss-result.val_mse:.4f})\n"
-            + "  " + " | ".join(parts)
-        )
+
