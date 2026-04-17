@@ -279,20 +279,17 @@ def bot_background_loop():
         print(f"[BOT] STEP 3 Tick OK | sym={actual_sym} bid={tick.bid} ask={tick.ask} delay={staleness_secs:.1f}s")
 
         # ── STEP 3.5: Chờ Nến M1 Mới (New Bar Filter) ──
-        current_bars = trade_manager.mt5.copy_rates_from_pos(actual_sym, 1, 0, 1)  # TIMEFRAME_M1=1
-        if current_bars is not None and len(current_bars) > 0:
-            current_candle_time = int(current_bars[0][0])  # timestamp nến hiện tại
-        else:
-            current_candle_time = None
+        # Tính timestamp nến M1 hiện tại: mỗi nến M1 = 60 giây, làm tròn xuống
+        current_candle_time = int(time.time() // 60) * 60  # Unix timestamp đầu nến hiện tại
 
-        if current_candle_time is not None and current_candle_time == last_candle_time:
+        if current_candle_time == last_candle_time:
             # Chưa có nến mới — bỏ qua chu kỳ này, chờ đến khi nến đóng
             time.sleep(1)
             continue
 
-        if current_candle_time is not None:
-            last_candle_time = current_candle_time
-            print(f"[BOT] STEP 3.5 🕒 Nến M1 Mới | candle_time={datetime.utcfromtimestamp(current_candle_time).strftime('%H:%M')} UTC")
+        last_candle_time = current_candle_time
+        candle_utc_str = datetime.utcfromtimestamp(current_candle_time).strftime('%H:%M')
+        print(f"[BOT] STEP 3.5 🕒 Nến M1 Mới | candle_time={candle_utc_str} UTC")
 
         # ── STEP 4: Kéo Dữ Liệu MT5 ──
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
