@@ -137,7 +137,7 @@ def main():
     window_size = X.shape[1]
     
     # 2. Sinh mạng neural AAMTV3
-    model = AAMT_Model(num_features=num_features, window_size=window_size)
+    model = AAMT_Model(input_dim=num_features, seq_len=window_size)
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     
