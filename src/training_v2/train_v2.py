@@ -887,6 +887,24 @@ if __name__ == "__main__":
 
     print(f"\n[LOAD] Đang đọc features: {os.path.basename(features_path)}")
     features_raw = pd.read_parquet(features_path)
+    
+    # --- ÁP DỤNG LÁ CHẮN "DATA PARITY" TRƯỚC KHI FIT MODEL ---
+    exact_req = cfg.get("FEATURE_ENGINEERING", {}).get("EXACT_FEATURES", [])
+    if exact_req:
+        missing_in_parquet = [f for f in exact_req if f not in features_raw.columns]
+        extra_in_parquet = [f for f in features_raw.columns if f not in exact_req]
+        
+        if missing_in_parquet or extra_in_parquet:
+            error_msg = f"\n❌ [DATA PARITY ERROR] FILE PARQUET KHÔNG KHỚP 100% VỚI CẤU HÌNH JSON ('{CONFIG_ID}')\n"
+            if missing_in_parquet:
+                error_msg += f"   ➤ Parquet THIẾU các cột (Nguy hiểm): {missing_in_parquet[:10]}\n"
+            if extra_in_parquet:
+                error_msg += f"   ➤ Parquet THỪA các cột (Rác): {extra_in_parquet[:10]}\n"
+            error_msg += "HỆ THỐNG HUẤN LUYỆN TỪ CHỐI TIẾP NHẬN BỘ DỮ LIỆU SAI LỆCH NÀY. VUI LÒNG KIỂM TRA LẠI KHÂU FEATURE ENGINEERING!"
+            print(error_msg)
+            sys.exit(1)
+        else:
+            print("🛡️ [DATA PARITY] Dữ liệu Đầu vào Khớp Mã Vạch 100% với Thiết kế Não (EXACT_FEATURES).")
 
     # ── Áp QuantileTransformer V2 ──────────────────────────────
     pipeline = FeaturePipelineV2(

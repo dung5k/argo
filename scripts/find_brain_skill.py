@@ -2,7 +2,7 @@ import json, os, traceback
 import numpy as np
 from huggingface_hub import HfApi
 
-VERSION_SUFFIX = "V2_2"
+VERSION_SUFFIX = "V2_1"
 
 def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
     print("🚀 Bắt đầu quá trình nội suy lấy Brain tốt nhất từ HuggingFace...")
@@ -92,15 +92,20 @@ def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
                     t_arr = np.array(thresholds)[idx]
                     w_arr = np.array(wrs)[idx]
                     
-                    if target_signals < np.min(s_arr) or target_signals > np.max(s_arr):
-                        closest_idx = np.argmin(np.abs(s_arr - target_signals))
-                        interp_t = t_arr[closest_idx]
-                        interp_w = w_arr[closest_idx]
+                    if target_signals == 0:  # Mode Maximum Threshold
+                        best_idx = np.argmax(t_arr) # 0 là index của t_arr (threshold array)
+                        interp_t = float(t_arr[best_idx])
+                        interp_w = float(w_arr[best_idx])
+                        print(f"[*] {r}: MAX_Thresh = {interp_t:.4f} | WinRate = {interp_w:.2f}% | Signals = {s_arr[best_idx]}")
                     else:
-                        interp_t = float(np.interp(target_signals, s_arr, t_arr))
-                        interp_w = float(np.interp(target_signals, s_arr, w_arr))
-                        
-                    print(f"[*] {r}: Thresh@{target_signals} = {interp_t:.4f} | WinRate@{target_signals} = {interp_w:.2f}%")
+                        if target_signals < np.min(s_arr) or target_signals > np.max(s_arr):
+                            closest_idx = np.argmin(np.abs(s_arr - target_signals))
+                            interp_t = float(t_arr[closest_idx])
+                            interp_w = float(w_arr[closest_idx])
+                        else:
+                            interp_t = float(np.interp(target_signals, s_arr, t_arr))
+                            interp_w = float(np.interp(target_signals, s_arr, w_arr))
+                        print(f"[*] {r}: Thresh@{target_signals} = {interp_t:.4f} | WinRate@{target_signals} = {interp_w:.2f}%")
                     
                     if interp_w > best_wr_target:
                         best_wr_target = interp_w
@@ -165,7 +170,7 @@ def find_and_apply_best_brains(target_signals=100, apply_to_config=True):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--signals", type=int, default=100, help="Mốc nội suy tương đối (Mặc định 100)")
+    parser.add_argument("--signals", type=int, default=100, help="Mốc nội suy tương đối. Chọn 0 để lấy Max Threshold")
     parser.add_argument("--no-apply", action="store_true", help="Chỉ tìm, không độ vào cấu hình file json")
     args = parser.parse_args()
     

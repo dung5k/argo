@@ -137,7 +137,17 @@ class V2CloudManager:
         # 1. Download model weights
         model_path = self._download_file(f"runs/{run_id}/{weight_filename}")
 
-        # 2. Download + save scaler
+        # 2. Download + save training metrix FIRST to get dimensions
+        metrix_data = {}
+        try:
+            metrix_cloud = self._download_file(f"runs/{run_id}/{metrix_filename}")
+            metrix_local = self._save_to_data_dir(metrix_cloud, "training_metrix_v2.json")
+            with open(metrix_local, 'r', encoding='utf-8') as f:
+                metrix_data = json.load(f)
+        except Exception as e:
+            self.log_callback(f"[CloudManager] ⚠️ Không tải được Metrix: {e}")
+
+        # 3. Download + save scaler
         inference_feats, num_features, num_xau = [], 86, 8
         try:
             scaler_cloud = self._download_file(f"runs/{run_id}/{remote_scaler_filename}")
@@ -146,16 +156,15 @@ class V2CloudManager:
         except Exception as e:
             self.log_callback(f"[CloudManager] ⚠️ Không tải được Scaler: {e}")
 
-        # Fallback num_xau nếu vẫn còn default
-        if num_xau == 8:
-            num_xau = self._load_local_fallback_num_xau(num_xau)
-
-        # 3. Download + save training metrix
-        try:
-            metrix_cloud = self._download_file(f"runs/{run_id}/{metrix_filename}")
-            self._save_to_data_dir(metrix_cloud, "training_metrix_v2.json")
-        except Exception as e:
-            self.log_callback(f"[CloudManager] ⚠️ Không tải được Metrix: {e}")
+        # OVERRIDE num_xau if V2.2 metrix has dimensions
+        if "dimensions" in metrix_data:
+            num_xau = metrix_data["dimensions"].get("num_features_target", num_xau)
+            num_features = num_xau + metrix_data["dimensions"].get("num_features_macro", num_features - num_xau)
+            self.log_callback(f"[CloudManager] 🧩 Override Dimensions từ Metrix: n_feats={num_features}, n_xau={num_xau}")
+        else:
+            # Fallback num_xau nếu vẫn còn default
+            if num_xau == 8:
+                num_xau = self._load_local_fallback_num_xau(num_xau)
 
         self.log_callback(
             f"[CloudManager] ✅ Sync hoàn tất | run={run_id} | "

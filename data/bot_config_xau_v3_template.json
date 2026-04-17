@@ -1,0 +1,40 @@
+{
+    "TARGET_PREFIX": "XAUUSDm",
+    "CONFIG_ID": "CFG_XAU_V3_TEMPLATE",
+    "VERSION": "3.0",
+    
+    "FEATURE_ENGINEERING": {
+        "TP_PIPS": 15,
+        "SL_PIPS": 15,
+        "MAX_HOLD_BARS": 20,
+        "PIP_SIZE": 0.1,
+        
+        "WINDOW_SIZE": 60,
+        "STEP_SIZE": 1
+    },
+
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 4,
+        "BATCH_SIZE": 512,
+        
+        "WARMUP_EPOCHS": 20,
+        "FINETUNE_EPOCHS": 50,
+        
+        "LEARNING_RATE": 1e-4
+    },
+    
+    "DATA_SOURCE": {
+        "HG_DATASET": "dung5k/xau_1m_v3_tensor_data",
+        "RAW_LOCAL_DIR": "data/history",
+        "ROUTING": {
+            "XAUUSDm": "Exness"
+        }
+    },
+    
+    "LIVE_BOT": {
+        "MSE_THRESHOLD_PERCENTILE": 70,
+        "MIN_PROBABILITY_THRESH": 0.7
+    }
+}

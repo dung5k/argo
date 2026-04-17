@@ -264,9 +264,18 @@ def sync_all_history():
     
     print("\n" + "="*60)
     print(f"📝 TỔNG KẾT: {'✅ TẤT CẢ DỮ LIỆU HỢP LỆ' if all_ok else '⚠️  CÓ VẤN ĐỀ CẦN XEM XÉT'}")
-    print(f"   Tổng số file đã đồng bộ: {len(generated_files)}")
+    print(f"   Tổng số file đã đồng bộ: {len(generated_files)} / {len(router.items())} mã yêu cầu")
     print("="*60)
     
+    if len(generated_files) < len(router.items()):
+        all_ok = False
+        print("❌ LỖI NGHIÊM TRỌNG: Mất kết nối dẫn đến không cào được bản thể của một số Mã đầu vào.")
+        
+    if not all_ok:
+        error_msg = "❌ CẢNH BÁO: BỘ DATA CÓ NHIỀU MÃ BỊ LỖI HOẶC THIẾU TICK. HỆ THỐNG ĐÃ DỪNG LẠI ĐỂ BẢO VỆ CHẤT LƯỢNG DATA. BẠN CẦN KIỂM TRA LẠI MT5!"
+        print("\n" + error_msg)
+        raise RuntimeError(error_msg)
+        
     # --- LƯU Ý UPLOAD CHUYỂN SANG GIAI ĐOẠN SAU ---
     print("\nLưu ý: Bạn cần chạy tiếp Feature Engineering để tạo file tổng hợp, sau đó dùng hf_sync.py push để tải lên đám mây!")
 

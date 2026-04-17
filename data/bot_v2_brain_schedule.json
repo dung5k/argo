@@ -6,12 +6,12 @@
         "asian": {
             "start": "00:00",
             "end": "07:00",
-            "run_id": "run_20260416_234908_xauusd_CFG_XAU_ASIAN_TRANSFORMER_V2_2",
+            "run_id": "run_20260414_131632_xauusd_CFG_XAU_ASIAN_V2_1_TRANSFORMER_V2",
             "weight_file": "xauusd_asia_weights_EV_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2_1",
-            "_metrix": "Auto-selected (Target: 100 signals) -> WR=53.66% | thresh=0.7867 | Signals=2581 | Epoch=921",
+            "_metrix": "Manual Override -> thresh=0.63",
             "trading_config": {
-                "entry_thresh": 0.90,
+                "entry_thresh": 0.63,
                 "close_thresh": 0.43,
                 "lot_size": 0.01,
                 "tp_pips": 600,
@@ -21,12 +21,12 @@
         "european": {
             "start": "07:00",
             "end": "12:30",
-            "run_id": "run_20260414_170529_xauusd_CFG_XAU_LONDON_V2_1_TRANSFORMER_V2",
+            "run_id": "run_20260416_080600_xauusd_CFG_XAU_LONDON_V2_1_TRANSFORMER_V2",
             "weight_file": "xauusd_london_weights_EV_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_LONDON_V2_1",
-            "_metrix": "Auto-selected (Target: 100 signals) -> WR=57.83% | thresh=0.5000",
+            "_metrix": "Manual Override -> thresh=0.63",
             "trading_config": {
-                "entry_thresh": 0.55,
+                "entry_thresh": 0.63,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
@@ -36,12 +36,12 @@
         "ny": {
             "start": "13:00",
             "end": "22:00",
-            "run_id": "run_20260416_161934_xauusd_CFG_XAU_NY_TRANSFORMER_V2_2",
+            "run_id": "run_20260414_000528_xauusd_CFG_XAU_NY_V2_1_TRANSFORMER_V2",
             "weight_file": "xauusd_ny_weights_EV_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_NY_V2_2",
-            "_metrix": "Auto-selected (Target: 100 signals) -> WR=57.97% | thresh=0.5267",
+            "_metrix": "Manual Override -> thresh=0.63",
             "trading_config": {
-                "entry_thresh": 0.5267,
+                "entry_thresh": 0.63,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,

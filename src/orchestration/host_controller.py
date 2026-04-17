@@ -65,7 +65,12 @@ class HostController:
         
         config_content = ""
         if cmd == "train":
-            local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(symbol)
+            LOCAL_CONFIG_MAP = {
+                "asian": "data/bot_config_xau_asian_v2_1.json",
+                "london": "data/bot_config_xau_london_v2_1.json",
+                "ny": "data/bot_config_xau_ny_v2_1.json"
+            }
+            local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(session, "data/bot_config_xau.json")
             if local_cfg:
                 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
                 local_cfg_path = os.path.join(base_dir, "data", os.path.basename(local_cfg))

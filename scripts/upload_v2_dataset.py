@@ -7,9 +7,7 @@ hf_token = "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"
 repo_id = "dung5k/argo_data"
 repo_type = "dataset"
 data_dirs = [
-    "data/CFG_XAU_LONDON_V2_1",
-    "data/CFG_XAU_ASIAN_V2_1",
-    "data/CFG_XAU_NY_V2_1"
+    "data/CFG_XAU_LONDON_V2_1"
 ]
 
 run_id = "V2_2026_DATA"
@@ -35,11 +33,12 @@ for data_dir in data_dirs:
     
     for filename in files_to_upload:
         local_path = os.path.join(data_dir, filename)
-        repo_path = f"runs/{run_id}/{filename}"
+        repo_path = f"data/{config_id}/{filename}"
         
         if not os.path.exists(local_path):
-            print(f"⚠️ Không tìm thấy file tại Local: {local_path} -> Bỏ qua!")
-            continue
+            error_msg = f"❌ LỖI NGHIÊM TRỌNG: Không tìm thấy file tại Local: {local_path}\nKhông cho phép Upload dữ liệu khuyết. Hệ thống ngừng để bảo vệ tính đồng nhất!"
+            print(error_msg)
+            raise RuntimeError(error_msg)
             
         print(f"Uploading {filename} (Size: {os.path.getsize(local_path) / (1024*1024):.2f} MB)...")
         try:
@@ -55,3 +54,24 @@ for data_dir in data_dirs:
             print(f"❌ Lỗi khi Push {filename}: {str(e)}")
 
 print("\n🎉 HOÀN TẤT UPLOAD DATASET V2 LÊN ĐÁM MÂY")
+
+print("\n🧹 TIẾN HÀNH DỌN DẸP DỮ LIỆU LOCAL SAU KHI UPLOAD...")
+import shutil
+import glob
+
+# Xóa các thư mục CFG đã upload
+for data_dir in data_dirs:
+    if os.path.exists(data_dir):
+        print(f"Xóa thư mục đã upload: {data_dir}")
+        shutil.rmtree(data_dir, ignore_errors=True)
+
+# Xóa các file RAW parquet và pkl trên root data/
+temp_files = glob.glob("data/*.parquet") + glob.glob("data/*.pkl")
+for f in temp_files:
+    try:
+        os.remove(f)
+        print(f"Đã xóa file tạm: {f}")
+    except Exception as e:
+        pass
+
+print("✅ Dọn dẹp hoàn tất. Trả lại không gian trống cho Host.")

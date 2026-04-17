@@ -8,7 +8,7 @@
 #property version   "1.00"
 #property description "Cầu Nối Đón Data Tín Hiệu PyTorch Bắn Qua API"
 
-input string   InpApiUrl = "http://127.0.0.1:5050/api/"; 
+input string   InpApiUrl = "http://127.0.0.1:5050/api/v2/"; 
 input int      InpHistoryLimit = 1000;
 
 int OnInit()
@@ -19,7 +19,7 @@ int OnInit()
    string cookie=NULL,headers;
    char post[],result[];
    
-   string url = InpApiUrl + "history?limit=" + IntegerToString(InpHistoryLimit);
+   string url = InpApiUrl + "history?symbol=" + _Symbol + "&limit=" + IntegerToString(InpHistoryLimit);
    int res = WebRequest("GET", url, cookie, NULL, 5000, post, 0, result, headers);
    
    if(res == 200)
@@ -57,7 +57,7 @@ void OnTimer()
   {
    string cookie=NULL,headers;
    char post[],result[];
-   string url = InpApiUrl + "live";
+   string url = InpApiUrl + "predict?symbol=" + _Symbol + "&time=" + IntegerToString((int)iTime(_Symbol, _Period, 0));
    
    int res = WebRequest("GET", url, cookie, NULL, 1000, post, 0, result, headers);
    if(res == 200)

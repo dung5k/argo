@@ -27,7 +27,7 @@
         ]
     },
     "DATA_SOURCE": {
-        "DATASET_SUFFIX": "20260101_to_20260408",
+        "DATASET_SUFFIX": "20260201_to_20260331",
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
@@ -46,12 +46,9 @@
             "XAGUSDm": "EXNESS",
             "XCUUSDm": "EXNESS",
             "DXYm": "EXNESS",
-            "USOILm": "EXNESS",
             "XNGUSD": "ICMARKETS",
-            "VIXYm": "ICMARKETS",
             "NASDAQ_100": "EXNESS",
             "US500": "ICMARKETS",
-            "US_10Y_YIELD": "ICMARKETS",
             "BTCUSDm": "EXNESS",
             "ETHUSDm": "EXNESS"
         },
@@ -60,28 +57,6 @@
                 "PREFIX": "USTECm",
                 "BROKER": "EXNESS",
                 "IS_CFD": true
-            },
-            "US_10Y_YIELD": {
-                "PREFIX": "UST10Y_",
-                "IS_CFD": false
-            },
-            "VIXYm": {
-                "PREFIX": "VIX_",
-                "IS_CFD": false,
-                "CONTRACT_MONTHS": [
-                    "F",
-                    "G",
-                    "H",
-                    "J",
-                    "K",
-                    "M",
-                    "N",
-                    "Q",
-                    "U",
-                    "V",
-                    "X",
-                    "Z"
-                ]
             }
         }
     },
@@ -106,29 +81,22 @@
             "XAUUSD_ret_30m",
             "XAUUSD_ATR_ratio",
             "XAUUSD_open_log_ret",
-            "XAUUSD_high_log_ret",
-            "XAUUSD_low_log_ret",
             "XAUUSD_close_log_ret",
             "XAUUSD_volume",
-            "is_imputed_flag",
             "NASDAQ_100_volume",
             "US500_volume",
             "DXY_volume",
             "USDJPY_volume",
             "USDCHF_volume",
-            "USOIL_volume",
             "XNGUSD_volume",
             "EURUSD_close_log_ret",
             "USDCAD_close_log_ret",
             "USDJPY_close_log_ret",
             "USDCHF_close_log_ret",
             "DXY_close_log_ret",
-            "USOIL_close_log_ret",
             "XNGUSD_close_log_ret",
             "NASDAQ_100_close_log_ret",
             "US500_close_log_ret",
-            "US_10Y_YIELD_close_log_ret",
-            "VIXY_close_log_ret",
             "XAGUSD_close_log_ret",
             "XCUUSD_close_log_ret",
             "BTCUSD_close_log_ret",

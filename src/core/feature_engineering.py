@@ -280,9 +280,9 @@ def create_stationary_features(df, is_live=False, apply_scaling=True):
     if exact_features:
         missing_cols = [c for c in exact_features if c not in feature_df.columns]
         if missing_cols:
-            print(f"⚠️ [EXACT SHIELD] Cảnh báo: Thiếu {len(missing_cols)} Features từ danh sách yêu cầu (VD: {missing_cols[:5]}). Đang Zero-Pad...")
-            pad_df = pd.DataFrame(0.0, index=feature_df.index, columns=missing_cols)
-            feature_df = pd.concat([feature_df, pad_df], axis=1)
+            error_msg = f"❌ [EXACT SHIELD] LỖI NGHIÊM TRỌNG: Thiếu {len(missing_cols)} Features từ cấu hình EXACT_FEATURES (VD: {missing_cols[:5]}).\nKhông được phép Zero-Pad. Hệ thống dừng lại để bảo vệ chất lượng dữ liệu!"
+            print(error_msg)
+            raise RuntimeError(error_msg)
             
         extra_cols = [c for c in feature_df.columns if c not in exact_features]
         if extra_cols:
@@ -297,7 +297,7 @@ def create_stationary_features(df, is_live=False, apply_scaling=True):
                 ones_pct = (imputed_flags == 1).mean() * 100
                 print(f" [{idx+1:2d}] {feat:28s} | ✅ Cờ Đóng Băng: {ones_pct:.1f}% nến mượn giá (Vĩ mô ngủ)")
             elif feat in missing_cols:
-                print(f" [{idx+1:2d}] {feat:28s} | ⚠️ Zero-Pad (Hoàn toàn LỖI/MẤT BẢN THỂ TỪ NGUỒN)")
+                print(f" [{idx+1:2d}] {feat:28s} | ❌ LỖI: Feature bị mất tích!")
             else:
                 nan_count = feature_df[feat].isna().sum()
                 zero_pct = (feature_df[feat] == 0).mean() * 100
@@ -338,9 +338,9 @@ def create_stationary_features(df, is_live=False, apply_scaling=True):
         expected_cols = list(scaler.feature_names_in_)
         missing_cols = [c for c in expected_cols if c not in feature_df.columns]
         if missing_cols:
-            print(f"⚠️ [SHIELD] Cảnh báo: Thiếu {len(missing_cols)} Features từ MT5 (vd: {missing_cols[:5]}). Đang Zero-Pad...")
-            pad_df = pd.DataFrame(0.0, index=feature_df.index, columns=missing_cols)
-            feature_df = pd.concat([feature_df, pad_df], axis=1)
+            error_msg = f"❌ [SHIELD] LỖI NGHIÊM TRỌNG: Thiếu {len(missing_cols)} Features từ MT5 so với file Trọng số Scaler (vd: {missing_cols[:5]}). Vui lòng kiểm tra lại quá trình cào MT5!"
+            print(error_msg)
+            raise RuntimeError(error_msg)
             
         extra_cols = [c for c in feature_df.columns if c not in expected_cols]
         if extra_cols:
