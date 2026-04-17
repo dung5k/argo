@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 plotter_v3.py — Đồ họa quá trình huấn luyện V3
 ====================================================
@@ -19,7 +20,7 @@ def plot_and_notify_v3(
     cfg_name: str, 
     epoch: int,
     run_dir: str,
-    tg_config_path: str = "tg_config.json"
+    tg_config_path: str = ""
 ):
     """
     Vẽ biểu đồ và gửi Telegram (V3 Version).
@@ -73,22 +74,53 @@ def plot_and_notify_v3(
     # ==========================
     # Gửi qua Telegram
     # ==========================
-    if os.path.exists(tg_config_path):
+    # Tự tìm đúng đường dẫn tg_config nếu không truyền vào
+    if not tg_config_path:
+        _this_dir = os.path.dirname(os.path.abspath(__file__))
+        _project_root = os.path.dirname(os.path.dirname(_this_dir))
+        _candidates = [
+            os.path.join(_project_root, ".agent", "telegram_bot.json"),
+            os.path.join("C:/argo/.agent", "telegram_bot.json"),
+            os.path.join("C:/argo", "tg_config.json"),
+            "tg_config.json",
+        ]
+        tg_config_path = next((p for p in _candidates if os.path.exists(p)), "")
+
+    if tg_config_path and os.path.exists(tg_config_path):
         try:
-            with open(tg_config_path, "r") as f:
+            with open(tg_config_path, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
             bot = TelegramBot(cfg["bot_token"])
             chat_id = cfg["allowed_chat_ids"][0]
             
-            client_id = os.environ.get("ARGO_CLIENT_ID", "UnknownClient")
-            pfx = f"🚀 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
+            # Đọc client_id: ưu tiên env var → file client_id.txt → key trong tg_config → "UnknownClient"
+            client_id = os.environ.get("ARGO_CLIENT_ID", "")
+            if not client_id:
+                _this_dir = os.path.dirname(os.path.abspath(__file__))
+                _project_root = os.path.dirname(os.path.dirname(_this_dir))
+                _id_candidates = [
+                    os.path.join(_project_root, ".agent", "client_id.txt"),
+                    os.path.join("C:/argo/.agent", "client_id.txt"),
+                    os.path.join("C:/argo", "client_id.txt"),
+                ]
+                for _id_file in _id_candidates:
+                    if os.path.exists(_id_file):
+                        with open(_id_file, "r") as _f:
+                            client_id = _f.read().strip()
+                        break
+            if not client_id:
+                client_id = cfg.get("client_id", "UnknownClient")
+            
+            pfx = f"\U0001f680 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
             caption = (
                 f"{pfx}\n"
-                f"🔹 <b>Epoch:</b> {epoch}\n"
-                f"🔹 <b>Best Score:</b> {eval_res.composite_score():.4f}\n"
-                f"🔹 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n"
+                f"\U0001f539 <b>Epoch:</b> {epoch}\n"
+                f"\U0001f539 <b>Best Score:</b> {eval_res.composite_score():.4f}\n"
+                f"\U0001f539 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n"
                 f"<pre>{eval_res.format_summary()}</pre>"
             )
             bot.send_photo(chat_id, photo_path=chart_path, caption=caption)
         except Exception as e:
-            print(f"  ❌ Lỗi gửi Telegram Plot: {e}")
+            print(f"  \u274c Lỗi gửi Telegram Plot: {e}", flush=True)
+    else:
+        print(f"  \u26a0\ufe0f Không tìm thấy file cấu hình Telegram. Bỏ qua gửi Telegram.", flush=True)
