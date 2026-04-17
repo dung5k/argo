@@ -1,4 +1,5 @@
-﻿import os
+# -*- coding: utf-8 -*-
+import os
 import sys
 import json
 import argparse
@@ -37,15 +38,15 @@ except ImportError:
 
 def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=5):
     """
-    Giai Ä‘oáº¡n 1: Dáº¡y AI cÃ¡ch nhÃ¬n biá»ƒu Ä‘á»“ (TÃ¡ch nhiá»…u) báº±ng cÃ¡ch chá»‰ báº­t Reconstruction Loss
+    Giai đoạn 1: Dạy AI cách nhìn biểu đồ (Tách nhiễu) bằng cách chỉ bật Reconstruction Loss
     """
     model.train()
     model.to(device)
     
-    # Ã‰p trá»ng sá»‘ Joint Loss: Táº®T hoÃ n toÃ n nhÃ¡nh Dá»± Ä‘oÃ¡n, Dá»’N 100% lá»±c cho nhÃ¡nh Giáº£i nÃ©n
+    # Ép trọng số Joint Loss: TẮT hoàn toàn nhánh Dự đoán, DỒN 100% lực cho nhánh Giải nén
     criterion.set_lambdas(lambda_recon=1.0, lambda_class=0.0)
     
-    print(f"--- ðŸš€ Báº®T Äáº¦U WARM-UP AUTOENCODER ({epochs} Epochs) ---", flush=True)
+    print(f"--- \U0001f680 BẮT ĐẦU WARM-UP AUTOENCODER ({epochs} Epochs) ---", flush=True)
     for epoch in range(epochs):
         total_recon_loss = 0.0
         for batch_idx, (inputs, targets) in enumerate(train_loader):
@@ -64,11 +65,11 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
 
 def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     """
-    Cháº¡y Fine-Tuning 1 Epoch Ä‘á»ƒ cáº¯m vÃ o luá»“ng while True.
+    Chạy Fine-Tuning 1 Epoch để cắm vào luồng while True.
     """
     model.train()
     model.to(device)
-    # Báº¬T Láº I nhÃ¡nh phÃ¢n loáº¡i (lambda_class = 1.0) Ä‘á»ƒ Ä‘Ã o táº¡o hÃ m tá»•ng (Joint)
+    # BẬT LẠI nhánh phân loại (lambda_class = 1.0) để đào tạo hàm tổng (Joint)
     criterion.set_lambdas(lambda_recon=1.0, lambda_class=1.0)
     
     total_loss_val = 0.0
@@ -124,7 +125,7 @@ def evaluate_val_set(model, val_loader, criterion, device):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("config", nargs="?", help="Path to config file")
-    parser.add_argument("--scratch", action="store_true", help="Bá» qua káº¿ thá»«a, train láº¡i tá»« Ä‘áº§u")
+    parser.add_argument("--scratch", action="store_true", help="Bỏ qua kế thừa, train lại từ đầu")
     parser.add_argument("--session", default="ny", help="Session target (bo qua, doc tu config file)")
     args = parser.parse_args()
     
@@ -144,8 +145,8 @@ def main():
     
     hf_token = os.environ.get("HF_TOKEN", "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")
     
-    # 1. KÃ©o Dataset (Features V3, 37 Cá»™t) tá»« mÃ¢y vá»
-    print("â˜ï¸ Äang táº£i Dataset Tensor tá»« HuggingFace HUB...", flush=True)
+    # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
+    print("\u2601\ufe0f Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
     x_filename = f"data/{cfg_id}/X_tensor_{cfg_id}.npy"
     y_filename = f"data/{cfg_id}/Y_tensor_{cfg_id}.npy"
     
@@ -154,7 +155,7 @@ def main():
     
     X = np.load(x_path)
     Y = np.load(y_path)
-    print(f"âœ… Táº£i thÃ nh cÃ´ng! KÃ­ch thÆ°á»›c X: {X.shape}, Y: {Y.shape}", flush=True)
+    print(f"\u2705 Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
     
     # Chia Validation set
     X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
@@ -163,20 +164,20 @@ def main():
     val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long)), batch_size=batch_size, shuffle=False)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"ðŸ’» Äang Train trÃªn ná»n táº£ng: {device}", flush=True)
+    print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
     
-    # 2. Sinh máº¡ng neural AAMTV3
+    # 2. Sinh mạng neural AAMTV3
     model = AAMT_Model(input_dim=X.shape[2], seq_len=X.shape[1])
     
     msg = ""
     # -------------------------------------
-    # Káº¿ thá»«a trá»ng sá»‘ cÅ©
+    # Kế thừa trọng số cũ
     # -------------------------------------
     if args.scratch:
-        msg = "Bá» qua káº¿ thá»«a theo cá» --scratch. ÄÃ o táº¡o má»›i hoÃ n toÃ n!"
+        msg = "Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!"
         print(f"\n[INHERIT] {msg}", flush=True)
     else:
-        print("\n[INHERIT] Äang tÃ¬m trá»ng sá»‘ cÅ© Ä‘á»ƒ káº¿ thá»«a tá»« HF...", flush=True)
+        print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ HF...", flush=True)
         import sys as _sys
         _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
         if _hf_script_dir not in _sys.path:
@@ -185,7 +186,7 @@ def main():
             from hf_sync import pull_runs
             pulled = pull_runs(logger=None, target_prefix="v3", config_id=cfg_id)
         except Exception as e:
-            print(f"[HF] Lá»—i pull_runs: {e}", flush=True)
+            print(f"[HF] Lỗi pull_runs: {e}", flush=True)
             
         import glob
         pattern = os.path.join(_ROOT, "logs", "runs", "**", f"aamt_v3_{cfg_id}_final.pth")
@@ -194,13 +195,13 @@ def main():
             latest_file = max(all_files, key=os.path.getmtime)
             try:
                 model.load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
-                msg = f"ðŸ‘‰ Káº¿ thá»«a Model: {os.path.basename(latest_file)}"
-                print(f"  {msg} tá»« \n  {latest_file}", flush=True)
+                msg = f"\U0001f449 Kế thừa Model: {os.path.basename(latest_file)}"
+                print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:
-                msg = f"âŒ Lá»—i káº¿ thá»«a Model: {e}"
+                msg = f"\u274c Lỗi kế thừa Model: {e}"
                 print(f"  {msg}", flush=True)
         else:
-            msg = f"âŒ KhÃ´ng tÃ¬m tháº¥y trá»ng sá»‘ cÅ© ná»™i bá»™/Ä‘Ã¡m mÃ¢y. Khá»Ÿi táº¡o ngáº«u nhiÃªn tá»« Ä‘áº§u!"
+            msg = f"\u274c Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!"
             print(f"  {msg}", flush=True)
             
     try:
@@ -211,7 +212,7 @@ def main():
         tbot = TelegramBot(tcfg["bot_token"])
         chat_id = tcfg["allowed_chat_ids"][0]
         client_id = os.environ.get("ARGO_CLIENT_ID", "Unknown")
-        tbot.send_message(chat_id, f"âš™ï¸ <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
+        tbot.send_message(chat_id, f"\u2699\ufe0f <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
     except Exception as e:
         pass
     
@@ -225,14 +226,14 @@ def main():
     else:
         phoenix = None
     
-    # 3. PHASE 1 WARM-UP (Chá»‰ chay 1 láº§n)
+    # 3. PHASE 1 WARM-UP (Chỉ chạy 1 lần)
     model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
     
-    # Tá»± Ä‘á»™ng tá»‘i Æ°u CUDNN nÃªÃº dÃ¹ng GPU
+    # Tự động tối ưu CUDNN nếu dùng GPU
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
     
-    # MÃ´i trÆ°á»ng log giá»‘ng V2
+    # Môi trường log giống V2
     import shutil
     run_timestamp = time.strftime("%Y%m%d_%H%M%S")
     run_name = f"run_{run_timestamp}_v3_{cfg_id}"
@@ -259,10 +260,10 @@ def main():
     scaler_src = f"data/{cfg_id}/scaler_{cfg_id}.pkl"
     if os.path.exists(scaler_src):
         shutil.copy(scaler_src, os.path.join(out_dir, f"scaler_{cfg_id}.pkl"))
-        print(f"[PACK] KÃ¨m theo scaler file vÃ o: {out_dir}", flush=True)
+        print(f"[PACK] Kèm theo scaler file vào: {out_dir}", flush=True)
 
-    # 4. PHASE 2 FINE-TUNING (VÃ²ng láº·p vÄ©nh cá»­u)
-    print("--- ðŸš€ Báº®T Äáº¦U VÃ’NG Láº¶P FINE-TUNING ÄA NHIá»†M (Infinite Loop) ---", flush=True)
+    # 4. PHASE 2 FINE-TUNING (Vòng lặp vĩnh cửu)
+    print("--- \U0001f680 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
     epoch = 0
     best_score = 0.0
     api = HfApi(token=hf_token)
@@ -281,13 +282,13 @@ def main():
         improved = comp_score > best_score
         if improved:
             best_score = comp_score
-            print(f"  ðŸŒŸ Ká»¶ Lá»¤C Má»šI! Composite Score = {best_score:.4f}. LÆ°u model...", flush=True)
+            print(f"  \U0001f31f KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
             
             # Save local
             model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
             torch.save(model.state_dict(), model_export_path)
             
-            # Ghi json metrics theo chuáº©n V2
+            # Ghi json metrics theo chuẩn V2
             try:
                 session_name = config.get("SESSION", "ny").lower()
                 target_sym = config.get("TARGET_SYMBOL", "xauusd").lower().replace('m', '')
@@ -302,7 +303,7 @@ def main():
                         "avg_loss_return": 0.001,
                         "ev_score": float(m.balanced_score),
                         "sharpe_score": 0.0,
-                        "total_buy": int(m.total_signals // 2),  # Giáº£ láº­p táº¡m
+                        "total_buy": int(m.total_signals // 2),  # Giả lập tạm
                         "total_sell": int(m.total_signals - (m.total_signals // 2))
                     })
                     
@@ -331,12 +332,12 @@ def main():
                 with open(os.path.join(out_dir, "training_metrix_v3.json"), "w", encoding="utf-8") as fm:
                     json.dump(metrics_data, fm, indent=4)
             except Exception as e:
-                print(f"  âŒ Lá»—i lÆ°u JSON metrics: {e}", flush=True)
+                print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
 
-            # Äáº©y Chart Telegram
+            # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
             
-            # Upload HuggingFace nguyÃªn kiá»‡n (Logs, Charts, Config, Model)
+            # Upload HuggingFace nguyên kiện (Logs, Charts, Config, Model)
             try:
                 import sys as _sys
                 _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
@@ -345,9 +346,9 @@ def main():
                 from hf_sync import push_runs
                 
                 push_runs(run_dir=out_dir)
-                print(f"  â˜ï¸ Upload dá»¯ liá»‡u nguyÃªn kiá»‡n thÆ° má»¥c {out_dir} lÃªn HF thÃ nh cÃ´ng!", flush=True)
+                print(f"  \u2601\ufe0f Upload dữ liệu nguyên kiện thư mục {out_dir} lên HF thành công!", flush=True)
             except Exception as e:
-                print(f"  âŒ Lá»—i Push HF: {e}", flush=True)
+                print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             
             if phoenix:
                 phoenix.notify_improved()
@@ -355,10 +356,9 @@ def main():
             if phoenix:
                 if phoenix.notify_no_improve():
                     phoenix.apply_perturbation(model.state_dict())
-                    print(f"  ðŸ”¥ PHOENIX RESTART! (TÃ¡i sinh do káº¹t {phoenix.max_stagnate} epochs)", flush=True)
+                    print(f"  \U0001f525 PHOENIX RESTART! (Tái sinh do kẹt {phoenix.max_stagnate} epochs)", flush=True)
             else:
                 pass # Continuous wait
 
 if __name__ == "__main__":
     main()
-
