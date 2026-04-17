@@ -6,13 +6,13 @@
         "asian": {
             "start": "00:00",
             "end": "07:00",
-            "run_id": "run_20260414_131632_xauusd_CFG_XAU_ASIAN_V2_1_TRANSFORMER_V2",
+            "run_id": "run_20260416_234908_xauusd_CFG_XAU_ASIAN_TRANSFORMER_V2_2",
             "weight_file": "xauusd_asia_weights_EV_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_ASIAN_V2_1",
-            "_metrix": "composite=0.000542 | WR=59.14% | Sharpe=3.20 | signals=301 | thr=0.7067",
+            "_metrix": "Auto-selected (Target: 100 signals) -> WR=53.66% | thresh=0.7867 | Signals=2581 | Epoch=921",
             "trading_config": {
-                "entry_thresh": 0.51,
-                "close_thresh": 0.44,
+                "entry_thresh": 0.7867,
+                "close_thresh": 0.43,
                 "lot_size": 0.01,
                 "tp_pips": 600,
                 "sl_pips": 300
@@ -21,12 +21,12 @@
         "european": {
             "start": "07:00",
             "end": "12:30",
-            "run_id": "run_20260414_195352_xauusd_CFG_XAU_LONDON_V2_1_TRANSFORMER_V2",
+            "run_id": "run_20260414_170529_xauusd_CFG_XAU_LONDON_V2_1_TRANSFORMER_V2",
             "weight_file": "xauusd_london_weights_EV_L3_1.1_L4_1.0.pth",
             "config_id": "CFG_XAU_LONDON_V2_1",
-            "_metrix": "composite=0.000213 | WR=64.52% | Sharpe=1.66 | signals=31 | thr=0.81 (BEST_VLOSS bi loai: EV am toan bo)",
+            "_metrix": "Auto-selected (Target: 100 signals) -> WR=57.83% | thresh=0.5000",
             "trading_config": {
-                "entry_thresh": 0.51,
+                "entry_thresh": 0.55,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
@@ -36,12 +36,12 @@
         "ny": {
             "start": "13:00",
             "end": "22:00",
-            "run_id": "run_20260414_000528_xauusd_CFG_XAU_NY_V2_1_TRANSFORMER_V2",
+            "run_id": "run_20260416_161934_xauusd_CFG_XAU_NY_TRANSFORMER_V2_2",
             "weight_file": "xauusd_ny_weights_EV_L3_1.1_L4_1.0.pth",
-            "config_id": "CFG_XAU_NY_V2_1",
-            "_metrix": "composite=0.000293 | WR=62.77% | Sharpe=2.99 | signals=137 | thr=0.5467",
+            "config_id": "CFG_XAU_NY_V2_2",
+            "_metrix": "Auto-selected (Target: 100 signals) -> WR=57.97% | thresh=0.5267",
             "trading_config": {
-                "entry_thresh": 0.51,
+                "entry_thresh": 0.5267,
                 "close_thresh": 0.44,
                 "lot_size": 0.01,
                 "tp_pips": 1000,
