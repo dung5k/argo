@@ -7,8 +7,9 @@ class FeatureEngineeringV3:
     Module xử lý Feature Engineering chuẩn V3 AAMT.
     Tập trung vào tính toán 4 nhóm đặc trưng trực giao, loại bỏ nhiễu và dư thừa.
     """
-    def __init__(self, target_prefix="XAUUSDm"):
+    def __init__(self, target_prefix="XAUUSDm", macro_features=None):
         self.target_prefix = target_prefix
+        self.macro_features = macro_features if macro_features else {}
         self.scaler = RobustScaler()
         self.is_fitted = False
         
@@ -27,17 +28,16 @@ class FeatureEngineeringV3:
         features['log_return_low'] = np.log((df[low_col] / prev_close) + 1e-6)
         features['log_return_close'] = np.log((df[close_col] / prev_close) + 1e-6)
         
-        # Wicks - Bóng nến (tính theo phần trăm thân nến hoặc theo spread nến)
-        # Để tránh chia cho 0 khi nến Doji hoàn hảo (Open == Close), ta cộng epsilon
-        candle_body = np.abs(df[close_col] - df[open_col]) + 1e-6
+        # Tính tổng chiều dài cản (Spread)
+        total_spread = df[high_col] - df[low_col] + 1e-6
         
-        # Bóng trên = (High - max(Open, Close)) / Body
+        # Bóng trên tỷ lệ với tổng độ dài nến (luôn nằm trong [0, 1])
         max_oc = np.maximum(df[open_col], df[close_col])
-        features['upper_wick_pct'] = (df[high_col] - max_oc) / candle_body
+        features['upper_wick_pct'] = (df[high_col] - max_oc) / total_spread
         
-        # Bóng dưới = (min(Open, Close) - Low) / Body
+        # Bóng dưới tỷ lệ với tổng độ dài nến (luôn nằm trong [0, 1])
         min_oc = np.minimum(df[open_col], df[close_col])
-        features['lower_wick_pct'] = (min_oc - df[low_col]) / candle_body
+        features['lower_wick_pct'] = (min_oc - df[low_col]) / total_spread
         
         return features
         
@@ -126,7 +126,7 @@ class FeatureEngineeringV3:
         # Xác định cột dựa trên target_prefix, dự phòng tên viết thường
         prefix = self.target_prefix.lower() if self.target_prefix.lower() + "_close" in map(str.lower, df.columns) else self.target_prefix
         
-        # Lấy tên chính xác từ DF
+        # Lấy tên chính xác từ DF cho XAU
         cols = {c.lower(): c for c in df.columns}
         try:
             open_col = cols[f"{prefix}_open".lower()]
@@ -136,14 +136,50 @@ class FeatureEngineeringV3:
         except KeyError as e:
             raise KeyError(f"Không tìm đủ các cột OHLC cho mã {prefix}. Chi tiết lỗi: {e}")
 
-        # Ráp các nhánh features
+        # Ráp các nhánh features của Mã Chính (XAU)
         f_pa = self.calculate_price_action(df, open_col, high_col, low_col, close_col)
         f_vol = self.calculate_volatility(df, high_col, low_col, close_col)
         f_mom = self.calculate_momentum(df, close_col)
         f_time = self.calculate_time_context(df)
         
+        feature_blocks = [f_pa, f_vol, f_mom, f_time]
+        
+        # Xử lý các mã Kinh tế Vĩ Mô (Macro)
+        if self.macro_features:
+            for sym, req_features in self.macro_features.items():
+                sym_lower = sym.lower()
+                
+                # Tìm cột close và high, low của Macro
+                try:
+                    m_close = cols.get(f"{sym_lower}_close".lower()) or cols.get(f"{sym_lower}_usd_close".lower())
+                    m_high = cols.get(f"{sym_lower}_high".lower()) or cols.get(f"{sym_lower}_usd_high".lower())
+                    m_low = cols.get(f"{sym_lower}_low".lower()) or cols.get(f"{sym_lower}_usd_low".lower())
+                    m_open = cols.get(f"{sym_lower}_open".lower()) or cols.get(f"{sym_lower}_usd_open".lower())
+                    
+                    if m_close and m_open:
+                        f_macro = pd.DataFrame(index=df.index)
+                        
+                        if "log_ret" in req_features:
+                            prev_close = df[m_close].shift(1).bfill()
+                            f_macro[f"{sym}_log_ret"] = np.log((df[m_close] / prev_close) + 1e-6)
+                        
+                        if "bb_width" in req_features and m_high and m_low:
+                            vol_macro = self.calculate_volatility(df, m_high, m_low, m_close)
+                            f_macro[f"{sym}_bb_width"] = vol_macro['bb_width']
+                            
+                        if "volume" in req_features:
+                            m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower())
+                            if m_vol:
+                                f_macro[f"{sym}_volume"] = df[m_vol]
+                            
+                        feature_blocks.append(f_macro)
+                    else:
+                        raise ValueError(f"FATAL ERROR: BẮT BUỘC MÃ {sym} PHẢI CÓ DỮ LIỆU ĐẦU VÀO NHƯNG KHÔNG TÌM THẤY! HỆ THỐNG TỰ HUỶ ĐỂ ĐẢM BẢO CHẤT LƯỢNG.")
+                except Exception as e:
+                    raise KeyError(f"FATAL ERROR: LỖI ÁNH XẠ DỮ LIỆU VĨ MÔ BẮT BUỘC CHO {sym}. Lỗi: {e}")
+        
         # Nối tất cả vào chung một khung
-        final_features = pd.concat([f_pa, f_vol, f_mom, f_time], axis=1)
+        final_features = pd.concat(feature_blocks, axis=1)
         
         # Xoá các giá trị NaN phát sinh do độ trễ rolling window của RSI/MACD (thường ở 30 row đầu tiên)
         final_features = final_features.bfill()
