@@ -113,8 +113,11 @@ def main():
     
     # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
     print("☁️ Đang tải Dataset Tensor từ HuggingFace HUB...")
-    x_path = hf_hub_download(repo_id=dataset_repo, filename=f"X_tensor_{cfg_id}.npy", repo_type="dataset", token=hf_token)
-    y_path = hf_hub_download(repo_id=dataset_repo, filename=f"Y_tensor_{cfg_id}.npy", repo_type="dataset", token=hf_token)
+    x_filename = f"data/{cfg_id}/X_tensor_{cfg_id}.npy"
+    y_filename = f"data/{cfg_id}/Y_tensor_{cfg_id}.npy"
+    
+    x_path = hf_hub_download(repo_id=dataset_repo, filename=x_filename, repo_type="dataset", token=hf_token)
+    y_path = hf_hub_download(repo_id=dataset_repo, filename=y_filename, repo_type="dataset", token=hf_token)
     
     X = np.load(x_path)
     Y = np.load(y_path)
