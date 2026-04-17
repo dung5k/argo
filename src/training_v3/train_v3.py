@@ -351,7 +351,7 @@ def main():
                         }
                     }
                 }
-                with open(os.path.join(out_dir, "training_metrix_v3.json"), "w", encoding="utf-8") as fm:
+                with open(os.path.join(out_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
                     json.dump(metrics_data, fm, indent=4)
             except Exception as e:
                 print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
