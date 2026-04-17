@@ -124,6 +124,7 @@ def evaluate_val_set(model, val_loader, criterion, device):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("config", nargs="?", help="Path to config file")
+    parser.add_argument("--scratch", action="store_true", help="Bỏ qua kế thừa, train lại từ đầu")
     args = parser.parse_args()
     
     config_path = args.config if args.config else "data/bot_config_xau_ny_v3.json"
@@ -165,6 +166,39 @@ def main():
     
     # 2. Sinh mạng neural AAMTV3
     model = AAMT_Model(input_dim=X.shape[2], seq_len=X.shape[1])
+    
+    # -------------------------------------
+    # Kế thừa trọng số cũ
+    # -------------------------------------
+    if args.scratch:
+        print("\n[INHERIT] Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!", flush=True)
+    else:
+        print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ HF...", flush=True)
+        import sys as _sys
+        _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
+        if _hf_script_dir not in _sys.path:
+            _sys.path.insert(0, _hf_script_dir)
+        try:
+            from hf_sync import pull_runs
+            pulled = pull_runs(logger=None, target_prefix="v3", config_id=cfg_id)
+        except Exception as e:
+            print(f"[HF] Lỗi pull_runs: {e}", flush=True)
+            
+        import glob
+        pattern = os.path.join(_ROOT, "logs", "runs", "**", f"aamt_v3_{cfg_id}_final.pth")
+        all_files = glob.glob(pattern, recursive=True)
+        if all_files:
+            latest_file = max(all_files, key=os.path.getmtime)
+            try:
+                model.load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
+                print(f"  👉 Kế thừa Model: {os.path.basename(latest_file)} từ \n  {latest_file}", flush=True)
+            except Exception as e:
+                print(f"  ❌ Lỗi kế thừa Model: {e}", flush=True)
+        else:
+            print(f"  ❌ Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!", flush=True)
+    
+    model.to(device)
+    
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     if 'PhoenixRestartV2' in globals():
@@ -183,7 +217,7 @@ def main():
     # Môi trường log giống V2
     import shutil
     run_timestamp = time.strftime("%Y%m%d_%H%M%S")
-    run_name = f"run_{run_timestamp}_{cfg_id}_AAMT_V3"
+    run_name = f"run_{run_timestamp}_v3_{cfg_id}"
     log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
     out_dir = os.path.join(log_base, "runs", run_name)
     os.makedirs(out_dir, exist_ok=True)
