@@ -12,7 +12,7 @@ powershell -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLi
 echo ========================================================
 echo.
 
-venv\Scripts\python.exe src\bot_v2\bot_v2.py data\bot_config_xau_london_v2.json
+venv\Scripts\python.exe src\bot_v2\bot_v2.py data\bot_config_xau_asian_v2_1.json
 
 echo.
 echo ========================================================
