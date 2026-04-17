@@ -2,19 +2,38 @@ import os
 import sys
 import json
 import argparse
+import time
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import numpy as np
 import torch
+
+# Add project root to path
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
+from sklearn.model_selection import train_test_split
 from huggingface_hub import hf_hub_download, HfApi
 
 # Import components
 try:
     from model_v3 import AAMT_Model
     from loss_v3 import AAMT_JointLoss
+    from evaluator_v3 import WinRateEvaluatorV3
+    from plotter_v3 import plot_and_notify_v3
 except ImportError:
     from src.training_v3.model_v3 import AAMT_Model
     from src.training_v3.loss_v3 import AAMT_JointLoss
+    from src.training_v3.evaluator_v3 import WinRateEvaluatorV3
+    from src.training_v3.plotter_v3 import plot_and_notify_v3
+
+try:
+    from src.training_v2.phoenix_v2 import PhoenixRestartV2
+except ImportError:
+    pass # Phoenix is optional
 
 def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=5):
     """
@@ -26,66 +45,81 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
     # Ép trọng số Joint Loss: TẮT hoàn toàn nhánh Dự đoán, DỒN 100% lực cho nhánh Giải nén
     criterion.set_lambdas(lambda_recon=1.0, lambda_class=0.0)
     
-    print(f"--- 🚀 BẮT ĐẦU WARM-UP AUTOENCODER ({epochs} Epochs) ---")
+    print(f"--- 🚀 BẮT ĐẦU WARM-UP AUTOENCODER ({epochs} Epochs) ---", flush=True)
     for epoch in range(epochs):
         total_recon_loss = 0.0
-        
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-            
             optimizer.zero_grad()
             reconstructed, logits, _ = model(inputs)
-            
             loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
-            
             loss.backward()
             optimizer.step()
-            
             total_recon_loss += l_recon.item()
             
         avg_loss = total_recon_loss / len(train_loader)
-        print(f"[Warm-up] Epoch {epoch+1}/{epochs} | Recon_MSE_Loss: {avg_loss:.6f}")
+        print(f"[Warm-up] Epoch {epoch+1}/{epochs} | Recon_MSE_Loss: {avg_loss:.6f}", flush=True)
         
     return model
 
-def train_finetuning_phase(model, train_loader, criterion, optimizer, device, epochs=10):
+def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     """
-    Giai đoạn 2: Dạy AI ra quyết định Buy/Sell dựa trên nền tảng hiểu biết biểu đồ đã có.
+    Chạy Fine-Tuning 1 Epoch để cắm vào luồng while True.
     """
     model.train()
     model.to(device)
-    
     # BẬT LẠI nhánh phân loại (lambda_class = 1.0) để đào tạo hàm tổng (Joint)
     criterion.set_lambdas(lambda_recon=1.0, lambda_class=1.0)
     
-    print(f"--- 🚀 BẮT ĐẦU FINE-TUNING ĐA NHIỆM ({epochs} Epochs) ---")
-    for epoch in range(epochs):
-        total_loss_val = 0.0
-        total_recon = 0.0
-        total_class = 0.0
+    total_loss_val = 0.0
+    total_recon = 0.0
+    total_class = 0.0
+    
+    for inputs, targets in train_loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+        optimizer.zero_grad()
+        reconstructed, logits, _ = model(inputs)
+        loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
+        loss.backward()
+        optimizer.step()
         
-        for batch_idx, (inputs, targets) in enumerate(train_loader):
+        total_loss_val += loss.item()
+        total_recon += l_recon.item()
+        total_class += l_class.item()
+        
+    l = len(train_loader)
+    return total_loss_val/l, total_recon/l, total_class/l
+
+def evaluate_val_set(model, val_loader, criterion, device):
+    model.eval()
+    total_loss_val = 0.0
+    total_recon = 0.0
+    
+    all_logits = []
+    all_labels = []
+    
+    with torch.no_grad():
+        for inputs, targets in val_loader:
             inputs, targets = inputs.to(device), targets.to(device)
-            
-            optimizer.zero_grad()
             reconstructed, logits, _ = model(inputs)
-            
             loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
-            
-            loss.backward()
-            optimizer.step()
             
             total_loss_val += loss.item()
             total_recon += l_recon.item()
-            total_class += l_class.item()
             
-        avg_loss = total_loss_val / len(train_loader)
-        avg_recon = total_recon / len(train_loader)
-        avg_class = total_class / len(train_loader)
-        
-        print(f"[Fine-tune] Epoch {epoch+1}/{epochs} | Total: {avg_loss:.6f} (MSE:{avg_recon:.4f} | CE:{avg_class:.4f})")
-        
-    return model
+            all_logits.append(logits.cpu())
+            all_labels.append(targets.cpu())
+            
+    l = len(val_loader)
+    avg_loss = total_loss_val / max(1, l)
+    avg_recon = total_recon / max(1, l)
+    
+    cat_logits = torch.cat(all_logits, dim=0)
+    cat_labels = torch.cat(all_labels, dim=0)
+    
+    evaluator = WinRateEvaluatorV3()
+    res = evaluator.evaluate(cat_logits, cat_labels, avg_loss, avg_recon)
+    return res
 
 def main():
     parser = argparse.ArgumentParser()
@@ -93,7 +127,7 @@ def main():
     args = parser.parse_args()
     
     config_path = args.config if args.config else "data/bot_config_xau_ny_v3.json"
-    print(f"Loading config from: {config_path}")
+    print(f"Loading config from: {config_path}", flush=True)
     
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
@@ -103,16 +137,13 @@ def main():
     train_cfg = config.get("TRAINING", {})
     
     epochs_warmup = train_cfg.get("EPOCHS_PHASE_1", 10)
-    epochs_finetune = train_cfg.get("EPOCHS_PHASE_2", 15)
     batch_size = train_cfg.get("BATCH_SIZE", 64)
     lr = train_cfg.get("LEARNING_RATE", 1e-4)
     
     hf_token = os.environ.get("HF_TOKEN", "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")
     
-    print(f"🚀 BẮT ĐẦU QUY TRÌNH TRAINING V3 CHO CẤU HÌNH: {cfg_id}")
-    
     # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
-    print("☁️ Đang tải Dataset Tensor từ HuggingFace HUB...")
+    print("☁️ Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
     x_filename = f"data/{cfg_id}/X_tensor_{cfg_id}.npy"
     y_filename = f"data/{cfg_id}/Y_tensor_{cfg_id}.npy"
     
@@ -121,52 +152,85 @@ def main():
     
     X = np.load(x_path)
     Y = np.load(y_path)
+    print(f"✅ Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
     
-    print(f"✅ Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}")
+    # Chia Validation set
+    X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
     
-    X_tensor = torch.tensor(X, dtype=torch.float32)
-    Y_tensor = torch.tensor(Y, dtype=torch.long)
-    
-    dataset = TensorDataset(X_tensor, Y_tensor)
-    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), torch.tensor(Y_tr, dtype=torch.long)), batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long)), batch_size=batch_size, shuffle=False)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"💻 Đang Train trên nền tảng: {device}")
-    
-    num_features = X.shape[2]
-    window_size = X.shape[1]
+    print(f"💻 Đang Train trên nền tảng: {device}", flush=True)
     
     # 2. Sinh mạng neural AAMTV3
-    model = AAMT_Model(input_dim=num_features, seq_len=window_size)
+    model = AAMT_Model(input_dim=X.shape[2], seq_len=X.shape[1])
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    if 'PhoenixRestartV2' in globals():
+        phoenix = PhoenixRestartV2(model, optimizer, max_phoenix=15, strategy="A", weight_decay=1e-4)
+    else:
+        phoenix = None
     
-    print(f"🧠 KHỞI TẠO SIÊU MẠNG AAMTV3 (Features: {num_features}, Window: {window_size})")
-    
-    # 3. Chạy 2 phase
+    # 3. PHASE 1 WARM-UP (Chỉ chay 1 lần)
     model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
-    model = train_finetuning_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_finetune)
     
-    # 4. Xuất mẻ model và Push ngược về HuggingFace
-    out_dir = "models_v3"
-    os.makedirs(out_dir, exist_ok=True)
+    # Tự động tối ưu CUDNN nêú dùng GPU
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
     
-    model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
-    torch.save(model.state_dict(), model_export_path)
-    print(f"💾 Đã lưu trọng số phục vụ Trade tại: {model_export_path}")
-    
+    # 4. PHASE 2 FINE-TUNING (Vòng lặp vĩnh cửu)
+    print("--- 🚀 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
+    epoch = 0
+    best_score = 0.0
     api = HfApi(token=hf_token)
     model_repo = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
     api.create_repo(repo_id=model_repo, exist_ok=True, private=True)
     
-    print(f"☁️ Đang Upload Model siêu cấp lên HuggingFace -> {model_repo} ...")
-    api.upload_file(
-        path_or_fileobj=model_export_path,
-        path_in_repo=f"aamt_v3_{cfg_id}_final.pth",
-        repo_id=model_repo,
-        commit_message=f"Upload Chiến Thần V3 (Train complete cho {cfg_id})"
-    )
-    print("✅✅✅ HOÀN TẤT TOÀN BỘ QUY TRÌNH TRAINING V3. HỆ THỐNG GIAO DỊCH SẴN SÀNG! ✅✅✅")
+    out_dir = "models_v3"
+    os.makedirs(out_dir, exist_ok=True)
+    
+    while True:
+        epoch += 1
+        tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, optimizer, device)
+        eval_res = evaluate_val_set(model, val_loader, criterion, device)
+        
+        comp_score = eval_res.composite_score()
+        print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
+        
+        improved = comp_score > best_score
+        if improved:
+            best_score = comp_score
+            print(f"  🌟 KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
+            
+            # Save local
+            model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
+            torch.save(model.state_dict(), model_export_path)
+            
+            # Upload HuggingFace
+            try:
+                api.upload_file(
+                    path_or_fileobj=model_export_path,
+                    path_in_repo=f"aamt_v3_{cfg_id}_final.pth",
+                    repo_id=model_repo,
+                    commit_message=f"Update V3 Weights (Score={best_score:.4f})"
+                )
+                print(f"  ☁️ Upload mây {model_repo} thành công!", flush=True)
+            except Exception as e:
+                print(f"  ❌ Lỗi Push HF: {e}", flush=True)
+                
+            # Đẩy Chart Telegram
+            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
+            
+            if phoenix:
+                phoenix.notify_improved()
+        else:
+            if phoenix:
+                if phoenix.notify_no_improve():
+                    phoenix.apply_perturbation(model.state_dict())
+                    print(f"  🔥 PHOENIX RESTART! (Tái sinh do kẹt {phoenix.max_stagnate} epochs)", flush=True)
+            else:
+                pass # Continuous wait
 
 if __name__ == "__main__":
     main()
