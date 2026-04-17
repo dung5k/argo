@@ -249,7 +249,7 @@ def main():
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     if 'PhoenixRestartV2' in globals():
-        phoenix = PhoenixRestartV2(model, base_lr=lr, max_phoenix=15, weight_decay=1e-4)
+        phoenix = PhoenixRestartV2(model, base_lr=lr, max_phoenix=50, weight_decay=1e-4)
         optimizer = phoenix.optimizer
     else:
         phoenix = None
