@@ -55,6 +55,8 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
             reconstructed, logits, _ = model(inputs)
             loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
             loss.backward()
+            # ⚡ CHỐT CHẶN SÓNG THẦN: Cắt gradient khổng lồ để bảo vệ trọng số mạng
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             total_recon_loss += l_recon.item()
             
@@ -69,8 +71,9 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     """
     model.train()
     model.to(device)
-    # BẬT LẠI nhánh phân loại (lambda_class = 1.0) để đào tạo hàm tổng (Joint)
-    criterion.set_lambdas(lambda_recon=1.0, lambda_class=1.0)
+    # BẬT LẠI nhánh phân loại, GIẢM lực Reconstruction để AI tập trung vào Trade
+    # lambda_recon=0.2 để MSE không át tiếng CE Loss, classifier mới học được
+    criterion.set_lambdas(lambda_recon=0.2, lambda_class=1.0)
     
     total_loss_val = 0.0
     total_recon = 0.0
@@ -82,6 +85,8 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
         reconstructed, logits, _ = model(inputs)
         loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
         loss.backward()
+        # ⚡ CHỐT CHẶN SÓNG THẦN: Cắt gradient khổng lồ để bảo vệ trọng số mạng
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         
         total_loss_val += loss.item()
@@ -156,6 +161,23 @@ def main():
     X = np.load(x_path)
     Y = np.load(y_path)
     print(f"\u2705 Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
+    
+    # ============================================================
+    # KIỂM TRA SỨC KHỎE DỮ LIỆU: Phát hiện sớm data chưa scale
+    # ============================================================
+    x_abs_max = float(np.abs(X).max())
+    x_mean    = float(np.abs(X).mean())
+    print(f"[DATA CHECK] X abs_max={x_abs_max:.4f} | abs_mean={x_mean:.4f}", flush=True)
+    if x_abs_max > 100:
+        print(f"\u26a0\ufe0f  CẢNH BÁO: abs_max={x_abs_max:.1f} >> 10. Dữ liệu CÓ THỂ CHƯA ĐƯỢC SCALE!", flush=True)
+        print(f"   → Hãy chạy lại scripts/upload_v3_dataset.py để re-scale và upload lại.", flush=True)
+    else:
+        print(f"\u2705 Dữ liệu đã được scale chuẩn (abs_max < 100).", flush=True)
+    
+    # Phân bố nhãn Y
+    unique, counts = np.unique(Y, return_counts=True)
+    label_dist = dict(zip(unique.tolist(), counts.tolist()))
+    print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
     
     # Chia Validation set
     X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
