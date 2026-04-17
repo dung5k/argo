@@ -1,8 +1,8 @@
 {
     "TARGET_SYMBOL": "XAUUSDm",
     "TARGET_PREFIX": "XAUUSD",
-    "CONFIG_ID": "CFG_XAU_NY_V3",
-    "VERSION": "3.0",
+    "CONFIG_ID": "CFG_XAU_NY_V3_1",
+    "VERSION": "3.1",
     "SESSION": "ny",
     "SESSION_UTC": {
         "START": "13:00",
@@ -31,39 +31,17 @@
         "WINDOW_SIZE": 60,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
-            "EURUSD": [
-                "log_ret"
-            ],
-            "USDCAD": [
-                "log_ret"
-            ],
-            "USDJPY": [
-                "log_ret",
-                "volume"
-            ],
-            "USDCHF": [
-                "log_ret",
-                "volume"
-            ],
             "DXY": [
-                "log_ret",
-                "volume"
+                "log_ret"
             ],
             "USOIL": [
-                "log_ret",
-                "volume"
-            ],
-            "XNGUSD": [
-                "log_ret",
-                "volume"
+                "log_ret"
             ],
             "NASDAQ_100": [
-                "log_ret",
-                "volume"
+                "log_ret"
             ],
             "US500": [
-                "log_ret",
-                "volume"
+                "log_ret"
             ],
             "US_10Y_YIELD": [
                 "log_ret"
@@ -72,15 +50,6 @@
                 "log_ret"
             ],
             "XAGUSD": [
-                "log_ret"
-            ],
-            "XCUUSD": [
-                "log_ret"
-            ],
-            "BTCUSD": [
-                "log_ret"
-            ],
-            "ETHUSD": [
                 "log_ret"
             ]
         }
@@ -112,21 +81,13 @@
         },
         "ROUTING": {
             "XAUUSDm": "EXNESS",
-            "EURUSDm": "EXNESS",
-            "USDCADm": "EXNESS",
-            "USDJPYm": "EXNESS",
-            "USDCHF": "ICMARKETS",
             "XAGUSDm": "EXNESS",
-            "XCUUSDm": "EXNESS",
             "DXYm": "EXNESS",
             "USOILm": "EXNESS",
-            "XNGUSD": "ICMARKETS",
             "VIXYm": "ICMARKETS",
             "NASDAQ_100": "EXNESS",
             "US500": "ICMARKETS",
-            "US_10Y_YIELD": "ICMARKETS",
-            "BTCUSDm": "EXNESS",
-            "ETHUSDm": "EXNESS"
+            "US_10Y_YIELD": "ICMARKETS"
         },
         "CONTINUOUS_CONTRACTS": {
             "VIXYm": {
