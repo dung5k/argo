@@ -289,23 +289,23 @@ def main():
             # Ghi json metrics
             try:
                 metrics_data = {
-                    "epoch": epoch,
-                    "val_loss": eval_res.val_loss,
-                    "val_mse": getattr(eval_res, 'val_mse', -1),
-                    "composite_score": eval_res.composite_score(),
+                    "epoch": int(epoch),
+                    "val_loss": float(eval_res.val_loss),
+                    "val_mse": float(getattr(eval_res, 'val_mse', -1)),
+                    "composite_score": float(eval_res.composite_score()),
                     "thresholds": [
                         {
-                            "threshold": m.threshold,
-                            "win_rate": m.win_rate(),
-                            "balanced_score": m.balanced_score,
-                            "N": m.total_signals
+                            "threshold": float(m.threshold),
+                            "win_rate": float(m.win_rate()),
+                            "balanced_score": float(m.balanced_score),
+                            "N": int(m.total_signals)
                         } for m in eval_res.threshold_metrics
                     ]
                 }
-                with open(os.path.join(out_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
+                with open(os.path.join(out_dir, "training_metrix_v3.json"), "w", encoding="utf-8") as fm:
                     json.dump(metrics_data, fm, indent=4)
             except Exception as e:
-                pass
+                print(f"  ❌ Lỗi lưu JSON metrics: {e}", flush=True)
 
             # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
