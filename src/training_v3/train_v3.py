@@ -320,7 +320,7 @@ def main():
                     t_metrics.append({
                         "threshold": float(m.threshold),
                         "total_signals": int(m.total_signals),
-                        "win_rate": float(m.win_rate()),
+                        "win_rate": float(m.win_rate),
                         "avg_win_return": 0.001,
                         "avg_loss_return": 0.001,
                         "ev_score": float(m.balanced_score),
@@ -344,7 +344,7 @@ def main():
                                 "composite_score": float(eval_res.composite_score()),
                                 "val_loss": float(eval_res.val_loss),
                                 "threshold_metrics": t_metrics,
-                                "win_rates": [float(m.win_rate()) for m in eval_res.threshold_metrics],
+                                "win_rates": [float(m.win_rate) for m in eval_res.threshold_metrics],
                                 "thresholds": [float(m.threshold) for m in eval_res.threshold_metrics],
                                 "totals": [int(m.total_signals) for m in eval_res.threshold_metrics]
                             }
