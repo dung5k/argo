@@ -175,8 +175,9 @@ def main():
     x_mean    = float(np.abs(X).mean())
     print(f"[DATA CHECK] X abs_max={x_abs_max:.4f} | abs_mean={x_mean:.4f}", flush=True)
     if x_abs_max > 100:
-        print(f"\u26a0\ufe0f  CẢNH BÁO: abs_max={x_abs_max:.1f} >> 10. Dữ liệu CÓ THỂ CHƯA ĐƯỢC SCALE!", flush=True)
-        print(f"   → Hãy chạy lại scripts/upload_v3_dataset.py để re-scale và upload lại.", flush=True)
+        error_msg = f"FATAL ERROR: abs_max={x_abs_max:.1f} khổng lồ. Dữ liệu CHƯA ĐƯỢC SCALE hoặc bị Nổ Variance!\n   → TỪ CHỐI HUẤN LUYỆN. Hãy chạy lại scripts/upload_v3_dataset.py để re-scale chuẩn."
+        print(f" \u26d4 {error_msg}", flush=True)
+        raise ValueError(error_msg)
     else:
         print(f"\u2705 Dữ liệu đã được scale chuẩn (abs_max < 100).", flush=True)
     
