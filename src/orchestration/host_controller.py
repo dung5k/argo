@@ -85,6 +85,7 @@ class HostController:
             payload = json.dumps({
                 "cmd": cmd,
                 "symbol": symbol,
+                "script": script,
                 "config": f"C:/argo/data/{os.path.basename(local_cfg)}" if local_cfg else "",
                 "mode": mode,
                 "session": session,
@@ -324,7 +325,7 @@ def main():
         host.listen_logs(args.time)
     elif args.cmd in ["train", "kill", "run", "update"]:
         mode_val = getattr(args, 'mode', 'MAX')
-        cfg_path = args.file if args.cmd == "train" and args.file else ""
+        cfg_path = args.file if args.file else ""
         host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False), config_path=cfg_path)
         host.listen_logs(args.time)
     elif args.cmd == "getlog":

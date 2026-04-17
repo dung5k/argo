@@ -89,10 +89,13 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device, ep
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True, help="Path to config file")
+    parser.add_argument("config", nargs="?", help="Path to config file")
     args = parser.parse_args()
     
-    with open(args.config, 'r', encoding='utf-8') as f:
+    config_path = args.config if args.config else "data/bot_config_xau_ny_v3.json"
+    print(f"Loading config from: {config_path}")
+    
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
         
     cfg_id = config.get('CONFIG_ID', 'V3_UNKNOWN')
