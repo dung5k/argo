@@ -250,12 +250,18 @@ def main():
         tg_config_path = os.path.join(_ROOT, ".agent", "telegram_bot.json")
         with open(tg_config_path, "r", encoding="utf-8") as f:
             tcfg = json.load(f)
-        from src.orchestration.tg_helper import TelegramBot
+
+        # Import TelegramBot robust (compatible cả client lẫn host)
+        try:
+            from tg_helper import TelegramBot
+        except ImportError:
+            from src.orchestration.tg_helper import TelegramBot
+
         tbot = TelegramBot(tcfg["bot_token"])
         chat_id = tcfg["allowed_chat_ids"][0]
 
         # === THÔNG BÁO KHỞI ĐỘNG TRAINING ĐẦY ĐỦ ===
-        fe_cfg   = config.get("FEATURE_ENGINEERING", {})
+        fe_cfg     = config.get("FEATURE_ENGINEERING", {})
         macro_keys = list(fe_cfg.get("MACRO_FEATURES", {}).keys())
         label_dist_str = " | ".join([f"C{int(k)}: {v:,}" for k, v in label_dist.items()])
         inherit_icon = "🔁" if not args.scratch else "🆕"
@@ -283,8 +289,9 @@ def main():
             f"{inherit_icon} <b>Chế độ:</b> {inherit_text}"
         )
         tbot.send_message(chat_id, start_msg)
+        print(f"✅ [TELEGRAM] Đã gửi thông báo khởi động!", flush=True)
     except Exception as e:
-        pass
+        print(f"⚠️ [TELEGRAM] Lỗi gửi thông báo khởi động: {e}", flush=True)
     
     model.to(device)
 
