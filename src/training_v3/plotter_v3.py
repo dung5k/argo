@@ -20,7 +20,8 @@ def plot_and_notify_v3(
     cfg_name: str, 
     epoch: int,
     run_dir: str,
-    tg_config_path: str = ""
+    tg_config_path: str = "",
+    is_periodic: bool = False
 ):
     """
     Vẽ biểu đồ và gửi Telegram (V3 Version).
@@ -111,7 +112,10 @@ def plot_and_notify_v3(
             if not client_id:
                 client_id = cfg.get("client_id", "UnknownClient")
             
-            pfx = f"\U0001f680 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
+            if is_periodic:
+                pfx = f"⏳ <b>AAMT_V3 [{cfg_name}]</b> Báo cáo tiến độ trên <b>{client_id}</b> (Chưa có đỉnh mới)"
+            else:
+                pfx = f"\\U0001f680 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
             caption = (
                 f"{pfx}\n"
                 f"\U0001f539 <b>Epoch:</b> {epoch}\n"

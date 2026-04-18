@@ -297,7 +297,7 @@ def main():
     model_repo = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
     api.create_repo(repo_id=model_repo, exist_ok=True, private=True)
     
-    report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 60) * 60
+    report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 10) * 60
     last_report_time = time.time()
     
     while True:
@@ -382,6 +382,7 @@ def main():
             
             if phoenix:
                 pass
+            last_report_time = time.time()
         else:
             pass # Continuous wait
 
@@ -389,6 +390,7 @@ def main():
         current_time = time.time()
         if (current_time - last_report_time) >= report_interval_seconds:
             last_report_time = current_time
+            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir, is_periodic=True)
             if tbot and chat_id:
                 try:
                     report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
