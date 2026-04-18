@@ -7,22 +7,15 @@ class AAMT_JointLoss(nn.Module):
     Hàm mất mát tổng hợp của V3.0 (Joint Loss).
     Tối ưu đồng thời 2 nhánh:
     1. Reconstruction Loss (MSE): Đánh giá lỗi khi khôi phục lại input tensor.
-    2. Classification Loss (Cross Entropy): Đánh giá lỗi khi phân loại (Buy/Sell/Sideway).
-
     Args:
-        class_weights: Tensor [num_classes] — trọng số nghịch đảo tần suất nhãn.
-            Nên tính bằng: total / (num_classes * class_count) để bù đắp mất cân bằng
-            tự nhiên của thị trường (VD: 1 Buy : 5 Sell do Downtrend kéo dài).
+        lambda_recon: Trọng số của nhánh khôi phục.
+        lambda_class: Trọng số của nhánh phân loại.
     """
-    def __init__(self, lambda_recon=1.0, lambda_class=1.0, class_weights: torch.Tensor = None):
+    def __init__(self, lambda_recon=1.0, lambda_class=1.0):
         super().__init__()
         self.mse_loss = nn.MSELoss()
 
-        # Nếu được truyền class_weights, CrossEntropy sẽ phạt nặng hơn khi đoán sai lớp thiểu số
-        if class_weights is not None:
-            self.ce_loss = nn.CrossEntropyLoss(weight=class_weights)
-        else:
-            self.ce_loss = nn.CrossEntropyLoss()
+        self.ce_loss = nn.CrossEntropyLoss()
 
         self.lambda_recon = lambda_recon
         self.lambda_class = lambda_class

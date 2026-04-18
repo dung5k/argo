@@ -15,9 +15,9 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "TP_PIPS": 15,
-        "SL_PIPS": 15,
-        "MAX_HOLD_BARS": 20,
+        "TP_PIPS": 35,
+        "SL_PIPS": 35,
+        "MAX_HOLD_BARS": 30,
         "PIP_SIZE": 0.1,
         "WINDOW_SIZE": 60,
         "STEP_SIZE": 1,

@@ -195,6 +195,8 @@ class FeatureEngineeringV3:
         
         if cols_to_scale:
             scaled_vals = self.scaler.fit_transform(features_df[cols_to_scale])
+            # Bóp trần (clip) để trị bạo loạn từ những outlier siêu khổng lồ (khi IQR quá nhỏ do Market đóng GAP)
+            scaled_vals = np.clip(scaled_vals, -15.0, 15.0)
             scaled_data[cols_to_scale] = scaled_vals
             self.is_fitted = True
             
@@ -210,6 +212,7 @@ class FeatureEngineeringV3:
         
         if cols_to_scale:
             scaled_vals = self.scaler.transform(features_df[cols_to_scale])
+            scaled_vals = np.clip(scaled_vals, -15.0, 15.0)
             scaled_data[cols_to_scale] = scaled_vals
             
         return scaled_data
@@ -217,7 +220,7 @@ class FeatureEngineeringV3:
 
 class LabelingV3:
     """Triple-Barrier Labeling mechanism"""
-    def __init__(self, tp_pips=15, sl_pips=15, max_hold_bars=20, pip_size=0.1):
+    def __init__(self, tp_pips=35, sl_pips=35, max_hold_bars=30, pip_size=0.1):
         self.tp_pips = tp_pips
         self.sl_pips = sl_pips
         self.max_hold_bars = max_hold_bars

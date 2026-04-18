@@ -186,18 +186,8 @@ def main():
     label_dist = dict(zip(unique.tolist(), counts.tolist()))
     print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
 
-    # Tính Class Weights nghịch đảo tần suất để cân bằng mất cân đối tự nhiên của thị trường
-    # (VD: 1 Buy : 5 Sell do thị trường Downtrend kéo dài không phải lỗi code)
-    # Công thức: w_c = total / (num_classes * count_c) — chuẩn sklearn balanced strategy
-    num_classes = 3  # 0=Sell, 1=Buy, 2=Sideway
-    total_samples = len(Y)
-    class_weights_list = []
-    for c in range(num_classes):
-        cnt = label_dist.get(c, 1)  # Tránh chia 0 nếu lớp không có mẫu nào
-        w = total_samples / (num_classes * cnt)
-        class_weights_list.append(w)
-    class_weights_tensor = torch.tensor(class_weights_list, dtype=torch.float32)
-    print(f"[DATA CHECK] Class Weights tự động (Sell/Buy/Sideway): {[f'{w:.3f}' for w in class_weights_list]}", flush=True)
+    # Đã gỡ bỏ tính toán trọng số cân bằng lớp (class weights) để chống conflict với Triple Barrier.
+    # Mạng sẽ học thẳng vào phân bố nhãn thật.
 
     # Chia Validation set - BẮT BUỘC shuffle=False để bảo toàn trục thời gian (Time-Series)
     # shuffle=True gây Data Leakage: mẫu i và i+1 chia sẻ 59/60 nến trùng nhau với Sliding Window
@@ -263,8 +253,7 @@ def main():
     
     model.to(device)
 
-    # Khởi tạo Criterion với Class Weights để bù đắp mất cân bằng nhãn thị trường
-    criterion = AAMT_JointLoss(class_weights=class_weights_tensor.to(device))
+    criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     phoenix = None  # Đã tắt Auto Healing
     
