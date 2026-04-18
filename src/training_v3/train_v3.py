@@ -186,8 +186,9 @@ def main():
     label_dist = dict(zip(unique.tolist(), counts.tolist()))
     print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
     
-    # Chia Validation set
-    X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
+    # Chia Validation set - BẮT BUỘC shuffle=False để bảo toàn trục thời gian (Time-Series)
+    # shuffle=True gây Data Leakage: mẫu i và i+1 chia sẻ 59/60 nến trùng nhau với Sliding Window
+    X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, shuffle=False)
     
     train_loader = DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), torch.tensor(Y_tr, dtype=torch.long)), batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long)), batch_size=batch_size, shuffle=False)
