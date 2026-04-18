@@ -74,8 +74,8 @@ class WinRateEvaluatorV3:
         buy_mask  = prob_buy > threshold
         sell_mask = prob_sell > threshold
 
-        # Target classes: 0=Sell, 1=Sideway/Hold, 2=Buy
-        correct_buy  = buy_mask  & (hard_labels == 2)
+        # Target classes: 0=Sell, 1=Buy, 2=Sideway
+        correct_buy  = buy_mask  & (hard_labels == 1)
         correct_sell = sell_mask & (hard_labels == 0)
 
         n_buy = buy_mask.sum().item()
@@ -103,15 +103,19 @@ class WinRateEvaluatorV3:
         )
 
     def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float) -> EpochEvalResultV3:
-        # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Hold, 2=Buy
+        # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Buy, 2=Sideway
         probs = torch.softmax(logits, dim=1)
         prob_sell = probs[:, 0]
-        prob_buy = probs[:, 2]
+        prob_buy = probs[:, 1]
 
         max_thresh = self._find_max_threshold(prob_sell, prob_buy)
-        step = (max_thresh - 0.53) / 3 if max_thresh > 0.53 else 0.0
-        thresholds = [round(0.53 + step * i, 4) for i in range(self.n_thresholds)]
-
+        
+        if max_thresh > 0.54:
+            step = (max_thresh - 0.53) / (self.n_thresholds - 1)
+            thresholds = [round(0.53 + step * i, 4) for i in range(self.n_thresholds)]
+        else:
+            thresholds = [0.53, 0.68, 0.84, 0.99] # Mặc định giãn đều nếu không có tín hiệu cao
+            max_thresh = 0.99
         metrics_list = []
         for t in thresholds:
             m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t)
