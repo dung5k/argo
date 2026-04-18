@@ -1,0 +1,44 @@
+{
+    "TARGET_SYMBOL": "XAUUSDm",
+    "TARGET_PREFIX": "XAUUSD",
+    "CONFIG_ID": "CFG_XAU_NY_V3_1_INDICATOR",
+    "VERSION": "3.1",
+    "SESSION": "ny",
+    "SESSION_UTC": {
+        "START": "13:00",
+        "END": "22:00",
+        "DESCRIPTION": "New York session - V3 Indicator Export"
+    },
+    "HF_RUN_ID": "run_V3_AAMT_NY",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_data",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PIPS": 15,
+        "SL_PIPS": 15,
+        "MAX_HOLD_BARS": 20,
+        "PIP_SIZE": 0.1,
+        "WINDOW_SIZE": 60,
+        "STEP_SIZE": 1,
+        "MACRO_FEATURES": {
+            "DXY": ["log_ret"],
+            "USOIL": ["log_ret"],
+            "NASDAQ_100": ["log_ret"],
+            "US500": ["log_ret"],
+            "US_10Y_YIELD": ["log_ret"],
+            "VIXY": ["log_ret"],
+            "XAGUSD": ["log_ret"]
+        }
+    },
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 4
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "data/history",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1"
+    }
+}
