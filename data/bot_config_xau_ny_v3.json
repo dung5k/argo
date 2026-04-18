@@ -19,7 +19,7 @@
     "HF_RUN_ID": "run_V3_AAMT_NY",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/xau_v3_tensor_ny",
-        "MODEL_REPO": "dung5k/trading_models_v3",
+        "MODEL_REPO": "dung5k/argo_data",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
