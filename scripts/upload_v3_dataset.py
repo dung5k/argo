@@ -116,28 +116,82 @@ if __name__ == "__main__":
 
     print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")
 
-    # GỌI HÀM V2 ĐỂ GỘP MÚI GIỜ CỦA NHIỀU MÃ RAW VÀO CHUNG 1 DATAFRAME
-    try:
-        df_raw = load_and_align_data(raw_dir)
-    except FileNotFoundError:
-        df_raw = pd.DataFrame()
+    crypto_mode_data = fe_cfg.get('CRYPTO_MODE', False)
 
-    if df_raw.empty:
+    if crypto_mode_data:
+        # --- Chế độ Crypto: đọc trực tiếp từ file parquet Binance theo danh sách config ---
+        print("  [Crypto] Đọc trực tiếp file parquet Binance (bỏ qua load_and_align_data)...")
+        binance_cfg = config.get('DATA_SOURCE', {}).get('CRYPTO_BINANCE', {})
+        mt5_routing  = config.get('DATA_SOURCE', {}).get('ROUTING', {})
+        # Danh sách tất cả mã cần: target + macro
+        all_syms = {config.get('TARGET_SYMBOL', '').upper().replace('M', '')}  # ETH/USDT → ETHUSDT
+        all_syms.add(config.get('TARGET_SYMBOL', '').upper())  # ETHUSDT
+        for sym in fe_cfg.get('MACRO_FEATURES', {}).keys():
+            all_syms.add(sym.upper())  # BTCUSDT, ETHBTC, USTECm
+        # Đọc từng file và gộp
+        df_list = []
+        for fname in os.listdir(raw_dir):
+            if not fname.endswith('.parquet'):
+                continue
+            # Lấy symbol name từ tên file: ETHUSDT_MT5_1M_2026.parquet → ETHUSDT
+            sym_raw = fname.split('_MT5_')[0].upper()
+            # Kiểm tra có trong danh sách cần thiết không
+            matched = any(sym_raw == s.upper() or sym_raw == s.upper().rstrip('M')
+                          for s in all_syms)
+            if not matched:
+                continue
+            df_sym = pd.read_parquet(os.path.join(raw_dir, fname))
+            if 'time' in df_sym.columns:
+                df_sym.set_index('time', inplace=True)
+            if df_sym.index.tz is None:
+                df_sym.index = df_sym.index.tz_localize('UTC')
+            # Prefix cột
+            rename_map = {c: f"{sym_raw}_{c}" for c in df_sym.columns}
+            df_sym = df_sym.rename(columns=rename_map)
+            df_list.append(df_sym)
+            print(f"  + Đọc: {fname} → prefix={sym_raw} ({len(df_sym)} nến)")
+
+        if not df_list:
+            print(f"❌ Không tìm thấy parquet nào phù hợp tại {raw_dir}")
+            sys.exit(1)
+        df_raw = df_list[0].copy()
+        for df_next in df_list[1:]:
+            df_raw = df_raw.join(df_next, how='outer')
+        df_raw = df_raw.sort_index()
+        # Forward fill ngắn (tối đa 5 phút) để xử lý lệch timestamp nhỏ
+        df_raw = df_raw.ffill(limit=5)
+        print(f"  ✅ Crypto df_raw: {df_raw.shape[0]} dòng x {df_raw.shape[1]} cột")
+    else:
+        # --- Chế độ Forex/Vàng: dùng hàm gộp cũ ---
+        try:
+            df_raw = load_and_align_data(raw_dir)
+        except FileNotFoundError:
+            df_raw = pd.DataFrame()
+
+    if df_raw is None or df_raw.empty:
         print(f"❌ Lỗi: Thư mục chứa File Lịch Sử ({raw_dir}) trống không.")
         sys.exit(1)
 
     if 'time' in df_raw.columns:
         df_raw.set_index('time', inplace=True)
 
-    # Xác định prefix linh hoạt
+    # Xác định prefix linh hoạt (Forex: XAUUSDm → xauusdm, Crypto: ETH → ethusdt)
     cols_map    = {c.lower(): c for c in df_raw.columns}
     real_prefix = target_prefix.lower()
+
+    # Kiểm tra dạng có 'm' suffix (broker Exness: XAUUSDm)
     if f"{target_prefix.lower()}m_open" in cols_map:
         real_prefix = f"{target_prefix.lower()}m"
+    # Kiểm tra dạng có 'usdt' suffix (Binance Crypto: ETHUSDT)
+    elif f"{target_prefix.lower()}usdt_open" in cols_map:
+        real_prefix = f"{target_prefix.lower()}usdt"
 
     actual_open = cols_map.get(f"{real_prefix}_open", f"{target_prefix}_open")
     actual_high = cols_map.get(f"{real_prefix}_high", f"{target_prefix}_high")
     actual_low  = cols_map.get(f"{real_prefix}_low",  f"{target_prefix}_low")
+
+    # Cập nhật TARGET_PREFIX để FeatureEngineeringV3 tìm đúng cột
+    target_prefix_mapped = real_prefix.upper()
 
     # Gắn nhãn 3-Class trên dữ liệu 24/24 (hardé LabelingV3 nhìn đủ ngữ cảnh giá thật)
     print("[1] Gắn nhãn Triple-Barrier trên Data 24/24...")
@@ -159,10 +213,10 @@ if __name__ == "__main__":
     targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
 
     # Feature Eng trên dữ liệu 24/24 (để Scaler hiểu toàn bộ biến động)
-    print("[2] Khởi tạo Features Target + Macro (AAMT V3)...")
+    print(f"[2] Khởi tạo Features Target ({target_prefix_mapped}) + Macro (AAMT V3)...")
     crypto_mode = fe_cfg.get('CRYPTO_MODE', False)
     fe = FeatureEngineeringV3(
-        target_prefix=target_prefix,
+        target_prefix=target_prefix_mapped,
         macro_features=fe_cfg.get('MACRO_FEATURES', {}),
         crypto_mode=crypto_mode
     )
