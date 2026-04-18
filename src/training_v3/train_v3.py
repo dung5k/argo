@@ -233,6 +233,9 @@ def main():
             msg = f"\u274c Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!"
             print(f"  {msg}", flush=True)
             
+    tbot = None
+    chat_id = None
+    client_id = os.environ.get("ARGO_CLIENT_ID", "Unknown")
     try:
         tg_config_path = os.path.join(_ROOT, ".agent", "telegram_bot.json")
         with open(tg_config_path, "r", encoding="utf-8") as f:
@@ -240,8 +243,7 @@ def main():
         from src.orchestration.tg_helper import TelegramBot
         tbot = TelegramBot(tcfg["bot_token"])
         chat_id = tcfg["allowed_chat_ids"][0]
-        client_id = os.environ.get("ARGO_CLIENT_ID", "Unknown")
-        tbot.send_message(chat_id, f"\u2699\ufe0f <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
+        tbot.send_message(chat_id, f"⚙️ <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
     except Exception as e:
         pass
     
@@ -249,11 +251,7 @@ def main():
     
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-    if 'PhoenixRestartV2' in globals():
-        phoenix = PhoenixRestartV2(model, base_lr=lr, max_phoenix=50, weight_decay=1e-4)
-        optimizer = phoenix.optimizer
-    else:
-        phoenix = None
+    phoenix = None  # Đã tắt Auto Healing
     
     # 3. PHASE 1 WARM-UP (Chỉ chạy 1 lần)
     model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
@@ -299,9 +297,12 @@ def main():
     model_repo = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
     api.create_repo(repo_id=model_repo, exist_ok=True, private=True)
     
+    report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 60) * 60
+    last_report_time = time.time()
+    
     while True:
         epoch += 1
-        current_optimizer = phoenix.optimizer if phoenix else optimizer
+        current_optimizer = optimizer
         tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
         eval_res = evaluate_val_set(model, val_loader, criterion, device)
         
@@ -380,14 +381,23 @@ def main():
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             
             if phoenix:
-                phoenix.notify_improved()
+                pass
         else:
-            if phoenix:
-                if phoenix.notify_no_improve():
-                    phoenix.apply_perturbation(model.state_dict())
-                    print(f"  \U0001f525 PHOENIX RESTART! (Tái sinh do kẹt {phoenix.max_stagnate} epochs)", flush=True)
-            else:
-                pass # Continuous wait
+            pass # Continuous wait
+
+        # Báo cáo Telegram định kỳ
+        current_time = time.time()
+        if (current_time - last_report_time) >= report_interval_seconds:
+            last_report_time = current_time
+            if tbot and chat_id:
+                try:
+                    report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
+                    report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
+                    report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
+                    tbot.send_message(chat_id, report_msg)
+                    print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
+                except Exception as e:
+                    print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
 
 if __name__ == "__main__":
     main()
