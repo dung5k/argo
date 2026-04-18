@@ -309,10 +309,11 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
 
     try:
         if isinstance(pattern, str):
+            # Cải thiện regex để HuggingFace Hub match chuẩn các subfolder
             patterns = [
-                f"{pattern.replace('**', '')}*.pth",
-                f"{pattern.replace('**', '')}*.json",
-                f"{pattern.replace('**', '')}*.pkl"
+                f"runs/**/*_{target_prefix}_{config_id}*/*.pth",
+                f"runs/**/*_{target_prefix}_{config_id}*/*.json",
+                f"runs/**/*_{target_prefix}_{config_id}*/*.pkl"
             ]
         else:
             patterns = ["**/*.pth", "**/*.json", "**/*.pkl"]
@@ -326,7 +327,8 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
             allow_patterns=patterns,
             ignore_patterns=["**/*.png"],
             local_dir=str(argo_logs_dir),
-            force_download=False
+            force_download=False,
+            local_dir_use_symlinks=False # Chống xoắn symlink trên Windows preventing glob search
         )
         log("[HF] Kéo trọng số hoàn tất! Sẵn sàng kế thừa. ✅")
         return True
