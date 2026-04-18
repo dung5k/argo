@@ -247,9 +247,32 @@ def main():
     if not client_id or client_id == "UnknownClient":
         client_id = socket.gethostname()[:8]
     try:
-        tg_config_path = os.path.join(_ROOT, ".agent", "telegram_bot.json")
-        with open(tg_config_path, "r", encoding="utf-8") as f:
-            tcfg = json.load(f)
+        # Cố gắng lấy Telegram credentials từ file JSON rồi fallback sang biến môi trường
+        tg_token = None
+        tg_chat_id = None
+
+        # Danh sách đường dẫn thử theo thứ tự ưu tiên
+        tg_config_candidates = [
+            os.path.join(_ROOT, ".agent", "telegram_bot.json"),
+            os.path.join(_ROOT, "tg_config.json"),
+        ]
+        for tg_config_path in tg_config_candidates:
+            if os.path.exists(tg_config_path):
+                with open(tg_config_path, "r", encoding="utf-8") as f:
+                    tcfg = json.load(f)
+                tg_token   = tcfg.get("bot_token")
+                tg_chat_id = tcfg.get("allowed_chat_ids", [None])[0]
+                break
+
+        if not tg_token:
+            # Fallback: đọc từ biến môi trường (client không có file config)
+            tg_token   = os.environ.get("TELEGRAM_BOT_TOKEN")
+            tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+            if tg_chat_id:
+                tg_chat_id = int(tg_chat_id)
+
+        if not tg_token or not tg_chat_id:
+            raise ValueError("Không tìm thấy Telegram credentials (file JSON hoặc env vars)")
 
         # Import TelegramBot robust (compatible cả client lẫn host)
         try:
@@ -257,8 +280,8 @@ def main():
         except ImportError:
             from src.orchestration.tg_helper import TelegramBot
 
-        tbot = TelegramBot(tcfg["bot_token"])
-        chat_id = tcfg["allowed_chat_ids"][0]
+        tbot = TelegramBot(tg_token)
+        chat_id = tg_chat_id
 
         # === THÔNG BÁO KHỞI ĐỘNG TRAINING ĐẦY ĐỦ ===
         fe_cfg     = config.get("FEATURE_ENGINEERING", {})
