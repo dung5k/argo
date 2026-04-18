@@ -298,14 +298,25 @@ class TrainingManager:
         with self._lock:
             proc    = self._proc
             task_id = self._task_id
-        if not proc or proc.poll() is not None:
-            return {"ok": True, "message": "Không có task nào đang chạy."}
-        proc.terminate()
+        if proc and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                
+        import psutil
+        killed = 0
         try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-        return {"ok": True, "message": f"Đã dừng task <code>{task_id}</code>"}
+            for p in psutil.process_iter(['name', 'cmdline']):
+                if p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline']:
+                    cmdline = ' '.join(p.info['cmdline'])
+                    if 'train_' in cmdline and 'client_tg_agent' not in cmdline:
+                        p.kill()
+                        killed += 1
+        except: pass
+        
+        return {"ok": True, "message": f"Đã dừng task <code>{task_id}</code> và diệt {killed} tiến trình rác"}
 
     def last_log_lines(self, n: int = 20) -> str:
         """Đọc N dòng cuối của log file hiện tại."""
@@ -370,6 +381,8 @@ class TelegramAgent:
                     config = config_from_payload
             else:
                 config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
+            self.logger.info(f"  ➜ Nhận lệnh TRAIN — Đang BẮT BUỘC KILL các tiến trình cũ...")
+            self.manager.kill() # Thêm bước dập tắt tiến trình theo yêu cầu
             self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}, scratch={scratch}")
             res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session, scratch=scratch)
             if not res.get("ok"):
@@ -553,6 +566,8 @@ class TelegramAgent:
             self.logger.info("  [DEPLOY] Thực hiện Hard Reset & Pull Cập Nhật Toàn Bộ Dự Án...")
             if self.mqtt: self.mqtt.send_log("INFO", "Thực hiện Hard Reset & Pull Cập Nhật Toàn Bộ Agent...")
             def _restart():
+                self.logger.info("  ➜ [DEPLOY] Dập tắt tiến trình cũ để tránh Git bị lock file...")
+                self.manager.kill()
                 try: 
                     subprocess.run(["git", "fetch", "--all"], cwd=str(self.base_dir), timeout=20)
                     subprocess.run(["git", "reset", "--hard", "origin/main"], cwd=str(self.base_dir), timeout=20)
@@ -561,7 +576,6 @@ class TelegramAgent:
                 except: pass
                 if self.mqtt: self.mqtt.send_log("INFO", "Git Pull xong! Tự động Restart...")
                 time.sleep(2)
-                self.manager.kill()
                 os._exit(69)
             threading.Thread(target=_restart, daemon=True).start()
 
