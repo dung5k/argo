@@ -85,7 +85,7 @@ def load_and_align_data(data_path):
             files = filtered_files
             print(f"✅ Đã Khớp Cấu Hình LIVE! Giữ lại {len(files)} files chuẩn MT5 để huấn luyện.")
         elif 'XAU' in TARGET_PREFIX.upper():
-            useless_features = ['btc', 'eth', 'sol', 'xrp', 'ada', 'bnb', 'bch', 'ltc', 'usdjpy', 'jp225', 'us30', 'dxy']
+            useless_features = ['btc', 'eth', 'sol', 'xrp', 'ada', 'bnb', 'bch', 'ltc', 'jp225', 'us30']
             filtered_files = []
             for f in files:
                 f_lower = f.lower()

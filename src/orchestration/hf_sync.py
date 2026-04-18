@@ -309,11 +309,11 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
 
     try:
         if isinstance(pattern, str):
-            # Cải thiện regex để HuggingFace Hub match chuẩn các subfolder
+            # Cải thiện regex cực kỳ rộng rãi cho HF Hub
             patterns = [
-                f"runs/**/*_{target_prefix}_{config_id}*/*.pth",
-                f"runs/**/*_{target_prefix}_{config_id}*/*.json",
-                f"runs/**/*_{target_prefix}_{config_id}*/*.pkl"
+                f"**/*{target_prefix}*{config_id}*.pth",
+                f"**/*{target_prefix}*{config_id}*.json",
+                f"**/*{target_prefix}*{config_id}*.pkl"
             ]
         else:
             patterns = ["**/*.pth", "**/*.json", "**/*.pkl"]
