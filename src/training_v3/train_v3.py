@@ -253,7 +253,36 @@ def main():
         from src.orchestration.tg_helper import TelegramBot
         tbot = TelegramBot(tcfg["bot_token"])
         chat_id = tcfg["allowed_chat_ids"][0]
-        tbot.send_message(chat_id, f"⚙️ <b>[{client_id}] [AAMT V3 ({cfg_id})]</b>\n{msg}")
+
+        # === THÔNG BÁO KHỞI ĐỘNG TRAINING ĐẦY ĐỦ ===
+        fe_cfg   = config.get("FEATURE_ENGINEERING", {})
+        macro_keys = list(fe_cfg.get("MACRO_FEATURES", {}).keys())
+        label_dist_str = " | ".join([f"C{int(k)}: {v:,}" for k, v in label_dist.items()])
+        inherit_icon = "🔁" if not args.scratch else "🆕"
+        inherit_text = msg if msg else "Kế thừa trọng số cũ thành công"
+        gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+
+        start_msg = (
+            f"🚀 <b>[{client_id}] BẮT ĐẦU TRAINING</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📋 <b>Cấu hình:</b> <code>{cfg_id}</code> (v{config.get('VERSION', '?')})\n"
+            f"🎯 <b>Target:</b> {config.get('TARGET_SYMBOL', '?')} — Phiên {config.get('SESSION', '?').upper()}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📦 <b>Dữ liệu:</b>\n"
+            f"  • Tensor X: <code>{X.shape}</code>\n"
+            f"  • Samples: <code>{X.shape[0]:,}</code> | Window: <code>{X.shape[1]}</code> nến | Features: <code>{X.shape[2]}</code>\n"
+            f"  • Train/Val: <code>{len(X_tr):,} / {len(X_va):,}</code>\n"
+            f"  • Nhãn: <code>{label_dist_str}</code>\n"
+            f"  • Macro: <code>{', '.join(macro_keys)}</code>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⚙️ <b>Siêu tham số:</b>\n"
+            f"  • TP={fe_cfg.get('TP_PIPS')} | SL={fe_cfg.get('SL_PIPS')} | MaxHold={fe_cfg.get('MAX_HOLD_BARS')}\n"
+            f"  • LR=<code>{lr}</code> | Batch=<code>{batch_size}</code> | WarmUp=<code>{epochs_warmup}</code> ep\n"
+            f"  • Device: <code>{device}</code> ({gpu_name})\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"{inherit_icon} <b>Chế độ:</b> {inherit_text}"
+        )
+        tbot.send_message(chat_id, start_msg)
     except Exception as e:
         pass
     
