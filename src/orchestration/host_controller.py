@@ -81,12 +81,12 @@ class HostController:
                 else:
                     print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
             
-            # [FIX] Đưa config vào payload kèm absolute path C:/argo/data để client_tg_agent không trỏ nhầm về tự thư mục local cũ
+            # Bỏ việc trỏ cứng C:/argo/data vì client đã đồng bộ qua git pull rồi! 
             payload = json.dumps({
                 "cmd": cmd,
                 "symbol": symbol,
                 "script": script,
-                "config": f"C:/argo/data/{os.path.basename(local_cfg)}" if local_cfg else "",
+                "config": f"data/{os.path.basename(local_cfg)}" if local_cfg else "",
                 "mode": mode,
                 "session": session,
                 "scratch": scratch
