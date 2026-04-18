@@ -55,9 +55,31 @@ class EpochEvalResultV3:
 
 
 class WinRateEvaluatorV3:
-    def __init__(self, min_signals: int = 30, n_thresholds: int = 4):
-        self.min_signals = min_signals
+    def __init__(self, min_signals: int = 30, n_thresholds: int = 4,
+                 freq_min_N: int = 80, freq_max_N: int = 1000):
+        self.min_signals  = min_signals
         self.n_thresholds = n_thresholds
+        # Frequency penalty params
+        # min_N: dưới ngưỡng này → under-trading, bị phạt
+        # max_N: trên ngưỡng này → over-trading, bị phạt
+        self.freq_min_N = freq_min_N
+        self.freq_max_N = freq_max_N
+
+    @staticmethod
+    def calculate_frequency_penalty(total_signals: int, min_N: int = 80, max_N: int = 1000) -> float:
+        """
+        Hàm phạt số lượng lệnh: trả về hệ số nhân trong [0.0, 1.0].
+        - Vùng [→min_N, max_N]: không bị phạt -→ nhân 1.0
+        - Dưới min_N (under-trading): hệ số = total / min_N
+        - Trên max_N (over-trading)   : hệ số = max_N / total
+        """
+        if total_signals <= 0:
+            return 0.0
+        if total_signals < min_N:
+            return total_signals / min_N          # e.g. 20/80 = 0.25
+        if total_signals > max_N:
+            return max_N / total_signals          # e.g. 1000/5000 = 0.20
+        return 1.0                                # Vùng lý tưởng, không phạt
 
     def _find_max_threshold(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor) -> float:
         max_thresh = 0.53
@@ -92,6 +114,15 @@ class WinRateEvaluatorV3:
             # Nếu 1 chiều cực liệt (0%), thì ratio=0 -> x0.6 (phạt cực mạnh)
             balance_factor = 0.6 + 0.4 * balance_ratio
             score = win_rate * balance_factor
+
+            # Áp dụng phạt Số Lượng Lệnh (Frequency Penalty)
+            # → Chống under-trading (chỉ bắn vài lệnh, WR 100%) và over-trading (spam lệnh, dính spread)
+            freq_factor = self.calculate_frequency_penalty(
+                total_signals=n_signals,
+                min_N=self.freq_min_N,
+                max_N=self.freq_max_N
+            )
+            score = score * freq_factor
 
         return ThresholdMetricsV3(
             threshold=threshold,

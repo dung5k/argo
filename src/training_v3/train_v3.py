@@ -96,7 +96,7 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     l = len(train_loader)
     return total_loss_val/l, total_recon/l, total_class/l
 
-def evaluate_val_set(model, val_loader, criterion, device):
+def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000):
     model.eval()
     total_loss_val = 0.0
     total_recon = 0.0
@@ -123,7 +123,7 @@ def evaluate_val_set(model, val_loader, criterion, device):
     cat_logits = torch.cat(all_logits, dim=0)
     cat_labels = torch.cat(all_labels, dim=0)
     
-    evaluator = WinRateEvaluatorV3()
+    evaluator = WinRateEvaluatorV3(freq_min_N=freq_min_N, freq_max_N=freq_max_N)
     res = evaluator.evaluate(cat_logits, cat_labels, avg_loss, avg_recon)
     return res
 
@@ -369,11 +369,15 @@ def main():
     report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 10) * 60
     last_report_time = time.time()
     
+    # Đọc cấu hình giới hạn số lượng lệnh, mặc định 50-500
+    freq_min = config.get("TRAINING", {}).get("FREQ_MIN_N", 50)
+    freq_max = config.get("TRAINING", {}).get("FREQ_MAX_N", 500)
+    
     while True:
         epoch += 1
         current_optimizer = optimizer
         tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-        eval_res = evaluate_val_set(model, val_loader, criterion, device)
+        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max)
         
         comp_score = eval_res.composite_score()
         print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
