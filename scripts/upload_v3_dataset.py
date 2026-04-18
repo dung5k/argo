@@ -47,23 +47,48 @@ def filter_by_session(df, start_utc_str, end_utc_str):
     return filtered
 
 
-def build_tensor_dataset(df_features, labels_series, window_size=60, step_size=1):
-    """Trượt Tensor Window Mảng 3D."""
+def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str, end_utc_str, window_size=60, step_size=1):
+    """
+    Trượt Tensor trên Data liên tục 24/24.
+    Sau đó chỉ giữ lại các Window mà Nến mục tiêu (Target Candle - nến CUỐI cửa sổ)
+    nằm trong khung giờ Session quy định.
+    → Tránh hiện tượng ghép nến qua đêm (Time-Series Rupture).
+    """
+    try:
+        start_h, start_m = map(int, start_utc_str.split(':'))
+        end_h, end_m     = map(int, end_utc_str.split(':'))
+        start_min = start_h * 60 + start_m
+        end_min   = end_h   * 60 + end_m
+    except Exception:
+        start_min, end_min = 0, 1439  # Mặc định cả ngày
+
     feature_vals = df_features.values
-    label_vals = labels_series.values
-    
-    X_list = []
-    Y_list = []
-    
+    label_vals   = labels_series.values
+    timestamps   = df_features.index  # Lấy trục thời gian thực
+
+    X_list, Y_list = [], []
     max_idx = len(feature_vals) - window_size
     for i in tqdm(range(0, max_idx, step_size), desc="Đang ráp khối Tensor V3"):
-        window = feature_vals[i : i + window_size]
-        target_label = label_vals[i + window_size - 1]
-        
+        target_idx  = i + window_size - 1
+        target_time = timestamps[target_idx]
+
+        # Kiểm tra nến mục tiêu có nằm trong Session không
+        time_in_minutes = target_time.hour * 60 + target_time.minute
+        if start_min <= end_min:
+            in_session = (start_min <= time_in_minutes <= end_min)
+        else:  # Phiên xuyên nửa đêm
+            in_session = (time_in_minutes >= start_min) or (time_in_minutes <= end_min)
+
+        if not in_session:
+            continue
+
+        window       = feature_vals[i: i + window_size]
+        target_label = label_vals[target_idx]
+
         if not np.isnan(window).any() and not np.isnan(target_label):
             X_list.append(window)
             Y_list.append(target_label)
-            
+
     return np.array(X_list, dtype=np.float32), np.array(Y_list, dtype=np.int64)
 
 
@@ -71,74 +96,78 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='data/bot_config_xau_ny_v3.json')
     args = parser.parse_args()
-    
+
     # 1. Đọc config
     with open(args.config, 'r', encoding='utf-8') as f:
         config = json.load(f)
-        
-    cfg_id = config.get('CONFIG_ID', 'V3_UNKNOWN')
-    target_sym = config.get('TARGET_SYMBOL', 'XAUUSDm')
+
+    cfg_id        = config.get('CONFIG_ID', 'V3_UNKNOWN')
+    target_sym    = config.get('TARGET_SYMBOL', 'XAUUSDm')
     target_prefix = config.get('TARGET_PREFIX', 'XAUUSD')
-    fe_cfg = config['FEATURE_ENGINEERING']
+    fe_cfg        = config['FEATURE_ENGINEERING']
     session_start = config.get('SESSION_UTC', {}).get('START', '00:00')
-    session_end = config.get('SESSION_UTC', {}).get('END', '23:59')
-    
+    session_end   = config.get('SESSION_UTC', {}).get('END', '23:59')
+
     # 2. Định vị thư mục
     raw_dir = config.get('DATA_SOURCE', {}).get('RAW_LOCAL_DIR', 'data/history')
     out_dir = os.path.join("data", cfg_id)
     os.makedirs(out_dir, exist_ok=True)
-    
-    print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")
-    
-    # GỌI HÀM V2 ĐỂ GỘP MÚI GIỜ CỦA NHIỀU MÃ RAW VÀO CHUNG 1 DATAFRAME
     os.makedirs(raw_dir, exist_ok=True)
+
+    print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")
+
+    # GỌI HÀM V2 ĐỂ GỘP MÚI GIỜ CỦA NHIỀU MÃ RAW VÀO CHUNG 1 DATAFRAME
     try:
         df_raw = load_and_align_data(raw_dir)
     except FileNotFoundError:
         df_raw = pd.DataFrame()
-        
+
     if df_raw.empty:
         print(f"❌ Lỗi: Thư mục chứa File Lịch Sử ({raw_dir}) trống không.")
-        print("💡 Vui lòng bật Bot MT5 (hoặc cloud_manager_v2.py) cào file parquet các mã Vĩ mô/XAU rồi lưu vào đây trước.")
         sys.exit(1)
-        
+
     if 'time' in df_raw.columns:
         df_raw.set_index('time', inplace=True)
-    
-    # Xác định prefix linh hoạt (có m hay không có m tùy broker config)
-    cols_map = {c.lower(): c for c in df_raw.columns}
+
+    # Xác định prefix linh hoạt
+    cols_map    = {c.lower(): c for c in df_raw.columns}
     real_prefix = target_prefix.lower()
     if f"{target_prefix.lower()}m_open" in cols_map:
         real_prefix = f"{target_prefix.lower()}m"
-        
+
     actual_open = cols_map.get(f"{real_prefix}_open", f"{target_prefix}_open")
     actual_high = cols_map.get(f"{real_prefix}_high", f"{target_prefix}_high")
-    actual_low = cols_map.get(f"{real_prefix}_low", f"{target_prefix}_low")
-    
-    # Gắn nhãn 3-Class
-    print("[1] Gắn nhãn Triple-Barrier...")
+    actual_low  = cols_map.get(f"{real_prefix}_low",  f"{target_prefix}_low")
+
+    # Gắn nhãn 3-Class trên dữ liệu 24/24 (để LabelingV3 nhìn đủ ngữ cảnh giá thật)
+    print("[1] Gắn nhãn Triple-Barrier trên Data 24/24...")
     labeler = LabelingV3(
-        tp_pips=fe_cfg['TP_PIPS'], sl_pips=fe_cfg['SL_PIPS'], 
+        tp_pips=fe_cfg['TP_PIPS'], sl_pips=fe_cfg['SL_PIPS'],
         max_hold_bars=fe_cfg['MAX_HOLD_BARS'], pip_size=fe_cfg['PIP_SIZE']
     )
     targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
-    
-    # Feature Eng
-    print("[2] Khởi tạo 15 Features XAU + 30 Features Macro (AAMT V3)...")
+
+    # Feature Eng trên dữ liệu 24/24 (để Scaler hiểu toàn bộ biến động)
+    print("[2] Khởi tạo Features XAU + Macro (AAMT V3)...")
     fe = FeatureEngineeringV3(target_prefix=target_prefix, macro_features=fe_cfg.get('MACRO_FEATURES', {}))
     df_features = fe.process_features(df_raw)
-    
-    # Lọc Session Time
-    print(f"[3] Xẻ Session Vùng Kín ({session_start} - {session_end})")
-    df_features = filter_by_session(df_features, session_start, session_end)
-    targets = targets.loc[df_features.index]
-    
-    # Scale Data
-    print("[4] Ép Robust Scaler...")
+
+    # Scale Data trên dữ liệu 24/24
+    print("[3] Ép Robust Scaler...")
     df_scaled = fe.fit_transform_scaler(df_features)
-    
-    # Tensor 3D
-    X, Y = build_tensor_dataset(df_scaled, targets, window_size=fe_cfg['WINDOW_SIZE'], step_size=fe_cfg['STEP_SIZE'])
+
+    # Đồng bộ targets với df_scaled (sau khi process_features có thể bị drop row NaN)
+    targets = targets.loc[targets.index.isin(df_scaled.index)]
+    df_scaled_aligned = df_scaled.loc[df_scaled.index.isin(targets.index)]
+    targets = targets.loc[df_scaled_aligned.index]
+
+    # Ráp Tensor VÀ Lọc Session CÙNG LÚC (không còn thủng lỗ hổng thời gian)
+    print(f"[4] Xẻ Tensor và Lọc Session ({session_start} - {session_end})...")
+    X, Y = build_tensor_dataset_with_session(
+        df_scaled_aligned, targets,
+        start_utc_str=session_start, end_utc_str=session_end,
+        window_size=fe_cfg['WINDOW_SIZE'], step_size=fe_cfg['STEP_SIZE']
+    )
     print(f"👉 KẾT QUẢ TENSOR ({cfg_id}): X={X.shape}, Y={Y.shape}")
     
     # Lưu xuống Data Hub cục bộ theo tên Cấu Hình
