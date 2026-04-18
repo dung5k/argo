@@ -7,9 +7,10 @@ class FeatureEngineeringV3:
     Module xử lý Feature Engineering chuẩn V3 AAMT.
     Tập trung vào tính toán 4 nhóm đặc trưng trực giao, loại bỏ nhiễu và dư thừa.
     """
-    def __init__(self, target_prefix="XAUUSDm", macro_features=None):
+    def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False):
         self.target_prefix = target_prefix
         self.macro_features = macro_features if macro_features else {}
+        self.crypto_mode = crypto_mode
         self.scaler = RobustScaler()
         self.is_fitted = False
         
@@ -98,27 +99,25 @@ class FeatureEngineeringV3:
         
         return features
         
-    def calculate_time_context(self, df):
-        """Tính toán Ngữ cảnh thời gian: Sin/Cos mã hóa giờ, Cờ từng phiên giao dịch"""
+    def calculate_time_context(self, df, crypto_mode: bool = False):
+        """
+        Tính toán Ngữ cảnh thời gian.
+        - Forex: Sin/Cos + One-Hot session (Asian/London/NY)
+        - Crypto mode: chỉ Sin/Cos (loại bỏ session flags vì Crypto 24/7)
+        """
         features = pd.DataFrame(index=df.index)
-        
-        # Yêu cầu df.index phải là dạng datetime và set Timezone chuẩn là UTC
-        # Giả định df.index đã chuẩn hoá thành UTC khi merge data
         hour = df.index.hour
-        
-        # Cyclical Time Encoding
+
+        # Cyclical Time Encoding (luôn giữ)
         features['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
         features['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
-        
-        # One-Hot Encoding Phiên (Giờ tham chiếu theo chuẩn UTC)
-        # Asian: 00:00 -> 07:00 UTC
-        # London (Âu): 07:00 -> 12:30 UTC -> xấp xỉ 07:00 -> 12:59
-        # NY (Mỹ): 13:00 -> 22:00 UTC
-        
-        features['is_asian'] = ((hour >= 0) & (hour < 7)).astype(float)
-        features['is_london'] = ((hour >= 7) & (hour < 13)).astype(float)
-        features['is_ny'] = ((hour >= 13) & (hour < 22)).astype(float)
-        
+
+        if not crypto_mode:
+            # One-Hot Encoding Phiên (chỉ dùng cho Forex/Vàng)
+            features['is_asian']  = ((hour >= 0)  & (hour < 7)).astype(float)
+            features['is_london'] = ((hour >= 7)  & (hour < 13)).astype(float)
+            features['is_ny']     = ((hour >= 13) & (hour < 22)).astype(float)
+
         return features
 
     def process_features(self, df):
@@ -140,7 +139,8 @@ class FeatureEngineeringV3:
         f_pa = self.calculate_price_action(df, open_col, high_col, low_col, close_col)
         f_vol = self.calculate_volatility(df, high_col, low_col, close_col)
         f_mom = self.calculate_momentum(df, close_col)
-        f_time = self.calculate_time_context(df)
+        crypto_mode = getattr(self, 'crypto_mode', False)
+        f_time = self.calculate_time_context(df, crypto_mode=crypto_mode)
         
         feature_blocks = [f_pa, f_vol, f_mom, f_time]
         
@@ -219,16 +219,26 @@ class FeatureEngineeringV3:
 
 
 class LabelingV3:
-    """Triple-Barrier Labeling mechanism"""
-    def __init__(self, tp_pips=10, sl_pips=10, max_hold_bars=15, pip_size=0.1):
-        self.tp_pips = tp_pips
-        self.sl_pips = sl_pips
+    """
+    Triple-Barrier Labeling mechanism.
+    - Pip mode (Forex/Vàng): TP/SL tính bằng pip cố định (tp_pips * pip_size)
+    - Pct mode (Crypto):     TP/SL tính theo % của giá vào lệnh (tp_pct, sl_pct)
+    """
+    def __init__(self, tp_pips=10, sl_pips=10, max_hold_bars=15, pip_size=0.1,
+                 label_mode='pip', tp_pct=0.003, sl_pct=0.003):
         self.max_hold_bars = max_hold_bars
+        self.label_mode = label_mode  # 'pip' hoặc 'pct'
+
+        # Pip mode params
+        self.tp_pips  = tp_pips
+        self.sl_pips  = sl_pips
         self.pip_size = pip_size
-        
-        # Convert pip to actual price unit
-        self.tp_price = self.tp_pips * self.pip_size
-        self.sl_price = self.sl_pips * self.pip_size
+        self.tp_price = tp_pips * pip_size
+        self.sl_price = sl_pips * pip_size
+
+        # Pct mode params (dùng cho Crypto)
+        self.tp_pct = tp_pct
+        self.sl_pct = sl_pct
 
     def apply_triple_barrier(self, df, open_col, high_col, low_col):
         """
@@ -247,12 +257,20 @@ class LabelingV3:
         low_prices = df[low_col].values
         n_rows = len(df)
         
+        use_pct = (self.label_mode == 'pct')
+
         for i in range(n_rows - 1):
-            entry_price = open_prices[i + 1] # Vào lệnh tại nến MỞ CỬA của nến tiếp theo
-            
-            upper_barrier = entry_price + self.tp_price # Lệnh Buy cắn TP / Lệnh Sell cắn SL
-            lower_barrier = entry_price - self.sl_price # Lệnh Buy cắn SL / Lệnh Sell cắn TP
-            
+            entry_price = open_prices[i + 1]  # Vào lệnh tại nến MỞ CỬA của nến tiếp theo
+
+            if use_pct:
+                # % mode: TP/SL là tỷ lệ phần trăm của giá vào lệnh — bền vững với mọi mức giá
+                upper_barrier = entry_price * (1.0 + self.tp_pct)
+                lower_barrier = entry_price * (1.0 - self.sl_pct)
+            else:
+                # Pip mode: TP/SL là khoảng giá cố định (pips * pip_size)
+                upper_barrier = entry_price + self.tp_price
+                lower_barrier = entry_price - self.sl_price
+
             limit_idx = min(i + 1 + self.max_hold_bars, n_rows)
             
             for j in range(i + 1, limit_idx):

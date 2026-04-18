@@ -139,17 +139,33 @@ if __name__ == "__main__":
     actual_high = cols_map.get(f"{real_prefix}_high", f"{target_prefix}_high")
     actual_low  = cols_map.get(f"{real_prefix}_low",  f"{target_prefix}_low")
 
-    # Gắn nhãn 3-Class trên dữ liệu 24/24 (để LabelingV3 nhìn đủ ngữ cảnh giá thật)
+    # Gắn nhãn 3-Class trên dữ liệu 24/24 (hardé LabelingV3 nhìn đủ ngữ cảnh giá thật)
     print("[1] Gắn nhãn Triple-Barrier trên Data 24/24...")
-    labeler = LabelingV3(
-        tp_pips=fe_cfg['TP_PIPS'], sl_pips=fe_cfg['SL_PIPS'],
-        max_hold_bars=fe_cfg['MAX_HOLD_BARS'], pip_size=fe_cfg['PIP_SIZE']
-    )
+    label_mode = fe_cfg.get('LABEL_MODE', 'pip')  # 'pip' (Forex) hoặc 'pct' (Crypto)
+    if label_mode == 'pct':
+        labeler = LabelingV3(
+            max_hold_bars=fe_cfg['MAX_HOLD_BARS'],
+            label_mode='pct',
+            tp_pct=fe_cfg.get('TP_PCT', 0.003),
+            sl_pct=fe_cfg.get('SL_PCT', 0.003),
+            pip_size=fe_cfg.get('PIP_SIZE', 0.01)
+        )
+        print(f"  [Crypto mode] TP={fe_cfg.get('TP_PCT',0.003)*100:.2f}% | SL={fe_cfg.get('SL_PCT',0.003)*100:.2f}%")
+    else:
+        labeler = LabelingV3(
+            tp_pips=fe_cfg.get('TP_PIPS', 10), sl_pips=fe_cfg.get('SL_PIPS', 10),
+            max_hold_bars=fe_cfg['MAX_HOLD_BARS'], pip_size=fe_cfg['PIP_SIZE']
+        )
     targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
 
     # Feature Eng trên dữ liệu 24/24 (để Scaler hiểu toàn bộ biến động)
-    print("[2] Khởi tạo Features XAU + Macro (AAMT V3)...")
-    fe = FeatureEngineeringV3(target_prefix=target_prefix, macro_features=fe_cfg.get('MACRO_FEATURES', {}))
+    print("[2] Khởi tạo Features Target + Macro (AAMT V3)...")
+    crypto_mode = fe_cfg.get('CRYPTO_MODE', False)
+    fe = FeatureEngineeringV3(
+        target_prefix=target_prefix,
+        macro_features=fe_cfg.get('MACRO_FEATURES', {}),
+        crypto_mode=crypto_mode
+    )
     df_features = fe.process_features(df_raw)
 
     # Scale Data trên dữ liệu 24/24
