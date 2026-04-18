@@ -223,8 +223,8 @@ def main():
             print(f"[HF] Lỗi pull_runs: {e}", flush=True)
             
         import glob
-        import glob
-        pattern = os.path.join(_ROOT, "runs", "**", f"aamt_v3_{cfg_id}_final.pth")
+        log_base_fetch = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
+        pattern = os.path.join(log_base_fetch, "runs", "**", f"aamt_v3_{cfg_id}_final.pth")
         all_files = glob.glob(pattern, recursive=True)
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
