@@ -24,9 +24,9 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C KH\u00d4NG TH\u1ea2 HI\u1ec6P! N\u1ebeU C\u00c0O THI\u1ebeU D\u00d9 CH\u1ec8 1 M\u00c3, H\u1ec6 TH\u1ed0NG CH\u1ee6 \u0110\u1ed8NG T\u1ef0 HU\u1ef6!",
-        "TP_PIPS": 10,
-        "SL_PIPS": 10,
-        "MAX_HOLD_BARS": 15,
+        "TP_PIPS": 20,
+        "SL_PIPS": 20,
+        "MAX_HOLD_BARS": 6,
         "PIP_SIZE": 0.1,
         "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,

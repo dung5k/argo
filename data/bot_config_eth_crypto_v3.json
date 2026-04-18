@@ -16,9 +16,9 @@
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PCT": 0.003,
-        "SL_PCT": 0.003,
-        "MAX_HOLD_BARS": 12,
+        "TP_PCT": 0.006,
+        "SL_PCT": 0.006,
+        "MAX_HOLD_BARS": 5,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
         "WINDOW_SIZE": 20,
@@ -49,7 +49,9 @@
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-18",
-        "EPOCHS_PHASE_1": 1
+        "EPOCHS_PHASE_1": 1,
+        "FREQ_MIN_N": 100,
+        "FREQ_MAX_N": 800
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "data/history",
