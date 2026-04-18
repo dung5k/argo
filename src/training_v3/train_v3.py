@@ -217,7 +217,8 @@ def main():
             _sys.path.insert(0, _hf_script_dir)
         try:
             from hf_sync import pull_runs
-            pulled = pull_runs(logger=None, target_prefix="v3", config_id=cfg_id)
+            model_repo_pull = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
+            pulled = pull_runs(logger=None, target_prefix="v3", config_id=cfg_id, custom_repo_id=model_repo_pull)
         except Exception as e:
             print(f"[HF] Lỗi pull_runs: {e}", flush=True)
             
@@ -234,8 +235,9 @@ def main():
                 msg = f"\u274c Lỗi kế thừa Model: {e}"
                 print(f"  {msg}", flush=True)
         else:
-            msg = f"\u274c Không tìm thấy trọng số cũ nội bộ/đám mây. Khởi tạo ngẫu nhiên từ đầu!"
+            msg = f"❌ Không tìm thấy CSDL trọng số cũ nào cho {cfg_id} trên HF để kế thừa! Yêu cầu kế thừa đã bị thất bại. Dừng hệ thống!"
             print(f"  {msg}", flush=True)
+            raise FileNotFoundError(msg)
             
     tbot = None
     chat_id = None
@@ -379,8 +381,9 @@ def main():
                 if _hf_script_dir not in _sys.path:
                     _sys.path.insert(0, _hf_script_dir)
                 from hf_sync import push_runs
+                model_repo_push = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
                 
-                push_runs(run_dir=out_dir)
+                push_runs(run_dir=out_dir, custom_repo_id=model_repo_push)
                 print(f"  \u2601\ufe0f Upload dữ liệu nguyên kiện thư mục {out_dir} lên HF thành công!", flush=True)
             except Exception as e:
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)

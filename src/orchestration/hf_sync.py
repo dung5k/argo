@@ -203,12 +203,13 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         else: print(f"[HF] Lỗi khi kéo Data: {e}")
         return False
 
-def push_runs(logger=None, run_dir=None):
+def push_runs(logger=None, run_dir=None, custom_repo_id=None):
     """Đẩy trọng số lên HuggingFace.
     
     Args:
         run_dir: Nếu chỉ định, chỉ upload file trong thư mục run này (nhanh hơn).
                  Nếu None, upload toàn bộ runs/ (dùng khi sync toàn bộ).
+                 custom_repo_id: Ghi đè repo id nếu có.
     """
     _suppress_hf_progress()
     cfg = _load_config()
@@ -219,7 +220,7 @@ def push_runs(logger=None, run_dir=None):
         return False
 
     token = cfg["hf_token"]
-    repo_id = cfg["hf_repo_id"]
+    repo_id = custom_repo_id if custom_repo_id else cfg["hf_repo_id"]
     argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
 
@@ -284,7 +285,7 @@ def push_runs(logger=None, run_dir=None):
     return errors == 0
 
 
-def pull_runs(logger=None, target_prefix=None, config_id=None):
+def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=None):
     """Kéo thư mục runs/ (trọng số) từ HuggingFace về, ưu tiên kéo đúng thư mục cần thiết."""
     _suppress_hf_progress()
     cfg = _load_config()
@@ -295,7 +296,7 @@ def pull_runs(logger=None, target_prefix=None, config_id=None):
         return False
 
     token = cfg["hf_token"]
-    repo_id = cfg["hf_repo_id"]
+    repo_id = custom_repo_id if custom_repo_id else cfg["hf_repo_id"]
     argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
 
