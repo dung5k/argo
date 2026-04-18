@@ -140,9 +140,10 @@ def export_indicator_csv(run_id: str):
             _, logits, _ = model(x_tensor)
             probs = torch.softmax(logits, dim=1).squeeze(0).cpu().numpy()
             
-            # probs[0] = Sell Win, probs[1] = Buy Win, probs[2] = Sideway
+            # probs[0] = Sell, probs[1] = Sideway, probs[2] = Buy
             prob_sell = probs[0]
-            prob_buy = probs[1]
+            prob_hold = probs[1]
+            prob_buy = probs[2]
             
             # Công thức Oscillator: Giá trị [-1, 1], dương là Buy, âm là Sell
             diff_prob = prob_buy - prob_sell
