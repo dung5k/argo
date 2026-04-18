@@ -229,7 +229,7 @@ def main():
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
             try:
-                model.load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
+                model.load_state_dict(torch.load(latest_file, map_location=device))
                 msg = f"\U0001f449 Kế thừa Model: {os.path.basename(latest_file)}"
                 print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:

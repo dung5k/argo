@@ -487,7 +487,7 @@ def train_v2(
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
             try:
-                models[s_id].load_state_dict(torch.load(latest_file, map_location=device, weights_only=True))
+                models[s_id].load_state_dict(torch.load(latest_file, map_location=device))
                 print(f"  ↪ Mạng {s_id} ({s_name.upper()}): {os.path.basename(latest_file)}")
             except Exception as e:
                 print(f"  ↪ Lỗi kế thừa Mạng {s_id}: {e}")
