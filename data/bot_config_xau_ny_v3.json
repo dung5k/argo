@@ -65,7 +65,9 @@
         "TRAIN_START": "2025-06-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-18",
-        "EPOCHS_PHASE_1": 1
+        "EPOCHS_PHASE_1": 1,
+        "FREQ_MIN_N": 50,
+        "FREQ_MAX_N": 250
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "data/history",
