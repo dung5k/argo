@@ -220,7 +220,7 @@ class FeatureEngineeringV3:
 
 class LabelingV3:
     """Triple-Barrier Labeling mechanism"""
-    def __init__(self, tp_pips=35, sl_pips=35, max_hold_bars=30, pip_size=0.1):
+    def __init__(self, tp_pips=10, sl_pips=10, max_hold_bars=15, pip_size=0.1):
         self.tp_pips = tp_pips
         self.sl_pips = sl_pips
         self.max_hold_bars = max_hold_bars
