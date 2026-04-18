@@ -109,9 +109,11 @@ def plot_and_notify_v3(
                         with open(_id_file, "r") as _f:
                             client_id = _f.read().strip()
                         break
-            if not client_id:
+            if not client_id or client_id == "UnknownClient":
                 import socket
-                client_id = cfg.get("client_id", socket.gethostname()[:8])
+                client_id = cfg.get("client_id", "")
+                if not client_id or client_id == "UnknownClient":
+                    client_id = socket.gethostname()[:8]
             
             if is_periodic:
                 pfx = f"⏳ <b>AAMT_V3 [{cfg_name}]</b> Báo cáo tiến độ trên <b>{client_id}</b> (Chưa có đỉnh mới)"

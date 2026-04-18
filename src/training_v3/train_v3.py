@@ -242,7 +242,9 @@ def main():
     tbot = None
     chat_id = None
     import socket
-    client_id = os.environ.get("ARGO_CLIENT_ID", socket.gethostname()[:8])
+    client_id = os.environ.get("ARGO_CLIENT_ID", "")
+    if not client_id or client_id == "UnknownClient":
+        client_id = socket.gethostname()[:8]
     try:
         tg_config_path = os.path.join(_ROOT, ".agent", "telegram_bot.json")
         with open(tg_config_path, "r", encoding="utf-8") as f:
