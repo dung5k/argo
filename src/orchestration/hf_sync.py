@@ -301,7 +301,7 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
     log = logger.info if logger else print
 
     if target_prefix and config_id:
-        pattern = f"runs/*_{target_prefix}_{config_id}_*/**"
+        pattern = f"runs/*_{target_prefix}_{config_id}*/**"
         log(f"[HF] Đang kéo trọng số CỤ THỂ ({pattern}) từ {repo_id}/runs/ về...")
     else:
         pattern = "runs/**"
