@@ -410,9 +410,15 @@ def main():
         else:
             _es_streak += 1
             if _es_streak >= _ES_PATIENCE:
-                print(f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!", flush=True)
-                print(f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})", flush=True)
-                print(f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất.", flush=True)
+                es_msg = f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!\n"
+                es_msg += f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})\n"
+                es_msg += f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất."
+                print(es_msg, flush=True)
+                if tbot and chat_id:
+                    try:
+                        tbot.send_message(chat_id, f"🛑 <b>[{client_id}] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
+                    except Exception:
+                        pass
                 break
         
         improved = comp_score > best_score
