@@ -23,8 +23,8 @@
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PIPS": 15,
-        "SL_PIPS": 15,
+        "TP_PIPS": 10,
+        "SL_PIPS": 10,
         "MAX_HOLD_BARS": 5,
         "PIP_SIZE": 0.1,
         "WINDOW_SIZE": 20,

@@ -53,13 +53,21 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
 
     # Xây dựng mapping: symbol -> source
     required_symbols = {}
-    required_symbols[target_symbol.upper()] = "BINANCE"
+    
+    t_sym = target_symbol.upper()
+    file_sym = t_sym[:-1] if t_sym.endswith("M") else t_sym
+    if t_sym in ("BTCUSDT", "ETHUSDT", "LTCUSDT"):
+        required_symbols[file_sym] = "BINANCE"
+    else:
+        required_symbols[file_sym] = "MT5"
+        
     for sym, _ in macro_features.items():
         sym_up = sym.upper()
+        file_sym_macro = sym_up[:-1] if sym_up.endswith("M") else sym_up
         if sym_up in ("BTCUSDT", "ETHUSDT", "LTCUSDT"):
-            required_symbols[sym_up] = "BINANCE"
+            required_symbols[file_sym_macro] = "BINANCE"
         else:
-            required_symbols[sym_up] = "MT5"
+            required_symbols[file_sym_macro] = "MT5"
 
     df_list = []
     loaded = set()
@@ -284,6 +292,7 @@ def main():
 
     # Xác định cột OHLC thực tế (flex prefix)
     sym_up = target_sym.upper()
+    if sym_up.endswith("M"): sym_up = sym_up[:-1]
     actual_open = f"{sym_up}_open"
     actual_high = f"{sym_up}_high"
     actual_low  = f"{sym_up}_low"
@@ -325,14 +334,21 @@ def main():
 
     # ── 4. FEATURE ENGINEERING ─────────────────────────────────────────────
     print(f"\n[2] Feature Engineering V3 (Macro: {list(macro_features.keys())})...", flush=True)
-    target_prefix_mapped = f"{target_prefix.upper()}USDT"
+    target_prefix_mapped = target_prefix.upper()
+    if target_prefix_mapped.endswith("M"): target_prefix_mapped = target_prefix_mapped[:-1]
+    # Re-append USDT if it's Crypto, but wait, XAUUSD doesn't need USDT appended if target_prefix is already XAUUSD.
+    # Actually, for crypto it was f"{target_prefix.upper()}USDT".
+    # But for Forex it's just XAUUSD.
+    if fe_cfg.get("CRYPTO_MODE", False):
+        target_prefix_mapped = f"{target_prefix_mapped}USDT"
+    
     assert_ok(f"{target_prefix_mapped}_open".lower() in [c.lower() for c in df_raw.columns],
               f"Không tìm thấy cột open cho prefix '{target_prefix_mapped}'!")
 
     fe = FeatureEngineeringV3(
         target_prefix=target_prefix_mapped,
         macro_features=macro_features,
-        crypto_mode=fe_cfg.get("CRYPTO_MODE", True)
+        crypto_mode=fe_cfg.get("CRYPTO_MODE", False)
     )
     df_features = fe.process_features(df_raw)
     assert_ok(not df_features.empty, "df_features rỗng sau process_features!")
