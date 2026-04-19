@@ -1,24 +1,24 @@
 {
-    "TARGET_SYMBOL": "ETHUSDT",
-    "TARGET_PREFIX": "ETH",
-    "CONFIG_ID": "CFG_ETH_CRYPTO_V3",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "TARGET_PREFIX": "LTC",
+    "CONFIG_ID": "CFG_LTC_CRYPTO_V3",
     "VERSION": "3.5",
-    "SESSION": "all_day",
+    "SESSION": "crypto_247",
     "SESSION_UTC": {
         "START": "00:00",
         "END": "23:59",
-        "DESCRIPTION": "Crypto 24/7 — không có phiên cố định"
+        "DESCRIPTION": "Crypto 24/7 — LTC Follow BTC/ETH, không có phiên cố định"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/eth_v3_tensor_crypto",
+        "DATASET_REPO": "dung5k/ltc_v3_tensor_crypto",
         "MODEL_REPO": "dung5k/argo_data",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PCT": 0.006,
-        "SL_PCT": 0.006,
-        "MAX_HOLD_BARS": 5,
+        "TP_PCT": 0.005,
+        "SL_PCT": 0.005,
+        "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
         "WINDOW_SIZE": 20,
@@ -30,7 +30,7 @@
                 "bb_width",
                 "volume"
             ],
-            "ETHBTC": [
+            "ETHUSDT": [
                 "log_ret"
             ],
             "USTEC": [
@@ -51,7 +51,7 @@
         "VAL_END": "2026-04-18",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 100,
-        "FREQ_MAX_N": 800
+        "FREQ_MAX_N": 600
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "data/history",
@@ -65,7 +65,7 @@
             "USTECm": "EXNESS"
         },
         "CRYPTO_BINANCE": {
-            "SYMBOLS": ["ETH/USDT", "BTC/USDT", "ETH/BTC"],
+            "SYMBOLS": ["LTC/USDT", "BTC/USDT", "ETH/USDT"],
             "TIMEFRAME": "1m",
             "SINCE": "2025-01-01T00:00:00Z"
         }
