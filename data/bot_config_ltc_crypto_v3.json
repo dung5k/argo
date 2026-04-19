@@ -16,8 +16,8 @@
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PCT": 0.005,
-        "SL_PCT": 0.005,
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
