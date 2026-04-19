@@ -50,7 +50,7 @@
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
         "LEARNING_RATE": 0.00001,
-        "TRAIN_START": "2025-06-15",
+        "TRAIN_START": "2024-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-18",
         "EPOCHS_PHASE_1": 1,
