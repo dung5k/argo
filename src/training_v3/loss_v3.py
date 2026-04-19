@@ -15,9 +15,9 @@ class AAMT_JointLoss(nn.Module):
         super().__init__()
         self.mse_loss = nn.MSELoss()
 
-        # label_smoothing=0.1: Phân phối 10% xác suất sang class khác, ngăn model
+        # label_smoothing=0.15: Phân phối 15% xác suất sang class khác, ngăn model
         # đặt probability ~0 vào class đúng → fix CE Loss bùng nổ (CE=8) sau nhiều epoch
-        self.ce_loss = nn.CrossEntropyLoss(label_smoothing=0.1)
+        self.ce_loss = nn.CrossEntropyLoss(label_smoothing=0.15)
 
         self.lambda_recon = lambda_recon
         self.lambda_class = lambda_class
