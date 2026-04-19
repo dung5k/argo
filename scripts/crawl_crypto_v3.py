@@ -110,7 +110,8 @@ def main(config_file: str):
         config = json.load(f)
 
     train_cfg    = config.get("TRAINING", {})
-    since_str    = train_cfg.get("TRAIN_START", "2025-01-01") + "T00:00:00Z"
+    binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
+    since_str    = binance_cfg.get("SINCE", train_cfg.get("TRAIN_START", "2024-01-01") + "T00:00:00Z")
     end_str      = train_cfg.get("VAL_END",    "2026-04-18")
     history_dir  = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", "data/history")
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
@@ -135,7 +136,7 @@ def main(config_file: str):
                 missing.append(sym)
                 continue
             fname = binance_sym_to_filename(sym)
-            out_path = os.path.join(history_dir, f"{fname}_MT5_1M_2026.parquet")
+            out_path = os.path.join(history_dir, f"{fname}_BINANCE_1M_2026.parquet")
             df.to_parquet(out_path)
             log(f"  💾 Đã lưu: {out_path} ({len(df)} nến)")
 
@@ -158,7 +159,10 @@ def main(config_file: str):
         import pytz
         from datetime import datetime as dt
         tz = pytz.UTC
-        start_dt = tz.localize(dt.strptime(f"{train_cfg.get('TRAIN_START','2025-01-01')} 00:00:00", "%Y-%m-%d %H:%M:%S"))
+        # Ưu tiên lấy TRAIN_START từ TRAINING dict, nếu không có thì trích xuất từ SINCE của BINANCE
+        raw_since = binance_cfg.get("SINCE", "2024-01-01T00:00:00Z").split('T')[0]
+        start_date = train_cfg.get('TRAIN_START', raw_since)
+        start_dt = tz.localize(dt.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S"))
         end_dt   = tz.localize(dt.strptime(f"{end_str} 23:59:59", "%Y-%m-%d %H:%M:%S"))
 
         for sym in sym_list:

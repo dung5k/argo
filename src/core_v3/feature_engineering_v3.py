@@ -293,3 +293,106 @@ class LabelingV3:
                     break
                     
         return pd.Series(labels, index=df.index, name='target_class')
+
+    # =========================================================
+    # GIẢI PHÁP C: CLEAN DATA DIET
+    # =========================================================
+    def apply_triple_barrier_fast_hit(self, df, open_col, high_col, low_col,
+                                       fast_hit_bars: int = 3):
+        """
+        [Giải Pháp C - Clean Data Diet]
+        Giống apply_triple_barrier nhưng bổ sung thêm cột 'hit_bars':
+        - hit_bars = số nến thực tế để chạm TP/SL.
+        - hit_bars = -1 nếu Timeout (Sideway).
+
+        Dùng kết hợp với get_clean_mask() để lọc tập Train chỉ giữ
+        những Setup có sóng chắc chắn, dứt khoát (Chân Sóng Vĩ Đại).
+
+        Args:
+            df: DataFrame đã có cột OHLC
+            open_col, high_col, low_col: Tên cột tương ứng
+            fast_hit_bars: Ngưỡng "tốc độ sóng" (số nến tối đa để chạm TP).
+                           VD: fast_hit_bars=3 -> chỉ giữ setup TP trong <=3 nến.
+
+        Returns:
+            DataFrame với 2 cột mới: 'target_class' và 'hit_bars'
+        """
+        labels   = np.full(len(df), 2, dtype=int)
+        hit_bars = np.full(len(df), -1, dtype=int)   # -1 = Timeout/Sideway
+
+        open_prices = df[open_col].values
+        high_prices = df[high_col].values
+        low_prices  = df[low_col].values
+        n_rows = len(df)
+        use_pct = (self.label_mode == 'pct')
+
+        for i in range(n_rows - 1):
+            entry_price = open_prices[i + 1]
+
+            if use_pct:
+                upper_barrier = entry_price * (1.0 + self.tp_pct)
+                lower_barrier = entry_price * (1.0 - self.sl_pct)
+            else:
+                upper_barrier = entry_price + self.tp_price
+                lower_barrier = entry_price - self.sl_price
+
+            limit_idx = min(i + 1 + self.max_hold_bars, n_rows)
+
+            for j in range(i + 1, limit_idx):
+                h = high_prices[j]
+                l = low_prices[j]
+                hit_upper = h >= upper_barrier
+                hit_lower = l <= lower_barrier
+
+                if hit_upper and hit_lower:
+                    labels[i]   = 2
+                    hit_bars[i] = j - i
+                    break
+                elif hit_upper:
+                    labels[i]   = 1
+                    hit_bars[i] = j - i
+                    break
+                elif hit_lower:
+                    labels[i]   = 0
+                    hit_bars[i] = j - i
+                    break
+
+        return pd.DataFrame({
+            'target_class': labels,
+            'hit_bars': hit_bars
+        }, index=df.index)
+
+    def get_clean_mask(self, label_df, fast_hit_bars: int = 3,
+                       include_sideway: bool = False):
+        """
+        [Giải Pháp C - Clean Data Diet]
+        Tạo Boolean Mask từ DataFrame của apply_triple_barrier_fast_hit().
+
+        Mask = True nếu:
+        - Setup có hướng rõ ràng (Buy/Sell) VÀ chạm TP trong <= fast_hit_bars nến.
+        - (Tùy chọn) Bao gồm Sideway nếu include_sideway=True.
+
+        Ví dụ sử dụng:
+            labeler = LabelingV3(...)
+            label_df = labeler.apply_triple_barrier_fast_hit(df, open_col, high_col, low_col)
+            mask = labeler.get_clean_mask(label_df, fast_hit_bars=3)
+            X_clean = X[mask.values]
+            Y_clean = label_df.loc[mask, 'target_class'].values
+            print(f"Tập sạch: {mask.sum()}/{len(mask)} ({mask.mean()*100:.1f}%)")
+
+        Args:
+            label_df: DataFrame có cột 'target_class' và 'hit_bars'.
+            fast_hit_bars: Số nến tối đa coi là "Chân Sóng Vĩ Đại".
+            include_sideway: Có giữ mẫu Sideway trong Train không (mặc định False).
+
+        Returns:
+            pd.Series[bool] có cùng index với label_df.
+        """
+        is_decisive = label_df['target_class'].isin([0, 1])
+        is_fast     = label_df['hit_bars'].between(1, fast_hit_bars)
+        clean_mask  = is_decisive & is_fast
+
+        if include_sideway:
+            clean_mask = clean_mask | (label_df['target_class'] == 2)
+
+        return clean_mask.rename('is_clean')

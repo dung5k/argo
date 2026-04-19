@@ -2,229 +2,229 @@
     "target": "xauusd",
     "version": "Independent_Multi_Session_v2.2",
     "dimensions": {
-        "num_features_target": 18,
-        "num_features_macro": 20
+        "num_features_target": 13,
+        "num_features_macro": 25
     },
     "sessions": {
         "asia": {},
-        "london": {
+        "london": {},
+        "ny": {
             "EV_L3_1.4_L4_1.0": {
-                "epoch": 805,
-                "max_threshold": 0.55,
-                "composite_score": 0.0004368357695408552,
+                "epoch": 77,
+                "max_threshold": 0.57,
+                "composite_score": 0.00014676369087583343,
                 "session_evs": {},
-                "best_ev": 0.0006000000284984708,
-                "val_loss": 0.17453473806381226,
+                "best_ev": 0.0002260731426933824,
+                "val_loss": 0.17427969404629298,
                 "threshold_metrics": [
                     {
                         "threshold": 0.5,
-                        "total_signals": 83,
-                        "win_rate": 49.39759036144578,
-                        "avg_win_return": 0.0010000000474974513,
-                        "avg_loss_return": 0.0009999999310821295,
-                        "ev_score": -1.2048134434384811e-05,
-                        "sharpe_score": -0.110463731869164,
-                        "total_buy": 42,
-                        "total_sell": 41
-                    },
-                    {
-                        "threshold": 0.5167,
-                        "total_signals": 65,
-                        "win_rate": 53.84615384615385,
-                        "avg_win_return": 0.0010000001639127731,
-                        "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 7.482523935475756e-05,
-                        "sharpe_score": 0.6003801964568076,
-                        "total_buy": 33,
-                        "total_sell": 32
-                    },
-                    {
-                        "threshold": 0.5333,
-                        "total_signals": 45,
-                        "win_rate": 66.66666666666666,
+                        "total_signals": 6247,
+                        "win_rate": 51.080518648951504,
                         "avg_win_return": 0.0010000000474974513,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.0003202898702854155,
-                        "sharpe_score": 2.125085293762082,
-                        "total_buy": 23,
-                        "total_sell": 22
+                        "ev_score": 1.9385412166269066e-05,
+                        "sharpe_score": 1.5337937674326592,
+                        "total_buy": 3313,
+                        "total_sell": 2934
                     },
                     {
-                        "threshold": 0.55,
-                        "total_signals": 30,
-                        "win_rate": 80.0,
+                        "threshold": 0.5233,
+                        "total_signals": 1468,
+                        "win_rate": 52.247956403269754,
                         "avg_win_return": 0.0010000000474974513,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.0006000000284984708,
-                        "sharpe_score": 3.2602050818130173,
-                        "total_buy": 15,
-                        "total_sell": 15
+                        "ev_score": 4.302206129324977e-05,
+                        "sharpe_score": 1.6478188517512256,
+                        "total_buy": 716,
+                        "total_sell": 752
+                    },
+                    {
+                        "threshold": 0.5467,
+                        "total_signals": 431,
+                        "win_rate": 54.75638051044084,
+                        "avg_win_return": 0.0010000000474974513,
+                        "avg_loss_return": 0.0010000001639127731,
+                        "ev_score": 9.011408243472704e-05,
+                        "sharpe_score": 1.8723209388522428,
+                        "total_buy": 209,
+                        "total_sell": 222
+                    },
+                    {
+                        "threshold": 0.57,
+                        "total_signals": 68,
+                        "win_rate": 63.23529411764706,
+                        "avg_win_return": 0.0010000000474974513,
+                        "avg_loss_return": 0.0010000000474974513,
+                        "ev_score": 0.0002260731426933824,
+                        "sharpe_score": 1.8536962815685505,
+                        "total_buy": 37,
+                        "total_sell": 31
                     }
                 ],
                 "win_rates": [
-                    49.39759036144578,
-                    53.84615384615385,
-                    66.66666666666666,
-                    80.0
+                    51.080518648951504,
+                    52.247956403269754,
+                    54.75638051044084,
+                    63.23529411764706
                 ],
                 "thresholds": [
                     0.5,
-                    0.5167,
-                    0.5333,
-                    0.55
+                    0.5233,
+                    0.5467,
+                    0.57
                 ],
                 "totals": [
-                    83,
-                    65,
-                    45,
-                    30
+                    6247,
+                    1468,
+                    431,
+                    68
                 ]
             },
             "EV_L3_1.1_L4_1.0": {
-                "epoch": 805,
-                "max_threshold": 0.55,
-                "composite_score": 0.0004534851837202037,
+                "epoch": 77,
+                "max_threshold": 0.57,
+                "composite_score": 0.00015485649208170577,
                 "session_evs": {},
-                "best_ev": 0.0006000000284984708,
-                "val_loss": 0.17453473806381226,
+                "best_ev": 0.0002260731426933824,
+                "val_loss": 0.17427969404629298,
                 "threshold_metrics": [
                     {
                         "threshold": 0.5,
-                        "total_signals": 83,
-                        "win_rate": 49.39759036144578,
-                        "avg_win_return": 0.0010000000474974513,
-                        "avg_loss_return": 0.0009999999310821295,
-                        "ev_score": -1.2048134434384811e-05,
-                        "sharpe_score": -0.110463731869164,
-                        "total_buy": 42,
-                        "total_sell": 41
-                    },
-                    {
-                        "threshold": 0.5167,
-                        "total_signals": 65,
-                        "win_rate": 53.84615384615385,
-                        "avg_win_return": 0.0010000001639127731,
-                        "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 7.482523935475756e-05,
-                        "sharpe_score": 0.6003801964568076,
-                        "total_buy": 33,
-                        "total_sell": 32
-                    },
-                    {
-                        "threshold": 0.5333,
-                        "total_signals": 45,
-                        "win_rate": 66.66666666666666,
+                        "total_signals": 6247,
+                        "win_rate": 51.080518648951504,
                         "avg_win_return": 0.0010000000474974513,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.0003202898702854155,
-                        "sharpe_score": 2.125085293762082,
-                        "total_buy": 23,
-                        "total_sell": 22
+                        "ev_score": 1.9385412166269066e-05,
+                        "sharpe_score": 1.5337937674326592,
+                        "total_buy": 3313,
+                        "total_sell": 2934
                     },
                     {
-                        "threshold": 0.55,
-                        "total_signals": 30,
-                        "win_rate": 80.0,
+                        "threshold": 0.5233,
+                        "total_signals": 1468,
+                        "win_rate": 52.247956403269754,
                         "avg_win_return": 0.0010000000474974513,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.0006000000284984708,
-                        "sharpe_score": 3.2602050818130173,
-                        "total_buy": 15,
-                        "total_sell": 15
+                        "ev_score": 4.302206129324977e-05,
+                        "sharpe_score": 1.6478188517512256,
+                        "total_buy": 716,
+                        "total_sell": 752
+                    },
+                    {
+                        "threshold": 0.5467,
+                        "total_signals": 431,
+                        "win_rate": 54.75638051044084,
+                        "avg_win_return": 0.0010000000474974513,
+                        "avg_loss_return": 0.0010000001639127731,
+                        "ev_score": 9.011408243472704e-05,
+                        "sharpe_score": 1.8723209388522428,
+                        "total_buy": 209,
+                        "total_sell": 222
+                    },
+                    {
+                        "threshold": 0.57,
+                        "total_signals": 68,
+                        "win_rate": 63.23529411764706,
+                        "avg_win_return": 0.0010000000474974513,
+                        "avg_loss_return": 0.0010000000474974513,
+                        "ev_score": 0.0002260731426933824,
+                        "sharpe_score": 1.8536962815685505,
+                        "total_buy": 37,
+                        "total_sell": 31
                     }
                 ],
                 "win_rates": [
-                    49.39759036144578,
-                    53.84615384615385,
-                    66.66666666666666,
-                    80.0
+                    51.080518648951504,
+                    52.247956403269754,
+                    54.75638051044084,
+                    63.23529411764706
                 ],
                 "thresholds": [
                     0.5,
-                    0.5167,
-                    0.5333,
-                    0.55
+                    0.5233,
+                    0.5467,
+                    0.57
                 ],
                 "totals": [
-                    83,
-                    65,
-                    45,
-                    30
+                    6247,
+                    1468,
+                    431,
+                    68
                 ]
             },
             "BEST_VLOSS": {
-                "epoch": 1086,
-                "max_threshold": 0.55,
-                "composite_score": -0.17205171287059784,
+                "epoch": 50,
+                "max_threshold": 0.56,
+                "composite_score": -0.17385520466736384,
                 "session_evs": {},
-                "best_ev": 0.0001403920834499689,
-                "val_loss": 0.17205171287059784,
+                "best_ev": 3.37706594050978e-05,
+                "val_loss": 0.17385520466736384,
                 "threshold_metrics": [
                     {
                         "threshold": 0.5,
-                        "total_signals": 83,
-                        "win_rate": 65.06024096385542,
-                        "avg_win_return": 0.0010000000474974513,
+                        "total_signals": 6247,
+                        "win_rate": 51.288618536897715,
+                        "avg_win_return": 0.0010000001639127731,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.0001403920834499689,
-                        "sharpe_score": 1.2871896099126259,
-                        "total_buy": 59,
-                        "total_sell": 24
+                        "ev_score": 1.7806966511771216e-05,
+                        "sharpe_score": 1.408905522275171,
+                        "total_buy": 2476,
+                        "total_sell": 3771
                     },
                     {
-                        "threshold": 0.5167,
-                        "total_signals": 69,
-                        "win_rate": 63.76811594202898,
-                        "avg_win_return": 0.0010000000474974513,
-                        "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 0.00012868974287670538,
-                        "sharpe_score": 1.0622061988109568,
-                        "total_buy": 49,
-                        "total_sell": 20
+                        "threshold": 0.52,
+                        "total_signals": 1609,
+                        "win_rate": 53.57364822871349,
+                        "avg_win_return": 0.0009999999310821295,
+                        "avg_loss_return": 0.0009999999310821295,
+                        "ev_score": 3.37706594050978e-05,
+                        "sharpe_score": 1.3549330364990146,
+                        "total_buy": 471,
+                        "total_sell": 1138
                     },
                     {
-                        "threshold": 0.5333,
-                        "total_signals": 53,
-                        "win_rate": 58.490566037735846,
+                        "threshold": 0.54,
+                        "total_signals": 467,
+                        "win_rate": 54.17558886509636,
                         "avg_win_return": 0.0010000000474974513,
-                        "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 7.18432545009054e-05,
-                        "sharpe_score": 0.5189005005721155,
-                        "total_buy": 39,
-                        "total_sell": 14
+                        "avg_loss_return": 0.0010000001639127731,
+                        "ev_score": 3.0151886296659558e-05,
+                        "sharpe_score": 0.6511414472105546,
+                        "total_buy": 105,
+                        "total_sell": 362
                     },
                     {
-                        "threshold": 0.55,
-                        "total_signals": 41,
-                        "win_rate": 53.65853658536586,
-                        "avg_win_return": 0.0010000000474974513,
+                        "threshold": 0.56,
+                        "total_signals": 96,
+                        "win_rate": 55.208333333333336,
+                        "avg_win_return": 0.0010000001639127731,
                         "avg_loss_return": 0.0010000000474974513,
-                        "ev_score": 1.8606272660754e-05,
-                        "sharpe_score": 0.11799257124250798,
-                        "total_buy": 35,
-                        "total_sell": 6
+                        "ev_score": 2.1317843623033392e-05,
+                        "sharpe_score": 0.20782551995057533,
+                        "total_buy": 10,
+                        "total_sell": 86
                     }
                 ],
                 "win_rates": [
-                    65.06024096385542,
-                    63.76811594202898,
-                    58.490566037735846,
-                    53.65853658536586
+                    51.288618536897715,
+                    53.57364822871349,
+                    54.17558886509636,
+                    55.208333333333336
                 ],
                 "thresholds": [
                     0.5,
-                    0.5167,
-                    0.5333,
-                    0.55
+                    0.52,
+                    0.54,
+                    0.56
                 ],
                 "totals": [
-                    83,
-                    69,
-                    53,
-                    41
+                    6247,
+                    1609,
+                    467,
+                    96
                 ]
             }
-        },
-        "ny": {}
+        }
     }
 }

@@ -1,0 +1,55 @@
+{
+    "CONFIG_ID": "CFG_LTC_V5_XGB",
+    "DESCRIPTION": "XGBoost Selective Prediction Engine for Scalping",
+    
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "data/history",
+        "PREDICT_LOCAL_DIR": "data/live"
+    },
+    
+    "TARGET_PREFIX": "LTC",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "TARGET_SOURCE": "BINANCE",
+    
+    "V5_XGB_ENGINE": {
+        "LEADER_ASSETS": {
+            "BTCUSDT": {
+                "source": "BINANCE",
+                "features": ["log_ret", "rvol"],
+                "weight": 1.0
+            },
+            "ETHUSDT": {
+                "source": "BINANCE",
+                "features": ["log_ret", "rvol"],
+                "weight": 0.5
+            },
+            "USTEC": {
+                "source": "MT5",
+                "features": ["log_ret_macro"],
+                "weight": 0.5
+            }
+        },
+        "BAR_WINDOW": 20,
+        "MACRO_VETO": true,
+        "XGB_PARAMS": {
+            "n_estimators": 500,
+            "max_depth": 6,
+            "learning_rate": 0.05,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "objective": "multi:softprob",
+            "num_class": 3,
+            "eval_metric": "mlogloss",
+            "tree_method": "hist"
+        }
+    },
+    
+    "LIVE_BOT": {
+        "LABEL_MODE": "pct",
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.003,
+        "PIP_SIZE": 0.01,
+        "MAX_HOLD_BARS": 20,
+        "XGB_PROB_THRESHOLD": 0.90
+    }
+}

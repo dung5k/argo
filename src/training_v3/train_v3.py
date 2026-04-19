@@ -68,17 +68,21 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
 def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     """
     Chạy Fine-Tuning 1 Epoch để cắm vào luồng while True.
+
+    PHÁC ĐỒ ĐIỀU TRỊ Task Domination:
+    - lambda_recon = 0.05: Bóp nghẹt autoencoder xuống 5% để CE Loss chiếm
+      95% gradient bandwidth → mạng dồn sức vào phân loại thay vì vẽ nến.
     """
     model.train()
     model.to(device)
-    # BẬT LẠI nhánh phân loại, GIẢM lực Reconstruction để AI tập trung vào Trade
-    # lambda_recon=0.2 để MSE không át tiếng CE Loss, classifier mới học được
-    criterion.set_lambdas(lambda_recon=0.2, lambda_class=1.0)
-    
+    # [PHÁC ĐỒ 1] Cán cân Loss: Autoencoder chỉ giữ vai trò Regularizer (5%)
+    # Giảm mạnh từ 0.2 → 0.05 để triệt tiêu hiện tượng Task Domination
+    criterion.set_lambdas(lambda_recon=0.05, lambda_class=1.0)
+
     total_loss_val = 0.0
     total_recon = 0.0
     total_class = 0.0
-    
+
     for inputs, targets in train_loader:
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
@@ -88,11 +92,11 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
         # ⚡ CHỐT CHẶN SÓNG THẦN: Cắt gradient khổng lồ để bảo vệ trọng số mạng
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-        
+
         total_loss_val += loss.item()
-        total_recon += l_recon.item()
-        total_class += l_class.item()
-        
+        total_recon    += l_recon.item()
+        total_class    += l_class.item()
+
     l = len(train_loader)
     return total_loss_val/l, total_recon/l, total_class/l
 
@@ -321,6 +325,18 @@ def main():
     criterion = AAMT_JointLoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     phoenix = None  # Đã tắt Auto Healing
+
+    # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau 10 epoch không cải thiện CE Loss val
+    # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.5, patience=10,
+        min_lr=1e-6, verbose=True
+    )
+    # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp 20 epoch
+    # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
+    _ES_PATIENCE     = 20   # Số epoch chịu đựng CE tăng
+    _es_streak       = 0    # Biến đếm streak tăng hiện tại
+    _es_best_ce_val  = float('inf')  # CE val tốt nhất từ trước đến nay
     
     # 3. PHASE 1 WARM-UP (Chỉ chạy 1 lần)
     model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
@@ -378,14 +394,33 @@ def main():
         current_optimizer = optimizer
         tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
         eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max)
-        
-        comp_score = eval_res.composite_score()
-        print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
+
+        comp_score  = eval_res.composite_score()
+        val_ce_loss = eval_res.val_loss   # CE-dominated val loss
+        current_lr  = optimizer.param_groups[0]['lr']
+        print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | LR={current_lr:.2e} | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
+
+        # [PHÁC ĐỒ 2] Báo ReduceLROnPlateau bước CE Loss val
+        lr_scheduler.step(val_ce_loss)
+
+        # [PHÁC ĐỒ 3] Early Stopping: theo dõi CE Loss val
+        if val_ce_loss < _es_best_ce_val:
+            _es_best_ce_val = val_ce_loss
+            _es_streak      = 0
+        else:
+            _es_streak += 1
+            if _es_streak >= _ES_PATIENCE:
+                print(f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!", flush=True)
+                print(f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})", flush=True)
+                print(f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất.", flush=True)
+                break
         
         improved = comp_score > best_score
         if improved:
-            best_score = comp_score
-            print(f"  \U0001f31f KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
+            best_score      = comp_score
+            _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
+            _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
+            print(f"  🌟 KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
             
             # Save local
             model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
