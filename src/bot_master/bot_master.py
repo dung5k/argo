@@ -309,6 +309,17 @@ def bot_background_loop():
         gui_status = "Đang Trích Xuất Phân Rã Không Gian..."
         
         if BOT_VERSION == "v3":
+            # [DEBUG] Bắt đầu điều tra sự thay đổi data
+            try:
+                latest_close = merged_df.iloc[-1]["close"]
+                tensor_sum = float(t_seq.sum().item())
+                tensor_mean = float(t_seq.mean().item())
+                print(f"[DEBUG DATA] Close hiện tại: {latest_close:.3f} | Tensor Sum: {tensor_sum:.4f} | Mean: {tensor_mean:.6f}")
+                print(f"[DEBUG DATA] Tensor Shape: {t_seq.shape} | 3 số ngẫu nhiên từ tensor: {t_seq.flatten()[:3].tolist()}...")
+            except Exception as e:
+                print(f"[DEBUG DATA] Lỗi tính toán debug: {e}")
+            # [DEBUG] KẾT THÚC
+
             action, mse, probs = engine.predict(t_seq)
             if action is None:
                 gui_status = "Động Cơ AI Sập"
