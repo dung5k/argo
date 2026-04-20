@@ -1,4 +1,5 @@
 {
+    "HF_RUN_ID": "WAITING_FOR_LTC_TRAINING_TO_FINISH",
     "TARGET_SYMBOL": "LTCUSDT",
     "TARGET_PREFIX": "LTC",
     "CONFIG_ID": "CFG_LTC_CRYPTO_V3_5",
@@ -72,6 +73,10 @@
     },
     "LIVE_BOT": {
         "MSE_THRESHOLD_PERCENTILE": 70,
-        "MIN_PROBABILITY_THRESH": 0.7
+        "MIN_PROBABILITY_THRESH": 0.7,
+        "BINANCE_EXECUTION": {
+            "LOT_SIZE": 0.5,
+            "LEVERAGE": 10
+        }
     }
 }
