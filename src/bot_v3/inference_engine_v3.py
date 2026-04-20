@@ -45,6 +45,17 @@ class V3InferenceEngine:
 
             from src.training_v3.model_v3 import AAMT_Model
 
+            state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
+            
+            # Khắc phục triệt để lỗi Toán Học đầu vào: tự động suy luận input_dim từ bộ lưu trọng số
+            try:
+                detected_dim = state_dict['encoder.input_projection.weight'].shape[1]
+                if detected_dim != num_features:
+                    self.log_callback(f"[InferenceEngineV3] ⚠️ Ghi đè Cột Đầu Vào từ {num_features} -> {detected_dim} theo Model Weights.")
+                    num_features = detected_dim
+            except KeyError:
+                pass
+
             self.model = AAMT_Model(
                 input_dim=num_features,
                 seq_len=window_size,
@@ -54,10 +65,9 @@ class V3InferenceEngine:
                 num_classes=3
             ).to(self.device)
 
-            self.model.load_state_dict(
-                torch.load(model_path, map_location=self.device, weights_only=True)
-            )
+            self.model.load_state_dict(state_dict)
             self.model.eval()
+            self.num_features = num_features
 
             device_str = getattr(self.device, 'type', 'mock').upper()
             param_count = sum(p.numel() for p in self.model.parameters())
@@ -95,13 +105,13 @@ class V3InferenceEngine:
                 # Tính Loss (AutoEncoder MSE)
                 mse_loss = F.mse_loss(reconstructed, x_tensor).item()
                 
-                # Lấy xác suất từ 3 class [Sell=0, Hold=1, Buy=2] bằng Softmax
+                # Lấy xác suất từ 3 class [Sell=0, Buy=1, Sideway=2] bằng Softmax
                 probs = F.softmax(logits, dim=-1).cpu().numpy()[0]
                 
                 out_dict = {
-                    "sell": float(probs[0]),
-                    "hold": float(probs[1]),
-                    "buy": float(probs[2])
+                    "sell": float(probs[0]),  # Class 0: Sell
+                    "buy": float(probs[1]),   # Class 1: Buy  ← khớp với LabelingV3
+                    "hold": float(probs[2])   # Class 2: Sideway/Hold
                 }
                 
                 action = "HOLD"
