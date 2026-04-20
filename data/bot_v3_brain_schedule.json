@@ -1,0 +1,40 @@
+{
+    "description": "L\u1ecbch tr\u00ecnh thay th\u1ebf b\u1ed9 n\u00e3o si\u00eau vi\u1ec7t theo phi\u00ean V3 (UTC Time)",
+    "timezone": "UTC",
+    "mt5_path": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "schedule": {
+        "asian": {
+            "start": "00:00",
+            "end": "06:59",
+            "run_id": "run_20260420_204854_v3_CFG_XAU_NY_V3_5",
+            "config_id": "CFG_XAU_NY_V3_5",
+            "dataset_repo": "dung5k/xau_v3_tensor_ny",
+            "trading_config": {
+                "min_prob_thresh": 0.6,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "london": {
+            "start": "07:00",
+            "end": "12:59",
+            "run_id": "run_20260420_210323_v3_CFG_XAU_LONDON_V3_5",
+            "config_id": "CFG_XAU_LONDON_V3_5",
+            "dataset_repo": "dung5k/xau_v3_tensor_london",
+            "trading_config": {
+                "min_prob_thresh": 0.61,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "ny": {
+            "start": "13:00",
+            "end": "22:59",
+            "run_id": "run_20260420_204854_v3_CFG_XAU_NY_V3_5",
+            "config_id": "CFG_XAU_NY_V3_5",
+            "dataset_repo": "dung5k/xau_v3_tensor_ny",
+            "trading_config": {
+                "min_prob_thresh": 0.6,
+                "mse_thresh_perc": 70.0
+            }
+        }
+    }
+}
