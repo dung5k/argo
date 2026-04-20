@@ -23,11 +23,11 @@
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PIPS": 10,
-        "SL_PIPS": 10,
-        "MAX_HOLD_BARS": 5,
+        "TP_PIPS": 5,
+        "SL_PIPS": 15,
+        "MAX_HOLD_BARS": 30,
         "PIP_SIZE": 0.1,
-        "WINDOW_SIZE": 20,
+        "WINDOW_SIZE": 60,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
             "USDJPY": [
@@ -51,9 +51,9 @@
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
         "LEARNING_RATE": 0.00001,
-        "TRAIN_START": "2024-01-01",
+        "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
-        "VAL_END": "2026-04-18",
+        "VAL_END": "2026-03-31",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 40,
         "FREQ_MAX_N": 200
