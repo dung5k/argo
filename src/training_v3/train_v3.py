@@ -235,7 +235,17 @@ def main():
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
             try:
-                model.load_state_dict(torch.load(latest_file, map_location=device))
+                state_dict = torch.load(latest_file, map_location=device)
+                model_state = model.state_dict()
+                for name, param in state_dict.items():
+                    if name in model_state:
+                        if param.shape != model_state[name].shape:
+                            print(f"[INHERIT] ✂️ Tự động Padding layer {name}: {param.shape} -> {model_state[name].shape}", flush=True)
+                            new_param = model_state[name].clone()
+                            slices = tuple(slice(0, min(s1, s2)) for s1, s2 in zip(param.shape, new_param.shape))
+                            new_param[slices] = param[slices]
+                            state_dict[name] = new_param
+                model.load_state_dict(state_dict, strict=False)
                 msg = f"\U0001f449 Kế thừa Model: {os.path.basename(latest_file)}"
                 print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:
