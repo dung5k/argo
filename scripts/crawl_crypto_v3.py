@@ -165,11 +165,28 @@ def main(config_file: str):
         start_dt = tz.localize(dt.strptime(f"{start_date} 00:00:00", "%Y-%m-%d %H:%M:%S"))
         end_dt   = tz.localize(dt.strptime(f"{end_str} 23:59:59", "%Y-%m-%d %H:%M:%S"))
 
+        continuous = config.get("DATA_SOURCE", {}).get("CONTINUOUS_CONTRACTS", {})
+        
         for sym in sym_list:
-            rates = mt5.copy_rates_range(sym, mt5.TIMEFRAME_M1,
+            # Resolve tên symbol thực trên MT5 (hỗ trợ CONTINUOUS_CONTRACTS)
+            actual_mt5_sym = sym
+            if sym in continuous:
+                prefix = continuous[sym].get("PREFIX", sym)
+                # Tìm symbol thực trên MT5 bằng prefix
+                all_syms = mt5.symbols_get()
+                matches = [s.name for s in all_syms if s.name.startswith(prefix)] if all_syms else []
+                if matches:
+                    actual_mt5_sym = matches[0]
+                    log(f"  📌 Resolve {sym} → {actual_mt5_sym} (prefix={prefix})")
+                else:
+                    log(f"  ❌ Không tìm thấy symbol prefix={prefix} trên MT5!")
+                    missing.append(sym)
+                    continue
+            
+            rates = mt5.copy_rates_range(actual_mt5_sym, mt5.TIMEFRAME_M1,
                                           int(start_dt.timestamp()), int(end_dt.timestamp()))
             if rates is None or len(rates) == 0:
-                log(f"  ❌ Không có dữ liệu MT5 cho {sym}!")
+                log(f"  ❌ Không có dữ liệu MT5 cho {actual_mt5_sym} ({sym})!")
                 missing.append(sym)
                 continue
 
@@ -179,11 +196,11 @@ def main(config_file: str):
             df.rename(columns={'tick_volume': 'volume'}, inplace=True)
             df_save = df[['open', 'high', 'low', 'close', 'volume', 'real_volume', 'spread']].copy()
 
-            # Loại bỏ suffix 'm' để tạo filename chuẩn
+            # Loại bỏ suffix 'm' để tạo filename chuẩn — dùng tên config (không phải actual MT5 sym)
             sym_clean = sym.upper().rstrip('M') if sym.upper().endswith('M') else sym.upper()
             out_path = os.path.join(history_dir, f"{sym_clean}_MT5_1M_2026.parquet")
             df_save.to_parquet(out_path)
-            log(f"  ✔️ MT5 {sym}: {len(df_save)} nến → {out_path}")
+            log(f"  ✔️ MT5 {actual_mt5_sym} → {sym_clean}: {len(df_save)} nến → {out_path}")
 
         mt5.shutdown()
 
