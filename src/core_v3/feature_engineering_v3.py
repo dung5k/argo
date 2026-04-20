@@ -196,8 +196,10 @@ class FeatureEngineeringV3:
         
     def fit_transform_scaler(self, features_df):
         """Scale data trong lúc Training"""
-        # Tránh đưa cột Time Context (sin/cos/vùng one-hot) vào scaler vì bản thân nó đã nằm trong biên [-1, 1] hoặc [0, 1]
-        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled'))]
+        # Tránh đưa cột đã nằm trong biên [-1, 1] hoặc [0, 1] vào scaler:
+        # - hour_sin/cos, is_asian/london/ny: Time Context 
+        # - rsi_14_scaled, rsi_5_scaled: đã chuẩn hóa thủ công về [-1, 1]
+        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))]
         
         scaled_data = features_df.copy()
         
@@ -215,13 +217,15 @@ class FeatureEngineeringV3:
         if not self.is_fitted:
             raise ValueError("Scaler chưa được fit. Vui lòng gọi fit_transform trước.")
             
-        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled'))]
+        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))]
         scaled_data = features_df.copy()
         
         if cols_to_scale:
-            scaled_vals = self.scaler.transform(features_df[cols_to_scale])
+            # Chỉ scale những cột mà scaler đã được fit (fix lỗi Feature unseen at fit time)
+            valid_cols = [c for c in cols_to_scale if c in self.scaler.feature_names_in_]
+            scaled_vals = self.scaler.transform(features_df[valid_cols])
             scaled_vals = np.clip(scaled_vals, -15.0, 15.0)
-            scaled_data[cols_to_scale] = scaled_vals
+            scaled_data[valid_cols] = scaled_vals
             
         return scaled_data
 

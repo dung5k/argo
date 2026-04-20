@@ -106,7 +106,7 @@ class V3DataProcessor:
         else:
             # Fallback: format cũ — dùng thứ tự từ DataFrame (rủi ro)
             valid_scaled_feats = self.inference_feats
-            static_context_feats = ['hour_sin', 'hour_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled']
+            static_context_feats = ['hour_sin', 'hour_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled', 'rsi_5_scaled']
             allowed_features = set(valid_scaled_feats).union(set(static_context_feats))
             final_cols = [c for c in scaled_df.columns if c in allowed_features]
         
