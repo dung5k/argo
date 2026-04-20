@@ -343,7 +343,7 @@ def main():
     # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=10,
-        min_lr=1e-6, verbose=True
+        min_lr=1e-6
     )
     # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp 20 epoch
     # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
