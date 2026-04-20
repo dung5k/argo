@@ -307,15 +307,13 @@ def bot_background_loop():
             continue
             
         gui_status = "Đang Trích Xuất Phân Rã Không Gian..."
-        
         if BOT_VERSION == "v3":
             # [DEBUG] Bắt đầu điều tra sự thay đổi data
             try:
-                latest_close = merged_df.iloc[-1]["close"]
                 tensor_sum = float(t_seq.sum().item())
                 tensor_mean = float(t_seq.mean().item())
-                print(f"[DEBUG DATA] Close hiện tại: {latest_close:.3f} | Tensor Sum: {tensor_sum:.4f} | Mean: {tensor_mean:.6f}")
-                print(f"[DEBUG DATA] Tensor Shape: {t_seq.shape} | 3 số ngẫu nhiên từ tensor: {t_seq.flatten()[:3].tolist()}...")
+                print(f"[DEBUG DATA] Tensor Sum: {tensor_sum:.8f} | Mean: {tensor_mean:.8f}")
+                print(f"[DEBUG DATA] Tensor Shape: {t_seq.shape} | 3 số đầu: {t_seq.flatten()[:3].tolist()}...")
             except Exception as e:
                 print(f"[DEBUG DATA] Lỗi tính toán debug: {e}")
             # [DEBUG] KẾT THÚC
@@ -333,14 +331,13 @@ def bot_background_loop():
             msg_pred = f"🎯 KẾT QUẢ DỰ ĐOÁN:\nNến {gui_time} | L: {mse:.4f}\n(Thresh: {engine.mse_threshold:.4f})\nTỷ lệ: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\nHành động: {action}"
             print(f"[BOT MASTER] {msg_pred}")
             
-            # Gửi 3 lần đầu hoặc khi vươn tới sát ngưỡng (vd: mấp mé ngưỡng 15%)
-            is_approaching = max(probs['buy'], probs['sell']) >= (engine.prob_threshold - 0.15)
+            # Chỉ thông báo Tele khi: 3 lần warmup đầu HOẶC có tín hiệu thật (BUY/SELL)
             is_trade_action = action in ["BUY", "SELL"]
             
-            if tele_msg_count < 3 or is_approaching or is_trade_action:
-                prefix = "⚠️ [SẮP ĐẠT NGƯỠNG] " if (is_approaching and not is_trade_action) else ("🔥 [TÍN HIỆU] " if is_trade_action else "📊 [CẬP NHẬT ĐỊNH KỲ] ")
+            if tele_msg_count < 3 or is_trade_action:
+                prefix = "🔥 [TÍN HIỆU VÀO LỆNH] " if is_trade_action else "📊 [CẬP NHẬT ĐỊNH KỲ] "
                 tg_notify(prefix + msg_pred)
-                if not (is_approaching or is_trade_action):
+                if not is_trade_action:
                     tele_msg_count += 1
                     
             trade_manager.manage_mt5_positions(action, probs, mse, actual_target_sym=actual_sym)
@@ -389,13 +386,30 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
             w_hold = int(300 * gui_v3_probs.get("hold", 0))
             
             # Left: BUY (Green), Middle: HOLD (Gray), Right: SELL (Red)
-            if w_buy > 0: pred_canvas.create_rectangle(0, 0, w_buy, 15, fill="#00ffcc", outline="")
-            if w_hold > 0: pred_canvas.create_rectangle(w_buy, 0, w_buy + w_hold, 15, fill="#555555", outline="")
-            if w_sell > 0: pred_canvas.create_rectangle(w_buy + w_hold, 0, 300, 15, fill="#ff3366", outline="")
+            if w_buy > 0: pred_canvas.create_rectangle(0, 0, w_buy, 30, fill="#00ffcc", outline="")
+            if w_hold > 0: pred_canvas.create_rectangle(w_buy, 0, w_buy + w_hold, 30, fill="#555555", outline="")
+            if w_sell > 0: pred_canvas.create_rectangle(w_buy + w_hold, 0, 300, 30, fill="#ff3366", outline="")
             
-            # Borders for active action threshold if close
-            if gui_action == "BUY": pred_canvas.create_rectangle(0, 0, w_buy, 15, outline="#ffffff", width=2)
-            if gui_action == "SELL": pred_canvas.create_rectangle(w_buy + w_hold, 0, 300, 15, outline="#ffffff", width=2)
+            # Text labels on bar
+            buy_pct = gui_v3_probs.get("buy", 0) * 100
+            sell_pct = gui_v3_probs.get("sell", 0) * 100
+            hold_pct = gui_v3_probs.get("hold", 0) * 100
+            
+            lbl_font = ("Consolas", 9, "bold")
+            if w_buy > 30:
+                pred_canvas.create_text(w_buy // 2, 15, text=f"B {buy_pct:.0f}%", fill="#001a12", font=lbl_font)
+            if w_hold > 30:
+                pred_canvas.create_text(w_buy + w_hold // 2, 15, text=f"H {hold_pct:.0f}%", fill="#ffffff", font=lbl_font)
+            if w_sell > 30:
+                pred_canvas.create_text(w_buy + w_hold + (300 - w_buy - w_hold) // 2, 15, text=f"S {sell_pct:.0f}%", fill="#330010", font=lbl_font)
+            
+            # Winning action label (big, centered)
+            if gui_action == "BUY":
+                pred_canvas.create_text(150, 15, text=f"▲ BUY  {buy_pct:.1f}%", fill="#ffffff", font=("Consolas", 11, "bold"))
+                pred_canvas.create_rectangle(0, 0, w_buy, 30, outline="#ffffff", width=2)
+            elif gui_action == "SELL":
+                pred_canvas.create_text(150, 15, text=f"▼ SELL  {sell_pct:.1f}%", fill="#ffffff", font=("Consolas", 11, "bold"))
+                pred_canvas.create_rectangle(w_buy + w_hold, 0, 300, 30, outline="#ffffff", width=2)
             
     else:
         try:
@@ -454,7 +468,7 @@ def start_overlay_dashboard():
     
     pred_canvas = None
     if BOT_VERSION == "v3":
-        pred_canvas = tk.Canvas(root, width=300, height=15, bg="#222222", highlightthickness=0)
+        pred_canvas = tk.Canvas(root, width=300, height=30, bg="#222222", highlightthickness=0)
         pred_canvas.pack(pady=2)
         
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))
