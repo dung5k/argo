@@ -1,7 +1,7 @@
 {
     "TARGET_SYMBOL": "LTCUSDT",
     "TARGET_PREFIX": "LTC",
-    "CONFIG_ID": "CFG_LTC_CRYPTO_V3",
+    "CONFIG_ID": "CFG_LTC_CRYPTO_V3_5",
     "VERSION": "3.5",
     "SESSION": "crypto_247",
     "SESSION_UTC": {
@@ -48,7 +48,7 @@
         "LEARNING_RATE": 0.00001,
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
-        "VAL_END": "2026-04-18",
+        "VAL_END": "2026-04-20",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 100,
         "FREQ_MAX_N": 600
