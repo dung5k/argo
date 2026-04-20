@@ -148,7 +148,7 @@ class MT5DataManager:
         for source_name, symbol_dict in self.DATA_SOURCES.items():
             for sym_m, mapped_list in symbol_dict.items():
                 for mapped_name in mapped_list:
-                    if any(f.startswith(f"{mapped_name}_") for f in self.features):
+                    if sym_m == self.target_sym or any(f.startswith(f"{mapped_name}_") for f in self.features):
                         self.active_mappings.append((source_name, sym_m, mapped_name))
         
         self.gui_symbols = {}
@@ -355,7 +355,8 @@ class MT5DataManager:
                 return None, [], error_msg
                 
             if len(merged_df) > 0:
-                merged_df.index = merged_df.index.tz_convert('America/New_York')
+                # BUG FIX: GIỮ INDEX UTC khi đưa vào FE/V3 pipeline (khớp với lúc Training dùng UTC)
+                # KHÔNG convert sang New_York trước khi tính hour_sin/is_london/is_ny
                 from src.core.feature_engineering import add_time_embeddings
                 merged_df = add_time_embeddings(merged_df)
                 # ĐỂ LẠI NaNs cho FeatureEngineering tự lo (Zero-pad hoặc Drop)), không dropna() tránh mất trắng dữ liệu

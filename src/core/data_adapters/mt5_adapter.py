@@ -65,7 +65,8 @@ class MT5Adapter(BaseDataAdapter):
         if not mt5.symbol_select(symbol, True):
             return pd.DataFrame()
             
-        rates = mt5.copy_rates_from_pos(symbol, mt5_tf, 0, limit)
+        # Fetch limit+1 để dự phòng Nến cuối là Nến Mở (Chưa Đóng)
+        rates = mt5.copy_rates_from_pos(symbol, mt5_tf, 0, limit + 1)
         if rates is None or len(rates) == 0:
             return pd.DataFrame()
             
@@ -78,6 +79,11 @@ class MT5Adapter(BaseDataAdapter):
         df.set_index('datetime', inplace=True)
         # Đưa về UTC chuẩn
         df.index = df.index.tz_localize('UTC')
+        
+        # BUG FIX: Drop nến cuối cùng (đang chưa đóng) 
+        # copy_rates_from_pos pos=0 luôn include nến M1 đang chạy ở vị trí cuối
+        if len(df) > 1:
+            df = df.iloc[:-1]
         
         df.drop(columns=['spread'], inplace=True, errors='ignore')
         df.rename(columns={'tick_volume': 'volume'}, inplace=True)
