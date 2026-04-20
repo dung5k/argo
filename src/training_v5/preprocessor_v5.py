@@ -13,7 +13,7 @@ class PreprocessorV5:
         self.cfg_engine = config.get("V5_XGB_ENGINE", {})
         self.leader_assets = self.cfg_engine.get("LEADER_ASSETS", {})
         self.window_size = self.cfg_engine.get("BAR_WINDOW", 20)
-        self.target_symbol = config.get("TARGET_SYMBOL", "LTCUSDT")
+        self.target_symbol = config.get("TARGET_PREFIX", "LTC")
         
         self.scaler = RobustScaler()
         self.is_fitted = False

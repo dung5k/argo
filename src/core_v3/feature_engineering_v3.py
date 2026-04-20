@@ -70,6 +70,7 @@ class FeatureEngineeringV3:
         lower_band = sma - 2 * rstd
         
         features['bb_width'] = (upper_band - lower_band) / (sma + 1e-6)
+        features['bb_zscore'] = (df[close_col] - sma) / (rstd + 1e-6)
         
         return features
         
@@ -86,6 +87,13 @@ class FeatureEngineeringV3:
         rsi = 100 - (100 / (1 + rs))
         # Chuẩn hóa RSI về [-1, 1] cho Neural Network dễ học
         features['rsi_14_scaled'] = (rsi / 50.0) - 1.0
+        
+        # Thêm RSI siêu ngắn (RSI 5) để bắt Mean Reversion độ trễ thấp
+        gain_5 = (delta.where(delta > 0, 0)).rolling(window=5, min_periods=1).mean()
+        loss_5 = (-delta.where(delta < 0, 0)).rolling(window=5, min_periods=1).mean()
+        rs_5 = gain_5 / (loss_5 + 1e-6)
+        rsi_5 = 100 - (100 / (1 + rs_5))
+        features['rsi_5_scaled'] = (rsi_5 / 50.0) - 1.0
         
         # Tính MACD
         ema_fast = df[close_col].ewm(span=macd_fast, adjust=False).mean()

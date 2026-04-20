@@ -76,8 +76,30 @@ def main():
     print(f"🔥 BẮT ĐẦU XÂY DỰNG MODULE SELECTIVE V5 CHO: {cfg_id}")
     
     print("\n[1] Đọc dữ liệu lịch sử...")
-    df_raw = load_parquet_crypto(raw_dir, target_symbol, target_source, leader_assets)
-    print(f"  ✅ df_raw: {df_raw.shape}")
+    df_raw = load_parquet_crypto(raw_dir, target_prefix, target_source, leader_assets)
+    print(f"  ✅ df_raw trước resample: {df_raw.shape}")
+    
+    resample_freq = config.get("DATA_SOURCE", {}).get("RESAMPLE_FREQ", None)
+    if resample_freq:
+        print(f"\n[1.5] Resample dữ liệu về khung {resample_freq}...")
+        # Define aggregation dictionary
+        agg_dict = {}
+        for col in df_raw.columns:
+            if col.endswith('_open'):
+                agg_dict[col] = 'first'
+            elif col.endswith('_high'):
+                agg_dict[col] = 'max'
+            elif col.endswith('_low'):
+                agg_dict[col] = 'min'
+            elif col.endswith('_close'):
+                agg_dict[col] = 'last'
+            elif col.endswith('_volume') or col.endswith('_tick_volume'):
+                agg_dict[col] = 'sum'
+            else:
+                agg_dict[col] = 'last'
+        
+        df_raw = df_raw.resample(resample_freq).agg(agg_dict).dropna()
+        print(f"  ✅ df_raw SAU resample: {df_raw.shape}")
     
     # Chuẩn bị Macro Veto (Test Phase)
     close_col = f"{target_symbol}_close"
@@ -98,16 +120,18 @@ def main():
     print("\n[3] Gắn nhãn Triple Barrier...")
     live_cfg = config.get("LIVE_BOT", {})
     labeler = LabelingV3(
-        max_hold_bars=live_cfg.get("MAX_HOLD_BARS", 10),
-        label_mode=live_cfg.get("LABEL_MODE", "pct"),
+        max_hold_bars=live_cfg.get("MAX_HOLD_BARS", 5),
+        label_mode=live_cfg.get("LABEL_MODE", "pip"),
         tp_pct=live_cfg.get("TP_PCT", 0.005),
         sl_pct=live_cfg.get("SL_PCT", 0.005),
-        pip_size=live_cfg.get("PIP_SIZE", 0.01)
+        tp_pips=live_cfg.get("TP_PIPS", 15),
+        sl_pips=live_cfg.get("SL_PIPS", 15),
+        pip_size=live_cfg.get("PIP_SIZE", 0.1)
     )
     
-    actual_open = f"{target_symbol}_open" if f"{target_symbol}_open" in df_raw.columns else f"{target_prefix}USDT_open"
-    actual_high = f"{target_symbol}_high" if f"{target_symbol}_high" in df_raw.columns else f"{target_prefix}USDT_high"
-    actual_low = f"{target_symbol}_low" if f"{target_symbol}_low" in df_raw.columns else f"{target_prefix}USDT_low"
+    actual_open = f"{target_symbol}_open" if f"{target_symbol}_open" in df_raw.columns else f"{target_prefix}_open"
+    actual_high = f"{target_symbol}_high" if f"{target_symbol}_high" in df_raw.columns else f"{target_prefix}_high"
+    actual_low = f"{target_symbol}_low" if f"{target_symbol}_low" in df_raw.columns else f"{target_prefix}_low"
     
     targets_all = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
     labels = targets_all.loc[valid_indices].values
