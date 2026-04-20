@@ -222,13 +222,15 @@ def main():
         try:
             from hf_sync import pull_runs
             model_repo_pull = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
-            pulled = pull_runs(logger=None, target_prefix="v3", config_id=cfg_id, custom_repo_id=model_repo_pull)
+            inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
+            pulled = pull_runs(logger=None, target_prefix="v3", config_id=inherit_cfg_id, custom_repo_id=model_repo_pull)
         except Exception as e:
             print(f"[HF] Lỗi pull_runs: {e}", flush=True)
             
         import glob
         log_base_fetch = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
-        pattern = os.path.join(log_base_fetch, "runs", "**", f"aamt_v3_{cfg_id}_final.pth")
+        inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
+        pattern = os.path.join(log_base_fetch, "runs", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
         all_files = glob.glob(pattern, recursive=True)
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
@@ -240,7 +242,7 @@ def main():
                 msg = f"\u274c Lỗi kế thừa Model: {e}"
                 print(f"  {msg}", flush=True)
         else:
-            msg = f"❌ Không tìm thấy CSDL trọng số cũ nào cho {cfg_id} trên HF để kế thừa! Yêu cầu kế thừa đã bị thất bại. Dừng hệ thống!"
+            msg = f"❌ Không tìm thấy CSDL trọng số cũ nào cho {inherit_cfg_id} trên HF để kế thừa! Yêu cầu kế thừa đã bị thất bại. Dừng hệ thống!"
             print(f"  {msg}", flush=True)
             raise FileNotFoundError(msg)
             
