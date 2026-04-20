@@ -20,6 +20,7 @@ class V3DataProcessor:
         self.config = config or {}
         self.log_callback = log_callback or print
         self.fe = None
+        self.saved_column_order = None  # Thứ tự cột lúc Training (nếu có)
         self.log_callback(
             f"[DataProcessorV3] Khởi tạo | scaler={os.path.basename(scaler_path)} "
             f"| window={window_size} | n_feats={len(inference_feats)}"
@@ -37,9 +38,18 @@ class V3DataProcessor:
             
             self.fe = FeatureEngineeringV3(target_prefix=target_prefix, macro_features=macro_features)
             
-            # Load scaler
-            scaler_obj = joblib.load(self.scaler_path)
-            self.fe.scaler = scaler_obj
+            # Load scaler (hỗ trợ cả format cũ và mới)
+            raw_pickle = joblib.load(self.scaler_path)
+            if isinstance(raw_pickle, dict) and "scaler" in raw_pickle:
+                # Format mới: dict {scaler, column_order}
+                self.fe.scaler = raw_pickle["scaler"]
+                self.saved_column_order = raw_pickle.get("column_order", None)
+                self.log_callback(f"[DataProcessorV3] 📐 Column order loaded: {len(self.saved_column_order)} cột")
+            else:
+                # Format cũ: chỉ có scaler object
+                self.fe.scaler = raw_pickle
+                self.saved_column_order = None
+                self.log_callback("[DataProcessorV3] ⚠️ Scaler format cũ (không có column_order). Dùng thứ tự mặc định.")
             self.fe.is_fitted = True
             
             self.log_callback("[DataProcessorV3] ✅ FeatureEngineeringV3 sẵn sàng.")
@@ -84,15 +94,26 @@ class V3DataProcessor:
             self.log_callback(f"[DataProcessorV3] ⚠️ {msg}")
             return None, msg
 
-        # 3. Filter & Align
-        missing = [c for c in self.inference_feats if c not in scaled_df.columns]
-        if missing:
-            self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {len(missing)} cột: {missing[:5]}. Auto fill zeros.")
-            for col in missing:
-                scaled_df[col] = 0.0
-                
-        final_df = scaled_df[self.inference_feats].copy()
+        # 3. Khớp Khối Dữ Liệu Toán Học — ÉP THỨ TỰ CỘT KHỚP VỚI TRAINING
+        if self.saved_column_order:
+            # Dùng thứ tự cột chính xác từ lúc Training (đã lưu trong scaler pickle)
+            available = set(scaled_df.columns)
+            final_cols = [c for c in self.saved_column_order if c in available]
+            # Nếu có cột thiếu, log cảnh báo
+            missing = [c for c in self.saved_column_order if c not in available]
+            if missing:
+                self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {len(missing)} cột so với Training: {missing[:5]}")
+        else:
+            # Fallback: format cũ — dùng thứ tự từ DataFrame (rủi ro)
+            valid_scaled_feats = self.inference_feats
+            static_context_feats = ['hour_sin', 'hour_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled']
+            allowed_features = set(valid_scaled_feats).union(set(static_context_feats))
+            final_cols = [c for c in scaled_df.columns if c in allowed_features]
+        
+        final_df = scaled_df[final_cols].copy()
+        
         final_df.replace([np.inf, -np.inf], 0, inplace=True)
+        final_df.ffill(inplace=True)  # Ưu tiên giá trị gần nhất trước khi fill 0
         final_df.fillna(0, inplace=True)
 
         # 4. Trích Window cuối + to Tensor

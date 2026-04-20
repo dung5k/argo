@@ -289,6 +289,27 @@ def main():
         raw_dir, target_sym, target_prefix, macro_features,
         dataset_suffix=config.get("DATA_SOURCE", {}).get("DATASET_SUFFIX", "2026")
     )
+    
+    resample_freq = config.get("DATA_SOURCE", {}).get("RESAMPLE_FREQ", None)
+    if resample_freq:
+        print(f"\n[1.5] Resample dữ liệu về khung {resample_freq}...", flush=True)
+        agg_dict = {}
+        for col in df_raw.columns:
+            if col.endswith('_open'):
+                agg_dict[col] = 'first'
+            elif col.endswith('_high'):
+                agg_dict[col] = 'max'
+            elif col.endswith('_low'):
+                agg_dict[col] = 'min'
+            elif col.endswith('_close'):
+                agg_dict[col] = 'last'
+            elif col.endswith('_volume') or col.endswith('_tick_volume'):
+                agg_dict[col] = 'sum'
+            else:
+                agg_dict[col] = 'last'
+                
+        df_raw = df_raw.resample(resample_freq).agg(agg_dict).dropna()
+        print(f"  ✅ df_raw SAU resample: {df_raw.shape}", flush=True)
 
     # Xác định cột OHLC thực tế (flex prefix)
     sym_up = target_sym.upper()
@@ -388,8 +409,15 @@ def main():
 
     np.save(x_path, X)
     np.save(y_path, Y)
+    
+    # Lưu scaler + column_order để đảm bảo thứ tự cột khớp hoàn hảo khi live inference
+    scaler_bundle = {
+        "scaler": fe.scaler,
+        "column_order": list(df_scaled.columns),
+    }
     with open(scaler_path, "wb") as f:
-        pickle.dump(fe.scaler, f)
+        pickle.dump(scaler_bundle, f)
+    print(f"  📐 Column order ({len(df_scaled.columns)} cột): {list(df_scaled.columns)[:5]}...", flush=True)
     print(f"\n✅ Đã lưu tensor cục bộ tại: {out_dir}/", flush=True)
 
     # ── 9. UPLOAD HF ────────────────────────────────────────────────────────
