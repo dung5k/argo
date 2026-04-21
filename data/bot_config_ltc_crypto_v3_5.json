@@ -26,7 +26,7 @@
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
-            "BTCUSDT": ["log_ret", "bb_width", "volume"],
+            "BTCUSDT": ["log_ret", "bb_width", "volume", "corr_60"],
             "ETHUSDT": ["log_ret", "volume"],
             "BCHUSDT": ["log_ret"],
             "DOGEUSDT": ["log_ret", "volume"],
