@@ -285,10 +285,12 @@ class FeatureEngineeringV3:
                 
                 # Tìm cột close và high, low của Macro
                 try:
-                    m_close = cols.get(f"{sym_lower}_close".lower()) or cols.get(f"{sym_lower}_usd_close".lower())
-                    m_high = cols.get(f"{sym_lower}_high".lower()) or cols.get(f"{sym_lower}_usd_high".lower())
-                    m_low = cols.get(f"{sym_lower}_low".lower()) or cols.get(f"{sym_lower}_usd_low".lower())
-                    m_open = cols.get(f"{sym_lower}_open".lower()) or cols.get(f"{sym_lower}_usd_open".lower())
+                    sym_clean = sym_lower.removesuffix('m')
+                    
+                    m_close = cols.get(f"{sym_lower}_close".lower()) or cols.get(f"{sym_lower}_usd_close".lower()) or cols.get(f"{sym_clean}_close".lower())
+                    m_high = cols.get(f"{sym_lower}_high".lower()) or cols.get(f"{sym_lower}_usd_high".lower()) or cols.get(f"{sym_clean}_high".lower())
+                    m_low = cols.get(f"{sym_lower}_low".lower()) or cols.get(f"{sym_lower}_usd_low".lower()) or cols.get(f"{sym_clean}_low".lower())
+                    m_open = cols.get(f"{sym_lower}_open".lower()) or cols.get(f"{sym_lower}_usd_open".lower()) or cols.get(f"{sym_clean}_open".lower())
                     
                     if m_close and m_open:
                         f_macro = pd.DataFrame(index=df.index)
@@ -317,7 +319,7 @@ class FeatureEngineeringV3:
                             f_macro[f"{sym}_bb_width"] = vol_macro['bb_width']
                             
                         if "volume" in req_features:
-                            m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower())
+                            m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower()) or cols.get(f"{sym_clean}_volume".lower()) or cols.get(f"{sym_clean}_tick_volume".lower())
                             if m_vol:
                                 f_macro[f"{sym}_volume"] = df[m_vol]
                             
