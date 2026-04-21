@@ -10,7 +10,8 @@ Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn
 **Workflow Action:**
 1. Call `git add <file(s)>`
 2. Call `git commit -m "bot: <mô tả ngắn gọn tiếng Việt>"`
-3. Call `git push` (optional: continue if it fails due to branching)
+3. Call `git pull --no-edit` (BẮT BUỘC: Pull code về và tự động merge nếu có xung đột nhẹ để đồng bộ với Remote)
+4. Call `git push` (BÁO CÁO: nếu push hoặc pull thất bại do merge conflict phức tạp, cần báo người dùng can thiệp)
 
 
 # Nguyên tắc code
