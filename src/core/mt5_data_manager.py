@@ -32,6 +32,13 @@ class MT5DataManager:
         self.MT5_PATHS = self.config.get("DATA_SOURCE", {}).get("BROKERS", {
             "DEFAULT": r"C:\Program Files\MetaTrader 5\terminal64.exe"
         })
+        
+        # Xử lý thư mục backup D:\mt5 nếu không tìm thấy thư mục gốc
+        for alias, path in list(self.MT5_PATHS.items()):
+            if path and "terminal64.exe" in path and not os.path.exists(path):
+                backup_path = r"D:\mt5\terminal64.exe"
+                if os.path.exists(backup_path):
+                    self.MT5_PATHS[alias] = backup_path
         self.MT5_PATHS["LOCAL"] = "LOCAL" # Giữ nguyên nhãn cho data lấy từ LOCAL
         
         # 2. Xây dựng DATA_SOURCES tự động từ phần ROUTING của Unified Config

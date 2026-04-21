@@ -135,6 +135,7 @@ def bot_background_loop():
     if TRADE_PLATFORM == "MT5":
         trade_manager.init_mt5()
         mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        if not os.path.exists(mt5_init_path) and os.path.exists(r"D:\mt5\terminal64.exe"): mt5_init_path = r"D:\mt5\terminal64.exe"
         gui_status = "Đang kết nối MT5..."
         if not trade_manager.mt5.initialize(path=mt5_init_path):
             gui_status = "❌ Mất Kết Nối MT5 Terminal!"
@@ -273,6 +274,7 @@ def bot_background_loop():
         
         if TRADE_PLATFORM == "MT5":
             trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+            if not os.path.exists(trading_path) and os.path.exists(r"D:\mt5\terminal64.exe"): trading_path = r"D:\mt5\terminal64.exe"
             if mt5_manager.current_connected_path != trading_path:
                 trade_manager.mt5.shutdown()
                 trade_manager.mt5.initialize(path=trading_path)

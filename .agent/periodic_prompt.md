@@ -30,6 +30,8 @@ Những thay đổi BẠN CÓ QUYỀN VÀ NÊN làm:
 ## BƯỚC 4: Chuẩn bị Dữ liệu & Kích hoạt Huấn luyện
 1. **Chuẩn bị lại Data (Nếu Cần)**: Nếu Bước 3 có động chạm tới cấu trúc Features, `WINDOW_SIZE` hoặc `TP/SL` v.v., bạn BẮT BUỘC phải gọi script sinh lại bộ dữ liệu (tạo Tensors). Hãy tìm đúng file script sinh data của hệ thống và chạy nó với cấu hình mới.
 2. **Kích hoạt Training**: Gọi lệnh chạy huấn luyện mô hình (ví dụ: chạy `train_v3.py` truyền vào đường dẫn cấu hình). Đảm bảo sử dụng công cụ Run Command theo cơ chế ngầm (Background / Async) để tiến trình tự chạy.
+   - **THEO DÕI LOG VÀ FIX LỖI**: Đừng chỉ khởi động xong rồi bỏ đó! Hãy đọc liên tục các dòng log (thông qua file output hoặc theo dõi Command_Status) trong vài phút đầu để xem tiến trình chuẩn bị Data hoặc Training có sinh ra Exception / Error không.
+   - Nếu có lỗi phát sinh: BẠN PHẢI TỰ ĐỘNG PHÂN TÍCH LỖI, SỬA CODE/CONFIG và CHẠY LẠI tiến trình cho đến khi Training thực sự diễn ra thành công.
 3. **Thông báo Telegram**: Sử dụng script `.agent/send_to_tele.py` để báo cáo ngắn gọn về việc: Bạn vừa đánh giá kết quả ra sao, thay đổi những gì ở Cấu hình/Code, và đã kích hoạt lại vòng lặp huấn luyện mới. 
 
 Chúc bạn tìm ra "chén thánh" thành công!
