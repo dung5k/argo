@@ -1,0 +1,216 @@
+{
+    "_description": "Danh mục tập trung tất cả nguồn dữ liệu và mã giao dịch. Đây là source of truth cho toàn hệ thống.",
+    "_last_updated": "2026-04-12",
+
+    "brokers": {
+        "EXNESS": {
+            "path": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "description": "Exness MT5 - nguồn chính, phủ hầu hết Forex, Kim loại, Crypto, Indices"
+        },
+        "DEFAULT": {
+            "path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "description": "MT5 mặc định - dùng cho VIXY, một số mã US không có trên Exness"
+        },
+        "MT5_2": {
+            "path": "C:\\Program Files\\MetaTrader 5 - 2\\terminal64.exe",
+            "description": "MT5 phụ - dùng cho US 10Y Yield futures (Z10Y)"
+        },
+        "MTRADING": {
+            "path": "C:\\Program Files\\Mtrading MetaTrader 5\\terminal64.exe",
+            "description": "MTrading MT5 - dự phòng"
+        },
+        "ICMARKETS": {
+            "path": "C:\\Program Files\\MetaTrader 5 - ICMarkets\\terminal64.exe",
+            "description": "ICMarkets MT5 - báo giá chuẩn cho Forex CFD, chứng khoán, năng lượng"
+        }
+    },
+
+    "symbols": {
+        "precious_metals": {
+            "description": "Kim loại quý",
+            "items": {
+                "XAUUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["XAUUSDm", "XAUUSD", "GOLD", "GOLDm", "XAUUSD.a"],
+                    "feature_prefix": "XAUUSD",
+                    "available_features": ["close_log_ret", "open_log_ret", "high_log_ret", "low_log_ret", "RSI", "EMA9_dist", "EMA21_dist", "Body", "Upper_Shadow", "Lower_Shadow", "ATR_ratio", "ret_5m", "ret_10m", "ret_30m"],
+                    "note": "Mã chính - giữ nguyên full features"
+                },
+                "XAGUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["XAGUSDm", "XAGUSD", "SILVER", "SILVERm", "XAGUSD.a"],
+                    "feature_prefix": "XAGUSD",
+                    "available_features": ["close_log_ret"],
+                    "note": "Bạch kim - tương quan tốt với vàng"
+                }
+            }
+        },
+
+        "forex_major": {
+            "description": "Cặp tiền tệ chính",
+            "items": {
+                "EURUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["EURUSDm", "EURUSD", "EURUSD.a"],
+                    "feature_prefix": "EURUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["asian", "london", "ny"],
+                    "note": "Phản ánh USD strength - hữu ích mọi phiên"
+                },
+                "GBPUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["GBPUSDm", "GBPUSD", "GBPUSD.a"],
+                    "feature_prefix": "GBPUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["london"],
+                    "note": "Phù hợp phiên London hơn, yếu hơn trong NY"
+                },
+                "AUDUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["AUDUSDm", "AUDUSD", "AUDUSD.a"],
+                    "feature_prefix": "AUDUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["asian"],
+                    "note": "Tương quan tốt với vàng nhưng phù hợp phiên Asian hơn NY"
+                },
+                "USDCADm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["USDCADm", "USDCAD", "USDCAD.a"],
+                    "feature_prefix": "USDCAD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "USD strength + Oil price - rất phù hợp phiên NY"
+                },
+                "USDJPYm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["USDJPYm", "USDJPY", "USDJPY.a"],
+                    "feature_prefix": "USDJPY",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["asian", "london"],
+                    "note": "Safe-haven signal, quan trọng cho Asian"
+                },
+                "USDCHFm": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["USDCHFm", "USDCHF", "USDCHF.a"],
+                    "feature_prefix": "USDCHF",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny", "london"],
+                    "note": "Safe-haven châu Âu, phản ứng mạnh ở phiên NY khi có biến cố vĩ mô"
+                }
+            }
+        },
+
+        "us_indices": {
+            "description": "Chỉ số chứng khoán Mỹ",
+            "items": {
+                "NASDAQ_100": {
+                    "broker": "EXNESS",
+                    "mt5_symbol": "USTECm",
+                    "fallback_names": ["USTECm", "USTEC", "NAS100", "US100"],
+                    "is_continuous_contract": false,
+                    "is_cfd": true,
+                    "feature_prefix": "NASDAQ_100",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Risk-on/off indicator đặc trưng thị trường Mỹ - quan trọng nhất cho NY"
+                },
+                "US_10Y_YIELD": {
+                    "broker": "MT5_2",
+                    "mt5_prefix": "Z10Y",
+                    "is_continuous_contract": true,
+                    "is_cfd": false,
+                    "contract_months": ["J", "K", "M", "U", "Z", "H"],
+                    "fallback_names": ["Z10YJ26", "Z10YM26", "Z10YU26"],
+                    "feature_prefix": "US_10Y_YIELD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Lãi suất trái phiếu Mỹ 10 năm - ảnh hưởng trực tiếp đến giá vàng trong phiên NY"
+                },
+                "VIXYm": {
+                    "broker": "DEFAULT",
+                    "fallback_names": ["VIXYm", "VIXY", "VIX"],
+                    "feature_prefix": "VIXY",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Fear index - phản ánh tâm lý phố Wall"
+                },
+                "US500m": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["US500m", "US500", "SP500", "SPX500"],
+                    "is_continuous_contract": false,
+                    "is_cfd": true,
+                    "feature_prefix": "US500",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Đại diện tổng quát nhất cho chứng khoán Mỹ, đối nghịch với vàng khi Risk-on"
+                }
+            }
+        },
+
+        "crypto": {
+            "description": "Tiền số - risk sentiment indicator",
+            "items": {
+                "BTCUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["BTCUSDm", "BTCUSD", "BTCUSD.a"],
+                    "feature_prefix": "BTCUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Bitcoin - macro risk-on/off signal, đồng pha với vàng khi có sự kiện Fed/lạm phát"
+                },
+                "ETHUSDm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["ETHUSDm", "ETHUSD", "ETHUSD.a"],
+                    "feature_prefix": "ETHUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Ethereum - tech/DeFi sentiment, bổ sung góc nhìn risk appetite thị trường"
+                }
+            }
+        },
+
+        "commodities": {
+            "description": "Năng lượng & Hàng hóa (Tác động lạm phát)",
+            "items": {
+                "USOILm": {
+                    "broker": "EXNESS",
+                    "fallback_names": ["USOILm", "USOIL", "WTI", "WTICRUDEm"],
+                    "feature_prefix": "USOIL",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny", "london"],
+                    "note": "Dầu WTI - Đại diện số 1 cho kỳ vọng lạm phát toàn cầu"
+                },
+                "XNGUSDm": {
+                    "broker": "ICMARKETS",
+                    "fallback_names": ["XNGUSDm", "XNGUSD", "NATGAS", "NATGASm"],
+                    "feature_prefix": "XNGUSD",
+                    "available_features": ["close_log_ret"],
+                    "sessions": ["ny"],
+                    "note": "Khí gas tự nhiên - Cú sốc năng lượng, biến động sát với giờ Mỹ"
+                }
+            }
+        }
+    },
+
+    "session_recommendations": {
+        "ny": {
+            "utc": "13:00-22:00",
+            "vn_time": "20:00-05:00",
+            "recommended_symbols": ["XAUUSDm", "XAGUSDm", "EURUSDm", "USDCADm", "USDCHFm", "NASDAQ_100", "US500m", "US_10Y_YIELD", "VIXYm", "XNGUSDm", "BTCUSDm", "ETHUSDm"],
+            "avoid": ["AUDUSDm", "GBPUSDm", "USDJPYm"],
+            "reason": "Tập trung USD strength, lãi suất Mỹ, và risk sentiment phố Wall"
+        },
+        "london": {
+            "utc": "07:00-16:00",
+            "vn_time": "14:00-23:00",
+            "recommended_symbols": ["XAUUSDm", "XAGUSDm", "EURUSDm", "GBPUSDm", "NASDAQ_100"],
+            "reason": "Tập trung EUR/GBP liquidity và overlap với NY đầu phiên"
+        },
+        "asian": {
+            "utc": "00:00-09:00",
+            "vn_time": "07:00-16:00",
+            "recommended_symbols": ["XAUUSDm", "XAGUSDm", "AUDUSDm", "USDJPYm"],
+            "reason": "Tập trung AUD (hàng hóa), JPY (safe-haven), volatility thấp"
+        }
+    }
+}

@@ -19,3 +19,7 @@ trading_logs/*
 *.npy
 *.pth
 *.pkl
+
+!shared_meta/
+
+!shared_meta/*.json

@@ -26,6 +26,6 @@ echo Dang tiep nap Bo Nao V3 - Phien New York (US)...
 echo.
 
 :: Chạy Live Bot với cấu hình V3 NY
-venv\Scripts\python.exe src\bot_v3\bot_v3.py data\bot_config_xau_ny_v3.json
+venv\Scripts\python.exe src\bot_v3\bot_v3.py workspaces\CFG_XAU_NY_V3_5\config\bot_config_xau_ny_v3_5.json
 
 pause
