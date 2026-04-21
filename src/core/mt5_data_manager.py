@@ -378,14 +378,17 @@ class MT5DataManager:
                 
             if merged_df is not None and len(merged_df) >= 2 and close_col in merged_df.columns:
                 last_row = merged_df.iloc[-1]
-                prev_row = merged_df.iloc[-2]
+                # Lấy nến đầu tiên trong Window (thường là 1500 M1 ~ 24h) thay vì nến M1 liền kề
+                prev_row = merged_df.iloc[0]
                 
                 p_curr = last_row[close_col]
                 p_prev = prev_row[close_col]
                 if pd.isna(p_curr) or pd.isna(p_prev):
                     p_curr, p_prev = 0.0, 0.0
+                    self.log_message(f"❌ Lỗi (Missing Data): Có cột nhưng giá bị NaN đối với mã {sym_clean} ({source_name})")
             else:
                 p_curr, p_prev = 0.0, 0.0
+                self.log_message(f"❌ Lỗi (No Data): Không lấy được luồng giá cho mã {sym_clean} ({source_name}). Vui lòng kiểm tra lại cấu hình hoặc kết nối!")
                 
             change = p_curr - p_prev
             try:
