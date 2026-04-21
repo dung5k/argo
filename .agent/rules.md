@@ -30,3 +30,11 @@ Sau khi thực hiện bất kỳ thay đổi nào (Code Edits) trên mã nguồn
 - Tắt ứng dụng / bot một cách AN TOÀN (Safe Stop).
 - NGHIÊM CẤM sử dụng biện pháp kill tiến trình python một cách thô bạo (vd: Get-Process python | Stop-Process) vì máy tính còn chạy nhiều ứng dụng python khác.
 - Để tắt một bot, cần tìm chính xác process thông qua CommandLine (vd: wmic process where "name='python.exe' and commandline like '%tên_script.py%'" call terminate).
+
+# Báo cáo Telegram (Telegram Notification Policy)
+**MANDATORY RULE FOR AI AGENT:**
+- Trong suốt quá trình thực thi nhiệm vụ, lúc nào cần báo cáo tiến độ hoặc nhắn tin trao đổi với người dùng, Agent **BẮT BUỘC** phải sử dụng lệnh:
+  `python .agent/send_to_tele.py "<Nội_dung>"`
+- Khi đã giải quyết xong yêu cầu, chuẩn bị kết thúc toàn bộ công việc và trả trạng thái rảnh, Agent **BẮT BUỘC** phải gọi lệnh kèm cờ `--done`:
+  `python .agent/send_to_tele.py "<Kết_quả_cuối>" --done`
+- NGHIÊM CẤM bỏ quên bước gửi tin báo cáo qua Telegram khi kết thúc một Yêu cầu (Request) của người dùng!
