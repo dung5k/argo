@@ -53,10 +53,12 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
 
     # Xây dựng mapping: symbol -> source
     required_symbols = {}
+    file_sym_to_orig = {}
     
     t_sym = target_symbol.upper()
     file_sym = t_sym[:-1] if t_sym.endswith("M") else t_sym
-    if t_sym in ("BTCUSDT", "ETHUSDT", "LTCUSDT"):
+    file_sym_to_orig[file_sym] = t_sym
+    if t_sym.endswith("USDT"):
         required_symbols[file_sym] = "BINANCE"
     else:
         required_symbols[file_sym] = "MT5"
@@ -64,7 +66,8 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
     for sym, _ in macro_features.items():
         sym_up = sym.upper()
         file_sym_macro = sym_up[:-1] if sym_up.endswith("M") else sym_up
-        if sym_up in ("BTCUSDT", "ETHUSDT", "LTCUSDT"):
+        file_sym_to_orig[file_sym_macro] = sym_up
+        if sym_up.endswith("USDT"):
             required_symbols[file_sym_macro] = "BINANCE"
         else:
             required_symbols[file_sym_macro] = "MT5"
@@ -82,15 +85,16 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
                     df_sym.set_index("time", inplace=True)
                 if df_sym.index.tz is None:
                     df_sym.index = df_sym.index.tz_localize("UTC")
-                rename_map = {c: f"{sym}_{c}" for c in df_sym.columns}
+                orig_sym = file_sym_to_orig[sym]
+                rename_map = {c: f"{orig_sym}_{c}" for c in df_sym.columns}
                 df_sym = df_sym.rename(columns=rename_map)
                 df_list.append(df_sym)
-                loaded.add(sym)
-                print(f"  + {fname} → prefix={sym} ({len(df_sym):,} nến)", flush=True)
+                loaded.add(orig_sym)
+                print(f"  + {fname} → prefix={orig_sym} ({len(df_sym):,} nến)", flush=True)
                 break
 
     # Kiểm tra thiếu symbol
-    missing = set(required_symbols.keys()) - loaded
+    missing = set([file_sym_to_orig[k] for k in required_symbols.keys()]) - loaded
     assert_ok(len(missing) == 0,
               f"Thiếu dữ liệu cho các symbol: {missing}. "
               f"Hãy chạy crawl_crypto_v3.py trước!")
@@ -313,7 +317,6 @@ def main():
 
     # Xác định cột OHLC thực tế (flex prefix)
     sym_up = target_sym.upper()
-    if sym_up.endswith("M"): sym_up = sym_up[:-1]
     actual_open = f"{sym_up}_open"
     actual_high = f"{sym_up}_high"
     actual_low  = f"{sym_up}_low"
@@ -355,16 +358,10 @@ def main():
 
     # ── 4. FEATURE ENGINEERING ─────────────────────────────────────────────
     print(f"\n[2] Feature Engineering V3 (Macro: {list(macro_features.keys())})...", flush=True)
-    target_prefix_mapped = target_prefix.upper()
-    if target_prefix_mapped.endswith("M"): target_prefix_mapped = target_prefix_mapped[:-1]
-    # Re-append USDT if it's Crypto, but wait, XAUUSD doesn't need USDT appended if target_prefix is already XAUUSD.
-    # Actually, for crypto it was f"{target_prefix.upper()}USDT".
-    # But for Forex it's just XAUUSD.
-    if fe_cfg.get("CRYPTO_MODE", False):
-        target_prefix_mapped = f"{target_prefix_mapped}USDT"
+    target_prefix_mapped = target_sym.upper()
     
     assert_ok(f"{target_prefix_mapped}_open".lower() in [c.lower() for c in df_raw.columns],
-              f"Không tìm thấy cột open cho prefix '{target_prefix_mapped}'!")
+              f"Không tìm thấy cột open cho prefix '{target_prefix_mapped}' khi check df_raw columns: {df_raw.columns}")
 
     fe = FeatureEngineeringV3(
         target_prefix=target_prefix_mapped,

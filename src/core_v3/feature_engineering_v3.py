@@ -168,14 +168,15 @@ class FeatureEngineeringV3:
         
         return features
         
-    def calculate_time_context(self, df, crypto_mode: bool = False):
+    def calculate_time_context(self, df, crypto_mode: bool = False, open_col=None, close_col=None):
         """
         Tính toán Ngữ cảnh thời gian.
-        - Forex: Sin/Cos + One-Hot session (Asian/London/NY)
+        - Forex: Sin/Cos + One-Hot session (Asian/London/NY) + Session Open Distances
         - Crypto mode: chỉ Sin/Cos (loại bỏ session flags vì Crypto 24/7)
         """
         features = pd.DataFrame(index=df.index)
         hour = df.index.hour
+        minute = df.index.minute
 
         # Cyclical Time Encoding (luôn giữ)
         features['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
@@ -186,6 +187,23 @@ class FeatureEngineeringV3:
             features['is_asian']  = ((hour >= 0)  & (hour < 7)).astype(float)
             features['is_london'] = ((hour >= 7)  & (hour < 13)).astype(float)
             features['is_ny']     = ((hour >= 13) & (hour < 22)).astype(float)
+            
+            # [MỚI - SA Review #4] Khoảng cách đến New York/London/Asian Open
+            if open_col and close_col:
+                # London (07:00 UTC)
+                london_mask = (hour == 7) & (minute == 0)
+                london_open_px = df[open_col].where(london_mask).ffill()
+                features['london_open_dist'] = ((df[close_col] - london_open_px) / (london_open_px + 1e-6)).fillna(0.0)
+                
+                # Asian (00:00 UTC)
+                asian_mask = (hour == 0) & (minute == 0)
+                asian_open_px = df[open_col].where(asian_mask).ffill()
+                features['asian_open_dist'] = ((df[close_col] - asian_open_px) / (asian_open_px + 1e-6)).fillna(0.0)
+                
+                # NY (13:00 UTC)
+                ny_mask = (hour == 13) & (minute == 0)
+                ny_open_px = df[open_col].where(ny_mask).ffill()
+                features['ny_open_dist'] = ((df[close_col] - ny_open_px) / (ny_open_px + 1e-6)).fillna(0.0)
 
         return features
 
@@ -209,7 +227,7 @@ class FeatureEngineeringV3:
         f_vol = self.calculate_volatility(df, high_col, low_col, close_col)
         f_mom = self.calculate_momentum(df, close_col)
         crypto_mode = getattr(self, 'crypto_mode', False)
-        f_time = self.calculate_time_context(df, crypto_mode=crypto_mode)
+        f_time = self.calculate_time_context(df, crypto_mode=crypto_mode, open_col=open_col, close_col=close_col)
         
         # [MỚI P1/P2] Microstructure features: body_pct, vroc, adx, vwap_distance
         volume_col = cols.get(f"{prefix}_volume".lower()) or cols.get(f"{prefix}_real_volume".lower())

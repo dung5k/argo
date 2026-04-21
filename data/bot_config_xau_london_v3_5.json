@@ -25,22 +25,23 @@
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
-        "TP_PIPS": 20,
-        "SL_PIPS": 20,
-        "MAX_HOLD_BARS": 6,
+        "TP_PIPS": 15,
+        "SL_PIPS": 15,
+        "MAX_HOLD_BARS": 12,
         "PIP_SIZE": 0.1,
         "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
-            "USDJPY": [
+            "XAGUSDm": [
                 "log_ret",
-                "bb_width"
+                "bb_width",
+                "volume"
             ],
-            "AUDUSD": [
+            "EURUSDm": [
                 "log_ret",
-                "bb_width"
+                "volume"
             ],
-            "DXY": [
+            "DXYm": [
                 "log_ret"
             ]
         }
@@ -70,8 +71,8 @@
         },
         "ROUTING": {
             "XAUUSDm": "EXNESS",
-            "USDJPYm": "EXNESS",
-            "AUDUSDm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "EURUSDm": "EXNESS",
             "DXYm": "EXNESS"
         }
     },
