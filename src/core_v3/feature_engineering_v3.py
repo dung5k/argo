@@ -74,6 +74,11 @@ class FeatureEngineeringV3:
             cum_vol = vol.groupby(day_key).cumsum()
             vwap = cum_pv / (cum_vol + 1e-6)
             features['vwap_distance'] = (df[close_col] - vwap) / (vwap + 1e-6)
+            
+            # -- [MỚI - SA Review #5] VSA: Effort vs Result (Nỗ lực vs Kết quả)
+            # Khối lượng lớn nhưng biến động giá thấp -> Dấu hiệu hấp thụ (Absorption), chặn đảo chiều
+            candle_length = df[high_col] - df[low_col]
+            features['volume_effort'] = vol / (candle_length + 1e-6)
         
         # -- adx_normalized: ADX(period) chuẩn hóa về [0, 1]
         high  = df[high_col]
@@ -181,12 +186,17 @@ class FeatureEngineeringV3:
         # Cyclical Time Encoding (luôn giữ)
         features['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
         features['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
+        features['minute_sin'] = np.sin(2 * np.pi * minute / 60.0)
+        features['minute_cos'] = np.cos(2 * np.pi * minute / 60.0)
 
         if not crypto_mode:
             # One-Hot Encoding Phiên (chỉ dùng cho Forex/Vàng)
             features['is_asian']  = ((hour >= 0)  & (hour < 7)).astype(float)
             features['is_london'] = ((hour >= 7)  & (hour < 13)).astype(float)
             features['is_ny']     = ((hour >= 13) & (hour < 22)).astype(float)
+            
+            # [MỚI - SA Review #5] Cờ Giao Thoa London - NY (12:00 - 13:00 UTC)
+            features['is_overlap'] = (hour == 12).astype(float)
             
             # [MỚI - SA Review #4] Khoảng cách đến New York/London/Asian Open
             if open_col and close_col:
@@ -290,13 +300,13 @@ class FeatureEngineeringV3:
     def fit_transform_scaler(self, features_df):
         """Scale data trong lúc Training"""
         # Tránh scale các cột đã nằm trong biên [-1, 1] hoặc [0, 1]:
-        # - hour_sin/cos, is_*: Time Context
+        # - hour_ / minute_ / is_*: Time Context
         # - rsi_*_scaled: đã chuẩn hóa thủ công về [-1, 1]
         # - body_pct, adx_normalized: luôn [0, 1]
         # - *_target_corr_60: Pearson correlation đã in [-1, 1] — dùng suffix match để bắt mọi symbol
         def _no_scale(col):
             return (
-                col.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
+                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
                 or col in ('body_pct', 'adx_normalized')
                 or col.endswith('_target_corr_60')
             )
@@ -320,7 +330,7 @@ class FeatureEngineeringV3:
         
         def _no_scale(col):
             return (
-                col.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
+                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
                 or col in ('body_pct', 'adx_normalized')
                 or col.endswith('_target_corr_60')
             )

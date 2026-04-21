@@ -43,6 +43,10 @@
             ],
             "DXYm": [
                 "log_ret"
+            ],
+            "DE30m": [
+                "log_ret",
+                "bb_width"
             ]
         }
     },
@@ -73,7 +77,8 @@
             "XAUUSDm": "EXNESS",
             "XAGUSDm": "EXNESS",
             "EURUSDm": "EXNESS",
-            "DXYm": "EXNESS"
+            "DXYm": "EXNESS",
+            "DE30m": "EXNESS"
         }
     },
     "LIVE_BOT": {
