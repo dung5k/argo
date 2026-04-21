@@ -1,1 +1,1 @@
-import sys; print(open(r'C:\argo\logs\client1_unified.log', encoding='utf-8', errors='ignore').read()[-2000:])
+import sys; print(open(r'C:\argo\logs\client1_unified.log', encoding='utf-8', errors='ignore').read()[-3000:])
