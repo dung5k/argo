@@ -1,1 +1,1 @@
-import sys, json; print(json.load(open('workspaces/CFG_LTC_LONDON_V3_5/bot_config_ltc_london_v3_5.json', encoding='utf-8'))['HF_CLOUD']['DATASET_REPO'])
+import sys; print(open(r'C:\argo\logs\client1_unified.log', encoding='utf-8', errors='ignore').read()[-3000:])
