@@ -154,8 +154,14 @@ def main():
     
     hf_token = os.environ.get("HF_TOKEN", "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")
     
-    # 1. Kéo Workspaces từ mây về
-    print("\u2601\ufe0f Đang đồng bộ Workspaces từ HuggingFace HUB...", flush=True)
+    # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
+    print("\u2601\ufe0f Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
+    x_filename = f"workspaces/{cfg_id}/data/tensors/X_tensor_{cfg_id}.npy"
+    y_filename = f"workspaces/{cfg_id}/data/tensors/Y_tensor_{cfg_id}.npy"
+    scaler_filename = f"workspaces/{cfg_id}/data/tensors/scaler_{cfg_id}.pkl"
+    
+    x_path = hf_hub_download(repo_id=dataset_repo, filename=x_filename, repo_type="dataset", token=hf_token)
+    y_path = hf_hub_download(repo_id=dataset_repo, filename=y_filename, repo_type="dataset", token=hf_token)
     try:
         from sync_workspaces import main as sync_workspaces_main
         sync_workspaces_main()
