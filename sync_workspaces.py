@@ -33,7 +33,8 @@ def main():
         snapshot_download(
             repo_id=REPO_ID,
             repo_type="dataset",
-            local_dir=LOCAL_DIR,
+            local_dir=".",
+            allow_patterns=["workspaces/*"],
             local_dir_use_symlinks=False,  
             ignore_patterns=IGNORE_RULES,
             token=token,
