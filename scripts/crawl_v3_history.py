@@ -73,15 +73,18 @@ def main(config_file):
     if not routing:
         routing = {config.get("TARGET_SYMBOL"): "EXNESS"}
         
-    history_dir = os.path.join("data", "history")
+    basename = os.path.basename(config_file).replace("bot_config_", "").replace(".json", "")
+    config_id = f"CFG_{basename.upper()}"
+    history_dir = os.path.join("workspaces", config_id, "data", "raw")
     os.makedirs(history_dir, exist_ok=True)
     
     # Nhóm mã theo broker
     broker_syms = {}
+    target_sym = config.get("TARGET_SYMBOL", "").replace("m", "").upper()
     for sym, brk in routing.items():
         # Kiểm tra nếu mã là bắt buộc trong MACRO_FEATURES hoặc là TARGET
         sym_clean = sym.replace('m', '').upper()
-        if sym_clean not in [k.replace('m', '').upper() for k in required_macros.keys()] and "XAUUSD" not in sym_clean:
+        if sym_clean not in [k.replace('m', '').upper() for k in required_macros.keys()] and target_sym not in sym_clean:
             continue
             
         brk_path = brokers_map.get(brk, brokers_map.get("DEFAULT"))

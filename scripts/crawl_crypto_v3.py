@@ -113,7 +113,9 @@ def main(config_file: str):
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
     since_str    = binance_cfg.get("SINCE", train_cfg.get("TRAIN_START", "2024-01-01") + "T00:00:00Z")
     end_str      = train_cfg.get("VAL_END",    "2026-04-18")
-    history_dir  = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", "data/history")
+    basename = os.path.basename(config_file).replace("bot_config_", "").replace(".json", "")
+    config_id = f"CFG_{basename.upper()}"
+    history_dir  = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", os.path.join("workspaces", config_id, "data", "raw"))
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
     brokers      = config.get("DATA_SOURCE", {}).get("BROKERS", {})
     routing      = config.get("DATA_SOURCE", {}).get("ROUTING", {})
@@ -145,6 +147,8 @@ def main(config_file: str):
     import MetaTrader5 as mt5_module
     broker_groups = {}
     for sym, brk in routing.items():
+        if brk == "BINANCE":
+            continue
         path = brokers.get(brk, brokers.get("DEFAULT"))
         broker_groups.setdefault(path, []).append(sym)
 
