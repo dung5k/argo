@@ -396,20 +396,20 @@ function startBridgeServer() {
                 try {
                     let task = JSON.parse(body);
                     let text = task.text || task.message;
-                    if (text) {
+                    
+                    if (task.done) {
+                        freeAgent(); // Cập nhật trạng thái rảnh sau khi task.done = true (dù có text hay không)
+                    }
+                    
+                    if (text && text !== '--done') {
                         let targets = activeTypingChats.size > 0 ? Array.from(activeTypingChats) : getActiveChatIds();
                         targets.forEach(t => {
                             sendTelegramMessage(t, `🤖 Antigravity:\n\n${text}`);
                         });
-                        res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ status: 'success' }));
-                        
-                        if (task.done) {
-                            freeAgent(); // Chỉ Cập nhật trạng thái rảnh sau khi task.done = true
-                        }
-                    } else {
-                        res.writeHead(400); res.end(JSON.stringify({ error: 'Missing text' }));
                     }
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ status: 'success' }));
                 } catch (e) {
                     res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
                 }
@@ -445,7 +445,7 @@ import urllib.request
 import urllib.error
 
 def send_to_telegram(content, is_done=False):
-    if not content:
+    if not content and not is_done:
         return
     url = 'http://127.0.0.1:38124/send-telegram'
     data = json.dumps({'text': content, 'done': is_done}).encode('utf-8')
