@@ -154,20 +154,23 @@ def main():
     
     hf_token = os.environ.get("HF_TOKEN", "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")
     
-    # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
-    print("\u2601\ufe0f Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
-    x_filename = f"data/{cfg_id}/X_tensor_{cfg_id}.npy"
-    y_filename = f"data/{cfg_id}/Y_tensor_{cfg_id}.npy"
-    scaler_filename = f"data/{cfg_id}/scaler_{cfg_id}.pkl"
-    
-    x_path = hf_hub_download(repo_id=dataset_repo, filename=x_filename, repo_type="dataset", token=hf_token)
-    y_path = hf_hub_download(repo_id=dataset_repo, filename=y_filename, repo_type="dataset", token=hf_token)
+    # 1. Kéo Workspaces từ mây về
+    print("\u2601\ufe0f Đang đồng bộ Workspaces từ HuggingFace HUB...", flush=True)
     try:
-        hf_hub_download(repo_id=dataset_repo, filename=scaler_filename, repo_type="dataset", token=hf_token)
-        print(f"\u2705 Tải Scaler thành công từ mây!", flush=True)
+        from sync_workspaces import main as sync_workspaces_main
+        sync_workspaces_main()
     except Exception as e:
-        print(f"\u26a0\ufe0f Lỗi tải Scaler (Bot Live sẽ không chạy được): {e}", flush=True)
+        print(f"\u26a0\ufe0f Lỗi đồng bộ Workspaces: {e}", flush=True)
+        
+    x_path = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"X_tensor_{cfg_id}.npy")
+    y_path = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"Y_tensor_{cfg_id}.npy")
+    scaler_src = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"scaler_{cfg_id}.pkl")
     
+    if not os.path.exists(x_path) or not os.path.exists(y_path):
+        raise FileNotFoundError(f"Không tìm thấy tensor tại {x_path} hoặc {y_path}. Hãy kiểm tra lại sync.")
+        
+    print(f"\u2705 Tải Scaler thành công từ mây (nếu có)!", flush=True)
+
     X = np.load(x_path)
     Y = np.load(y_path)
     print(f"\u2705 Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
@@ -214,23 +217,10 @@ def main():
         msg = "Bỏ qua kế thừa theo cờ --scratch. Đào tạo mới hoàn toàn!"
         print(f"\n[INHERIT] {msg}", flush=True)
     else:
-        print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ HF...", flush=True)
-        import sys as _sys
-        _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
-        if _hf_script_dir not in _sys.path:
-            _sys.path.insert(0, _hf_script_dir)
-        try:
-            from hf_sync import pull_runs
-            model_repo_pull = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
-            inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
-            pulled = pull_runs(logger=None, target_prefix="v3", config_id=inherit_cfg_id, custom_repo_id=model_repo_pull)
-        except Exception as e:
-            print(f"[HF] Lỗi pull_runs: {e}", flush=True)
-            
+        print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ Workspaces...", flush=True)
         import glob
-        log_base_fetch = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
         inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
-        pattern = os.path.join(log_base_fetch, "runs", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
+        pattern = os.path.join(_ROOT, "workspaces", inherit_cfg_id, "brains", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
         all_files = glob.glob(pattern, recursive=True)
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
@@ -362,8 +352,7 @@ def main():
     import shutil
     run_timestamp = time.strftime("%Y%m%d_%H%M%S")
     run_name = f"run_{run_timestamp}_v3_{cfg_id}"
-    log_base = os.environ.get("ARGO_LOGS_DIR", os.path.join(_ROOT, "logs"))
-    out_dir = os.path.join(log_base, "runs", run_name)
+    out_dir = os.path.join(_ROOT, "workspaces", cfg_id, "brains", run_name)
     os.makedirs(out_dir, exist_ok=True)
     
     import shutil
@@ -382,7 +371,7 @@ def main():
 
     sys.stdout = _TeeLogger(os.path.join(out_dir, "train_v3.log"))
     
-    scaler_src = f"data/{cfg_id}/scaler_{cfg_id}.pkl"
+    # scaler_src đã được trỏ đến thư mục workspaces ở bước trên
     if os.path.exists(scaler_src):
         shutil.copy(scaler_src, os.path.join(out_dir, f"scaler_{cfg_id}.pkl"))
         print(f"[PACK] Kèm theo scaler file vào: {out_dir}", flush=True)
@@ -391,9 +380,7 @@ def main():
     print("--- \U0001f680 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
     epoch = 0
     best_score = 0.0
-    api = HfApi(token=hf_token)
-    model_repo = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
-    api.create_repo(repo_id=model_repo, exist_ok=True, private=True)
+    # Bỏ qua logic tạo repo riêng lẻ vì đã dùng chung dung5k/argo_workspaces
     
     report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 10) * 60
     last_report_time = time.time()
@@ -494,17 +481,12 @@ def main():
             # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
             
-            # Upload HuggingFace nguyên kiện (Logs, Charts, Config, Model)
+            # Đồng bộ toàn bộ Workspaces lên HuggingFace
             try:
-                import sys as _sys
-                _hf_script_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "orchestration")
-                if _hf_script_dir not in _sys.path:
-                    _sys.path.insert(0, _hf_script_dir)
-                from hf_sync import push_runs
-                model_repo_push = config.get("HF_CLOUD", {}).get("MODEL_REPO", "dung5k/aamt_v3_xau_ny_weights")
-                
-                push_runs(run_dir=out_dir, custom_repo_id=model_repo_push)
-                print(f"  \u2601\ufe0f Upload dữ liệu nguyên kiện thư mục {out_dir} lên HF thành công!", flush=True)
+                print(f"  \u2601\ufe0f Đang đồng bộ Workspaces lên HF...", flush=True)
+                from sync_workspaces import main as sync_workspaces_main
+                sync_workspaces_main()
+                print(f"  \u2601\ufe0f Upload Workspaces thành công!", flush=True)
             except Exception as e:
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             
