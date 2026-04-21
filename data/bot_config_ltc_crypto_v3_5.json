@@ -33,6 +33,14 @@
             "USTECm": ["log_ret"],
             "DXYm": ["log_ret"],
             "XAUUSDm": ["log_ret"]
+        },
+        "_ENHANCED_FEATURES_V2": {
+            "_note": "Các features dưới đây được tự động tính trong feature_engineering_v3.py, không cần cấu hình thêm",
+            "body_pct": "Độ đặc thân nến [0,1] — phát hiện Marubozu/Doji",
+            "vroc": "Relative Volume (Volume/SMA20) — xác nhận breakout",
+            "vwap_distance": "Khoảng cách Close vs VWAP xấp xỉ — Mean Reversion signal",
+            "adx_normalized": "Sức mạnh xu hướng ADX(10)/100 trong [0,1]",
+            "ltc_btc_corr_60": "Rolling Pearson Corr LTC-BTC 60 nến [-1,1] — Decoupling signal"
         }
     },
     "TRAINING": {
