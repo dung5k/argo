@@ -36,8 +36,59 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
+bot_start_time = time.time()
+
 def custom_print(*args, **kwargs):
-    logging.info(" ".join(map(str, args)))
+    msg = " ".join(map(str, args))
+    
+    # 0. Chặn Cứng Log Rác (Luôn luôn bỏ qua dù trong bất kỳ hoàn cảnh nào)
+    spam_kws = ["Chu kỳ #", "Quét các cổng MT5", "Nến M1 Mới"]
+    if any(k in msg for k in spam_kws):
+        return
+
+    # 1. Force log cho các sự kiện CỰC QUAN TRỌNG (Lỗi, Mở/Đóng lệnh)
+    force_print_kws = ["❌", "⚠️", "✅", "FATAL", "Exception", "Lỗi", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "Bắt đầu Pipeline", "Kêt quả | Hành động"]
+    if any(k in msg for k in force_print_kws):
+        logging.info(msg)
+        return
+
+    # 2. Thời gian đầu khởi động (300 giây đầu tiên tương đương 5 phút)
+    if time.time() - bot_start_time < 300:
+        logging.info(msg)
+        return
+
+    # Biến toàn cục từ core
+    tm = globals().get('trade_manager')
+    g_probs = globals().get('gui_probs')
+    cfg = globals().get('CONFIG', {})
+
+    # 3. Thời gian đang có vị thế (Đang giữ lệnh)
+    has_position = False
+    if tm and hasattr(tm, 'active_trade_loggers'):
+        if len(tm.active_trade_loggers) > 0:
+            has_position = True
+
+    if has_position:
+        logging.info(msg)
+        return
+
+    # 4. Thời gian giá gần đến ngưỡng (Xác suất BUY/SELL >= 80% của Ngưỡng yêu cầu)
+    is_close_to_thr = False
+    if g_probs and cfg:
+        prob_thr = cfg.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.50)
+        near_thr = prob_thr * 0.8
+        
+        # Kiểm tra xem AI đã chớm "nóng" chưa
+        if g_probs.get('buy', 0.0) >= near_thr or g_probs.get('sell', 0.0) >= near_thr:
+            is_close_to_thr = True
+
+    if is_close_to_thr:
+        logging.info(msg)
+        return
+
+    # Bỏ qua lưu file cho tất cả các log lặp lại nhàm chán (Idle Mode)
+    pass
+
 print = custom_print
 
 try:
@@ -49,10 +100,56 @@ try:
 except Exception:
     tg_bot, tg_chat_id = None, None
 
-def tg_notify(msg):
+tg_brain_count = 0
+
+def _send_raw_tg(msg):
     if tg_bot and tg_chat_id:
         try: tg_bot.send_message(tg_chat_id, msg)
         except: pass
+
+def tg_notify(msg):
+    global tg_brain_count
+    
+    # 1. Đoạn đầu khởi động và Cảnh báo
+    force_tg_kws = ["KHỞI ĐỘNG", "Khởi động", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "❌", "⚠️", "✅"]
+    if any(k in msg for k in force_tg_kws):
+        _send_raw_tg(msg)
+        return
+
+    tm = globals().get('trade_manager')
+    g_probs = globals().get('gui_probs')
+    cfg = globals().get('CONFIG', {})
+
+    # 4. Trong khi có lệnh
+    has_position = False
+    if tm and hasattr(tm, 'active_trade_loggers') and len(tm.active_trade_loggers) > 0:
+        has_position = True
+
+    if has_position:
+        _send_raw_tg(msg)
+        return
+
+    # 3. Khi giá gần đến ngưỡng vào lệnh (>= 80% ngưỡng)
+    is_close_to_thr = False
+    if g_probs and cfg:
+        prob_thr = cfg.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.50)
+        near_thr = prob_thr * 0.8
+        if g_probs.get('buy', 0.0) >= near_thr or g_probs.get('sell', 0.0) >= near_thr:
+            is_close_to_thr = True
+
+    if is_close_to_thr:
+        _send_raw_tg(msg)
+        return
+
+    # 2. 3 kết quả đầu tiên của bộ não
+    if "PIPELINE DỰ ĐOÁN" in msg or "Tỷ lệ Cược" in msg:
+        if tg_brain_count < 3:
+            _send_raw_tg(msg)
+            tg_brain_count += 1
+        return
+        
+    # Chặn đứng các nội dung khác (ví dụ: liên tục báo HOLD vô nghĩa)
+    pass
 
 config_file = os.path.join(safe_script_dir, "data", "bot_config_xau_ny_v3.json")
 schedule_file = os.path.join(safe_script_dir, "data", "bot_v3_brain_schedule.json")
@@ -274,12 +371,35 @@ def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, 
     canvas_pred.delete("all")
     w = canvas_pred.winfo_width()
     if w < 10: w = 330
-    bw = int(w * gui_probs.get('buy', 0.0))
-    sw = int(w * gui_probs.get('sell', 0.0))
-    canvas_pred.create_rectangle(0, 0, bw, 24, fill="#00aa55", outline="")
-    canvas_pred.create_rectangle(w - sw, 0, w, 24, fill="#aa2222", outline="")
-    txt = f"BUY {gui_probs.get('buy', 0.0):.1%} | SELL {gui_probs.get('sell', 0.0):.1%}"
-    if gui_probs.get('buy', 0.0) == 0.0 and gui_probs.get('sell', 0.0) == 0.0:
+    
+    # Lấy ngưỡng vào hiện tại
+    prob_thr = CONFIG.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.50)
+    
+    # Lấy độ tin cậy
+    buy_p = gui_probs.get('buy', 0.0)
+    sell_p = gui_probs.get('sell', 0.0)
+    
+    bw = int(w * buy_p)
+    sw = int(w * sell_p)
+    
+    # Màu sắc thay đổi nếu vượt ngưỡng
+    buy_color = "#00ff77" if buy_p >= prob_thr else "#007733"
+    sell_color = "#ff3333" if sell_p >= prob_thr else "#882222"
+    
+    # Vẽ thanh
+    canvas_pred.create_rectangle(0, 0, bw, 24, fill=buy_color, outline="")
+    canvas_pred.create_rectangle(w - sw, 0, w, 24, fill=sell_color, outline="")
+    
+    # Vẽ Vạch Ngưỡng (Threshold Lines)
+    buy_thr_x = int(w * prob_thr)
+    sell_thr_x = int(w - w * prob_thr)
+    
+    # Vẽ 2 vạch kẻ dọc đứt nét
+    canvas_pred.create_line(buy_thr_x, 0, buy_thr_x, 24, fill="#ffcc00", dash=(2, 2))
+    canvas_pred.create_line(sell_thr_x, 0, sell_thr_x, 24, fill="#ffcc00", dash=(2, 2))
+    
+    txt = f"BUY {buy_p:.1%} | SELL {sell_p:.1%}"
+    if buy_p == 0.0 and sell_p == 0.0:
         txt = "Chờ Tín Hiệu..."
     canvas_pred.create_text(w/2, 12, text=txt, fill="white", font=("Consolas", 10, "bold"))
     
