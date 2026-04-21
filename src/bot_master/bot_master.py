@@ -194,7 +194,8 @@ def bot_background_loop():
         # Ngưỡng V3 check
         if BOT_VERSION == "v3":
             bot_cfg = CONFIG.get("LIVE_BOT", {})
-            engine.mse_threshold = bot_cfg.get("MSE_THRESHOLD_PERCENTILE", 70.0)
+            # [VÁ LỖI #5] Đọc ngưỡng Loss tuyệt đối (absolute) thay vì số Percentile (70) vô nghĩa
+            engine.mse_threshold = bot_cfg.get("MAX_ABSOLUTE_MSE", bot_cfg.get("MSE_THRESHOLD_PERCENTILE", 1.0))
             engine.prob_threshold = bot_cfg.get("MIN_PROBABILITY_THRESH", 0.70)
             target_run_id = CONFIG.get("HF_RUN_ID", "")
             

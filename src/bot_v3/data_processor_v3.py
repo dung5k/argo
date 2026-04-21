@@ -96,30 +96,39 @@ class V3DataProcessor:
 
         # 3. Khớp Khối Dữ Liệu Toán Học — ÉP THỨ TỰ CỘT KHỚP VỚI TRAINING
         if self.saved_column_order:
-            # Dùng thứ tự cột chính xác từ lúc Training (đã lưu trong scaler pickle)
             available = set(scaled_df.columns)
-            final_cols = [c for c in self.saved_column_order if c in available]
-            # Nếu có cột thiếu, log cảnh báo
             missing = [c for c in self.saved_column_order if c not in available]
             if missing:
-                self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {len(missing)} cột so với Training: {missing[:5]}")
+                # [VÁ LỖI #1] Fail-fast ngay lập tức - không tự ý cắt gọt tensor
+                msg = f"Thiếu {len(missing)} cột so với Training: {missing[:5]}... TỪ CHỐI SUY LUẬN!"
+                self.log_callback(f"[DataProcessorV3] ❌ FATAL: {msg}")
+                return None, msg
+            final_cols = self.saved_column_order
         else:
-            # Fallback: format cũ — dùng thứ tự từ DataFrame (rủi ro)
+            # Fallback: format scaler cũ — dùng thứ tự từ DataFrame
             valid_scaled_feats = self.inference_feats
             static_context_feats = ['hour_sin', 'hour_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled', 'rsi_5_scaled']
             allowed_features = set(valid_scaled_feats).union(set(static_context_feats))
             final_cols = [c for c in scaled_df.columns if c in allowed_features]
-        
+
         final_df = scaled_df[final_cols].copy()
-        
-        final_df.replace([np.inf, -np.inf], 0, inplace=True)
-        final_df.ffill(inplace=True)  # Ưu tiên giá trị gần nhất trước khi fill 0
-        final_df.fillna(0, inplace=True)
+
+        # [VÁ LỖI #2] Xử lý NaN đồng nhất với Training (chỉ ffill tối đa 3 nến, không fillna(0))
+        final_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        final_df.ffill(limit=3, inplace=True)
 
         # 4. Trích Window cuối + to Tensor
         window_df = final_df.iloc[-self.window_size:]
+
+        # Kiểm tra rác lần cuối — đồng nhất với `if np.isnan(window).any(): continue` bên Training
+        if window_df.isnull().values.any():
+            nan_cols = window_df.columns[window_df.isnull().any()].tolist()
+            msg = f"Window 60 nến cuối vẫn còn NaN sau ffill(limit=3) tại {nan_cols[:3]}. Từ chối đưa vào Mạng Nơ-ron!"
+            self.log_callback(f"[DataProcessorV3] ❌ {msg}")
+            return None, msg
+
         self.log_callback(f"[DataProcessorV3] 🔢 Bước 4 – to_tensor | window shape={window_df.shape}")
-        
+
         try:
             import torch
             tensor = torch.tensor(window_df.values, dtype=torch.float32).unsqueeze(0)

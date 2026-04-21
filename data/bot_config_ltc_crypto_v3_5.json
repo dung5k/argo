@@ -1,7 +1,7 @@
 {
-    "HF_RUN_ID": "WAITING_FOR_LTC_TRAINING_TO_FINISH",
+    "HF_RUN_ID": "run_20260421_082810_v3_CFG_LTC_CRYPTO_V3_5",
     "TARGET_SYMBOL": "LTCUSDT",
-    "TARGET_PREFIX": "LTC",
+    "TARGET_PREFIX": "LTCUSDT",
     "CONFIG_ID": "CFG_LTC_CRYPTO_V3_5",
     "VERSION": "3.5",
     "SESSION": "crypto_247",
@@ -16,27 +16,23 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÃ HỆ THỐNG TỰ HỦY!",
+        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÀ HỆ THỐNG TỰ HỦY!",
         "TP_PCT": 0.003,
         "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 20,
+        "WINDOW_SIZE": 60,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
-            "BTCUSDT": [
-                "log_ret",
-                "bb_width",
-                "volume"
-            ],
-            "ETHUSDT": [
-                "log_ret"
-            ],
-            "USTEC": [
-                "log_ret"
-            ]
+            "BTCUSDT": ["log_ret", "bb_width", "volume"],
+            "ETHUSDT": ["log_ret", "volume"],
+            "BCHUSDT": ["log_ret"],
+            "DOGEUSDT": ["log_ret", "volume"],
+            "USTECm": ["log_ret"],
+            "DXYm": ["log_ret"],
+            "XAUUSDm": ["log_ret"]
         }
     },
     "TRAINING": {
@@ -60,19 +56,27 @@
         "TIMEFRAME": "M1",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
-            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe"
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "BINANCE": "BINANCE"
         },
         "ROUTING": {
-            "USTECm": "EXNESS"
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "LTCUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "BCHUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE"
         },
         "CRYPTO_BINANCE": {
-            "SYMBOLS": ["LTC/USDT", "BTC/USDT", "ETH/USDT"],
+            "SYMBOLS": ["LTC/USDT", "BTC/USDT", "ETH/USDT", "BCH/USDT", "DOGE/USDT"],
             "TIMEFRAME": "1m",
             "SINCE": "2025-01-01T00:00:00Z"
         }
     },
     "LIVE_BOT": {
-        "MSE_THRESHOLD_PERCENTILE": 70,
+        "MAX_ABSOLUTE_MSE": 0.8,
         "MIN_PROBABILITY_THRESH": 0.7,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
