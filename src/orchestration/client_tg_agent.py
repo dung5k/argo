@@ -176,8 +176,10 @@ class TrainingManager:
         elif script:
             train_script = str(self.base_dir / script)
         else:
-            if config_path and "v1_5" in config_path:
+            if config_path and "v1_5" in config_path.lower():
                 train_script = str(self.base_dir / "src" / "training_v1_5" / "train_v1_5.py")
+            elif config_path and "v3" in config_path.lower():
+                train_script = str(self.base_dir / "src" / "training_v3" / "train_v3.py")
             else:
                 train_script = str(self.base_dir / "src" / "training_v2" / "train_v2.py")
 
