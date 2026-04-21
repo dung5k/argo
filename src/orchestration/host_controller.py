@@ -86,7 +86,7 @@ class HostController:
                 "cmd": cmd,
                 "symbol": symbol,
                 "script": script,
-                "config": f"data/{os.path.basename(local_cfg)}" if local_cfg else "",
+                "config": local_cfg if local_cfg else "",
                 "mode": mode,
                 "session": session,
                 "scratch": scratch
