@@ -115,7 +115,7 @@ def main(config_file: str):
     end_str      = train_cfg.get("VAL_END",    "2026-04-18")
     basename = os.path.basename(config_file).replace("bot_config_", "").replace(".json", "")
     config_id = f"CFG_{basename.upper()}"
-    history_dir  = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", os.path.join("workspaces", config_id, "data", "raw"))
+    history_dir = os.path.join("workspaces", config_id, "data", "raw")
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
     brokers      = config.get("DATA_SOURCE", {}).get("BROKERS", {})
     routing      = config.get("DATA_SOURCE", {}).get("ROUTING", {})

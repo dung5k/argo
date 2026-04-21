@@ -277,8 +277,8 @@ def main():
     fe_cfg        = config["FEATURE_ENGINEERING"]
     session_start = config.get("SESSION_UTC", {}).get("START", "00:00")
     session_end   = config.get("SESSION_UTC", {}).get("END",   "23:59")
-    raw_dir       = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", "data/history")
-    out_dir       = os.path.join("data", cfg_id)
+    raw_dir       = os.path.join("workspaces", cfg_id, "data", "raw")
+    out_dir       = os.path.join("workspaces", cfg_id, "data", "tensors")
     os.makedirs(out_dir, exist_ok=True)
 
     FAST_HIT_BARS = args.fast_hit_bars
