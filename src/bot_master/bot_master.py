@@ -306,6 +306,12 @@ def bot_background_loop():
         last_candle_time = current_candle_time
         print(f"[BOT MASTER] 🕒 Nến M1 Mới | {datetime.fromtimestamp(current_candle_time, timezone.utc).strftime('%H:%M')} UTC")
 
+        # [BUFFER RACE CONDITION] Nếu đang ở 2s đầu của phút mới, đợi sàn finalize nến cũ
+        current_second = int(time.time() % 60)
+        if current_second <= 2:
+            print(f"[BOT MASTER] ⏱️ Giây {current_second} của phút mới — đợi 2s cho Binance/MT5 chốt sổ nến...")
+            time.sleep(2.0)
+
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
         merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
         mt5_manager.current_connected_path = None
