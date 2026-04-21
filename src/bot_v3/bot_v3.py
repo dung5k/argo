@@ -193,7 +193,10 @@ def bot_background_loop():
     num_attn_layers = arch.get("NUM_LAYERS", 4)
     
     mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-    if not os.path.exists(mt5_init_path) and os.path.exists(r"D:\mt5\terminal64.exe"): mt5_init_path = r"D:\mt5\terminal64.exe"
+    if not os.path.exists(mt5_init_path):
+        backup_path = mt5_init_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
+        if os.path.exists(backup_path): mt5_init_path = backup_path
+        
     gui_status = "Đang kết nối MT5..."
     if not trade_manager.mt5.initialize(path=mt5_init_path):
         gui_status = "❌ Mất Kết Nối MT5 Terminal!"
@@ -275,7 +278,6 @@ def bot_background_loop():
         mt5_manager.scan_terminals_and_map()
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-        if not os.path.exists(trading_path) and os.path.exists(r"D:\mt5\terminal64.exe"): trading_path = r"D:\mt5\terminal64.exe"
         if mt5_manager.current_connected_path != trading_path:
             trade_manager.mt5.shutdown()
             trade_manager.mt5.initialize(path=trading_path)
@@ -343,7 +345,6 @@ def bot_background_loop():
             tg_notify(msg_pred)
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-        if not os.path.exists(trading_path) and os.path.exists(r"D:\mt5\terminal64.exe"): trading_path = r"D:\mt5\terminal64.exe"
         if mt5_manager.current_connected_path != trading_path:
             trade_manager.mt5.shutdown()
             trade_manager.mt5.initialize(path=trading_path)
