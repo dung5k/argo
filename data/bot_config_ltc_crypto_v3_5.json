@@ -77,7 +77,7 @@
     },
     "LIVE_BOT": {
         "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.7,
+        "MIN_PROBABILITY_THRESH": 0.57,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
