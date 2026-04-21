@@ -46,7 +46,8 @@
             ],
             "DE30m": [
                 "log_ret",
-                "bb_width"
+                "bb_width",
+                "volume"
             ]
         }
     },

@@ -77,8 +77,9 @@ class FeatureEngineeringV3:
             
             # -- [MỚI - SA Review #5] VSA: Effort vs Result (Nỗ lực vs Kết quả)
             # Khối lượng lớn nhưng biến động giá thấp -> Dấu hiệu hấp thụ (Absorption), chặn đảo chiều
+            # Dùng np.log1p để tránh hiện tượng phương sai nổ khổng lồ khi spread cực nhỏ (nến Doji)
             candle_length = df[high_col] - df[low_col]
-            features['volume_effort'] = vol / (candle_length + 1e-6)
+            features['volume_effort'] = np.log1p(vol / (candle_length + 1e-6))
         
         # -- adx_normalized: ADX(period) chuẩn hóa về [0, 1]
         high  = df[high_col]
@@ -196,6 +197,7 @@ class FeatureEngineeringV3:
             features['is_ny']     = ((hour >= 13) & (hour < 22)).astype(float)
             
             # [MỚI - SA Review #5] Cờ Giao Thoa London - NY (12:00 - 13:00 UTC)
+            # Nợ kỹ thuật (Q2/2026): Cần check lịch DST chuẩn xác vì lệch tuần. Tạm tính là 12h.
             features['is_overlap'] = (hour == 12).astype(float)
             
             # [MỚI - SA Review #4] Khoảng cách đến New York/London/Asian Open
