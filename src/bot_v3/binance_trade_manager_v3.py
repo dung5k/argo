@@ -168,7 +168,7 @@ class BinanceTradeManagerV3:
             try:
                 self.exchange.create_order(
                     symbol=target_binance_sym,
-                    type='stopMarket',
+                    type='STOP_MARKET',
                     side=sl_side,
                     amount=lot_size,
                     params={'stopPrice': sl_price, 'reduceOnly': True}
@@ -179,7 +179,7 @@ class BinanceTradeManagerV3:
             try:
                 self.exchange.create_order(
                     symbol=target_binance_sym,
-                    type='takeProfitMarket',
+                    type='TAKE_PROFIT_MARKET',
                     side=sl_side,
                     amount=lot_size,
                     params={'stopPrice': tp_price, 'reduceOnly': True}
@@ -201,7 +201,7 @@ class BinanceTradeManagerV3:
             self.log_callback(f"[BinanceTradeManagerV3] ❌ Lỗi mở lệnh: {e}")
             return None
 
-    def manage_positions(self, action: str, probs_dict: dict, mse_loss: float):
+    def execute_trade(self, action: str, probs_dict: dict, mse_loss: float, actual_target_sym: str = None):
         if not self.exchange: return
         target_binance_sym = self._format_symbol(self.target_symbol)
         
