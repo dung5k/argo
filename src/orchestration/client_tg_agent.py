@@ -378,7 +378,7 @@ class TelegramAgent:
             if config_from_payload:
                 # Đảm bảo dùng đường dẫn tuyệt đối trên client
                 if not os.path.isabs(config_from_payload):
-                    config = os.path.join(ARGO_DATA_DIR, os.path.basename(config_from_payload))
+                    config = os.path.join(str(self.base_dir), config_from_payload)
                 else:
                     config = config_from_payload
             else:

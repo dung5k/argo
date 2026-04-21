@@ -148,9 +148,6 @@ def main():
     dataset_repo = config.get("HF_CLOUD", {}).get("DATASET_REPO")
     train_cfg = config.get("TRAINING", {})
     
-    print(f"!!! [DEBUG] sys.argv: {sys.argv}", flush=True)
-    print(f"!!! [DEBUG] dataset_repo: {dataset_repo} | cfg_id: {cfg_id}", flush=True)
-    
     epochs_warmup = train_cfg.get("EPOCHS_PHASE_1", 10)
     batch_size = train_cfg.get("BATCH_SIZE", 64)
     lr = train_cfg.get("LEARNING_RATE", 1e-4)
