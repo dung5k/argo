@@ -86,6 +86,8 @@ def main(config_file):
         sym_clean = sym.replace('m', '').upper()
         if sym_clean not in [k.replace('m', '').upper() for k in required_macros.keys()] and target_sym not in sym_clean:
             continue
+        if brk == "BINANCE":
+            continue
             
         brk_path = brokers_map.get(brk, brokers_map.get("DEFAULT"))
         if brk_path not in broker_syms: broker_syms[brk_path] = []
