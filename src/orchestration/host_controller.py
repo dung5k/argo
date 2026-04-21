@@ -71,15 +71,9 @@ class HostController:
                 "ny": "data/bot_config_xau_ny_v3.json"
             }
             local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(session, "data/bot_config_xau.json")
-            if local_cfg:
-                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                local_cfg_path = os.path.join(base_dir, "data", os.path.basename(local_cfg))
-                if os.path.exists(local_cfg_path):
-                    print(f"[HOST] Đang đẩy tệp cấu hình mới ({os.path.basename(local_cfg)}) sang Client trước khi Train...")
-                    self.send_file(local_cfg_path, f"data/{os.path.basename(local_cfg)}")  # Prefix "data/" de Client nhan dien va luu vao C:\argo\data
-                    time.sleep(1.5)  # Cho client thoi gian ghi file
-                else:
-                    print(f"[HOST] Cảnh báo: Không tìm thấy file {local_cfg_path} để đính kèm.")
+            if local_cfg and os.path.exists(local_cfg):
+                # Không cần Gửi File Config qua MQTT base64 nữa vì Client sẽ tự động nhận qua git pull!
+                pass
             
             # Bỏ việc trỏ cứng C:/argo/data vì client đã đồng bộ qua git pull rồi! 
             payload = json.dumps({
