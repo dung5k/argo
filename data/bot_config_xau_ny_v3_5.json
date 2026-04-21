@@ -37,7 +37,17 @@
             "US_10Y_YIELD": [
                 "log_ret"
             ],
-            "USDJPY": [
+            "USTECm": [
+                "log_ret",
+                "volume",
+                "bb_width"
+            ],
+            "XAGUSDm": [
+                "log_ret",
+                "volume",
+                "bb_width"
+            ],
+            "VIXYm": [
                 "log_ret"
             ]
         }
@@ -73,7 +83,9 @@
             "XAUUSDm": "EXNESS",
             "DXYm": "EXNESS",
             "US_10Y_YIELD": "ICMARKETS",
-            "USDJPYm": "EXNESS"
+            "USTECm": "EXNESS",
+            "XAGUSDm": "EXNESS",
+            "VIXYm": "ICMARKETS"
         },
         "CONTINUOUS_CONTRACTS": {
             "VIXYm": {

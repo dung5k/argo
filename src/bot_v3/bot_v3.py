@@ -22,6 +22,7 @@ from src.bot_v3.data_processor_v3 import V3DataProcessor
 from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
 from src.core.mt5_data_manager import MT5DataManager
+from src.bot_v3.config_loader_v3 import V3ConfigLoader
 import logging
 
 log_dir = os.path.join(safe_script_dir, "data", "logs")
@@ -54,17 +55,17 @@ def tg_notify(msg):
         except: pass
 
 config_file = os.path.join(safe_script_dir, "data", "bot_config_xau_ny_v3.json")
+schedule_file = os.path.join(safe_script_dir, "data", "bot_v3_brain_schedule.json")
 if len(sys.argv) > 1:
-    for arg in sys.argv:
-        if arg.endswith('.json'):
-            config_file = arg
+    args_json = [arg for arg in sys.argv if arg.endswith('.json')]
+    if len(args_json) >= 1:
+        config_file = args_json[0]
+    if len(args_json) >= 2:
+        schedule_file = args_json[1]
 
-CONFIG = {}
-if os.path.exists(config_file):
-    try:
-        with open(config_file, "r", encoding="utf-8") as f:
-            CONFIG = json.load(f)
-    except: pass
+# Khởi tạo Config Loader
+config_loader = V3ConfigLoader(config_file, schedule_file, log_callback=print)
+CONFIG = config_loader.load_base_config()
 
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
 TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAUUSD")
@@ -73,31 +74,26 @@ trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_noti
 
 gui_status = "Đang Sưởi Ấm Radar V3..."
 gui_prediction = "Chờ Tín Hiệu..."
+gui_probs = {'buy': 0.0, 'sell': 0.0, 'loss': 0.0}
 gui_time = "00:00:00"
-gui_session = "Phiên: Đang đo Đạc..."
+gui_session = "Phiên: Đang khởi chạy..."
 gui_market_data = []
 
 def bot_background_loop():
-    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG
-    print("[BOT V3] ===== Khởi động OOP Modules V3.0 =====")
+    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs
+    print("[BOT V3] ===== Khởi động OOP Modules V3.0 (MASTER SCHEDULER) =====")
     
-    cloud = V3CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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", CONFIG, log_callback=print)
     engine = V3InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
     trade_manager.init_mt5()
     processor = None
+    cloud = None
     
     arch = CONFIG.get("TRAINING", {})
     window_size     = CONFIG.get("FEATURE_ENGINEERING", {}).get("WINDOW_SIZE", 60)
     d_model         = arch.get("D_MODEL", 128)
     nhead           = arch.get("N_HEAD", 8)
     num_attn_layers = arch.get("NUM_LAYERS", 4)
-    
-    # Configure bot engine options
-    bot_cfg = CONFIG.get("LIVE_BOT", {})
-    engine.mse_threshold = bot_cfg.get("MSE_THRESHOLD_PERCENTILE", 70.0)
-    engine.prob_threshold = bot_cfg.get("MIN_PROBABILITY_THRESH", 0.70)
-    trade_manager.update_gui_threshold()
     
     mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
     gui_status = "Đang kết nối MT5..."
@@ -113,7 +109,7 @@ def bot_background_loop():
     last_candle_time = None
     
     trade_manager.sync_existing_positions()
-    startup_msg = f"🤖 [BOT V3 KHỞI ĐỘNG]\n⏰ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n💹 Mã: {TARGET_SYMBOL} | Config: {os.path.basename(config_file)}"
+    startup_msg = f"🤖 [BOT V3 MASTER KHỞI ĐỘNG]\n⏰ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n💹 Mã: {TARGET_SYMBOL} | Config: {os.path.basename(config_file)}"
     tg_notify(startup_msg)
 
     while True:
@@ -121,28 +117,37 @@ def bot_background_loop():
         gui_time = datetime.now().strftime('%H:%M:%S')
         print(f"\n[BOT V3] ────── Chu kỳ #{cycle_count} | {gui_time} ──────")
         
-        try:
-            with open(config_file, "r", encoding="utf-8") as f:
-                CONFIG = json.load(f)
-                trade_manager.config = CONFIG
-                mt5_manager.config = CONFIG
-                trade_manager.update_gui_threshold()
-                bot_cfg = CONFIG.get("LIVE_BOT", {})
-                engine.mse_threshold = bot_cfg.get("MSE_THRESHOLD_PERCENTILE", 70.0)
-                engine.prob_threshold = bot_cfg.get("MIN_PROBABILITY_THRESH", 0.70)
-        except Exception:
-            pass
+        # 1. Hot-reload Config & Schedule
+        base_cfg = config_loader.load_base_config()
+        if base_cfg:
+            CONFIG = base_cfg
+            
+        sess_name, sinfo, global_mt5 = config_loader.get_current_schedule()
+        if sinfo:
+            CONFIG = config_loader.apply_schedule_overrides(CONFIG, sinfo, global_mt5)
+            
+        trade_manager.config = CONFIG
+        mt5_manager.config = CONFIG
+        trade_manager.update_gui_threshold()
+        
+        bot_cfg = CONFIG.get("LIVE_BOT", {})
+        engine.mse_threshold = bot_cfg.get("MSE_THRESHOLD_PERCENTILE", 70.0)
+        engine.prob_threshold = bot_cfg.get("MIN_PROBABILITY_THRESH", 0.70)
             
         target_run_id = CONFIG.get("HF_RUN_ID", "")
         cfg_id = CONFIG.get("CONFIG_ID", "")
 
         if target_run_id and target_run_id != active_run_id:
-            print(f"[BOT V3] Phát hiện Não mới! {active_run_id} → {target_run_id}")
+            msg = f"🔄 Chuyển đổi Khung Giờ (Phiên {sess_name})!\nĐang tiến hành Hủy Não [{active_run_id}] để tải Não mới [{target_run_id}]..."
+            print(f"[BOT V3] {msg}")
+            tg_notify(msg)
             brain_loaded = False
+            # Re-init cloud to fetch new config specs like DATASET_REPO
+            cloud = V3CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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", CONFIG, log_callback=print)
             
-        if not brain_loaded:
+        if not brain_loaded and cloud is not None:
             print(f"[BOT V3] Bắt đầu tải não AAMT...")
-            gui_session = "Đang Tải NÃO từ Cloud..."
+            gui_status = "Đang Tải NÃO từ Cloud..."
             try:
                 m_path, s_path, i_feats, n_feat = cloud.sync_session_model(cfg_id)
                 active_run_id = target_run_id
@@ -153,14 +158,21 @@ def bot_background_loop():
                 
                 brain_loaded = True
                 gui_status = "✅ Lắp Ráp NÃO V3 Thành Công!"
-                gui_session = f"NÃO NẠP: {os.path.basename(m_path)[:15]}"
-                print("[BOT V3] ✅ Não sẵn sàng.")
+                gui_session = f"PHIÊN {sess_name.upper() if sess_name else 'UNKNOWN'} (Não: {os.path.basename(m_path)[:10]})"
+                msg_done = f"✅ Lắp ráp NÃO V3 Xong!\nKhởi tạo thành công Mạng Nơ-ron (Loss %: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)})\nBot đang nghe ngóng thị trường..."
+                print(f"[BOT V3] {msg_done}")
+                tg_notify(msg_done)
             except Exception as ce:
                 gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
                 print(f"[BOT V3] ❌ Lỗi tải não: {ce}")
                 time.sleep(5)
                 continue
                 
+        if not brain_loaded:
+            print("[BOT V3] Chưa có Bộ Não nào được cấu hình hợ lệ. Đợi 5s...")
+            time.sleep(5)
+            continue
+            
         print("[BOT V3] Quét các cổng MT5...")
         mt5_manager.scan_terminals_and_map()
         
@@ -170,7 +182,8 @@ def bot_background_loop():
             trade_manager.mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
 
-        actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
+        mt5_exec_sym = CONFIG.get("EXECUTION_SYMBOL", TARGET_SYMBOL)
+        actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
         trade_manager.mt5.symbol_select(actual_sym, True)
         
         tick = trade_manager.mt5.symbol_info_tick(actual_sym)
@@ -194,10 +207,10 @@ def bot_background_loop():
             continue
             
         last_candle_time = current_candle_time
-        print(f"[BOT V3] 🕒 Nến M1 Mới | {datetime.utcfromtimestamp(current_candle_time).strftime('%H:%M')} UTC")
+        print(f"[BOT V3] 🕒 Nến M1 Mới | {datetime.fromtimestamp(current_candle_time, timezone.utc).strftime('%H:%M')} UTC")
 
         gui_status = "Đang Cào Dữ Liệu Thời Gian Thực..."
-        merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=120)
+        merged_df, sym_data, err_msg = mt5_manager.get_live_merged_data_in_memory(window=1500)
         mt5_manager.current_connected_path = None
         
         if err_msg or merged_df is None or len(merged_df) == 0:
@@ -222,6 +235,13 @@ def bot_background_loop():
             continue
             
         gui_prediction = f"B:{probs['buy']:.2f} S:{probs['sell']:.2f} (Loss:{mse:.3f})"
+        gui_probs = {'buy': probs['buy'], 'sell': probs['sell'], 'loss': mse}
+        msg_pred = f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\nThời gian: Nến {gui_time}\nGiá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\nTỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\nHành động: {action}"
+        print(f"[BOT V3] {msg_pred}")
+        # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
+        # Để tránh spam, sẽ chỉ gửi nếu tín hiệu vượt kỳ vọng (Loss nhỏ) hoặc Action = BUY/SELL
+        if action != "SLEEP":
+            tg_notify(msg_pred)
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
@@ -229,11 +249,11 @@ def bot_background_loop():
             trade_manager.mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
             
-        trade_manager.manage_mt5_positions(action, probs, mse, actual_target_sym=actual_sym)
+        trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)
         gui_status = f"Khóa Mốc. Hành động: {action}"
         time.sleep(1)
 
-def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
+def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
     if lbl_target: lbl_target.config(text=TARGET_SYMBOL)
     lbl_time.config(text=f"🕒 {gui_time}")
     lbl_session.config(text=f"🌐 {gui_session}")
@@ -251,13 +271,23 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
     tree.tag_configure("normal", foreground="white")
     tree.tag_configure("delayed", foreground="#ffaa00")
     
-    lbl_pred.config(text=f"🧠 Tín Hiệu: {gui_prediction}", fg="#00ffcc" if "B" in gui_prediction else "#cccccc")
-    root.after(500, update_ui, root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
+    canvas_pred.delete("all")
+    w = canvas_pred.winfo_width()
+    if w < 10: w = 330
+    bw = int(w * gui_probs.get('buy', 0.0))
+    sw = int(w * gui_probs.get('sell', 0.0))
+    canvas_pred.create_rectangle(0, 0, bw, 24, fill="#00aa55", outline="")
+    canvas_pred.create_rectangle(w - sw, 0, w, 24, fill="#aa2222", outline="")
+    txt = f"BUY {gui_probs.get('buy', 0.0):.1%} | SELL {gui_probs.get('sell', 0.0):.1%}"
+    if gui_probs.get('buy', 0.0) == 0.0 and gui_probs.get('sell', 0.0) == 0.0:
+        txt = "Chờ Tín Hiệu..."
+    canvas_pred.create_text(w/2, 12, text=txt, fill="white", font=("Consolas", 10, "bold"))
+    
+    root.after(500, update_ui, root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
 
 def start_overlay_dashboard():
     root = tk.Tk()
     root.title(f"AAMT TERMINATOR V3 - {TARGET_SYMBOL}")
-    root.overrideredirect(True)
     root.attributes('-topmost', True)
     root.attributes('-alpha', 0.92) 
     
@@ -274,11 +304,11 @@ def start_overlay_dashboard():
     root.bind("<ButtonRelease-1>", lambda e: setattr(root, 'x', None) or setattr(root, 'y', None))
     root.bind("<B1-Motion>", do_move)
     
-    tk.Label(root, text=f"🌌 {TARGET_SYMBOL} AAMT TERMINATOR [v3.0] 🌌", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
+    tk.Label(root, text=f"🌌 {TARGET_SYMBOL} MASTER V3 🌌", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
     lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9))
     lbl_session.pack()
-    lbl_pred = tk.Label(root, text="🧠 THỜI CƠ: N/A", fg="#cccccc", bg="#080b12", font=("Consolas", 10, "bold"))
-    lbl_pred.pack(pady=3)
+    canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
+    canvas_pred.pack(pady=3, fill=tk.X, padx=15)
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))
     lbl_action.pack()
     lbl_thr = tk.Label(root, text="⚖️ Ngưỡng L4: Chờ Load", fg="#ff55bb", bg="#080b12", font=("Consolas", 9))
@@ -290,6 +320,17 @@ def start_overlay_dashboard():
     style.configure("Treeview", background="#111625", foreground="white", fieldbackground="#111625", borderwidth=0)
     style.configure("Treeview.Heading", background="#1a2235", foreground="#00ffff", font=("Consolas", 8, "bold"))
     
+    def toggle_board():
+        if frame_data.winfo_ismapped():
+            frame_data.pack_forget()
+            btn_toggle.config(text="⬇ Mở Rộng Bảng Giá")
+        else:
+            frame_data.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            btn_toggle.config(text="⬆ Thu Gọn Bảng Giá")
+            
+    btn_toggle = tk.Button(root, text="⬆ Thu Gọn Bảng Giá", command=toggle_board, bg="#1a2235", fg="#00ffff", relief=tk.FLAT, font=("Consolas", 8, "bold"))
+    btn_toggle.pack(pady=2)
+
     frame_data = tk.Frame(root, bg="#080b12")
     frame_data.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
     tree = ttk.Treeview(frame_data, columns=("Symbol", "Price", "Change", "Time"), show="headings", height=8)
@@ -305,7 +346,7 @@ def start_overlay_dashboard():
     lbl_time = tk.Label(root, text="🕒 00:00:00", fg="#888888", bg="#080b12", font=("Consolas", 8))
     lbl_time.pack(side=tk.BOTTOM)
     
-    update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr)
+    update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr)
     root.mainloop()
 
 if __name__ == "__main__":

@@ -75,6 +75,26 @@ class FeatureEngineeringV3:
             vwap = cum_pv / (cum_vol + 1e-6)
             features['vwap_distance'] = (df[close_col] - vwap) / (vwap + 1e-6)
             
+            # -- [MỚI - NY Session] Daily High / Low Liquidity Magnets
+            daily_high = df[high_col].groupby(day_key).cummax()
+            daily_low = df[low_col].groupby(day_key).cummin()
+            features['dist_to_daily_high'] = (daily_high - df[close_col]) / (df[close_col] + 1e-6)
+            features['dist_to_daily_low'] = (df[close_col] - daily_low) / (daily_low + 1e-6)
+            
+            # -- [MỚI - NY Session] Exhaustion & Acceleration
+            features['vol_accel'] = vol - vol.shift(1).bfill()
+            
+            is_green = (df[close_col] > df[open_col]).astype(int)
+            is_red = (df[close_col] < df[open_col]).astype(int)
+            sign = is_green - is_red
+            streak_groups = (sign != sign.shift()).cumsum()
+            features['streak_count'] = sign.groupby(streak_groups).cumsum()
+            
+            upper_wick = df[high_col] - np.maximum(df[open_col], df[close_col])
+            lower_wick = np.minimum(df[open_col], df[close_col]) - df[low_col]
+            total_wick = upper_wick + lower_wick
+            features['wick_accel'] = total_wick - total_wick.shift(1).bfill()
+            
             # -- [MỚI - SA Review #5] VSA: Effort vs Result (Nỗ lực vs Kết quả)
             # Khối lượng lớn nhưng biến động giá thấp -> Dấu hiệu hấp thụ (Absorption), chặn đảo chiều
             # Dùng np.log1p để tránh hiện tượng phương sai nổ khổng lồ khi spread cực nhỏ (nến Doji)
@@ -139,6 +159,13 @@ class FeatureEngineeringV3:
         features['bb_width'] = (upper_band - lower_band) / (sma + 1e-6)
         features['bb_zscore'] = (df[close_col] - sma) / (rstd + 1e-6)
         
+        # [MỚI - NY Session] Choppiness Index (CHOP_14)
+        sum_atr = atr.rolling(window=14, min_periods=1).sum()
+        max_high = df[high_col].rolling(window=14, min_periods=1).max()
+        min_low = df[low_col].rolling(window=14, min_periods=1).min()
+        chop = 100 * np.log10(sum_atr / (max_high - min_low + 1e-6) + 1e-6) / np.log10(14)
+        features['chop_14'] = chop / 100.0  # normalize to [0,1]
+        
         return features
         
     def calculate_momentum(self, df, close_col, rsi_period=14, macd_fast=12, macd_slow=26, macd_signal=9):
@@ -199,6 +226,10 @@ class FeatureEngineeringV3:
             # [MỚI - SA Review #5] Cờ Giao Thoa London - NY (12:00 - 13:00 UTC)
             # Nợ kỹ thuật (Q2/2026): Cần check lịch DST chuẩn xác vì lệch tuần. Tạm tính là 12h.
             features['is_overlap'] = (hour == 12).astype(float)
+            
+            # [MỚI - NY Session] Quan trọng: Cờ giờ mở cửa cổ phiếu
+            features['is_nyse_open'] = ((hour == 13) & (minute >= 30)).astype(float)
+            features['is_london_fix'] = ((hour == 15) & (minute >= 30)).astype(float)
             
             # [MỚI - SA Review #4] Khoảng cách đến New York/London/Asian Open
             if open_col and close_col:
@@ -275,6 +306,11 @@ class FeatureEngineeringV3:
                                 )
                                 corr = target_ret.rolling(window=60, min_periods=20).corr(macro_ret)
                                 f_macro[f"{sym}_target_corr_60"] = corr.fillna(0.0)
+                            
+                            # [MỚI - NY Session] Macro Divergence: DXY_XAU Anomaly
+                            if sym_lower.startswith('dxy'):
+                                target_ret = np.log((df[close_col] / df[close_col].shift(1).bfill()) + 1e-6)
+                                f_macro[f"{sym}_dxy_xau_anomaly"] = macro_ret * target_ret
                         
                         if "bb_width" in req_features and m_high and m_low:
                             vol_macro = self.calculate_volatility(df, m_high, m_low, m_close)
@@ -309,7 +345,7 @@ class FeatureEngineeringV3:
         def _no_scale(col):
             return (
                 col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized')
+                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
@@ -333,7 +369,7 @@ class FeatureEngineeringV3:
         def _no_scale(col):
             return (
                 col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized')
+                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
