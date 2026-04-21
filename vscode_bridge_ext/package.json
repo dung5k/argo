@@ -1,0 +1,77 @@
+{
+  "name": "antigravity-telegram-bridge",
+  "displayName": "Antigravity Telegram Bridge",
+  "description": "Receives Telegram requests and routes them to VS Code Agent",
+  "version": "1.1.3",
+  "publisher": "antigravity",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/test/test.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "auto-click-bridge.restart",
+        "title": "Restart Bridge Server"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Bridge Bot",
+      "properties": {
+        "antigravityBridge.botActive": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "Activate or deactivate the Antigravity Telegram Bridge polling for this workspace."
+        },
+        "antigravityBridge.teleBotToken": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Telegram Bot Token for managing messaging."
+        },
+        "antigravityBridge.whitelistChatIds": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Comma separated list of allowed Chat IDs."
+        },
+        "antigravityBridge.periodicInterval": {
+          "type": "number",
+          "scope": "resource",
+          "default": 60,
+          "description": "Interval in minutes for the periodic execution."
+        },
+        "antigravityBridge.periodicPromptFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": ".agent/periodic_prompt.md",
+          "description": "Path to the prompt file for periodic execution. If relative, it uses the first open workspace."
+        },
+        "antigravityBridge.agentWorkingDir": {
+          "type": "string",
+          "scope": "resource",
+          "default": ".agent",
+          "description": "Directory to watch for response.txt. If relative, it uses the first open workspace."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/test/test/issues"
+  },
+  "homepage": "https://github.com/test/test#readme"
+}
