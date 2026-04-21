@@ -307,7 +307,7 @@ class FeatureEngineeringV3:
                                     (df[close_col] / df[close_col].shift(1).bfill()) + 1e-6
                                 )
                                 corr = target_ret.rolling(window=60, min_periods=20).corr(macro_ret)
-                                f_macro[f"{sym}_target_corr_60"] = corr.fillna(0.0)
+                                f_macro[f"{sym}_target_corr_60"] = corr.replace([np.inf, -np.inf], np.nan).fillna(0.0).clip(-1.0, 1.0)
                             
                             # [MỚI - NY Session] Macro Divergence: DXY_XAU Anomaly
                             if sym_lower.startswith('dxy'):
