@@ -80,7 +80,9 @@ elif BOT_VERSION.startswith("3"):
 
 print(f"[BOT MASTER] Phát hiện mã phiên bản BOT_VERSION = {BOT_VERSION.upper()} từ {os.path.basename(config_file)}")
 
-if not schedule_file:
+if CONFIG.get("SESSION", "") == "crypto_247" or CONFIG.get("FEATURE_ENGINEERING", {}).get("CRYPTO_MODE", False):
+    schedule_file = None
+elif not schedule_file:
     schedule_file = os.path.join(safe_script_dir, "data", f"bot_{BOT_VERSION}_brain_schedule.json")
 
 # IMPORTS DYNAMIC TỪNG VERSION
@@ -90,6 +92,7 @@ if BOT_VERSION == "v3":
     from src.bot_v3.inference_engine_v3 import V3InferenceEngine as InferenceEngine
     from src.bot_v3.trade_manager_v3 import V3TradeManager as TradeManager
     from src.bot_v3.config_loader_v3 import V3ConfigLoader as ConfigLoader
+    from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
 else:
     from src.bot_v2.cloud_manager_v2 import V2CloudManager as CloudManager
     from src.bot_v2.data_processor_v2 import V2DataProcessor as DataProcessor
@@ -106,13 +109,21 @@ if hasattr(config_loader, "load_base_config"):
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
 TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAUUSD")
 
-trade_manager = TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+IS_CRYPTO = CONFIG.get("FEATURE_ENGINEERING", {}).get("CRYPTO_MODE", False)
+TRADE_PLATFORM = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "BINANCE" if IS_CRYPTO else "MT5")
+
+if TRADE_PLATFORM == "BINANCE":
+    trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+else:
+    trade_manager = TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
 gui_status = f"Đang Sưởi Ấm Radar {BOT_VERSION.upper()}..."
 gui_prediction = "Chờ Tín Hiệu..."
 gui_time = "00:00:00"
 gui_session = "Phiên: Đang khởi chạy..."
 gui_market_data = []
+gui_v3_probs = {"buy": 0, "sell": 0, "hold": 1}
+gui_action = "N/A"
 
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG
@@ -120,18 +131,21 @@ def bot_background_loop():
     
     engine = InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
-    trade_manager.init_mt5()
-    processor = None
-    cloud = None
-    if BOT_VERSION == "v2":
-        cloud = CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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", log_callback=print)
     
-    mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-    gui_status = "Đang kết nối MT5..."
-    if not trade_manager.mt5.initialize(path=mt5_init_path):
-        gui_status = "❌ Mất Kết Nối MT5 Terminal!"
-        print("[BOT MASTER] ❌ FATAL: Không thể khởi tạo kết nối MT5.")
-        return
+    if TRADE_PLATFORM == "MT5":
+        trade_manager.init_mt5()
+        mt5_init_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        gui_status = "Đang kết nối MT5..."
+        if not trade_manager.mt5.initialize(path=mt5_init_path):
+            gui_status = "❌ Mất Kết Nối MT5 Terminal!"
+            print("[BOT MASTER] ❌ FATAL: Không thể khởi tạo kết nối MT5.")
+            return
+    else: # BINANCE
+        gui_status = "Đang kết nối Binance FAPI..."
+        if not trade_manager.init_client():
+            gui_status = "❌ Khởi tạo Binance CCXT thất bại!"
+            print("[BOT MASTER] ❌ FATAL: Không thể khởi tạo Binance FAPI. Kiểm tra Key.")
+            return
         
     last_tick_err_time = 0
     brain_loaded = False
@@ -253,32 +267,35 @@ def bot_background_loop():
             time.sleep(5)
             continue
             
-        print("[BOT MASTER] Quét các cổng MT5...")
+        print("[BOT MASTER] Quét định tuyến Đa Sàn (Terminal/Binance)...")
         mt5_manager.scan_terminals_and_map()
         
-        trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
-        if mt5_manager.current_connected_path != trading_path:
-            trade_manager.mt5.shutdown()
-            trade_manager.mt5.initialize(path=trading_path)
-            mt5_manager.current_connected_path = trading_path
+        if TRADE_PLATFORM == "MT5":
+            trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+            if mt5_manager.current_connected_path != trading_path:
+                trade_manager.mt5.shutdown()
+                trade_manager.mt5.initialize(path=trading_path)
+                mt5_manager.current_connected_path = trading_path
 
-        actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
-        trade_manager.mt5.symbol_select(actual_sym, True)
-        
-        tick = trade_manager.mt5.symbol_info_tick(actual_sym)
-        if tick is None:
-            if time.time() - last_tick_err_time > 10:
-                print(f"[BOT MASTER] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
-                last_tick_err_time = time.time()
-            mt5_manager.current_connected_path = None
-            time.sleep(1)
-            continue
+            actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(TARGET_SYMBOL, TARGET_SYMBOL)
+            trade_manager.mt5.symbol_select(actual_sym, True)
             
-        staleness_secs = time.time() - tick.time
-        if staleness_secs > 300:
-            gui_status = f"Giá Freeze ({int(staleness_secs/60)}p)..."
-            time.sleep(10)
-            continue
+            tick = trade_manager.mt5.symbol_info_tick(actual_sym)
+            if tick is None:
+                if time.time() - last_tick_err_time > 10:
+                    print(f"[BOT MASTER] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
+                    last_tick_err_time = time.time()
+                mt5_manager.current_connected_path = None
+                time.sleep(1)
+                continue
+                
+            staleness_secs = time.time() - tick.time
+            if staleness_secs > 300:
+                gui_status = f"Giá Freeze ({int(staleness_secs/60)}p)..."
+                time.sleep(10)
+                continue
+        else:
+            actual_sym = TARGET_SYMBOL # BINANCE
             
         current_candle_time = int(time.time() // 10) * 10
         if current_candle_time == last_candle_time:
@@ -340,7 +357,7 @@ def bot_background_loop():
                 if not is_trade_action:
                     tele_msg_count += 1
                     
-            trade_manager.manage_mt5_positions(action, probs, mse, actual_target_sym=actual_sym)
+            trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)
             gui_status = f"Khóa Mốc. Hành động: {action}"
         else: # V2
             pred, logits = engine.predict(t_seq)
@@ -350,7 +367,7 @@ def bot_background_loop():
                 continue
             gui_prediction = f"{pred*100:.2f}%"
             print(f"[BOT MASTER] Lực Bò={gui_prediction}")
-            trade_manager.manage_mt5_positions(pred, actual_target_sym=actual_sym)
+            trade_manager.execute_trade(pred, actual_target_sym=actual_sym)
             gui_status = "Khóa Mốc. Hoàn tất chu kỳ."
 
         time.sleep(1)
@@ -370,7 +387,8 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
         change_text = f"🟢 {change:+.2f}" if change >= 0 else f"🔴 {change:+.2f}"
         
         is_delayed = data[5] if len(data) >= 6 else False
-        source_display = f"⚠️ TRỄ DATA" if is_delayed else "Live MT5"
+        src_nm = data[4] if len(data) >= 5 else "Live MT5"
+        source_display = f"⚠️ TRỄ DATA" if is_delayed else f"📡 {src_nm}"
         tree.insert("", "end", values=(sym, f"{price:,.2f}", change_text, source_display, t_str), tags=("delayed" if is_delayed else "normal",))
         
     tree.tag_configure("normal", foreground="white")
@@ -423,14 +441,23 @@ def update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tre
 
 def start_overlay_dashboard():
     root = tk.Tk()
-    root.title(f"AAMT TERMINATOR {BOT_VERSION.upper()} - {TARGET_SYMBOL}")
+    root.title(f"AAMT TERMINATOR {BOT_VERSION.upper()} ({TRADE_PLATFORM}) - {TARGET_SYMBOL}")
     root.overrideredirect(True)
     root.attributes('-topmost', True)
     root.attributes('-alpha', 0.92) 
     
     screen_h = root.winfo_screenheight()
-    root.geometry(f"380x480+10+{screen_h - 520}")
-    root.configure(bg='#080b12') 
+    screen_w = root.winfo_screenwidth()
+    
+    bg_color = "#1c100b" if TRADE_PLATFORM == "BINANCE" else "#080b12"
+    panel_color = "#2b1a13" if TRADE_PLATFORM == "BINANCE" else "#111625"
+    title_bg = "#3e251a" if TRADE_PLATFORM == "BINANCE" else "#1a2235"
+    theme_fg = "#f3ba2f" if TRADE_PLATFORM == "BINANCE" else "#00ffff"
+    
+    # Góc phải cho Crypto, góc trái cho MT5
+    pos_x = screen_w - 380 if TRADE_PLATFORM == "BINANCE" else 10
+    root.geometry(f"380x480+{pos_x}+{screen_h - 520}")
+    root.configure(bg=bg_color) 
     
     root.x, root.y = 0, 0
     def do_move(event):
@@ -438,18 +465,19 @@ def start_overlay_dashboard():
         root.geometry(f"+{root.winfo_x() + event.x - root.x}+{root.winfo_y() + event.y - root.y}")
         
     # CUSTOM TITLE BAR
-    title_bar = tk.Frame(root, bg="#111625", relief="raised", bd=1)
+    title_bar = tk.Frame(root, bg=panel_color, relief="raised", bd=1)
     title_bar.pack(expand=0, fill=tk.X)
     
-    title_label = tk.Label(title_bar, text=f"🌌 {TARGET_SYMBOL} MASTER {BOT_VERSION.upper()} 🌌", fg="#00ffff", bg="#111625", font=("Consolas", 10, "bold"))
+    icon_char = "🔶" if TRADE_PLATFORM == "BINANCE" else "🌌"
+    title_label = tk.Label(title_bar, text=f"{icon_char} {TARGET_SYMBOL} MASTER {BOT_VERSION.upper()} ({TRADE_PLATFORM}) {icon_char}", fg=theme_fg, bg=panel_color, font=("Consolas", 10, "bold"))
     title_label.pack(side=tk.LEFT, padx=5, pady=2)
     
-    btn_frame = tk.Frame(title_bar, bg="#111625")
+    btn_frame = tk.Frame(title_bar, bg=panel_color)
     btn_frame.pack(side=tk.RIGHT, padx=2)
     
-    btn_min = tk.Button(btn_frame, text="—", bg="#111625", fg="white", bd=0, padx=5, command=lambda: root.geometry("380x30"), activebackground="#333333", activeforeground="white")
+    btn_min = tk.Button(btn_frame, text="—", bg=panel_color, fg="white", bd=0, padx=5, command=lambda: root.geometry("380x30"), activebackground="#333333", activeforeground="white")
     btn_min.pack(side=tk.LEFT)
-    btn_max = tk.Button(btn_frame, text="🗖", bg="#111625", fg="white", bd=0, padx=5, command=lambda: root.geometry(f"380x480"), activebackground="#333333", activeforeground="white")
+    btn_max = tk.Button(btn_frame, text="🗖", bg=panel_color, fg="white", bd=0, padx=5, command=lambda: root.geometry(f"380x480"), activebackground="#333333", activeforeground="white")
     btn_max.pack(side=tk.LEFT)
     btn_close = tk.Button(btn_frame, text="X", bg="#ff3333", fg="white", bd=0, padx=5, command=lambda: os._exit(0), activebackground="#aa0000", activeforeground="white")
     btn_close.pack(side=tk.LEFT)
@@ -461,9 +489,9 @@ def start_overlay_dashboard():
     title_label.bind("<ButtonRelease-1>", lambda e: setattr(root, 'x', None) or setattr(root, 'y', None))
     title_label.bind("<B1-Motion>", do_move)
     
-    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9))
+    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg=bg_color, font=("Consolas", 9))
     lbl_session.pack()
-    lbl_pred = tk.Label(root, text="🧠 THỜI CƠ: N/A", fg="#cccccc", bg="#080b12", font=("Consolas", 10, "bold"))
+    lbl_pred = tk.Label(root, text="🧠 THỜI CƠ: N/A", fg="#cccccc", bg=bg_color, font=("Consolas", 10, "bold"))
     lbl_pred.pack(pady=2)
     
     pred_canvas = None
@@ -471,18 +499,18 @@ def start_overlay_dashboard():
         pred_canvas = tk.Canvas(root, width=300, height=30, bg="#222222", highlightthickness=0)
         pred_canvas.pack(pady=2)
         
-    lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))
+    lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg=bg_color, font=("Consolas", 9))
     lbl_action.pack()
-    lbl_thr = tk.Label(root, text="⚖️ Ngưỡng L4: Chờ Load", fg="#ff55bb", bg="#080b12", font=("Consolas", 9))
+    lbl_thr = tk.Label(root, text="⚖️ Ngưỡng L4: Chờ Load", fg="#ff55bb", bg=bg_color, font=("Consolas", 9))
     lbl_thr.pack()
     
     from tkinter import ttk
     style = ttk.Style()
     style.theme_use("clam")
-    style.configure("Treeview", background="#111625", foreground="white", fieldbackground="#111625", borderwidth=0)
-    style.configure("Treeview.Heading", background="#1a2235", foreground="#00ffff", font=("Consolas", 8, "bold"))
+    style.configure("Treeview", background=panel_color, foreground="white", fieldbackground=panel_color, borderwidth=0)
+    style.configure("Treeview.Heading", background=title_bg, foreground=theme_fg, font=("Consolas", 8, "bold"))
     
-    frame_data = tk.Frame(root, bg="#080b12")
+    frame_data = tk.Frame(root, bg=bg_color)
     
     def toggle_table():
         if frame_data.winfo_viewable():
@@ -494,7 +522,7 @@ def start_overlay_dashboard():
             btn_toggle_table.config(text="Thu gọn Bảng Giá ▲")
             root.geometry("380x480")
             
-    btn_toggle_table = tk.Button(root, text="Thu gọn Bảng Giá ▲", bg="#1a2235", fg="#00ffff", bd=0, command=toggle_table, font=("Consolas", 8), cursor="hand2")
+    btn_toggle_table = tk.Button(root, text="Thu gọn Bảng Giá ▲", bg=title_bg, fg=theme_fg, bd=0, command=toggle_table, font=("Consolas", 8), cursor="hand2")
     btn_toggle_table.pack(pady=2)
     
     frame_data.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -506,12 +534,12 @@ def start_overlay_dashboard():
     
     tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
     
-    lbl_status_frame = tk.Frame(root, bg="#080b12")
+    lbl_status_frame = tk.Frame(root, bg=bg_color)
     lbl_status_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=2)
     
-    lbl_status = tk.Label(lbl_status_frame, text="⚙️ Đang Khởi Đoạt Mạng", fg="#aaaaaa", bg="#080b12", font=("Consolas", 8))
+    lbl_status = tk.Label(lbl_status_frame, text="⚙️ Đang Khởi Đoạt Mạng", fg="#aaaaaa", bg=bg_color, font=("Consolas", 8))
     lbl_status.pack(side=tk.BOTTOM, fill=tk.X, pady=2)
-    lbl_time = tk.Label(lbl_status_frame, text="🕒 00:00:00", fg="#888888", bg="#080b12", font=("Consolas", 8))
+    lbl_time = tk.Label(lbl_status_frame, text="🕒 00:00:00", fg="#888888", bg=bg_color, font=("Consolas", 8))
     lbl_time.pack(side=tk.BOTTOM)
     
     update_ui(root, lbl_time, lbl_session, lbl_pred, lbl_action, lbl_status, tree, lbl_thr, pred_canvas=pred_canvas)
