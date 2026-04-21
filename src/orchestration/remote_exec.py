@@ -1,1 +1,1 @@
-import os, glob; matches = []; [matches.extend(glob.glob(f'**/*.json', recursive=True))] ; [print(f) for f in matches if 'ltc_v3_tensor_london' in open(f, encoding='utf-8', errors='ignore').read()]
+import os, glob; matches = []; [matches.extend(glob.glob(f'**/*.bat', recursive=True))] ; [print(f, open(f).read()) for f in matches if 'train_v3.py' in open(f, encoding='utf-8', errors='ignore').read()]
