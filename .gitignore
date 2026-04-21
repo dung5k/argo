@@ -25,3 +25,7 @@ runs/old/
 # OneDrive placeholders
 *.url
 desktop.ini
+
+# Agent ignore
+.agent/
+.agents/
