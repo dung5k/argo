@@ -1,4 +1,1 @@
-import subprocess
-r = subprocess.run(['C:\\\\argo\\\\venv\\\\Scripts\\\\python.exe', 'src/training_v3/train_v3.py', 'workspaces/CFG_LTC_LONDON_V3_5/bot_config_ltc_london_v3_5.json', '--scratch'], capture_output=True, text=True)
-print('STDOUT:', r.stdout)
-print('STDERR:', r.stderr)
+import os, glob; matches = []; [matches.extend(glob.glob(f'**/*.json', recursive=True))] ; [print(f) for f in matches if 'ltc_v3_tensor_london' in open(f, encoding='utf-8', errors='ignore').read()]
