@@ -23,13 +23,13 @@ class FeatureEngineeringV3:
         # Điền NaN đầu tiên bằng chính giá open của nến đó để tránh rách index
         prev_close = prev_close.bfill()
         
-        # Cộng thêm epsilon nhỏ (1e-6) để tránh log(0) trong trường hợp giá không đổi hoặc lỗi dữ liệu
-        features['log_return_open'] = np.log((df[open_col] / prev_close) + 1e-6)
-        features['log_return_high'] = np.log((df[high_col] / prev_close) + 1e-6)
-        features['log_return_low'] = np.log((df[low_col] / prev_close) + 1e-6)
+        # Cộng thêm epsilon nhỏ (1e-6) để tránh log(0)
+        features['log_return_open']  = np.log((df[open_col]  / prev_close) + 1e-6)
+        features['log_return_high']  = np.log((df[high_col]  / prev_close) + 1e-6)
+        features['log_return_low']   = np.log((df[low_col]   / prev_close) + 1e-6)
         features['log_return_close'] = np.log((df[close_col] / prev_close) + 1e-6)
         
-        # Tính tổng chiều dài cản (Spread)
+        # Tổng chiều dài cản (Spread)
         total_spread = df[high_col] - df[low_col] + 1e-6
         
         # Bóng trên tỷ lệ với tổng độ dài nến (luôn nằm trong [0, 1])
@@ -41,6 +41,64 @@ class FeatureEngineeringV3:
         features['lower_wick_pct'] = (min_oc - df[low_col]) / total_spread
         
         return features
+        
+    def calculate_microstructure(self, df, open_col, high_col, low_col, close_col,
+                                  volume_col=None, adx_period=10, vwap_period=20):
+        """
+        [MỚI - P1/P2] Nhóm Vi cấu trúc thị trường:
+        - body_pct   : Độ đặc của thân nến (Marubozu detection)
+        - vroc       : Relative Volume (Volume / SMA20-Volume)
+        - adx_norm   : Sức mạnh xu hướng ADX, chuẩn hóa [0, 1]
+        - vwap_dist  : Khoảng cách giữa Close và VWAP xấp xỉ (Mean Reversion signal)
+        """
+        features = pd.DataFrame(index=df.index)
+        total_spread = df[high_col] - df[low_col] + 1e-6
+        
+        # -- body_pct: Tỷ lệ thân nến trong khoảng [0, 1]
+        body = (df[close_col] - df[open_col]).abs()
+        features['body_pct'] = body / total_spread
+        
+        if volume_col and volume_col in df.columns:
+            vol = df[volume_col].clip(lower=0)  # loại volume âm nếu lỗi adapter
+            
+            # -- vroc: Relative Volume so với SMA-20
+            sma_vol = vol.rolling(window=20, min_periods=1).mean()
+            features['vroc'] = vol / (sma_vol + 1e-6)
+            
+            # -- vwap_distance: VWAP xấp xỉ (typical_price * volume)
+            typical = (df[high_col] + df[low_col] + df[close_col]) / 3.0
+            tp_vol  = typical * vol
+            rolling_vol = vol.rolling(window=vwap_period, min_periods=1).sum()
+            vwap = tp_vol.rolling(window=vwap_period, min_periods=1).sum() / (rolling_vol + 1e-6)
+            features['vwap_distance'] = (df[close_col] - vwap) / (vwap + 1e-6)
+        
+        # -- adx_normalized: ADX(period) chuẩn hóa về [0, 1]
+        high  = df[high_col]
+        low   = df[low_col]
+        prev_close = df[close_col].shift(1).bfill()
+        
+        plus_dm  = (high.diff()).clip(lower=0)
+        minus_dm = (-low.diff()).clip(lower=0)
+        # Chỉ giữ DM lớn hơn, set nhỏ hơn = 0
+        cond = plus_dm >= minus_dm
+        plus_dm_clean  = plus_dm.where(cond, 0.0)
+        minus_dm_clean = minus_dm.where(~cond, 0.0)
+        
+        tr = pd.DataFrame({
+            'hl': high - low,
+            'hc': (high - prev_close).abs(),
+            'lc': (low  - prev_close).abs()
+        }).max(axis=1)
+        
+        smoothed_tr   = tr.ewm(span=adx_period, adjust=False).mean()
+        plus_di  = 100 * plus_dm_clean.ewm(span=adx_period,  adjust=False).mean() / (smoothed_tr + 1e-6)
+        minus_di = 100 * minus_dm_clean.ewm(span=adx_period, adjust=False).mean() / (smoothed_tr + 1e-6)
+        dx  = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di + 1e-6)
+        adx = dx.ewm(span=adx_period, adjust=False).mean()
+        features['adx_normalized'] = adx / 100.0  # [0, 1]
+        
+        return features
+
         
     def calculate_volatility(self, df, high_col, low_col, close_col, bb_period=20, atr_period=14):
         """Tính toán nhóm Biến động: ATR chuẩn hóa và Bollinger Band Width"""
@@ -143,14 +201,18 @@ class FeatureEngineeringV3:
         except KeyError as e:
             raise KeyError(f"Không tìm đủ các cột OHLC cho mã {prefix}. Chi tiết lỗi: {e}")
 
-        # Ráp các nhánh features của Mã Chính (XAU)
+        # Ráp các nhánh features của Mã Chính
         f_pa = self.calculate_price_action(df, open_col, high_col, low_col, close_col)
         f_vol = self.calculate_volatility(df, high_col, low_col, close_col)
         f_mom = self.calculate_momentum(df, close_col)
         crypto_mode = getattr(self, 'crypto_mode', False)
         f_time = self.calculate_time_context(df, crypto_mode=crypto_mode)
         
-        feature_blocks = [f_pa, f_vol, f_mom, f_time]
+        # [MỚI P1/P2] Microstructure features: body_pct, vroc, adx, vwap_distance
+        volume_col = cols.get(f"{prefix}_volume".lower()) or cols.get(f"{prefix}_real_volume".lower())
+        f_micro = self.calculate_microstructure(df, open_col, high_col, low_col, close_col, volume_col=volume_col)
+        
+        feature_blocks = [f_pa, f_vol, f_mom, f_time, f_micro]
         
         # Xử lý các mã Kinh tế Vĩ Mô (Macro)
         if self.macro_features:
@@ -189,17 +251,29 @@ class FeatureEngineeringV3:
         # Nối tất cả vào chung một khung
         final_features = pd.concat(feature_blocks, axis=1)
         
-        # Xoá các giá trị NaN phát sinh do độ trễ rolling window của RSI/MACD (thường ở 30 row đầu tiên)
+        # [MỚI P1] Rolling Correlation LTC-BTC (60 nến) — phát hiện Altcoin Decoupling
+        if 'BTCUSDT' in self.macro_features and 'log_return_close' in final_features.columns:
+            btc_col = 'BTCUSDT_log_ret'
+            if btc_col in final_features.columns:
+                ltc_ret = final_features['log_return_close']
+                btc_ret = final_features[btc_col]
+                corr_60 = ltc_ret.rolling(window=60, min_periods=20).corr(btc_ret)
+                final_features['ltc_btc_corr_60'] = corr_60.fillna(0.0)
+        
+        # Xoá các giá trị NaN phát sinh do độ trễ rolling window
         final_features = final_features.bfill()
         
         return final_features
         
     def fit_transform_scaler(self, features_df):
         """Scale data trong lúc Training"""
-        # Tránh đưa cột đã nằm trong biên [-1, 1] hoặc [0, 1] vào scaler:
-        # - hour_sin/cos, is_asian/london/ny: Time Context 
+        # Tránh scale các cột đã nằm trong biên [-1, 1] hoặc [0, 1]:
+        # - hour_sin/cos, is_asian/london/ny: Time Context
         # - rsi_14_scaled, rsi_5_scaled: đã chuẩn hóa thủ công về [-1, 1]
-        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))]
+        # - body_pct, adx_normalized: đã luôn trong [0, 1]
+        # - ltc_btc_corr_60: correlation đã in [-1, 1]
+        NO_SCALE_PREFIXES = ('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled', 'body_pct', 'adx_normalized', 'ltc_btc_corr')
+        cols_to_scale = [c for c in features_df.columns if not c.startswith(NO_SCALE_PREFIXES) and c not in ('body_pct', 'adx_normalized', 'ltc_btc_corr_60')]
         
         scaled_data = features_df.copy()
         
@@ -217,7 +291,8 @@ class FeatureEngineeringV3:
         if not self.is_fitted:
             raise ValueError("Scaler chưa được fit. Vui lòng gọi fit_transform trước.")
             
-        cols_to_scale = [c for c in features_df.columns if not c.startswith(('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))]
+        NO_SCALE_PREFIXES = ('hour_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled', 'body_pct', 'adx_normalized', 'ltc_btc_corr')
+        cols_to_scale = [c for c in features_df.columns if not c.startswith(NO_SCALE_PREFIXES) and c not in ('body_pct', 'adx_normalized', 'ltc_btc_corr_60')]
         scaled_data = features_df.copy()
         
         if cols_to_scale:
