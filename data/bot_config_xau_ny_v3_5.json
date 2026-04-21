@@ -23,35 +23,26 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C KH\u00d4NG TH\u1ea2 HI\u1ec6P! N\u1ebeU C\u00c0O THI\u1ebeU D\u00d9 CH\u1ec8 1 M\u00c3, H\u1ec6 TH\u1ed0NG CH\u1ee6 \u0110\u1ed8NG T\u1ef0 HU\u1ef6!",
+        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC KHÔNG THỎA HIỆP! NẾU CÀO THIẾU DÙ CHỈ 1 MÃ, HỆ THỐNG CHỦ ĐỘNG TỰ HUỶ!",
         "TP_PIPS": 20,
         "SL_PIPS": 20,
-        "MAX_HOLD_BARS": 15,
+        "MAX_HOLD_BARS": 8,
         "PIP_SIZE": 0.1,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 30,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
             "DXY": [
                 "log_ret",
                 "bb_width"
             ],
-            "US_10Y_YIELD": [
-                "log_ret",
-                "bb_width"
-            ],
             "USTECm": [
                 "log_ret",
                 "volume",
-                "bb_width",
                 "corr_60"
             ],
             "XAGUSDm": [
                 "log_ret",
                 "volume",
-                "bb_width"
-            ],
-            "VIXYm": [
-                "log_ret",
                 "bb_width"
             ]
         }
