@@ -23,7 +23,7 @@
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
@@ -51,6 +51,9 @@
                 "log_ret"
             ],
             "XAUUSDm": [
+                "log_ret"
+            ],
+            "DE30m": [
                 "log_ret"
             ]
         },
@@ -89,6 +92,7 @@
         },
         "ROUTING": {
             "USTECm": "EXNESS",
+            "DE30m": "EXNESS",
             "DXYm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "LTCUSDm": "EXNESS",
