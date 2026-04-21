@@ -1,0 +1,1 @@
+import sys; print(open('logs/client1_unified.log', encoding='utf-8', errors='ignore').read()[-2000:])
