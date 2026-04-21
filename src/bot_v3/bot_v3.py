@@ -25,7 +25,7 @@ from src.core.mt5_data_manager import MT5DataManager
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
 import logging
 
-log_dir = os.path.join(safe_script_dir, "data", "logs")
+log_dir = os.path.join(safe_script_dir, "workspaces", "shared_meta", "logs")
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, f"trade_bot_v3_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
 logging.basicConfig(
@@ -151,8 +151,8 @@ def tg_notify(msg):
     # Chặn đứng các nội dung khác (ví dụ: liên tục báo HOLD vô nghĩa)
     pass
 
-config_file = os.path.join(safe_script_dir, "data", "bot_config_xau_ny_v3.json")
-schedule_file = os.path.join(safe_script_dir, "data", "bot_v3_brain_schedule.json")
+config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "bot_config_xau_ny_v3_5.json")
+schedule_file = os.path.join(safe_script_dir, "workspaces", "shared_meta", "bot_v3_brain_schedule.json")
 if len(sys.argv) > 1:
     args_json = [arg for arg in sys.argv if arg.endswith('.json')]
     if len(args_json) >= 1:

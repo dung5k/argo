@@ -168,7 +168,7 @@ class V3TradeManager:
             req = {"action": self.mt5.TRADE_ACTION_SLTP, "position": pos.ticket, "symbol": pos.symbol, "sl": float(new_sl), "tp": float(pos.tp), "magic": self.MAGIC_NUMBER}
             self._send_order(req)
 
-    def manage_mt5_positions(self, action: str, probs_dict: dict, mse_loss: float, actual_target_sym: str = None):
+    def execute_trade(self, action: str, probs_dict: dict, mse_loss: float, actual_target_sym: str = None):
         if not self.mt5: return
         symbol = actual_target_sym or self.target_symbol
         

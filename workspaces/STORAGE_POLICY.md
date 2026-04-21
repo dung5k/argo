@@ -8,7 +8,7 @@ Hệ thống quản lý dữ liệu không qua thư mục gộp `data/` mà chia
 ```text
 workspaces/
 ├── CFG_XAG_LONDON_V3_5/
-│   ├── config/          # Lưu bot_config_*.json gốc của cấu hình
+│   ├── bot_config_xag_london_v3_5.json  # Lưu file cấu hình gốc của cấu hình
 │   ├── data/
 │   │   ├── raw/         # Chứa Dữ liệu Thô cào từ MT5 (các file .parquet ~ Hàng Gb)
 │   │   └── tensors/     # Chứa dữ liệu tinh chế Numpy (.npy) và Scaler (.pkl)

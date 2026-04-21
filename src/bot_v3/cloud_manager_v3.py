@@ -80,8 +80,11 @@ class V3CloudManager:
             scaler_obj = joblib.load(local_scaler_path)
             if hasattr(scaler_obj, "feature_names_in_"):
                 scaler_feats = list(scaler_obj.feature_names_in_)
-            elif isinstance(scaler_obj, dict) and "feature_names" in scaler_obj:
-                scaler_feats = list(scaler_obj["feature_names"])
+            elif isinstance(scaler_obj, dict):
+                if "feature_names" in scaler_obj:
+                    scaler_feats = list(scaler_obj["feature_names"])
+                elif "column_order" in scaler_obj:
+                    scaler_feats = list(scaler_obj["column_order"])
                 
         except Exception as e:
             self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Scaler: {e}")
