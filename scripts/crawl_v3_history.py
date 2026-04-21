@@ -81,7 +81,7 @@ def main(config_file):
     for sym, brk in routing.items():
         # Kiểm tra nếu mã là bắt buộc trong MACRO_FEATURES hoặc là TARGET
         sym_clean = sym.replace('m', '').upper()
-        if sym_clean not in map(str.upper, required_macros.keys()) and "XAUUSD" not in sym_clean:
+        if sym_clean not in [k.replace('m', '').upper() for k in required_macros.keys()] and "XAUUSD" not in sym_clean:
             continue
             
         brk_path = brokers_map.get(brk, brokers_map.get("DEFAULT"))
