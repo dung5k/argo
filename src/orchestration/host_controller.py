@@ -81,20 +81,12 @@ class HostController:
                 "ny": "data/bot_config_xau_ny_v3.json"
             }
             local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(session, "data/bot_config_xau.json")
-            if local_cfg and os.path.exists(local_cfg):
-                try:
-                    with open(local_cfg, "r", encoding="utf-8") as f:
-                        config_content = f.read()
-                except Exception as e:
-                    print(f"[HOST] Không thể đọc config_content: {e}")
-            
-            # Gửi config_content sang để đè lên kết quả của git pull
+            # Chỉ gửi đường dẫn cấu hình, không gửi nội dung
             payload = json.dumps({
                 "cmd": cmd,
                 "symbol": symbol,
                 "script": script,
                 "config": local_cfg if local_cfg else "",
-                "config_content": config_content,
                 "mode": mode,
                 "session": session,
                 "scratch": scratch,
@@ -253,21 +245,8 @@ class HostController:
 
 
     def sync_data_to_client(self):
-
-        self._wait_connected()
-        print("[HOST] 📤 Đang đẩy data/ lên HuggingFace...")
-        try:
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            from hf_sync import push_data
-            push_data()
-        except Exception as e:
-            print(f"[LỖI] push_data thất bại: {e}")
-            return
-
-        payload = json.dumps({"cmd": "pull_hf_data"})
-        self.client.publish(self.cmd_topic, payload, qos=1)
-        print(f"[HOST] 📡 Đã báo Client ({self.client_id}) kéo data mới từ HuggingFace.")
+        print("[HOST] Tính năng đồng bộ Data thủ công (sync_data_to_client) đã bị vô hiệu hóa.")
+        return
 
     def listen_logs(self, timeout: int = 15):
         print(f"[HOST] Đang lắng nghe log trực tiếp từ {self.client_id} (thời gian: {timeout}s)...")

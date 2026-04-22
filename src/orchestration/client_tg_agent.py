@@ -57,29 +57,7 @@ try:
 except ImportError:
     MqttHelper = None
 
-AGENT_VERSION = "2.2.0-SkyNet"
-
-ARGO_DATA_DIR = os.environ.get("ARGO_DATA_DIR", "C:/argo/data")
-os.environ["ARGO_DATA_DIR"] = ARGO_DATA_DIR
-
-ARGO_LOGS_DIR = os.environ.get("ARGO_LOGS_DIR", "C:/argo/logs")
-os.environ["ARGO_LOGS_DIR"] = ARGO_LOGS_DIR
-
-CONFIG_MAP = {
-    "xauusd": f"{ARGO_DATA_DIR}/bot_config_xau.json",
-    "xau"   : f"{ARGO_DATA_DIR}/bot_config_xau.json",
-    "xau_v1_5": f"{ARGO_DATA_DIR}/bot_config_xau_v1_5.json",
-    "xag_v1_5": f"{ARGO_DATA_DIR}/bot_config_xag_v1_5.json",
-    "xau_v2": f"{ARGO_DATA_DIR}/bot_config_xau_ny_v2.json",
-    "xau_ny_v2": f"{ARGO_DATA_DIR}/bot_config_xau_ny_v2.json",
-    "xag_v2": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
-    "xau_v2_0": f"{ARGO_DATA_DIR}/bot_config_xau_ny_v2.json",
-    "xag_v2_0": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
-    "xau_v2.0": f"{ARGO_DATA_DIR}/bot_config_xau_ny_v2.json",
-    "xag_v2.0": f"{ARGO_DATA_DIR}/bot_config_xag_v2.json",
-    "ltc"   : f"{ARGO_DATA_DIR}/bot_config_ltc.json",
-    "oil"   : f"{ARGO_DATA_DIR}/bot_config_oil.json",
-}
+AGENT_VERSION = "2.3.0-RunBased"
 
 
 def load_tg_config(base_dir: Path) -> dict:
@@ -160,7 +138,7 @@ class TrainingManager:
             return {"ok": False, "error": "Đang busy. Gửi /kill trước."}
 
         task_id  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + "_train"
-        log_dir  = Path(ARGO_LOGS_DIR) / self.client_id
+        log_dir  = self.base_dir / "logs" / self.client_id
         log_dir.mkdir(parents=True, exist_ok=True)
         log_file = log_dir / f"{task_id}.log"
         
@@ -189,12 +167,6 @@ class TrainingManager:
             config_abs = (str(self.base_dir / config_path)
                           if not Path(config_path).is_absolute() else config_path)
             
-            if config_content:
-                Path(config_abs).parent.mkdir(parents=True, exist_ok=True)
-                with open(config_abs, "w", encoding="utf-8") as f:
-                    f.write(config_content)
-                self.logger.info(f"  [CONFIG] Đã tự động tạo/lưu file cấu hình vào: {config_abs}")
-                
             if not Path(config_abs).exists() and not code:
                 return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
             cmd.append(config_abs)
@@ -224,17 +196,8 @@ class TrainingManager:
         else:
             env["PERFORMANCE_MODE"] = "MAX"
         env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"})
-        # Đảm bảo train_v2.py và hf_sync.pull_data dùng cùng data path
-        if os.name == 'nt':
-            os.environ["ARGO_DATA_DIR"] = "C:\\argo\\data"
-            os.environ["ARGO_LOGS_DIR"] = "C:\\argo\\logs"
-            env["ARGO_DATA_DIR"] = "C:\\argo\\data"
-            env["ARGO_LOGS_DIR"] = "C:\\argo\\logs"
-        else:
-            os.environ["ARGO_DATA_DIR"] = str(self.base_dir / "data")
-            os.environ["ARGO_LOGS_DIR"] = str(self.base_dir / "logs")
-            env["ARGO_DATA_DIR"] = str(self.base_dir / "data")
-            env["ARGO_LOGS_DIR"] = str(self.base_dir / "logs")
+        env["ARGO_DATA_DIR"] = str(self.base_dir / "data")
+        env["ARGO_LOGS_DIR"] = str(self.base_dir / "logs")
 
         env["ARGO_CLIENT_ID"] = self.client_id
 
@@ -350,7 +313,7 @@ class TelegramAgent:
         self.progress_n   = cfg.get("progress_every_n_epochs", 10)
         self._offset      = 0
 
-        log_dir      = Path(ARGO_LOGS_DIR) / client_id
+        log_dir      = self.base_dir / "logs" / client_id
         self.logger  = setup_logger(log_dir, client_id)
 
         self.mqtt = MqttHelper(client_id, self._handle_mqtt_cmd) if MqttHelper else None
@@ -391,7 +354,7 @@ class TelegramAgent:
                 if os.path.isdir(config):
                     config = os.path.join(config, "base_config.json")
             else:
-                config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
+                config = ""
             self.logger.info(f"  ➜ Nhận lệnh TRAIN — Đang BẮT BUỘC KILL các tiến trình cũ...")
             self.manager.kill() # Thêm bước dập tắt tiến trình theo yêu cầu
             
@@ -503,10 +466,7 @@ class TelegramAgent:
                 self.logger.error("  [RECV_FILE] Thiếu dest hoặc content_b64!")
                 return
             try:
-                if dest.startswith("data/"):
-                    dest_path = Path(ARGO_DATA_DIR) / dest[5:]
-                else:
-                    dest_path = self.base_dir / dest
+                dest_path = self.base_dir / dest
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 raw_bytes = base64.b64decode(content)
                 with open(dest_path, "wb") as f:
