@@ -58,8 +58,12 @@ Hãy so sánh kết quả mới nhất với toàn bộ lịch sử file metrics
   Sau đó báo cáo lý do dừng lên Telegram và gọi `--done`.
 - **Nếu chưa bão hoà**: Tiếp tục bước 3.2.
 
-### 3.2. Tinh chỉnh Chiến thuật
-Hãy suy luận sâu sắc, phân tích đa chiều các chỉ số (Win Rate, Composite Score, Sharpe, Max Drawdown nếu có) để tìm ra quy luật tham số nào thực sự mang lại Alpha. Mọi quyết định phải dựa trên tư duy phản biện sắc bén, tránh overfitting.
+### 3.2. Đánh giá và Tinh chỉnh Chiến thuật (Nhiệm vụ CỐT LÕI)
+**ĐIỀU QUAN TRỌNG NHẤT TRONG TOÀN BỘ NHIỆM VỤ NÀY:** Bạn phải đóng vai trò là một **Chuyên gia AI & Định lượng Tài chính (Quant Expert) cực kỳ giàu kinh nghiệm**. Trách nhiệm của bạn KHÔNG PHẢI là thay đổi tham số một cách ngẫu nhiên hay máy móc.
+
+Bạn BẮT BUỘC phải:
+1. **Đánh giá các tình huống đã thử nghiệm**: Nhìn nhận lại lịch sử các cấu hình trước đó. Sự kết hợp tham số nào đã mang lại kết quả tốt? Sự thay đổi nào làm mô hình sụp đổ? (Ví dụ: Thêm tính năng Vàng có làm nhiễu không? Bắt đỉnh đáy bằng RSI có hiệu quả không?)
+2. **Đưa ra Giả thuyết (Hypothesis)**: Bằng tư duy sắc bén, hãy đưa ra một gợi ý/giả thuyết rõ ràng cho lần chạy tiếp theo. Bạn định giải quyết vấn đề gì ở lượt chạy này và TẠI SAO lại điều chỉnh như vậy? Mọi quyết định phải dựa trên tư duy toán học, tránh xa overfitting.
 
 Những thay đổi BẠN CÓ QUYỀN VÀ NÊN làm:
 - **Thay đổi Input Features**: Thử nghiệm thêm/bớt chỉ số vĩ mô trong `MACRO_FEATURES` (DXYm, Crypto, Vàng...).
