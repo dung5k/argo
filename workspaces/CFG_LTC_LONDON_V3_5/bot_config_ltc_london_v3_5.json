@@ -3,7 +3,6 @@
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
-    "RUN_ID": "run_20260422_124315_v3",
     "CONFIG_ID": "CFG_LTC_LONDON_V3_5",
     "VERSION": "3.5",
     "SESSION": "london",
@@ -53,6 +52,9 @@
             ],
             "XAUUSDm": [
                 "log_ret"
+            ],
+            "DE30m": [
+                "log_ret"
             ]
         },
         "_ENHANCED_FEATURES_V2": {
@@ -90,6 +92,7 @@
         },
         "ROUTING": {
             "USTECm": "EXNESS",
+            "DE30m": "EXNESS",
             "DXYm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "LTCUSDm": "EXNESS",

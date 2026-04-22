@@ -12,6 +12,7 @@ __pycache__/
 *.parquet
 *.pkl
 *.pth
+*.npy
 
 # File nhan dien tung may khach
 .client_id

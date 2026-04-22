@@ -113,8 +113,7 @@ def main(config_file: str):
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
     since_str    = binance_cfg.get("SINCE", train_cfg.get("TRAIN_START", "2024-01-01") + "T00:00:00Z")
     end_str      = train_cfg.get("VAL_END",    "2026-04-18")
-    basename = os.path.basename(config_file).replace("bot_config_", "").replace(".json", "")
-    config_id = f"CFG_{basename.upper()}"
+    config_id = config.get("CONFIG_ID", "CFG_UNKNOWN")
     history_dir = os.path.join("workspaces", config_id, "data", "raw")
     binance_cfg  = config.get("DATA_SOURCE", {}).get("CRYPTO_BINANCE", {})
     brokers      = config.get("DATA_SOURCE", {}).get("BROKERS", {})

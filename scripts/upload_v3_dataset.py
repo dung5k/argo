@@ -111,19 +111,30 @@ if __name__ == "__main__":
     # 2. Định vị thư mục theo chuẩn Run-Based
     import datetime
     import shutil
+    import re
     
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_id = f"run_{timestamp}_v3"
-    run_dir = os.path.join("workspaces", cfg_id, "runs", run_id)
+    # Kiểm tra xem args.config có nằm trong thư mục runs/run_xxx_v3/ không
+    run_match = re.search(r'(workspaces[/\\][^/\\]+[/\\]runs[/\\](run_[^/\\]+))[/\\]', args.config)
+    if run_match:
+        run_dir = run_match.group(1)
+        run_id = run_match.group(2)
+        print(f"📁 Dùng lại thư mục Lượt chạy đã tạo: {run_id}")
+    else:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_id = f"run_{timestamp}_v3"
+        run_dir = os.path.join("workspaces", cfg_id, "runs", run_id)
+        print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
+    
     out_dir = os.path.join(run_dir, "data", "tensors")
     
     os.makedirs(out_dir, exist_ok=True)
     raw_dir = config.get('DATA_SOURCE', {}).get('RAW_LOCAL_DIR', 'data/history')
     os.makedirs(raw_dir, exist_ok=True)
     
-    # Lưu bản sao config vào lượt chạy
+    # Lưu bản sao config vào lượt chạy (nếu chưa có)
     run_config_path = os.path.join(run_dir, "config.json")
-    shutil.copy(args.config, run_config_path)
+    if os.path.abspath(args.config) != os.path.abspath(run_config_path):
+        shutil.copy(args.config, run_config_path)
     print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
 
     print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")

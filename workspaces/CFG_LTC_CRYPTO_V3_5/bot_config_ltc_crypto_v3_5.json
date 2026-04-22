@@ -3,17 +3,16 @@
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
-    "RUN_ID": "run_20260422_124315_v3",
-    "CONFIG_ID": "CFG_LTC_LONDON_V3_5",
+    "CONFIG_ID": "CFG_LTC_CRYPTO_V3_5",
     "VERSION": "3.5",
-    "SESSION": "london",
+    "SESSION": "crypto_247",
     "SESSION_UTC": {
-        "START": "07:00",
-        "END": "13:00",
-        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
+        "START": "00:00",
+        "END": "23:59",
+        "DESCRIPTION": "Crypto 24/7 — LTC Follow BTC/ETH, không có phiên cố định"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/ltc_v3_tensor_london",
+        "DATASET_REPO": "dung5k/ltc_v3_tensor_crypto",
         "MODEL_REPO": "dung5k/argo_data",
         "SYNC_CHUNKS": true
     },
@@ -24,36 +23,17 @@
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 20,
+        "WINDOW_SIZE": 60,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
-            "BTCUSDT": [
-                "log_ret",
-                "bb_width",
-                "volume",
-                "corr_60"
-            ],
-            "ETHUSDT": [
-                "log_ret",
-                "volume"
-            ],
-            "BCHUSDT": [
-                "log_ret"
-            ],
-            "DOGEUSDT": [
-                "log_ret",
-                "volume"
-            ],
-            "USTECm": [
-                "log_ret"
-            ],
-            "DXYm": [
-                "log_ret"
-            ],
-            "XAUUSDm": [
-                "log_ret"
-            ]
+            "BTCUSDT": ["log_ret", "bb_width", "volume", "corr_60"],
+            "ETHUSDT": ["log_ret", "volume"],
+            "BCHUSDT": ["log_ret"],
+            "DOGEUSDT": ["log_ret", "volume"],
+            "USTECm": ["log_ret"],
+            "DXYm": ["log_ret"],
+            "XAUUSDm": ["log_ret"]
         },
         "_ENHANCED_FEATURES_V2": {
             "_note": "Các features dưới đây được tự động tính trong feature_engineering_v3.py, không cần cấu hình thêm",
@@ -71,7 +51,7 @@
         "BATCH_SIZE": 512,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 1e-05,
+        "LEARNING_RATE": 0.00001,
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-20",
@@ -100,13 +80,7 @@
             "DOGEUSDT": "BINANCE"
         },
         "CRYPTO_BINANCE": {
-            "SYMBOLS": [
-                "LTC/USDT",
-                "BTC/USDT",
-                "ETH/USDT",
-                "BCH/USDT",
-                "DOGE/USDT"
-            ],
+            "SYMBOLS": ["LTC/USDT", "BTC/USDT", "ETH/USDT", "BCH/USDT", "DOGE/USDT"],
             "TIMEFRAME": "1m",
             "SINCE": "2025-01-01T00:00:00Z"
         }
