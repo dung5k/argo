@@ -32,3 +32,4 @@ desktop.ini
 !.agent/periodic_prompt_*.md
 .agents/
 .vscode/
+workspaces/
