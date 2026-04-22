@@ -227,7 +227,7 @@ async function handleMessage(message) {
         return;
     }
     
-    if (text === '/reset' || text === '/cancel') {
+    if (text === '/reset' || text === '/cancel' || text === '/stop') {
         isAgentBusy = false;
         activeTypingChats.clear();
         if (busyTimeout) clearTimeout(busyTimeout);
@@ -236,7 +236,13 @@ async function handleMessage(message) {
             const pendingPath = path.join(config.workingDir, 'pending_messages.json');
             try { fs.unlinkSync(pendingPath); } catch(e){}
         }
-        sendTelegramMessage(chatId, "✅ Đã gỡ kẹt trạng thái bận và xoá hàng đợi! Hệ thống đã sẵn sàng nhận lệnh mới.");
+        
+        // Thử gọi lệnh Stop của hệ thống Chat/Agent trong VS Code
+        try {
+            vscode.commands.executeCommand('workbench.action.chat.cancel');
+        } catch (e) {}
+
+        sendTelegramMessage(chatId, "🛑 Đã phát lệnh Stop tới Agent, gỡ kẹt trạng thái bận và xoá toàn bộ hàng đợi!");
         return;
     }
     
