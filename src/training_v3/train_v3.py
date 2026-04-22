@@ -526,12 +526,12 @@ def main():
             # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
             
-            # Đồng bộ cấu hình hiện tại lên HuggingFace
+            # Chỉ đẩy đúng thư mục run hiện tại lên HuggingFace
             try:
-                print(f"  ☁️ Đang PUSH cấu hình {cfg_id} lên HF...", flush=True)
-                from scripts.sync_workspaces import push_workspace
-                push_workspace(cfg_id)
-                print(f"  ☁️ PUSH thành công!", flush=True)
+                print(f"  ☁️ Đang PUSH run {run_id} lên HF...", flush=True)
+                from scripts.sync_workspaces import push_run
+                push_run(cfg_id, run_id)
+                print(f"  ☁️ PUSH run hoàn tất!", flush=True)
             except Exception as e:
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             

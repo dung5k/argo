@@ -42,27 +42,71 @@ def pull_workspace(config_id):
         log(f"❌ Lỗi nghiêm trọng lúc PULL: {e}")
 
 def push_workspace(config_id):
+    """Push toàn bộ thư mục config (legacy, ít dùng)."""
     token = os.environ.get("HF_TOKEN", "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")
     if not token:
         log("❌ Lỗi: Không tìm thấy Token HF.")
         return
 
-    log(f"⬆️ ĐANG TẢI (PUSH) KẾT QUẢ CỦA CẤU HÌNH: {config_id} LÊN MÂY...")
+    log(f"⬆️ ĐANG TẢI (PUSH) TOÀN BỘ CẤU HÌNH: {config_id} LÊN MÂY...")
     try:
         api = HfApi(token=token)
-        # Đẩy folder con workspaces/{config_id} lên repo ở đúng đường dẫn đó
         api.upload_folder(
             folder_path=f"workspaces/{config_id}",
             repo_id=REPO_ID,
             path_in_repo=f"workspaces/{config_id}",
             repo_type="dataset",
             ignore_patterns=IGNORE_RULES,
-            commit_message=f"Smart Sync: Tự động tải lên các thay đổi mới nhất cho {config_id}",
+            commit_message=f"Smart Sync: Push config {config_id}",
             run_as_future=False
         )
         log("✔️ Tải lên (Push) HF hoàn tất!")
     except Exception as e:
         log(f"❌ Lỗi nghiêm trọng lúc PUSH: {e}")
+
+def push_run(config_id, run_id):
+    """
+    Chỉ đẩy đúng thư mục của lượt chạy hiện tại:
+      Local: workspaces/{config_id}/runs/{run_id}/
+      HF:    workspaces/{config_id}/runs/{run_id}/
+    HuggingFace upload_folder tự so sánh hash, chỉ tốn băng thông
+    cho file mới hoặc bị thay đổi. Không hiển thị progress log.
+    """
+    token = os.environ.get("HF_TOKEN", "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")
+    if not token:
+        log("❌ Lỗi: Không tìm thấy Token HF.")
+        return
+
+    # Tắt hoàn toàn progress bar và verbose log của HF
+    try:
+        from huggingface_hub.utils import logging as hf_logging, disable_progress_bars
+        hf_logging.set_verbosity_error()
+        disable_progress_bars()
+    except Exception:
+        pass
+
+    local_path = f"workspaces/{config_id}/runs/{run_id}"
+    hf_path    = f"workspaces/{config_id}/runs/{run_id}"
+
+    if not os.path.isdir(local_path):
+        log(f"❌ Không tìm thấy thư mục local: {local_path}")
+        return
+
+    log(f"⬆️ PUSH RUN: {run_id} → HF (chỉ file mới/thay đổi)...")
+    try:
+        api = HfApi(token=token)
+        api.upload_folder(
+            folder_path=local_path,
+            repo_id=REPO_ID,
+            path_in_repo=hf_path,
+            repo_type="dataset",
+            ignore_patterns=IGNORE_RULES,
+            commit_message=f"Best model: {config_id}/{run_id}",
+            run_as_future=False
+        )
+        log(f"✔️ Push run {run_id} hoàn tất!")
+    except Exception as e:
+        log(f"❌ Lỗi nghiêm trọng lúc PUSH RUN: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Công cụ Đồng bộ Smart Sync 2 chiều cho Argo")
