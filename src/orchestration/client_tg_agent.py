@@ -167,6 +167,22 @@ class TrainingManager:
             config_abs = (str(self.base_dir / config_path)
                           if not Path(config_path).is_absolute() else config_path)
             
+            # [FIX] Đồng bộ thư mục từ HuggingFace trước khi kiểm tra file tồn tại
+            if "workspaces" in config_abs:
+                try:
+                    # Lấy config_id (vd: CFG_LTC_NY_V3_5) từ đường dẫn config_abs
+                    # config_abs: .../workspaces/CFG_LTC_NY_V3_5/runs/run_.../config.json
+                    parts = Path(config_abs).parts
+                    if "workspaces" in parts:
+                        idx = parts.index("workspaces")
+                        if idx + 1 < len(parts):
+                            config_id = parts[idx + 1]
+                            self.logger.info(f"  [SYNC] Đang đồng bộ data từ HuggingFace cho {config_id} trước khi Train...")
+                            if self.mqtt_helper: self.mqtt_helper.send_log("INFO", f"Đồng bộ {config_id} từ HF...")
+                            subprocess.run([python, "scripts/sync_workspaces.py", "pull", config_id], cwd=str(self.base_dir), timeout=300)
+                except Exception as e:
+                    self.logger.error(f"  [SYNC ERR] Lỗi đồng bộ HuggingFace: {e}")
+            
             if not Path(config_abs).exists() and not code:
                 return {"ok": False, "error": f"Không tìm thấy config: {config_abs}"}
             cmd.append(config_abs)
