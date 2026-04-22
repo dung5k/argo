@@ -35,14 +35,9 @@ Phân tích kết quả:
 
 ---
 
-## BƯỚC 2: Đồng bộ và Kiểm tra kết quả huấn luyện mới nhất
+## BƯỚC 2: Kiểm tra kết quả huấn luyện mới nhất
 
-Kéo kết quả mới nhất từ HuggingFace về HOST để đánh giá:
-```
-python scripts/sync_workspaces.py pull CFG_LTC_NY_V3_5
-```
-
-Sau đó đọc file `training_metrics_v3.json` trong thư mục `runs/` mới nhất (sắp xếp theo tên để tìm run cuối cùng).
+Đọc file `training_metrics_v3.json` trong thư mục `runs/` mới nhất (sắp xếp theo tên để tìm run cuối cùng).
 
 - **2.1 Chưa có kết quả nào**: Chuyển thẳng sang BƯỚC 4.
 - **2.2 Đã có kết quả**: Đọc và phân tích đầy đủ các chỉ số, chuyển sang BƯỚC 3.
