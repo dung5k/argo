@@ -93,7 +93,7 @@ git add . && git commit -m "auto-tuning LTC NY: <RUN_ID>" && git push
   ```
   python src/orchestration/host_controller.py train --client-id <client_rảnh> --session ny --file workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID>
   ```
-- Nếu **cả hai máy đều rảnh**, tạo thêm một run thứ hai với variant cấu hình khác biệt (ví dụ thử hyperparameter khác) và giao song song:
+- Nếu **cả hai máy đều rảnh**, tạo thêm một run thứ hai with variant cấu hình khác biệt (ví dụ thử hyperparameter khác) và giao song song:
   ```
   python src/orchestration/host_controller.py train --client-id client1  --session ny --file workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID_A>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID_A>
   ```
@@ -105,8 +105,10 @@ git add . && git commit -m "auto-tuning LTC NY: <RUN_ID>" && git push
 
 Chỉ kết thúc và gọi `--done` sau khi client đã xác nhận nhận lệnh (trạng thái BUSY trên log)!
 
-__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần: `python .agent/send_to_tele.py "<Nội_dung>"`. Khi hoàn tất toàn bộ, BẮT BUỘC chạy: `python .agent/send_to_tele.py "<Kết_quả>" --done`)__
+---
 
-
-
-__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__
+> **LƯU Ý QUAN TRỌNG VỀ THÔNG BÁO TELEGRAM:**
+> - Trong quá trình thực hiện, bạn có thể gọi lệnh này nhiều lần để cập nhật tiến độ:
+>   `python .agent/send_to_tele.py "<Nội_dung_cập_nhật>"`
+> - Khi đã hoàn tất toàn bộ tiến trình (sau khi đã giao việc cho Client), **BẮT BUỘC** chạy lệnh cuối cùng với flag `--done`:
+>   `python .agent/send_to_tele.py "<Kết_quả_cuối_cùng>" --done`
