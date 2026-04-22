@@ -191,19 +191,30 @@ def main():
     scaler_src = os.path.join(tensor_local_dir, f"scaler_{cfg_id}.pkl")
 
     import shutil
+    import subprocess
     legacy_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", "legacy_run", "data", "tensors")
 
     if not os.path.exists(x_path):
-        if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
-            print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
-            shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
-            shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
-            shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
-        else:
-            raise FileNotFoundError(
-                f"Không tìm thấy tensor tại {x_path}.\n"
-                f"Hãy chạy trước: python scripts/upload_v3_dataset.py --config {config_path}"
-            )
+        # THỬ ĐỒNG BỘ TỪ HUGGINGFACE TRƯỚC!
+        print(f"Không tìm thấy tensor cục bộ. Đang đồng bộ từ HuggingFace cho {cfg_id}...", flush=True)
+        try:
+            subprocess.run([sys.executable, "scripts/sync_workspaces.py", "pull", cfg_id], cwd=_ROOT, check=True)
+            print("Đồng bộ HuggingFace hoàn tất!", flush=True)
+        except Exception as e:
+            print(f"Lỗi khi đồng bộ HuggingFace: {e}", flush=True)
+            
+        # Nếu vẫn không có, thử copy từ legacy_run
+        if not os.path.exists(x_path):
+            if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+                print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
+                shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
+                shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
+                shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
+            else:
+                raise FileNotFoundError(
+                    f"Không tìm thấy tensor tại {x_path}.\n"
+                    f"Hãy chạy trước: python scripts/upload_v3_dataset.py --config {config_path}"
+                )
 
     print("\u2705 Tensor đã sẵn sàng!", flush=True)
 
