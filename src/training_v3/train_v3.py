@@ -189,10 +189,10 @@ def main():
     x_path = os.path.join(tensor_local_dir, f"X_tensor_{cfg_id}.npy")
     y_path = os.path.join(tensor_local_dir, f"Y_tensor_{cfg_id}.npy")
     scaler_src = os.path.join(tensor_local_dir, f"scaler_{cfg_id}.pkl")
-    
+
     import shutil
     legacy_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", "legacy_run", "data", "tensors")
-    
+
     if not os.path.exists(x_path):
         if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
             print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
@@ -200,18 +200,12 @@ def main():
             shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
             shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
         else:
-            print(f"Không tìm thấy tensor tại legacy_run. Tiến hành đồng bộ qua Smart Sync từ dung5k/argo_workspaces...", flush=True)
-                
-    try:
-        from scripts.sync_workspaces import pull_workspace
-        pull_workspace(cfg_id)
-    except Exception as e:
-        print(f"\u26a0\ufe0f Lỗi đồng bộ Workspaces: {e}", flush=True)
-        
-    if not os.path.exists(x_path) or not os.path.exists(y_path):
-        raise FileNotFoundError(f"Không tìm thấy tensor tại {x_path} hoặc {y_path}. Hãy kiểm tra lại sync hoặc legacy_run.")
-        
-    print(f"\u2705 Tải Scaler thành công từ mây (nếu có)!", flush=True)
+            raise FileNotFoundError(
+                f"Không tìm thấy tensor tại {x_path}.\n"
+                f"Hãy chạy trước: python scripts/upload_v3_dataset.py --config {config_path}"
+            )
+
+    print("\u2705 Tensor đã sẵn sàng!", flush=True)
 
     X = np.load(x_path)
     Y = np.load(y_path)
