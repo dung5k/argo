@@ -50,7 +50,7 @@ Dựa vào phân tích ở Bước 2.2, **BẠN PHẢI ĐÓNG VAI TRÒ LÀ MỘT
 
 ### 3.1. Kiểm tra Khả năng Hội Tụ — Có nên tiếp tục không?
 Hãy so sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_LTC_NY_V3_5/runs/` và đánh giá xu hướng:
-- Nếu bạn nhận thấy **Composite Score không còn cải thiện đáng kể qua ít nhất 15 lần chạy liên tiếp**, hoặc **mọi hướng tinh chỉnh hợp lý đã được thử**, hãy kết luận rằng không gian tìm kiếm đã bão hoà.
+- Nếu bạn nhận thấy **Composite Score không còn cải thiện đáng kể qua ít nhất 25 lần chạy liên tiếp**, hoặc **mọi hướng tinh chỉnh hợp lý đã được thử**, hãy kết luận rằng không gian tìm kiếm đã bão hoà.
 - **Nếu kết luận là BÃO HOÀ**: Đổi tên file này thành `.agent/periodic_prompt_host.DONE.md` bằng lệnh sau, thông báo Telegram lý do cụ thể và kết thúc:
   ```
   Rename-Item .agent/periodic_prompt_host.md .agent/periodic_prompt_host.DONE.md
@@ -116,3 +116,6 @@ Chỉ kết thúc và gọi `--done` sau khi client đã xác nhận nhận lệ
 >   `python .agent/send_to_tele.py "<Nội_dung_cập_nhật>"`
 > - Khi đã hoàn tất toàn bộ tiến trình (sau khi đã giao việc cho Client), **BẮT BUỘC** chạy lệnh cuối cùng với flag `--done`:
 >   `python .agent/send_to_tele.py "<Kết_quả_cuối_cùng>" --done`
+
+
+__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__
