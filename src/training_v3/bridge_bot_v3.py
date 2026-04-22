@@ -9,7 +9,7 @@ class TradeBotV3Bridge:
     """
     Cầu nối giữa MT5 Live System và Thuật toán AI V3.
     """
-    def __init__(self, config_path="data/bot_config_xau_v3_template.json", model_weights_path=None):
+    def __init__(self, config_path="workspaces/CFG_XAU_NY_V3_5/base_config.json", model_weights_path=None):
         # 1. Đọc Config
         with open(config_path, 'r') as f:
             self.config = json.load(f)

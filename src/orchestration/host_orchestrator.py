@@ -8,7 +8,7 @@ Giao tiếp với Client qua:
 Dùng:
     from host_orchestrator import HostOrchestrator
     host = HostOrchestrator()
-    host.send_train(client_id="client1", config="data/bot_config_xau.json")
+    host.send_train(client_id="client1", config="workspaces/CFG_XAU_NY_V3_5/base_config.json")
 """
 
 import os
@@ -150,7 +150,7 @@ class HostOrchestrator:
                    python_exe: str = "venv/Scripts/python.exe", task_id: str = None) -> str:
         """Gửi lệnh training với file config JSON.
         
-        config_path: Đường dẫn tương đối tới config (ví dụ: data/bot_config_xau.json)
+        config_path: Đường dẫn tương đối tới config (ví dụ: workspaces/CFG_XAU_NY_V3_5/base_config.json)
         python_exe : Đường dẫn tương đối tới Python executable
         """
         task_id = task_id or self._make_task_id("train")

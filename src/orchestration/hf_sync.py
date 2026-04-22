@@ -68,8 +68,8 @@ def push_data(config_path=None):
         # Nếu có chỉ định config_path, TỰ ĐỘNG ĐỌC CONFIG_ID để tìm file!
         import json
         cfg_file_path = Path(config_path)
-        if not cfg_file_path.exists():
-            cfg_file_path = data_dir / config_path
+        if not cfg_file_path.exists() and not cfg_file_path.is_absolute():
+            cfg_file_path = _project_root() / config_path
             
         if cfg_file_path.exists():
             target_files.append(cfg_file_path) # Up cấu hình lên
@@ -79,30 +79,29 @@ def push_data(config_path=None):
                     config_id = bot_cfg.get("CONFIG_ID", "")
                     
                     if config_id:
-                        config_dir = data_dir / config_id
-                        f1 = config_dir / f"final_features_{config_id}.parquet"
-                        f2 = config_dir / f"target_direction_{config_id}.parquet"
-                        f3 = config_dir / f"scaler_{config_id}.pkl"
+                        workspace_dir = _project_root() / "workspaces" / config_id
+                        config_dir = workspace_dir / "data" / "tensors"
+                        raw_dir = workspace_dir / "data" / "raw"
                         
-                        target_dir_for_upload = config_dir
-                        upload_path_in_repo = f"data/{config_id}"
+                        target_dir_for_upload = workspace_dir
+                        upload_path_in_repo = f"workspaces/{config_id}"
                         
-                        if f1.exists(): target_files.append(f1)
-                        if f2.exists(): target_files.append(f2)
-                        if f3.exists(): target_files.append(f3)
+                        # Thêm tất cả file parquet và pkl trong tensors
+                        for ext in ["*.parquet", "*.pkl", "*.npy", "*.json"]:
+                            target_files.extend(list(config_dir.rglob(ext)))
+                            
             except Exception as e:
                 print(f"[HF] Lỗi đọc config: {e}")
         else:
             print(f"[HF] Config {config_path} không tồn tại!")
     else:
-        target_dir_for_upload = data_dir
-        upload_path_in_repo = "data"
-        # Lọc cụ thể các file cần đẩy thay vì đẩy nguyên folder
-        for f in data_dir.rglob("*"):
-            if f.suffix in [".parquet", ".pkl", ".json"]:
-                # Chỉ pick các file config và kết quả feature engineering
-                if f.name.startswith("final_features") or f.name.startswith("target_direction") or f.name.startswith("scaler") or f.name.startswith("bot_config"):
-                    target_files.append(f)
+        target_dir_for_upload = _project_root() / "workspaces"
+        upload_path_in_repo = "workspaces"
+        for f in target_dir_for_upload.rglob("*"):
+            if "data/raw" in f.parts:
+                continue
+            if f.suffix in [".parquet", ".pkl", ".json", ".npy"]:
+                target_files.append(f)
 
     if not target_files:
         print("[HF] Không có file cần đẩy (final_features, target, scaler)!")
@@ -158,7 +157,8 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
             pass
             
     # Set the target clean directory if config_id exists
-    clean_dir = data_dir / config_id if config_id else data_dir
+    workspace_dir = _project_root() / "workspaces" / config_id if config_id else _project_root() / "workspaces"
+    clean_dir = workspace_dir / "data" / "tensors" if config_id else None
             
     log = logger.info if logger else print
     log(f"[HF] Bắt đầu tải Parquet data từ {repo_id} (Safe HTTP Method)...")
@@ -167,9 +167,9 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
         from huggingface_hub import HfApi, hf_hub_download
         
         # --- [CLEANUP] Dọn rác các file Parquet/Pkl cũ không còn nằm trong REQUIRED_PARQUETS ---
-        if required_parquets and clean_dir.exists():
+        if required_parquets and clean_dir and clean_dir.exists():
             for local_file in clean_dir.glob("*"):
-                if local_file.suffix in [".parquet", ".pkl", ".json"]:
+                if local_file.suffix in [".parquet", ".pkl", ".json", ".npy"]:
                     if local_file.name not in required_parquets:
                         try:
                             local_file.unlink()
@@ -178,14 +178,20 @@ def pull_data(logger: logging.Logger = None, config_path: str = None):
                         
         api = HfApi()
         files = api.list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
-        parquet_files = [f for f in files if f.startswith("data/") and (f.endswith(".parquet") or f.endswith(".pkl") or f.endswith(".json"))]
+        
+        if config_id:
+            prefix = f"workspaces/{config_id}/data/tensors/"
+            parquet_files = [f for f in files if f.startswith(prefix) and (f.endswith(".parquet") or f.endswith(".pkl") or f.endswith(".json") or f.endswith(".npy"))]
+        else:
+            parquet_files = [f for f in files if f.startswith("workspaces/") and "data/raw/" not in f and (f.endswith(".parquet") or f.endswith(".pkl") or f.endswith(".json") or f.endswith(".npy"))]
+            
         log(f"       => Đã tìm thấy {len(parquet_files)} file hợp lệ có trong HF Repo ({repo_id})")
         if required_parquets:
             log(f"       => Yêu cầu từ config: {required_parquets}")
             parquet_files = [f for f in parquet_files if Path(f).name in required_parquets]
             log(f"       => Đã lọc {len(parquet_files)}/{len(required_parquets)} file từ cấu hình")
         
-        target_dir = str(data_dir.parent)
+        target_dir = str(_project_root())
         for f in parquet_files:
             log(f"  + Checking/Downloading: {f} -> {target_dir}")
             hf_hub_download(
@@ -224,19 +230,28 @@ def push_runs(logger=None, run_dir=None, custom_repo_id=None):
     argo_logs_dir = os.environ.get("ARGO_LOGS_DIR", str(_project_root() / "logs"))
     log = logger.info if logger else print
 
-    # Nếu không có run_dir, tìm thư mục được tạo gần nhất trong runs/
+    # Nếu không có run_dir, tìm thư mục được tạo gần nhất trong workspaces/*/runs/
     if not run_dir:
-        runs_base = Path(argo_logs_dir) / "runs"
-        if runs_base.exists():
-            subdirs = [d for d in runs_base.iterdir() if d.is_dir() and d.name.startswith("run_")]
-            if subdirs:
-                latest_run = max(subdirs, key=lambda d: d.stat().st_mtime)
-                run_dir = str(latest_run)
-                log(f"[HF] Tự động chọn thư mục mới nhất để đẩy: {latest_run.name}")
+        workspaces_base = _project_root() / "workspaces"
+        subdirs = []
+        if workspaces_base.exists():
+            for config_dir in workspaces_base.iterdir():
+                if config_dir.is_dir() and config_dir.name.startswith("CFG_"):
+                    runs_base = config_dir / "runs"
+                    if runs_base.exists():
+                        subdirs.extend([d for d in runs_base.iterdir() if d.is_dir() and d.name.startswith("run_")])
+        if subdirs:
+            latest_run = max(subdirs, key=lambda d: d.stat().st_mtime)
+            run_dir = str(latest_run)
+            log(f"[HF] Tự động chọn thư mục mới nhất để đẩy: {latest_run}")
 
     if run_dir:
         scan_dir = Path(run_dir)
-        base_for_rel = Path(argo_logs_dir)
+        # Lấy relative path từ _project_root
+        try:
+            rel_path = scan_dir.relative_to(_project_root())
+        except ValueError:
+            rel_path = Path(f"workspaces/UNKNOWN/runs/{scan_dir.name}")
     else:
         log("[HF] Không tìm thấy thư mục run nào để đẩy.")
         return True
@@ -248,7 +263,7 @@ def push_runs(logger=None, run_dir=None, custom_repo_id=None):
         Path(os.path.join(r, f))
         for r, d, files in os.walk(scan_dir)
         for f in files
-        if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl')
+        if f.endswith('.pth') or f.endswith('.json') or f.endswith('.pkl') or f.endswith('.onnx')
     ]
 
     if not target_files:
@@ -261,16 +276,16 @@ def push_runs(logger=None, run_dir=None, custom_repo_id=None):
     except Exception:
         pass
 
-    log(f"[HF] Uploading folder {scan_dir.name} (only .pth, .json, .pkl) as a batched commit...")
+    log(f"[HF] Uploading folder {scan_dir.name} as a batched commit...")
     for attempt in range(3):
         try:
             api.upload_folder(
                 folder_path=str(scan_dir),
-                path_in_repo=f"runs/{scan_dir.name}",
+                path_in_repo=str(rel_path).replace("\\", "/"),
                 repo_id=repo_id,
                 repo_type="dataset",
                 token=token,
-                allow_patterns=["*.pth", "*.json", "*.pkl"],
+                allow_patterns=["*.pth", "*.json", "*.pkl", "*.onnx"],
                 commit_message=f"Auto-sync runs folder: {scan_dir.name}"
             )
             log(f"[HF] Successfully synced {scan_dir.name} in one commit!")
@@ -301,22 +316,23 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
     log = logger.info if logger else print
 
     if target_prefix and config_id:
-        pattern = f"runs/*_{target_prefix}_{config_id}*/**"
-        log(f"[HF] Đang kéo trọng số CỤ THỂ ({pattern}) từ {repo_id}/runs/ về...")
+        pattern = f"workspaces/{config_id}/runs/*_{target_prefix}*/**"
+        log(f"[HF] Đang kéo trọng số CỤ THỂ ({pattern}) từ {repo_id}/workspaces/ về...")
     else:
-        pattern = "runs/**"
-        log(f"[HF] Đang kéo TOÀN BỘ trọng số từ {repo_id}/runs/ về (Cảnh báo: Tốn băng thông!)...")
+        pattern = "workspaces/**/runs/**"
+        log(f"[HF] Đang kéo TOÀN BỘ trọng số từ {repo_id}/workspaces/ về (Cảnh báo: Tốn băng thông!)...")
 
     try:
         if isinstance(pattern, str):
             # Cải thiện regex cực kỳ rộng rãi cho HF Hub
             patterns = [
-                f"**/*{target_prefix}*{config_id}*.pth",
-                f"**/*{target_prefix}*{config_id}*.json",
-                f"**/*{target_prefix}*{config_id}*.pkl"
-            ]
+                f"**/*{target_prefix}*.pth",
+                f"**/*{target_prefix}*.json",
+                f"**/*{target_prefix}*.pkl",
+                f"**/*{target_prefix}*.onnx"
+            ] if target_prefix else ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx"]
         else:
-            patterns = ["**/*.pth", "**/*.json", "**/*.pkl"]
+            patterns = ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx"]
 
         log(f"[HF] Mẫu tải xuống (bỏ qua PNG): {patterns}")
         from huggingface_hub import snapshot_download
@@ -325,8 +341,8 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
             repo_type="dataset",
             token=token,
             allow_patterns=patterns,
-            ignore_patterns=["**/*.png"],
-            local_dir=str(argo_logs_dir),
+            ignore_patterns=["**/*.png", "data/raw/**"],
+            local_dir=str(_project_root()),
             force_download=False,
             local_dir_use_symlinks=False # Chống xoắn symlink trên Windows preventing glob search
         )

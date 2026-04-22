@@ -139,7 +139,7 @@ def main():
     parser.add_argument("--run-id", default="", help="ID của lượt chạy (vd: legacy_run)")
     args = parser.parse_args()
     
-    config_path = args.config if args.config else "data/bot_config_xau_ny_v3.json"
+    config_path = args.config if args.config else "workspaces/CFG_XAU_NY_V3_5/base_config.json"
     print(f"Loading config from: {config_path}", flush=True)
     
     with open(config_path, 'r', encoding='utf-8') as f:
