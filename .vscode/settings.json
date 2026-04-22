@@ -1,7 +1,0 @@
-{
-    "antigravityBridge.teleBotToken": "8250618245:AAHkAvr8WyyFHo_A-zRbxX8Q04P8pK0bctI",
-    "antigravityBridge.whitelistChatIds": "1816854047",
-    "antigravityBridge.botActive": true,
-    "antigravityBridge.periodicInterval": 10,
-    "antigravityBridge.periodicPromptFile": ".agent/periodic_prompt_host.md"
-}
