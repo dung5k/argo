@@ -6,16 +6,16 @@ Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được 
 
 ---
 
-## BƯỚC 0: Kiểm tra Khả năng Hội Tụ — Có nên tiếp tục không?
+## BƯỚC TIỀN XỬ LÝ: Đồng bộ kết quả mới nhất từ HuggingFace về HOST
 
-Trước tiên, hãy đọc toàn bộ lịch sử file metrics trong `workspaces/CFG_LTC_NY_V3_5/runs/` và so sánh xu hướng:
-- Nếu bạn nhận thấy **Composite Score không còn cải thiện đáng kể qua ít nhất 5 lần chạy liên tiếp**, hoặc **mọi hướng tinh chỉnh hợp lý đã được thử**, hãy kết luận rằng không gian tìm kiếm đã bão hoà.
-- **Nếu kết luận là BÃO HOÀ**: Đổi tên file này thành `.agent/periodic_prompt_host.DONE.md` bằng lệnh sau, thông báo Telegram và kết thúc:
-  ```
-  Rename-Item .agent/periodic_prompt_host.md .agent/periodic_prompt_host.DONE.md
-  ```
-  Sau đó báo cáo lý do dừng lên Telegram và gọi `--done`.
-- **Nếu chưa bão hoà**: Tiếp tục từ BƯỚC 1.
+**BẮT BUỘC chạy lệnh này đầu tiên**, trước khi làm bất cứ điều gì khác, để đảm bảo dữ liệu trên HOST là mới nhất:
+```
+python scripts/sync_workspaces.py pull CFG_LTC_NY_V3_5
+```
+
+Sau đó mới tiếp tục các bước bên dưới.
+
+---
 
 ---
 
@@ -49,11 +49,22 @@ Sau đó đọc file `training_metrics_v3.json` trong thư mục `runs/` mới n
 
 ---
 
-## BƯỚC 3: Review và Sửa đổi Cấu hình (Góc nhìn Chuyên gia)
+## BƯỚC 3: Review, Kiểm tra Hội tụ & Sửa đổi Cấu hình (Góc nhìn Chuyên gia)
 
 Dựa vào phân tích ở Bước 2.2, **BẠN PHẢI ĐÓNG VAI TRÒ LÀ MỘT CHUYÊN GIA AI & ĐỊNH LƯỢNG TÀI CHÍNH (QUANT EXPERT) HÀNG ĐẦU**.
 
-Hãy suy luận sâu sắc, phân tích đa chiều các chỉ số (Win Rate, Composite Score, Sharpe, Max Drawdown nếu có) và đối chiếu với **toàn bộ lịch sử** các `runs/` trước đó để tìm ra quy luật tham số nào thực sự mang lại Alpha. Mọi quyết định phải dựa trên tư duy phản biện sắc bén, tránh overfitting.
+### 3.1. Kiểm tra Khả năng Hội Tụ — Có nên tiếp tục không?
+Hãy so sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_LTC_NY_V3_5/runs/` và đánh giá xu hướng:
+- Nếu bạn nhận thấy **Composite Score không còn cải thiện đáng kể qua ít nhất 5 lần chạy liên tiếp**, hoặc **mọi hướng tinh chỉnh hợp lý đã được thử**, hãy kết luận rằng không gian tìm kiếm đã bão hoà.
+- **Nếu kết luận là BÃO HOÀ**: Đổi tên file này thành `.agent/periodic_prompt_host.DONE.md` bằng lệnh sau, thông báo Telegram lý do cụ thể và kết thúc:
+  ```
+  Rename-Item .agent/periodic_prompt_host.md .agent/periodic_prompt_host.DONE.md
+  ```
+  Sau đó báo cáo lý do dừng lên Telegram và gọi `--done`.
+- **Nếu chưa bão hoà**: Tiếp tục bước 3.2.
+
+### 3.2. Tinh chỉnh Chiến thuật
+Hãy suy luận sâu sắc, phân tích đa chiều các chỉ số (Win Rate, Composite Score, Sharpe, Max Drawdown nếu có) để tìm ra quy luật tham số nào thực sự mang lại Alpha. Mọi quyết định phải dựa trên tư duy phản biện sắc bén, tránh overfitting.
 
 Những thay đổi BẠN CÓ QUYỀN VÀ NÊN làm:
 - **Thay đổi Input Features**: Thử nghiệm thêm/bớt chỉ số vĩ mô trong `MACRO_FEATURES` (DXYm, Crypto, Vàng...).
@@ -90,6 +101,8 @@ git add . && git commit -m "auto-tuning LTC NY: <RUN_ID>" && git push
 - Nếu **cả hai máy đều rảnh**, tạo thêm một run thứ hai với variant cấu hình khác biệt (ví dụ thử hyperparameter khác) và giao song song:
   ```
   python src/orchestration/host_controller.py train --client-id client1  --session ny --file workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID_A>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID_A>
+  ```
+  ```
   python src/orchestration/host_controller.py train --client-id clientGH --session ny --file workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID_B>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID_B>
   ```
 
@@ -98,3 +111,4 @@ git add . && git commit -m "auto-tuning LTC NY: <RUN_ID>" && git push
 Chỉ kết thúc và gọi `--done` sau khi client đã xác nhận nhận lệnh (trạng thái BUSY trên log)!
 
 __(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần: `python .agent/send_to_tele.py "<Nội_dung>"`. Khi hoàn tất toàn bộ, BẮT BUỘC chạy: `python .agent/send_to_tele.py "<Kết_quả>" --done`)__
+
