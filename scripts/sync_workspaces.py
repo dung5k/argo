@@ -31,7 +31,7 @@ def pull_workspace(config_id):
             repo_id=REPO_ID,
             repo_type="dataset",
             local_dir=".",
-            allow_patterns=[f"workspaces/{config_id}/*"],
+            allow_patterns=[f"workspaces/{config_id}/**"],
             local_dir_use_symlinks=False,  
             ignore_patterns=ignore_pull,
             token=token,
