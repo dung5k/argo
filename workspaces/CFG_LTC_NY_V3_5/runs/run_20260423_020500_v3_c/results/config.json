@@ -18,9 +18,9 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C. THI\u1ebeU 1 M\u00c0 H\u1ec6 TH\u1ed0NG T\u1ef0 H\u1ee6Y!",
-        "TP_PCT": 0.005,
-        "SL_PCT": 0.004,
-        "MAX_HOLD_BARS": 5,
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.003,
+        "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
         "WINDOW_SIZE": 60,
@@ -124,5 +124,5 @@
             "LEVERAGE": 10
         }
     },
-    "RUN_ID": "run_20260423_020500_v3_d"
+    "RUN_ID": "run_20260423_020500_v3_c"
 }
