@@ -528,10 +528,10 @@ def main():
             
             # Đồng bộ toàn bộ Workspaces lên HuggingFace
             try:
-                print(f"  \u2601\ufe0f Đang đồng bộ Workspaces lên HF...", flush=True)
-                from sync_workspaces import main as sync_workspaces_main
+                print(f"  ☁️ Đang đồng bộ Workspaces lên HF...", flush=True)
+                from scripts.sync_workspaces import main as sync_workspaces_main
                 sync_workspaces_main()
-                print(f"  \u2601\ufe0f Upload Workspaces thành công!", flush=True)
+                print(f"  ☁️ Upload Workspaces thành công!", flush=True)
             except Exception as e:
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             
