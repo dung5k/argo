@@ -54,6 +54,14 @@
             "SOLUSDT": [
                 "log_ret",
                 "volume"
+            ],
+            "DXY": [
+                "log_ret",
+                "bb_width"
+            ],
+            "USTEC": [
+                "log_ret",
+                "volume"
             ]
         },
         "_ENHANCED_FEATURES_V2": {
