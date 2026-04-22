@@ -107,3 +107,6 @@ Chỉ kết thúc và gọi `--done` sau khi client đã xác nhận nhận lệ
 
 __(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần: `python .agent/send_to_tele.py "<Nội_dung>"`. Khi hoàn tất toàn bộ, BẮT BUỘC chạy: `python .agent/send_to_tele.py "<Kết_quả>" --done`)__
 
+
+
+__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__
