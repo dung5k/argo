@@ -179,7 +179,8 @@ class TrainingManager:
                             config_id = parts[idx + 1]
                             self.logger.info(f"  [SYNC] Đang đồng bộ data từ HuggingFace cho {config_id} trước khi Train...")
                             if self.mqtt_helper: self.mqtt_helper.send_log("INFO", f"Đồng bộ {config_id} từ HF...")
-                            subprocess.run([python, "scripts/sync_workspaces.py", "pull", config_id], cwd=str(self.base_dir), timeout=300)
+                            r = subprocess.run([python, "scripts/sync_workspaces.py", "pull", config_id], cwd=str(self.base_dir), capture_output=True, text=True, timeout=300)
+                            if self.mqtt_helper: self.mqtt_helper.send_log("INFO", f"SYNC HF OUT:\n{r.stdout}\n{r.stderr}")
                 except Exception as e:
                     self.logger.error(f"  [SYNC ERR] Lỗi đồng bộ HuggingFace: {e}")
             
