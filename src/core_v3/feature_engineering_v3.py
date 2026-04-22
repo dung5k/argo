@@ -292,6 +292,7 @@ class FeatureEngineeringV3:
                     m_low = cols.get(f"{sym_lower}_low".lower()) or cols.get(f"{sym_lower}_usd_low".lower()) or cols.get(f"{sym_clean}_low".lower())
                     m_open = cols.get(f"{sym_lower}_open".lower()) or cols.get(f"{sym_lower}_usd_open".lower()) or cols.get(f"{sym_clean}_open".lower())
                     
+                    print(f'sym={sym}, m_close={m_close}, m_open={m_open}')
                     if m_close and m_open:
                         f_macro = pd.DataFrame(index=df.index)
                         
