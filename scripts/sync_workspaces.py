@@ -16,57 +16,73 @@ IGNORE_RULES = [
     "*.npy"
 ]
 
-def main():
+import argparse
+
+def pull_workspace(config_id):
     token = os.environ.get("HF_TOKEN", "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")
     if not token:
         log("❌ Lỗi: Không tìm thấy Token HF.")
         return
 
-    log("="*50)
-    log("🚀 KHỞI ĐỘNG CÔNG CỤ ĐỒNG BỘ THÔNG MINH (SMART SYNC) 2 CHIỀU")
-    log("📌 Kịch bản: Bắt buộc Kéo (Pull) trước, Cập nhật (Push) sau.")
-    log("📌 Luồng Cấm: Bỏ qua 100% dữ liệu Raw Parquet cho cả 2 luồng.")
-    log("="*50)
-
-    # 1. PULL (Kéo về các File bị thiếu hoặc Mới hơn)
-    log("\n⬇️ BƯỚC 1: ĐANG KÉO (PULL) TÀI NGUYÊN TỪ MÂY XUỐNG MÁY...")
-    log("   (Xin chờ trong giấy lát, hệ thống đang Hashing để so khớp...)")
+    log(f"⬇️ ĐANG KÉO (PULL) DATA CHO CẤU HÌNH: {config_id} TỪ MÂY XUỐNG...")
     try:
+        ignore_pull = IGNORE_RULES + ["*.log"]
         snapshot_download(
             repo_id=REPO_ID,
             repo_type="dataset",
             local_dir=".",
-            allow_patterns=["workspaces/*"],
+            allow_patterns=[f"workspaces/{config_id}/*"],
             local_dir_use_symlinks=False,  
-            ignore_patterns=IGNORE_RULES,
+            ignore_patterns=ignore_pull,
             token=token,
             max_workers=4
         )
-        log("✔️ Kéo (Pull) tài nguyên hoàn tất! Local đã nhận đủ mảnh ghép của Đám mây.")
+        log("✔️ Kéo (Pull) tài nguyên hoàn tất!")
     except Exception as e:
         log(f"❌ Lỗi nghiêm trọng lúc PULL: {e}")
 
-    # 2. PUSH (Đẩy lên các File mới Train xong ở Local)
-    log("\n⬆️ BƯỚC 2: ĐANG TẢI (PUSH) NHỮNG THAY ĐỔI CỤC BỘ LÊN ĐÁM MÂY...")
-    log("   (Chỉ những File như Model.pth hoặc Config vừa sửa mới được kích Hoạt Upload...)")
+def push_workspace(config_id):
+    token = os.environ.get("HF_TOKEN", "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")
+    if not token:
+        log("❌ Lỗi: Không tìm thấy Token HF.")
+        return
+
+    log(f"⬆️ ĐANG TẢI (PUSH) KẾT QUẢ CỦA CẤU HÌNH: {config_id} LÊN MÂY...")
     try:
         api = HfApi(token=token)
+        # Đẩy folder con workspaces/{config_id} lên repo ở đúng đường dẫn đó
         api.upload_folder(
-            folder_path=LOCAL_DIR,
+            folder_path=f"workspaces/{config_id}",
             repo_id=REPO_ID,
-            path_in_repo="workspaces",
+            path_in_repo=f"workspaces/{config_id}",
             repo_type="dataset",
             ignore_patterns=IGNORE_RULES,
-            commit_message="Smart Sync: Tự động tải lên các thay đổi mới nhất từ Client",
+            commit_message=f"Smart Sync: Tự động tải lên các thay đổi mới nhất cho {config_id}",
             run_as_future=False
         )
-        log("✔️ Tải lên (Push) HF hoàn tất! Repo đã ghi nhận thay đổi.")
+        log("✔️ Tải lên (Push) HF hoàn tất!")
     except Exception as e:
         log(f"❌ Lỗi nghiêm trọng lúc PUSH: {e}")
 
+def main():
+    parser = argparse.ArgumentParser(description="Công cụ Đồng bộ Smart Sync 2 chiều cho Argo")
+    parser.add_argument("action", choices=["pull", "push"], help="Hành động cần thực hiện")
+    parser.add_argument("config_id", help="Tên cấu hình (VD: CFG_LTC_NY_V3_5)")
+    args = parser.parse_args()
+
     log("="*50)
-    log("🎉 CHUYẾN ĐỒNG BỘ HAI CHIỀU KẾT THÚC MỸ MÃN.")
+    log("🚀 KHỞI ĐỘNG CÔNG CỤ ĐỒNG BỘ THÔNG MINH (SMART SYNC)")
+    log("="*50)
+
+    if args.action == "pull":
+        pull_workspace(args.config_id)
+    elif args.action == "push":
+        push_workspace(args.config_id)
+
+    log("="*50)
+    log("🎉 HOÀN TẤT ĐỒNG BỘ.")
     log("="*50)
 
 if __name__ == "__main__":
     main()
+

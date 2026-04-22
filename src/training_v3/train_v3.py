@@ -203,8 +203,8 @@ def main():
             print(f"Không tìm thấy tensor tại legacy_run. Tiến hành đồng bộ qua Smart Sync từ dung5k/argo_workspaces...", flush=True)
                 
     try:
-        from scripts.sync_workspaces import main as sync_workspaces_main
-        sync_workspaces_main()
+        from scripts.sync_workspaces import pull_workspace
+        pull_workspace(cfg_id)
     except Exception as e:
         print(f"\u26a0\ufe0f Lỗi đồng bộ Workspaces: {e}", flush=True)
         
@@ -526,12 +526,12 @@ def main():
             # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
             
-            # Đồng bộ toàn bộ Workspaces lên HuggingFace
+            # Đồng bộ cấu hình hiện tại lên HuggingFace
             try:
-                print(f"  ☁️ Đang đồng bộ Workspaces lên HF...", flush=True)
-                from scripts.sync_workspaces import main as sync_workspaces_main
-                sync_workspaces_main()
-                print(f"  ☁️ Upload Workspaces thành công!", flush=True)
+                print(f"  ☁️ Đang PUSH cấu hình {cfg_id} lên HF...", flush=True)
+                from scripts.sync_workspaces import push_workspace
+                push_workspace(cfg_id)
+                print(f"  ☁️ PUSH thành công!", flush=True)
             except Exception as e:
                 print(f"  \u274c Lỗi Push HF: {e}", flush=True)
             
