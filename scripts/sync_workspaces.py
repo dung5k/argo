@@ -11,7 +11,9 @@ LOCAL_DIR = "workspaces"
 # Cấm đồng bộ dữ liệu siêu nặng (Được kế thừa từ STORAGE_POLICY)
 IGNORE_RULES = [
     "*/data/raw/*", 
-    "*.parquet"
+    "*/data/tensors/*",
+    "*.parquet",
+    "*.npy"
 ]
 
 def main():
