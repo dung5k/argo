@@ -108,11 +108,23 @@ if __name__ == "__main__":
     session_start = config.get('SESSION_UTC', {}).get('START', '00:00')
     session_end   = config.get('SESSION_UTC', {}).get('END', '23:59')
 
-    # 2. Định vị thư mục
-    raw_dir = config.get('DATA_SOURCE', {}).get('RAW_LOCAL_DIR', 'data/history')
-    out_dir = os.path.join("data", cfg_id)
+    # 2. Định vị thư mục theo chuẩn Run-Based
+    import datetime
+    import shutil
+    
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id = f"run_{timestamp}_v3"
+    run_dir = os.path.join("workspaces", cfg_id, "runs", run_id)
+    out_dir = os.path.join(run_dir, "data", "tensors")
+    
     os.makedirs(out_dir, exist_ok=True)
+    raw_dir = config.get('DATA_SOURCE', {}).get('RAW_LOCAL_DIR', 'data/history')
     os.makedirs(raw_dir, exist_ok=True)
+    
+    # Lưu bản sao config vào lượt chạy
+    run_config_path = os.path.join(run_dir, "config.json")
+    shutil.copy(args.config, run_config_path)
+    print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
 
     print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")
 
@@ -134,7 +146,12 @@ if __name__ == "__main__":
             if not fname.endswith('.parquet'):
                 continue
             # Lấy symbol name từ tên file: ETHUSDT_MT5_1M_2026.parquet → ETHUSDT
-            sym_raw = fname.split('_MT5_')[0].upper()
+            if '_MT5_' in fname:
+                sym_raw = fname.split('_MT5_')[0].upper()
+            elif '_BINANCE_' in fname:
+                sym_raw = fname.split('_BINANCE_')[0].upper()
+            else:
+                sym_raw = fname.split('_')[0].upper()
             # Kiểm tra có trong danh sách cần thiết không
             matched = any(sym_raw == s.upper() or sym_raw == s.upper().rstrip('M')
                           for s in all_syms)
@@ -255,7 +272,7 @@ if __name__ == "__main__":
     
     # Kích hoạt đẩy lên Huggingface
     print(f"\n🚀 TIẾN HÀNH ĐẨY DỮ LIỆU LÊN HUGGINGFACE (V3 STANDARD)...")
-    repo_id = config.get("HF_CLOUD", {}).get("DATASET_REPO", "dung5k/xau_v3_tensor_ny")
+    repo_id = "dung5k/argo_workspaces"
     hf_token = os.environ.get("HF_TOKEN")
     
     if not hf_token:
@@ -268,19 +285,20 @@ if __name__ == "__main__":
     api = HfApi(token=hf_token)
     
     files_to_upload = [
-        f"X_tensor_{cfg_id}.npy",
-        f"Y_tensor_{cfg_id}.npy",
-        f"scaler_{cfg_id}.pkl"
+        (os.path.join(out_dir, f"X_tensor_{cfg_id}.npy"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/X_tensor_{cfg_id}.npy"),
+        (os.path.join(out_dir, f"Y_tensor_{cfg_id}.npy"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/Y_tensor_{cfg_id}.npy"),
+        (os.path.join(out_dir, f"scaler_{cfg_id}.pkl"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/scaler_{cfg_id}.pkl"),
+        (run_config_path, f"workspaces/{cfg_id}/runs/{run_id}/config.json"),
+        (args.config, f"workspaces/{cfg_id}/base_config.json")
     ]
     
-    for filename in files_to_upload:
-        local_path = os.path.join(out_dir, filename)
-        repo_path = f"data/{cfg_id}/{filename}"
+    for local_path, repo_path in files_to_upload:
         
         if not os.path.exists(local_path):
             print(f"❌ LỖI NGHIÊM TRỌNG: Không tìm thấy file tại Local: {local_path}")
             continue
             
+        filename = os.path.basename(local_path)
         print(f"☁️ Uploading {filename} (Size: {os.path.getsize(local_path) / (1024*1024):.2f} MB)...")
         try:
             api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True, private=True)

@@ -205,6 +205,10 @@ class TrainingManager:
         if kwargs.get("scratch"):
             cmd.append("--scratch")
 
+        run_id_val = kwargs.get("run_id", "")
+        if run_id_val:
+            cmd.extend(["--run-id", run_id_val])
+
         env = os.environ.copy()
         perf_mode = kwargs.get("perf_mode", "MAX").upper()
         if perf_mode == "LIGHT":
@@ -371,6 +375,7 @@ class TelegramAgent:
             perf_mode = payload.get("perf_mode", "MAX")
             session = payload.get("session", "all")
             scratch = payload.get("scratch", False)
+            run_id = payload.get("run_id", "")
             config_content = payload.get("config_content", "")
             # [FIX] Ưu tiên config từ payload (host đã gửi tên file cấu hình cụ thể)
             # Chỉ fallback về CONFIG_MAP nếu host không cung cấp
@@ -381,12 +386,26 @@ class TelegramAgent:
                     config = os.path.join(str(self.base_dir), config_from_payload)
                 else:
                     config = config_from_payload
+                
+                # Hỗ trợ kiến trúc Run-based: nếu là thư mục, trỏ vào base_config.json
+                if os.path.isdir(config):
+                    config = os.path.join(config, "base_config.json")
             else:
                 config = CONFIG_MAP.get(symbol, f"{ARGO_DATA_DIR}/bot_config_{symbol}.json")
             self.logger.info(f"  ➜ Nhận lệnh TRAIN — Đang BẮT BUỘC KILL các tiến trình cũ...")
             self.manager.kill() # Thêm bước dập tắt tiến trình theo yêu cầu
-            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}, scratch={scratch}")
-            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session, scratch=scratch)
+            
+            self.logger.info("  [GIT] Thực hiện Git Pull trước khi train...")
+            if self.mqtt: self.mqtt.send_log("INFO", "Đang kéo Code và Cấu hình mới nhất từ GitHub...")
+            try:
+                subprocess.run(["git", "stash"], cwd=str(self.base_dir), timeout=20)
+                subprocess.run(["git", "clean", "-fd", "runs/"], cwd=str(self.base_dir), timeout=20)
+                subprocess.run(["git", "pull", "--rebase"], cwd=str(self.base_dir), timeout=60)
+            except Exception as e:
+                self.logger.error(f"  [GIT ERR] Lỗi kéo cấu hình: {e}")
+                
+            self.logger.info(f"  ➜ Khởi động TRAIN cục bộ, symbol={symbol}, session={session}, script={script}, config={config}, mode={perf_mode}, scratch={scratch}, run_id={run_id}")
+            res = self.manager.start_train(config, script=script, config_content=config_content, perf_mode=perf_mode, session=session, scratch=scratch, run_id=run_id)
             if not res.get("ok"):
                 self.logger.error(f"  [LỖI] Không thể khởi động train: {res.get('error')}")
                 if self.mqtt:

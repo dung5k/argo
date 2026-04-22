@@ -238,7 +238,7 @@ def upload_to_hf(out_dir: str, cfg_id: str, repo_id: str, hf_token: str):
         assert_ok(os.path.exists(local_path),
                   f"File cục bộ không tìm thấy: {local_path}")
 
-        repo_path = f"data/{cfg_id}/{filename}"
+        repo_path = f"workspaces/{cfg_id}/data/tensors/{filename}"
         size_mb = os.path.getsize(local_path) / (1024 * 1024)
         print(f"  ☁️  Uploading {filename} ({size_mb:.2f} MB)...", flush=True)
 

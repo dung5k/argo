@@ -151,7 +151,7 @@ def tg_notify(msg):
     # Chặn đứng các nội dung khác (ví dụ: liên tục báo HOLD vô nghĩa)
     pass
 
-config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "bot_config_xau_ny_v3_5.json")
+config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "base_config.json")
 schedule_file = os.path.join(safe_script_dir, "workspaces", "shared_meta", "bot_v3_brain_schedule.json")
 if len(sys.argv) > 1:
     args_json = [arg for arg in sys.argv if arg.endswith('.json')]

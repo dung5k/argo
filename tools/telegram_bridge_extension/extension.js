@@ -4,6 +4,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+function logDebug(msg) {
+    try {
+        const d = new Date().toISOString();
+        const f = path.join(getWorkspaceRoot() || __dirname, 'bridge_debug.log');
+        fs.appendFileSync(f, `[${d}] ${msg}\n`);
+    } catch(e) { console.error("logDebug Error:", e); }
+}
 let server;
 const PORT = 38124;
 
@@ -126,11 +133,13 @@ function sendTelegramMessage(chatId, text) {
         res.on('end', () => {
             if (res.statusCode !== 200) {
                 console.error(`Telegram API Error (Send Message): [${res.statusCode}]`, body);
+                logDebug(`[SEND API ERROR] [${res.statusCode}] ${body}`);
             }
         });
     });
     req.on('error', (e) => {
         console.error('Telegram Send Error', e);
+        logDebug(`[SEND NETWORK ERROR] ${e.message || e}`);
     });
     req.write(postData);
     req.end();
@@ -195,6 +204,7 @@ async function handleMessage(message) {
 
     const chatId = message.chat.id;
     let text = message.text || '';
+    logDebug(`[NEW MSG] From ChatId: ${chatId} | Text: ${text}`);
     
     // Loại bỏ @bot_username trong lệnh khi ở group chat
     text = text.replace(/@[a-zA-Z0-9_]+/g, '').trim();
@@ -205,6 +215,7 @@ async function handleMessage(message) {
     }
 
     if (!isUserWhitelisted(chatId)) {
+        logDebug(`[AUTH BLOCKED] ChatId ${chatId} is not whitelisted. Config whitelist is: ${getConfig().whitelistChatIds}`);
         sendTelegramMessage(chatId, `⛔ Lỗi: Group/Chat ID \`${chatId}\` không có quyền truy cập hệ thống.\n\nHãy sao chép dãy số trên và thêm vào danh sách Whitelist trong cài đặt VS Code.`);
         return;
     }
@@ -239,22 +250,11 @@ async function handleMessage(message) {
     
     const fullQuery = `${queryToAgent}\n\n__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__`;
     
-    if (isAgentBusy) {
-        const config = getConfig();
-        if (config.workingDir) {
-            const pendingPath = path.join(config.workingDir, 'pending_messages.json');
-            let pending = [];
-            if (fs.existsSync(pendingPath)) {
-                try { pending = JSON.parse(fs.readFileSync(pendingPath, 'utf8')); } catch(e){}
-            }
-            pending.push({ chatId, queryToAgent, text });
-            fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
-        }
-        return;
-    }
-    
-    sendTelegramMessage(chatId, "✅ Đã nhận yêu cầu của bạn, tôi đang xử lý nhé!");
+    // Khởi tạo/cập nhật thông báo đã nhận
+    sendTelegramMessage(chatId, "✅ Đã nhận lệnh, Anti đang xử lý (Nếu tôi đang bận việc khác, lệnh sẽ được tự động xếp hàng chờ)...");
     activeTypingChats.add(chatId.toString());
+    
+    // Đặt typing indicator timeout (chỉ dùng cho mục đích hiển thị typing)
     setAgentBusy();
     
     try {
@@ -289,12 +289,14 @@ function pollTelegram() {
                     for (const update of data.result) {
                         lastUpdateId = Math.max(lastUpdateId, update.update_id);
                         if (update.message) {
+                            logDebug(`[POLL SUCCESS] Received update_id ${update.update_id}`);
                             handleMessage(update.message);
                         }
                     }
                 }
             } catch (e) {
                 console.error("Poling Parse Error", e);
+                logDebug(`[POLL ERROR] ${e}`);
             }
             telegramPollingTimeout = setTimeout(pollTelegram, 1000);
         });
@@ -302,6 +304,7 @@ function pollTelegram() {
     
     req.on('error', (e) => {
         console.error("Polling Error", e);
+        logDebug(`[POLL NETWORK ERROR] ${e.message || e}`);
         telegramPollingTimeout = setTimeout(pollTelegram, 3000);
     });
 }
@@ -396,20 +399,20 @@ function startBridgeServer() {
                 try {
                     let task = JSON.parse(body);
                     let text = task.text || task.message;
-                    
-                    if (task.done) {
-                        freeAgent(); // Cập nhật trạng thái rảnh sau khi task.done = true (dù có text hay không)
-                    }
-                    
-                    if (text && text !== '--done') {
+                    if (text) {
                         let targets = activeTypingChats.size > 0 ? Array.from(activeTypingChats) : getActiveChatIds();
                         targets.forEach(t => {
                             sendTelegramMessage(t, `🤖 Antigravity:\n\n${text}`);
                         });
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ status: 'success' }));
+                        
+                        if (task.done) {
+                            freeAgent(); // Chỉ Cập nhật trạng thái rảnh sau khi task.done = true
+                        }
+                    } else {
+                        res.writeHead(400); res.end(JSON.stringify({ error: 'Missing text' }));
                     }
-                    
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ status: 'success' }));
                 } catch (e) {
                     res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
                 }
@@ -445,7 +448,7 @@ import urllib.request
 import urllib.error
 
 def send_to_telegram(content, is_done=False):
-    if not content and not is_done:
+    if not content:
         return
     url = 'http://127.0.0.1:38124/send-telegram'
     data = json.dumps({'text': content, 'done': is_done}).encode('utf-8')
@@ -499,7 +502,6 @@ function activate(context) {
     // Listen to configuration change
     vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('antigravityBridge')) {
-            // Nếu người dùng vừa đổi config sang true, reset lại mốc thời gian để bỏ qua message cũ trong khoảng tạm dừng
             activationTime = Math.floor(Date.now() / 1000);
             setupPeriodicExecution();
             setupTypingIndicator();

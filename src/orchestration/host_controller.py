@@ -60,11 +60,21 @@ class HostController:
                 if self.connected: break
                 time.sleep(0.1)
 
-    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw=False, config_path: str = "", mode: str = "MAX", session: str = "all", scratch: bool = False):
+    def send_command(self, cmd: str, symbol: str = "xauusd", script: str = "", raw=False, config_path: str = "", mode: str = "MAX", session: str = "all", scratch: bool = False, run_id: str = ""):
         self._wait_connected()
         
         config_content = ""
         if cmd == "train":
+            print("[HOST] Đang đẩy code mới nhất lên Git trước khi báo Client...")
+            import subprocess
+            try:
+                subprocess.run(["git", "add", "."], check=False, timeout=15)
+                subprocess.run(["git", "commit", "-m", "Auto commit config before training"], check=False, timeout=15)
+                subprocess.run(["git", "push"], check=False, timeout=15)
+                print("[HOST] Đã đẩy cấu hình lên Git thành công.")
+            except Exception as e:
+                print(f"[HOST] Lỗi khi đẩy lên Git (có thể do chưa cấu hình): {e}")
+
             LOCAL_CONFIG_MAP = {
                 "asian": "data/bot_config_xau_asian_v2_1.json",
                 "london": "data/bot_config_xau_london_v2_1.json",
@@ -72,18 +82,23 @@ class HostController:
             }
             local_cfg = config_path if config_path else LOCAL_CONFIG_MAP.get(session, "data/bot_config_xau.json")
             if local_cfg and os.path.exists(local_cfg):
-                # Không cần Gửi File Config qua MQTT base64 nữa vì Client sẽ tự động nhận qua git pull!
-                pass
+                try:
+                    with open(local_cfg, "r", encoding="utf-8") as f:
+                        config_content = f.read()
+                except Exception as e:
+                    print(f"[HOST] Không thể đọc config_content: {e}")
             
-            # Bỏ việc trỏ cứng C:/argo/data vì client đã đồng bộ qua git pull rồi! 
+            # Gửi config_content sang để đè lên kết quả của git pull
             payload = json.dumps({
                 "cmd": cmd,
                 "symbol": symbol,
                 "script": script,
                 "config": local_cfg if local_cfg else "",
+                "config_content": config_content,
                 "mode": mode,
                 "session": session,
-                "scratch": scratch
+                "scratch": scratch,
+                "run_id": run_id
             })
             
         elif cmd == "run" and raw and script:
@@ -278,6 +293,7 @@ def main():
     parser.add_argument("--time", "-t", type=int, default=15)
     parser.add_argument("--minutes", type=int, default=10, help="Số phút Log muốn lấy (dành cho getlog)")
     parser.add_argument("--scratch", action="store_true", help="Bắt đầu train lại từ đầu (bỏ qua Git pull)")
+    parser.add_argument("--run-id", default="", help="ID của lượt chạy để ghi đè (vd: run_001_initial)")
     
     args = parser.parse_args()
 
@@ -320,7 +336,7 @@ def main():
     elif args.cmd in ["train", "kill", "run", "update"]:
         mode_val = getattr(args, 'mode', 'MAX')
         cfg_path = args.file if args.file else ""
-        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False), config_path=cfg_path)
+        host.send_command(args.cmd, args.symbol, args.script, getattr(args, 'raw', False), mode=mode_val, session=getattr(args, 'session', 'all'), scratch=getattr(args, 'scratch', False), config_path=cfg_path, run_id=getattr(args, 'run_id', ''))
         host.listen_logs(args.time)
     elif args.cmd == "getlog":
         host.getlog(getattr(args, 'minutes', 60))

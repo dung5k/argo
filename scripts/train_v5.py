@@ -61,9 +61,19 @@ def main():
     with open(args.config, 'r', encoding='utf-8') as f:
         config = json.load(f)
         
+    import datetime
     cfg_id = config.get("CONFIG_ID", "CFG_V5_UNKNOWN")
-    out_dir = os.path.join("data", cfg_id)
-    os.makedirs(out_dir, exist_ok=True)
+    
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join("workspaces", cfg_id, "runs", f"run_{timestamp}")
+    run_data_dir = os.path.join(run_dir, "data")
+    run_brains_dir = os.path.join(run_dir, "brains")
+    
+    os.makedirs(run_data_dir, exist_ok=True)
+    os.makedirs(run_brains_dir, exist_ok=True)
+    
+    with open(os.path.join(run_dir, "config.json"), "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4, ensure_ascii=False)
     
     raw_dir = config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", "data/history")
     target_prefix = config.get("TARGET_PREFIX", "LTC")
@@ -114,7 +124,7 @@ def main():
     X_features, valid_indices = prep.fit_transform(df_raw)
     print(f"  ✅ X_features shape: {X_features.shape}")
     
-    with open(os.path.join(out_dir, "preprocessor.pkl"), "wb") as f:
+    with open(os.path.join(run_data_dir, "preprocessor.pkl"), "wb") as f:
         pickle.dump(prep, f)
         
     print("\n[3] Gắn nhãn Triple Barrier...")
@@ -156,10 +166,10 @@ def main():
     model = SelectiveXGBoost(xgb_params)
     model.fit(X_t, y_t, X_v, y_v)
     
-    model.save(os.path.join(out_dir, "xgb_model.json"))
+    model.save(os.path.join(run_brains_dir, "xgb_model.json"))
     print("  ✅ Lưu Model XGBoost System!")
     
-    test_file = os.path.join(out_dir, "test_v5.pkl")
+    test_file = os.path.join(run_data_dir, "test_v5.pkl")
     with open(test_file, 'wb') as f:
         pickle.dump({
             "X_test": X_test,
@@ -168,6 +178,18 @@ def main():
             "macro_test": macro_test
         }, f)
     print(f"  Lưu Test set -> {test_file}")
+    
+    # Save performance metrics basic
+    performance = {
+        "train_size": len(X_train),
+        "test_size": len(X_test),
+        "val_size": len(X_v),
+        "target": target_symbol,
+        "status": "completed"
+    }
+    with open(os.path.join(run_dir, "performance.json"), "w", encoding="utf-8") as f:
+        json.dump(performance, f, indent=4)
+        
     print("\n🎉 Hoàn thành Train Pipeline V5!")
 
 if __name__ == "__main__":

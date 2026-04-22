@@ -136,6 +136,7 @@ def main():
     parser.add_argument("config", nargs="?", help="Path to config file")
     parser.add_argument("--scratch", action="store_true", help="Bỏ qua kế thừa, train lại từ đầu")
     parser.add_argument("--session", default="ny", help="Session target (bo qua, doc tu config file)")
+    parser.add_argument("--run-id", default="", help="ID của lượt chạy (vd: legacy_run)")
     args = parser.parse_args()
     
     config_path = args.config if args.config else "data/bot_config_xau_ny_v3.json"
@@ -145,6 +146,32 @@ def main():
         config = json.load(f)
         
     cfg_id = config.get('CONFIG_ID', 'V3_UNKNOWN')
+    run_dir = None
+    if getattr(args, 'run_id', ""):
+        run_id = args.run_id
+    elif config.get("RUN_ID", ""):
+        run_id = config.get("RUN_ID")
+    else:
+        run_timestamp = time.strftime("%Y%m%d_%H%M%S")
+        run_id = f"run_{run_timestamp}_v3"
+
+    run_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", run_id)
+    os.makedirs(run_dir, exist_ok=True)
+    run_config_path = os.path.join(run_dir, "config.json")
+    
+    if os.path.exists(run_config_path):
+        with open(run_config_path, 'r', encoding='utf-8') as f:
+            run_cfg = json.load(f)
+            config.update(run_cfg)
+        print(f"Loaded run-specific overrides from: {run_config_path}", flush=True)
+        config_path = run_config_path
+    else:
+        # Mới tạo, copy từ base config
+        with open(run_config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+        print(f"Created new run directory: {run_dir}", flush=True)
+        config_path = run_config_path
+        
     dataset_repo = config.get("HF_CLOUD", {}).get("DATASET_REPO")
     train_cfg = config.get("TRAINING", {})
     
@@ -156,24 +183,33 @@ def main():
     
     # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
     print("\u2601\ufe0f Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
-    x_filename = f"workspaces/{cfg_id}/data/tensors/X_tensor_{cfg_id}.npy"
-    y_filename = f"workspaces/{cfg_id}/data/tensors/Y_tensor_{cfg_id}.npy"
-    scaler_filename = f"workspaces/{cfg_id}/data/tensors/scaler_{cfg_id}.pkl"
+    tensor_local_dir = os.path.join(run_dir, "data", "tensors")
+    os.makedirs(tensor_local_dir, exist_ok=True)
     
-    x_path = hf_hub_download(repo_id=dataset_repo, filename=x_filename, repo_type="dataset", token=hf_token)
-    y_path = hf_hub_download(repo_id=dataset_repo, filename=y_filename, repo_type="dataset", token=hf_token)
+    x_path = os.path.join(tensor_local_dir, f"X_tensor_{cfg_id}.npy")
+    y_path = os.path.join(tensor_local_dir, f"Y_tensor_{cfg_id}.npy")
+    scaler_src = os.path.join(tensor_local_dir, f"scaler_{cfg_id}.pkl")
+    
+    import shutil
+    legacy_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", "legacy_run", "data", "tensors")
+    
+    if not os.path.exists(x_path):
+        if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+            print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
+            shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
+            shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
+            shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
+        else:
+            print(f"Không tìm thấy tensor tại legacy_run. Tiến hành đồng bộ qua Smart Sync từ dung5k/argo_workspaces...", flush=True)
+                
     try:
         from sync_workspaces import main as sync_workspaces_main
         sync_workspaces_main()
     except Exception as e:
         print(f"\u26a0\ufe0f Lỗi đồng bộ Workspaces: {e}", flush=True)
         
-    x_path = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"X_tensor_{cfg_id}.npy")
-    y_path = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"Y_tensor_{cfg_id}.npy")
-    scaler_src = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors", f"scaler_{cfg_id}.pkl")
-    
     if not os.path.exists(x_path) or not os.path.exists(y_path):
-        raise FileNotFoundError(f"Không tìm thấy tensor tại {x_path} hoặc {y_path}. Hãy kiểm tra lại sync.")
+        raise FileNotFoundError(f"Không tìm thấy tensor tại {x_path} hoặc {y_path}. Hãy kiểm tra lại sync hoặc legacy_run.")
         
     print(f"\u2705 Tải Scaler thành công từ mây (nếu có)!", flush=True)
 
@@ -226,7 +262,10 @@ def main():
         print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ Workspaces...", flush=True)
         import glob
         inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
-        pattern = os.path.join(_ROOT, "workspaces", inherit_cfg_id, "brains", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
+        if run_dir:
+            pattern = os.path.join(_ROOT, "workspaces", inherit_cfg_id, "runs", "**", "brains", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
+        else:
+            pattern = os.path.join(_ROOT, "workspaces", inherit_cfg_id, "brains", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
         all_files = glob.glob(pattern, recursive=True)
         if all_files:
             latest_file = max(all_files, key=os.path.getmtime)
@@ -356,13 +395,13 @@ def main():
     
     # Môi trường log giống V2
     import shutil
-    run_timestamp = time.strftime("%Y%m%d_%H%M%S")
-    run_name = f"run_{run_timestamp}_v3_{cfg_id}"
-    out_dir = os.path.join(_ROOT, "workspaces", cfg_id, "brains", run_name)
-    os.makedirs(out_dir, exist_ok=True)
+    model_dir = os.path.join(run_dir, "brains")
+    results_dir = os.path.join(run_dir, "results")
+    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
     
     import shutil
-    shutil.copy(config_path, os.path.join(out_dir, os.path.basename(config_path)))
+    shutil.copy(config_path, os.path.join(results_dir, os.path.basename(config_path)))
 
     class _TeeLogger:
         def __init__(self, filename):
@@ -375,12 +414,12 @@ def main():
             self.terminal.flush()
             self.log.flush()
 
-    sys.stdout = _TeeLogger(os.path.join(out_dir, "train_v3.log"))
+    sys.stdout = _TeeLogger(os.path.join(results_dir, "train_v3.log"))
     
     # scaler_src đã được trỏ đến thư mục workspaces ở bước trên
     if os.path.exists(scaler_src):
-        shutil.copy(scaler_src, os.path.join(out_dir, f"scaler_{cfg_id}.pkl"))
-        print(f"[PACK] Kèm theo scaler file vào: {out_dir}", flush=True)
+        shutil.copy(scaler_src, os.path.join(model_dir, f"scaler_{cfg_id}.pkl"))
+        print(f"[PACK] Kèm theo scaler file vào: {model_dir}", flush=True)
 
     # 4. PHASE 2 FINE-TUNING (Vòng lặp vĩnh cửu)
     print("--- \U0001f680 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
@@ -435,7 +474,7 @@ def main():
             print(f"  🌟 KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
             
             # Save local
-            model_export_path = os.path.join(out_dir, f"aamt_v3_{cfg_id}_final.pth")
+            model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")
             torch.save(model.state_dict(), model_export_path)
             
             # Ghi json metrics theo chuẩn V2
@@ -479,13 +518,13 @@ def main():
                         }
                     }
                 }
-                with open(os.path.join(out_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
+                with open(os.path.join(results_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
                     json.dump(metrics_data, fm, indent=4)
             except Exception as e:
                 print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
 
             # Đẩy Chart Telegram
-            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir)
+            plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
             
             # Đồng bộ toàn bộ Workspaces lên HuggingFace
             try:
@@ -506,7 +545,7 @@ def main():
         current_time = time.time()
         if (current_time - last_report_time) >= report_interval_seconds:
             last_report_time = current_time
-            plot_and_notify_v3(eval_res, cfg_id, epoch, out_dir, is_periodic=True)
+            plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
             if tbot and chat_id:
                 try:
                     report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"

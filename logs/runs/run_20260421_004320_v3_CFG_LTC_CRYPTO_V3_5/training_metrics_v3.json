@@ -1,0 +1,82 @@
+{
+    "target": "ltcusdt",
+    "version": "Transformer_V3",
+    "dimensions": {
+        "num_features_target": 0,
+        "num_features_macro": 38
+    },
+    "sessions": {
+        "crypto_247": {
+            "BEST_VLOSS": {
+                "epoch": 61,
+                "max_threshold": 0.74,
+                "composite_score": 0.3885423760553885,
+                "val_loss": 0.8667183419068655,
+                "threshold_metrics": [
+                    {
+                        "threshold": 0.53,
+                        "total_signals": 10477,
+                        "win_rate": 0.5666698482389997,
+                        "avg_win_return": 0.001,
+                        "avg_loss_return": 0.001,
+                        "ev_score": 0.023835267820669408,
+                        "sharpe_score": 0.0,
+                        "total_buy": 5238,
+                        "total_sell": 5239
+                    },
+                    {
+                        "threshold": 0.6,
+                        "total_signals": 2561,
+                        "win_rate": 0.6185083951581414,
+                        "avg_win_return": 0.001,
+                        "avg_loss_return": 0.001,
+                        "ev_score": 0.10346295356395199,
+                        "sharpe_score": 0.0,
+                        "total_buy": 1280,
+                        "total_sell": 1281
+                    },
+                    {
+                        "threshold": 0.67,
+                        "total_signals": 478,
+                        "win_rate": 0.7092050209205021,
+                        "avg_win_return": 0.001,
+                        "avg_loss_return": 0.001,
+                        "ev_score": 0.48864407323780884,
+                        "sharpe_score": 0.0,
+                        "total_buy": 239,
+                        "total_sell": 239
+                    },
+                    {
+                        "threshold": 0.74,
+                        "total_signals": 49,
+                        "win_rate": 0.7346938775510204,
+                        "avg_win_return": 0.001,
+                        "avg_loss_return": 0.001,
+                        "ev_score": 0.24839999999999998,
+                        "sharpe_score": 0.0,
+                        "total_buy": 24,
+                        "total_sell": 25
+                    }
+                ],
+                "win_rates": [
+                    0.5666698482389997,
+                    0.6185083951581414,
+                    0.7092050209205021,
+                    0.7346938775510204
+                ],
+                "thresholds": [
+                    0.53,
+                    0.6,
+                    0.67,
+                    0.74
+                ],
+                "totals": [
+                    10477,
+                    2561,
+                    478,
+                    49
+                ]
+            }
+        }
+    }
+}
