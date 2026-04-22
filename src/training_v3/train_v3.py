@@ -203,7 +203,7 @@ def main():
             print(f"Không tìm thấy tensor tại legacy_run. Tiến hành đồng bộ qua Smart Sync từ dung5k/argo_workspaces...", flush=True)
                 
     try:
-        from sync_workspaces import main as sync_workspaces_main
+        from scripts.sync_workspaces import main as sync_workspaces_main
         sync_workspaces_main()
     except Exception as e:
         print(f"\u26a0\ufe0f Lỗi đồng bộ Workspaces: {e}", flush=True)
