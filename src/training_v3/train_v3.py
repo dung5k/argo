@@ -203,6 +203,24 @@ def main():
         except Exception as e:
             print(f"Lỗi khi đồng bộ HuggingFace: {e}", flush=True)
             
+        # DOWNLOAD TENSOR TỪ DATASET REPO (NẾU CÓ)
+        if not os.path.exists(x_path) and dataset_repo:
+            print(f"☁️ Đang tải trực tiếp Tensor từ Dataset Repo: {dataset_repo}...", flush=True)
+            try:
+                from huggingface_hub import hf_hub_download
+                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
+                    remote_path = f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/{filename}"
+                    local_dl_path = hf_hub_download(
+                        repo_id=dataset_repo,
+                        repo_type="dataset",
+                        filename=remote_path,
+                        token=hf_token
+                    )
+                    shutil.copy(local_dl_path, os.path.join(tensor_local_dir, filename))
+                print("✅ Tải Tensor thành công từ HF Dataset!", flush=True)
+            except Exception as e:
+                print(f"❌ Lỗi tải Tensor từ HF Dataset: {e}", flush=True)
+            
         # Nếu vẫn không có, thử copy từ legacy_run
         if not os.path.exists(x_path):
             if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
