@@ -75,8 +75,8 @@
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M1",
         "BROKERS": {
-            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
-            "EXNESS": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "DEFAULT": "D:\\mt5\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
             "BINANCE": "BINANCE"
         },
         "ROUTING": {
