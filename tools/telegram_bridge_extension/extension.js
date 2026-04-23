@@ -32,6 +32,20 @@ function setAgentBusy() {
     busyTimeout = setTimeout(() => { isAgentBusy = false; }, 15 * 60 * 1000);
 }
 
+function queueMessage(chatId, queryToAgent) {
+    const config = getConfig();
+    if (!config.workingDir) return;
+    const pendingPath = path.join(config.workingDir, 'pending_messages.json');
+    let pending = [];
+    if (fs.existsSync(pendingPath)) {
+        try {
+            pending = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
+        } catch(e) { pending = []; }
+    }
+    pending.push({ chatId, queryToAgent });
+    fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
+}
+
 function checkPendingMessages() {
     const config = getConfig();
     if (!config.workingDir) return;
@@ -256,8 +270,15 @@ async function handleMessage(message) {
     
     const fullQuery = `${queryToAgent}\n\n__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__`;
     
+    if (isAgentBusy) {
+        logDebug(`[QUEUEING] Agent is busy, adding message to queue for ChatId: ${chatId}`);
+        queueMessage(chatId, queryToAgent);
+        sendTelegramMessage(chatId, "⏳ Anti đang bận xử lý tác vụ khác. Tin nhắn của bạn đã được đưa vào hàng đợi và sẽ tự động được xử lý ngay khi Anti rảnh! (Dùng /reset nếu muốn ngắt tác vụ hiện tại)");
+        return;
+    }
+
     // Khởi tạo/cập nhật thông báo đã nhận
-    sendTelegramMessage(chatId, "✅ Đã nhận lệnh, Anti đang xử lý (Nếu tôi đang bận việc khác, lệnh sẽ được tự động xếp hàng chờ)...");
+    sendTelegramMessage(chatId, "✅ Đã nhận lệnh, Anti đang bắt đầu xử lý...");
     activeTypingChats.add(chatId.toString());
     
     // Đặt typing indicator timeout (chỉ dùng cho mục đích hiển thị typing)
