@@ -42,12 +42,10 @@ bot_start_time = time.time()
 G_CURRENT_PRICE = 0.0
 
 def kill_old_instances():
-    """Kill other processes running bot_v3.py with the same config file."""
+    """Kill other processes running bot_v3.py with the same config file using a PID file."""
     current_pid = os.getpid()
-    # Use config file from sys.argv as identifier
     target_config = ""
     if len(sys.argv) > 1:
-        # The first .json file is usually the config
         json_args = [arg for arg in sys.argv if arg.endswith('.json')]
         if json_args:
             target_config = os.path.basename(json_args[0])
@@ -55,20 +53,31 @@ def kill_old_instances():
     if not target_config:
         return
 
-    print(f"[PROCESS] Đang tìm và dọn dẹp các phiên bản cũ của {target_config}...")
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+    pid_dir = os.path.join(safe_script_dir, "temp")
+    os.makedirs(pid_dir, exist_ok=True)
+    pid_file = os.path.join(pid_dir, f"bot_{target_config}.pid")
+
+    if os.path.exists(pid_file):
         try:
-            if proc.info['pid'] == current_pid:
-                continue
+            with open(pid_file, "r") as f:
+                old_pid = int(f.read().strip())
             
-            cmdline = proc.info['cmdline']
-            if cmdline and any('bot_v3.py' in arg for arg in cmdline):
-                # Check if this process uses the same config file
-                if any(target_config in arg for arg in cmdline):
-                    print(f"[PROCESS] ⚠️ Đang KILL tiến trình cũ PID {proc.info['pid']} ({target_config})")
+            if psutil.pid_exists(old_pid) and old_pid != current_pid:
+                proc = psutil.Process(old_pid)
+                cmdline = proc.cmdline()
+                # Verify it's the same bot and config
+                if any('bot_v3.py' in arg for arg in cmdline) and any(target_config in arg for arg in cmdline):
+                    print(f"[PROCESS] ⚠️ Đang KILL tiến trình cũ PID {old_pid} ({target_config})")
                     proc.kill()
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
+                    print(f"[PROCESS] ✅ Đã KILL {old_pid}")
+        except Exception as e:
+            print(f"[PROCESS] ⚠️ Lỗi khi xử lý PID cũ: {e}")
+
+    try:
+        with open(pid_file, "w") as f:
+            f.write(str(current_pid))
+    except Exception as e:
+        print(f"[PROCESS] ⚠️ Không thể ghi PID file: {e}")
 
 kill_old_instances()
 
@@ -267,7 +276,19 @@ def bot_background_loop():
     last_candle_time = None
     
     trade_manager.sync_existing_positions()
-    startup_msg = f"🤖 [BOT V3 MASTER KHỞI ĐỘNG]\n⏰ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n💹 Mã: {TARGET_SYMBOL} | Config: {os.path.basename(config_file)}"
+    
+    # Lấy báo cáo vị thế hiện tại để gửi cùng tin nhắn khởi động
+    pos_report = ""
+    if hasattr(trade_manager, 'get_active_positions_report'):
+        pos_report = trade_manager.get_active_positions_report()
+    
+    mode_info = "Futures (Phái sinh)" if TRADE_PLATFORM == "BINANCE" else "MT5"
+    startup_msg = f"🤖 [BOT V3 MASTER KHỞI ĐỘNG]\n⏰ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n💹 Mã: {TARGET_SYMBOL} | Chế độ: {mode_info}\nConfig: {os.path.basename(config_file)}"
+    if pos_report:
+        startup_msg += f"\n\n{pos_report}"
+    else:
+        startup_msg += "\n\nℹ️ Không có vị thế nào đang mở."
+        
     tg_notify(startup_msg)
 
     while True:
