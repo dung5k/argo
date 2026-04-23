@@ -126,9 +126,12 @@ function sendTelegramMessage(chatId, text) {
     const token = getConfig().teleBotToken;
     if (!token) return;
     
+    // Tự động escape các ký tự Markdown nhạy cảm để tránh lỗi 400 Bad Request
+    const escapedText = text.replace(/[_*`[\]()]/g, '\\$&');
+    
     const postData = JSON.stringify({
         chat_id: chatId,
-        text: text,
+        text: escapedText,
         parse_mode: 'Markdown'
     });
     

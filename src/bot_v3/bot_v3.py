@@ -175,13 +175,14 @@ def tg_notify(msg):
     g_probs = globals().get('gui_probs')
     cfg = globals().get('CONFIG', {})
 
-    # 4. Trong khi có lệnh
+    # 4. Khi đang giữ lệnh: CHỈ thông báo nếu là lệnh mở/đóng hoặc có biến động lớn.
+    # Không thông báo tỷ lệ cược HOLD mỗi phút nữa.
     has_position = False
     if tm and hasattr(tm, 'active_trade_loggers') and len(tm.active_trade_loggers) > 0:
         has_position = True
 
-    if has_position:
-        _send_raw_tg(msg)
+    # Nếu đang giữ lệnh mà tin nhắn là "PIPELINE DỰ ĐOÁN" -> Bỏ qua để đỡ spam
+    if has_position and ("PIPELINE DỰ ĐOÁN" in msg or "Tỷ lệ Cược" in msg):
         return
 
     # 3. Khi giá gần đến ngưỡng vào lệnh (>= 80% ngưỡng)
@@ -422,9 +423,8 @@ def bot_background_loop():
         msg_pred = f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\nThời gian: Nến {gui_time}\nGiá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\nTỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\nHành động: {action}"
         print(f"[BOT V3] {msg_pred}")
         # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
-        # Để tránh spam, sẽ chỉ gửi nếu tín hiệu vượt kỳ vọng (Loss nhỏ) hoặc Action = BUY/SELL
-        if action != "SLEEP":
-            tg_notify(msg_pred)
+        # Để tránh spam, tg_notify đã được cấu hình chỉ gửi tin quan trọng
+        tg_notify(msg_pred)
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
