@@ -21,7 +21,7 @@ class BinanceAdapter(BaseDataAdapter):
     def connect(self) -> bool:
         try:
             # Thử danh sách các mirror để tránh bị chặn/chập chờn
-            mirrors = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com', 'https://api3.binance.com']
+            mirrors = ['https://api.binance.com/api/v3', 'https://api1.binance.com/api/v3', 'https://api2.binance.com/api/v3', 'https://api3.binance.com/api/v3']
             # Ta sẽ xoay vòng mirror nếu cần, hoặc để CCXT tự xử lý fallback nếu cấu hình đúng
             # Ở đây ta set mặc định mirror đầu tiên, nhưng cho phép retry
             
@@ -66,13 +66,15 @@ class BinanceAdapter(BaseDataAdapter):
             tf_ccxt = timeframe.lower()
             
         # Thử 3 lần với các mirror khác nhau nếu lỗi
-        mirrors = [None, 'https://api1.binance.com', 'https://api2.binance.com']
+        mirrors = [None, 'api1.binance.com', 'api2.binance.com', 'api3.binance.com']
         last_err = ""
         
         for mirror in mirrors:
             try:
                 if mirror:
-                    self.exchange.urls['api']['public'] = mirror
+                    self.exchange.hostname = mirror
+                else:
+                    self.exchange.hostname = 'api.binance.com'
                     
                 ohlcv = self.exchange.fetch_ohlcv(binance_sym, tf_ccxt, limit=fetch_limit)
                 if not ohlcv:
