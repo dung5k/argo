@@ -20,8 +20,14 @@ class BinanceAdapter(BaseDataAdapter):
         
     def connect(self) -> bool:
         try:
+            # Thử danh sách các mirror để tránh bị chặn/chập chờn
+            mirrors = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com', 'https://api3.binance.com']
+            # Ta sẽ xoay vòng mirror nếu cần, hoặc để CCXT tự xử lý fallback nếu cấu hình đúng
+            # Ở đây ta set mặc định mirror đầu tiên, nhưng cho phép retry
+            
             self.exchange = ccxt.binance({
                 'enableRateLimit': True,
+                'timeout': 5000, # Giảm timeout xuống 5s để tránh treo luồng quá lâu
                 'options': {
                     'defaultType': self.market_type,
                 }
@@ -38,12 +44,16 @@ class BinanceAdapter(BaseDataAdapter):
         """
         Pull LIVE candles từ Binance.
         CCXT Binance nhận limit tối đa 1000.
+        GIẢM LIMIT XUỐNG để tránh nặng tải (Chỉ cần đủ window cho AI).
         """
         if not self.exchange:
             if not self.connect(): return pd.DataFrame()
             
+        # Tối ưu: Nếu AI chỉ cần window nhỏ (ví dụ 30, 60), không nên kéo 1000 nến
+        fetch_limit = min(limit, 200) # Giới hạn tối đa 200 nến cho live để tăng tốc
+        if fetch_limit < 100: fetch_limit = 100 # Tối thiểu 100 nến để tính Indicators
+            
         # Chuẩn hoá mã "BTCUSDm" (của config) thành format của Binance "BTC/USDT"
-        # config routing thường để dict như: "BTCUSD": "BINANCE". Target là symbol gốc từ MT5 mapping
         base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
         binance_sym = base_sym + "/USDT"
         
@@ -55,28 +65,42 @@ class BinanceAdapter(BaseDataAdapter):
         else:
             tf_ccxt = timeframe.lower()
             
-        try:
-            ohlcv = self.exchange.fetch_ohlcv(binance_sym, tf_ccxt, limit=limit)
-            if not ohlcv:
-                return pd.DataFrame()
+        # Thử 3 lần với các mirror khác nhau nếu lỗi
+        mirrors = [None, 'https://api1.binance.com', 'https://api2.binance.com']
+        last_err = ""
+        
+        for mirror in mirrors:
+            try:
+                if mirror:
+                    self.exchange.urls['api']['public'] = mirror
+                    
+                ohlcv = self.exchange.fetch_ohlcv(binance_sym, tf_ccxt, limit=fetch_limit)
+                if not ohlcv:
+                    continue
                 
-            df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-            df['time'] = df['timestamp'] / 1000.0  # seconds
-            df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-            df.set_index('datetime', inplace=True)
-            
-            # Cột giả lập cho MT5 Compatibility
-            if 'real_volume' not in df.columns:
-                df['real_volume'] = df['volume']
+                df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                df['time'] = df['timestamp'] / 1000.0  # seconds
+                df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
+                df.set_index('datetime', inplace=True)
                 
-            # Đảm bảo index timezone = UTC
-            df.index = df.index.tz_localize('UTC')
-            return df
-            
-        except Exception as e:
-            self.log_message(f"⚠️ [Binance] Lỗi tải nến live {binance_sym}: {e}")
-            return pd.DataFrame()
-            
+                # Cột giả lập cho MT5 Compatibility
+                if 'real_volume' not in df.columns:
+                    df['real_volume'] = df['volume']
+                    
+                # Đảm bảo index timezone = UTC
+                df.index = df.index.tz_localize('UTC')
+                
+                # Thành công thì trả về ngay
+                return df
+                
+            except Exception as e:
+                last_err = str(e)
+                self.log_message(f"⚠️ [Binance] Thử mirror {mirror if mirror else 'default'} thất bại: {last_err}")
+                time.sleep(1) # Nghỉ 1s trước khi thử mirror tiếp theo
+                
+        self.log_message(f"❌ [Binance] TẤT CẢ MIRROR ĐỀU THẤT BẠI cho {binance_sym}: {last_err}")
+        return pd.DataFrame()
+        
     def fetch_historical_data(self, symbol: str, timeframe: str, start_time: str, end_time: str) -> pd.DataFrame:
         """
         Download dataset quá khứ (Có the tốn nhiều Request).
