@@ -224,6 +224,9 @@ class BinanceTradeManagerV3:
                 "entry_time": time.time(), "contracts": lot_size, "side": pos_side
             }
             
+            # Ghi log cục bộ
+            self.log_callback(f"[BinanceTradeManagerV3] ✅ ĐÃ BẮN LỆNH {'MUA' if side=='buy' else 'BÁN'} thành công! Symbol: {target_binance_sym} | L: {lot_size} | Giá: {current_price}")
+            
             self.tg_notify(f"🟢 AI V3 Binance Open {'MUA' if side=='buy' else 'BÁN'} (Market)\nSymbol: {target_binance_sym} | L: {lot_size}\nSL: {sl_price:.2f} | TP: {tp_price:.2f}\n{preds_info}")
             return ticket
             

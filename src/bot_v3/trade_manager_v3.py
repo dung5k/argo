@@ -148,6 +148,10 @@ class V3TradeManager:
                     "order_type": "MUA" if order_type == self.mt5.ORDER_TYPE_BUY else "BÁN",
                     "entry_time": time.time(), "last_pnl_notify_time": time.time()
                 }
+                
+                # Ghi log cục bộ để không bị mất dấu vết
+                self.log_callback(f"[TradeManagerV3] ✅ ĐÃ BẮN LỆNH {'MUA' if order_type==self.mt5.ORDER_TYPE_BUY else 'BÁN'} thành công! Ticket: #{ticket} | Giá: {req['price']}")
+                
                 self.tg_notify(f"🟢 AI V3 Open {'MUA' if order_type==self.mt5.ORDER_TYPE_BUY else 'BÁN'}\nSymbol: {symbol} | #{ticket} | {preds_info}")
                 return ticket
             else:

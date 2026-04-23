@@ -163,48 +163,39 @@ def _send_raw_tg(msg):
         except: pass
 
 def tg_notify(msg):
-    global tg_brain_count
-    
-    # 1. Đoạn đầu khởi động và Cảnh báo
+    """
+    Hệ thống thông báo Telegram thông minh - Đã siết chặt theo yêu cầu người dùng.
+    Chỉ gửi khi: Khởi động, Chạm ngưỡng (Action != HOLD), hoặc Đang giữ lệnh.
+    """
+    # 1. Luôn cho phép các thông báo hệ thống quan trọng (Khởi động, Lỗi, Khớp lệnh)
     force_tg_kws = ["KHỞI ĐỘNG", "Khởi động", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "❌", "⚠️", "✅"]
     if any(k in msg for k in force_tg_kws):
         _send_raw_tg(msg)
         return
 
     tm = globals().get('trade_manager')
-    g_probs = globals().get('gui_probs')
     cfg = globals().get('CONFIG', {})
-
-    # 4. Khi đang giữ lệnh: CHỈ thông báo nếu là lệnh mở/đóng hoặc có biến động lớn.
-    # Không thông báo tỷ lệ cược HOLD mỗi phút nữa.
+    
+    # 2. Kiểm tra trạng thái vị thế (Đang giữ lệnh)
     has_position = False
     if tm and hasattr(tm, 'active_trade_loggers') and len(tm.active_trade_loggers) > 0:
         has_position = True
 
-    # Nếu đang giữ lệnh mà tin nhắn là "PIPELINE DỰ ĐOÁN" -> Bỏ qua để đỡ spam
-    if has_position and ("PIPELINE DỰ ĐOÁN" in msg or "Tỷ lệ Cược" in msg):
-        return
+    # 3. Kiểm tra xem AI có ra quyết định thực thi không (Chạm ngưỡng)
+    # Tín hiệu dự đoán thường có dạng "Hành động: BUY/SELL/HOLD"
+    is_signal = False
+    if "Hành động: BUY" in msg or "Hành động: SELL" in msg:
+        is_signal = True
 
-    # 3. Khi giá gần đến ngưỡng vào lệnh (>= 80% ngưỡng)
-    is_close_to_thr = False
-    if g_probs and cfg:
-        prob_thr = cfg.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.50)
-        near_thr = prob_thr * 0.8
-        if g_probs.get('buy', 0.0) >= near_thr or g_probs.get('sell', 0.0) >= near_thr:
-            is_close_to_thr = True
-
-    if is_close_to_thr:
+    # QUY TẮC LỌC:
+    # Nếu là tín hiệu thực thi (BUY/SELL) -> Gửi.
+    # Nếu đang giữ lệnh -> Gửi (để cập nhật tình hình).
+    # Mọi trường hợp khác (HOLD, Idle) -> Bỏ qua.
+    if is_signal or has_position:
         _send_raw_tg(msg)
         return
-
-    # 2. 3 kết quả đầu tiên của bộ não
-    if "PIPELINE DỰ ĐOÁN" in msg or "Tỷ lệ Cược" in msg:
-        if tg_brain_count < 3:
-            _send_raw_tg(msg)
-            tg_brain_count += 1
-        return
         
-    # Chặn đứng các nội dung khác (ví dụ: liên tục báo HOLD vô nghĩa)
+    # Chặn đứng các nội dung khác (No Signal, Periodic Heartbeat)
     pass
 
 config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "base_config.json")
@@ -339,7 +330,11 @@ def bot_background_loop():
                 
                 brain_loaded = True
                 gui_status = "✅ Lắp Ráp NÃO V3 Thành Công!"
-                gui_session = f"PHIÊN {sess_name.upper() if sess_name else 'UNKNOWN'} (Não: {os.path.basename(m_path)[:10]})"
+                
+                # Sửa lỗi hiển thị "Unknown" - Fallback về SESSION trong config chính
+                display_sess = sess_name if sess_name else CONFIG.get("SESSION", "Unknown")
+                gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)[:10]})"
+                
                 msg_done = f"✅ Lắp ráp NÃO V3 Xong!\nKhởi tạo thành công Mạng Nơ-ron (Loss %: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)})\nBot đang nghe ngóng thị trường..."
                 print(f"[BOT V3] {msg_done}")
                 tg_notify(msg_done)
