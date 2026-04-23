@@ -49,9 +49,6 @@
             "DOGEUSDT": [
                 "log_ret",
                 "volume"
-            ],
-            "XAUUSDm": [
-                "log_ret"
             ]
         }
     },
@@ -71,7 +68,7 @@
         "FREQ_MAX_N": 500
     },
     "DATA_SOURCE": {
-        "RAW_LOCAL_DIR": "data/history",
+        "RAW_LOCAL_DIR": "workspaces/CFG_LTC_ASIAN_V3_5/data/raw",
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M1",
         "BROKERS": {
@@ -80,8 +77,6 @@
             "BINANCE": "BINANCE"
         },
         "ROUTING": {
-            "XAUUSDm": "EXNESS",
-            "LTCUSDm": "EXNESS",
             "LTCUSDT": "BINANCE",
             "BTCUSDT": "BINANCE",
             "ETHUSDT": "BINANCE",

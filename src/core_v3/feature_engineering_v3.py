@@ -286,6 +286,8 @@ class FeatureEngineeringV3:
                 # Tìm cột close và high, low của Macro
                 try:
                     sym_clean = sym_lower.removesuffix('m')
+                    print(f"DEBUG: sym={sym}, sym_lower={sym_lower}, cols keys matching: {[k for k in cols.keys() if sym_lower in k]}")
+
                     
                     m_close = cols.get(f"{sym_lower}_close".lower()) or cols.get(f"{sym_lower}_usd_close".lower()) or cols.get(f"{sym_clean}_close".lower())
                     m_high = cols.get(f"{sym_lower}_high".lower()) or cols.get(f"{sym_lower}_usd_high".lower()) or cols.get(f"{sym_clean}_high".lower())
