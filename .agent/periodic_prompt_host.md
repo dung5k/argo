@@ -1,6 +1,6 @@
-# NHIỆM VỤ ĐỊNH KỲ (HOST): AUTO-TUNING LTC LONDON BRAIN (PHÂN TÁN)
+# NHIỆM VỤ ĐỊNH KỲ (HOST): AUTO-TUNING XAG ASIAN BRAIN (PHÂN TÁN)
 
-Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa trên máy HOST để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_LTC_LONDON_V3_5` và giao việc cho **`client1`** và **`clientGH`**.
+Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa trên máy HOST để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_XAG_ASIAN_V3_5` và giao việc cho **`client1`** và **`clientGH`**.
 
 Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:
 
@@ -10,7 +10,7 @@ Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được 
 
 **BẮT BUỘC chạy lệnh này đầu tiên**, trước khi làm bất cứ điều gì khác, để đảm bảo dữ liệu trên HOST là mới nhất:
 ```
-python scripts/sync_workspaces.py pull CFG_LTC_LONDON_V3_5
+python scripts/sync_workspaces.py pull CFG_XAG_ASIAN_V3_5
 ```
 
 Sau đó mới tiếp tục các bước bên dưới.
@@ -35,7 +35,7 @@ Ghi nhận danh sách máy rảnh và máy bận.
 Đọc file `training_metrics_v3.json` trong thư mục `runs/` mới nhất. Dựa vào phân tích, **BẠN PHẢI ĐÓNG VAI TRÒ LÀ MỘT CHUYÊN GIA AI & ĐỊNH LƯỢNG TÀI CHÍNH**.
 
 ### 2.1. Kiểm tra Khả năng Hội Tụ
-- So sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_LTC_LONDON_V3_5/runs/`.
+- So sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_XAG_ASIAN_V3_5/runs/`.
 - Nếu **Composite Score không còn cải thiện qua 25 lần chạy**, hoặc mọi hướng tinh chỉnh hợp lý đã cạn kiệt -> Kết luận BÃO HOÀ.
   ```
   Rename-Item .agent/periodic_prompt_host.md .agent/periodic_prompt_host.DONE.md
@@ -54,7 +54,7 @@ Ghi nhận danh sách máy rảnh và máy bận.
 ## BƯỚC 3: Quản lý Hàng Đợi (Queue Management) & Chuẩn bị Data Trước
 
 Mục tiêu: Luôn có sẵn ít nhất 1-2 lượt chạy (runs) ĐÃ ĐƯỢC CHUẨN BỊ TENSOR để giao ngay cho Client khi rảnh.
-Kiểm tra thư mục `workspaces/CFG_LTC_LONDON_V3_5/runs/`:
+Kiểm tra thư mục `workspaces/CFG_XAG_ASIAN_V3_5/runs/`:
 - Tìm các `<RUN_ID>` đã có thư mục `data/tensors/` hoặc đã tạo, nhưng CHƯA CÓ file `results/training_metrics_v3.json` (tức là chưa chạy xong).
 - Đối chiếu với kết quả Bước 1: Loại trừ những `<RUN_ID>` mà Client đang "BUSY" đang chạy.
 - Còn lại chính là **HÀNG ĐỢI (Pending Runs)**.
@@ -66,12 +66,12 @@ Kiểm tra thư mục `workspaces/CFG_LTC_LONDON_V3_5/runs/`:
   3. BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!
   4. Chạy hai lệnh sau để CHUẨN BỊ TENSOR trước:
      ```
-     python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json
-     python scripts/upload_v3_dataset.py --config workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json
+     python scripts/crawl_crypto_v3.py workspaces/CFG_XAG_ASIAN_V3_5/runs/<RUN_ID>/config.json
+     python scripts/upload_v3_dataset.py --config workspaces/CFG_XAG_ASIAN_V3_5/runs/<RUN_ID>/config.json
      ```
   5. Commit và đẩy lên Git:
      ```
-     git add . && git commit -m "auto-tuning LTC LONDON data ready: <RUN_ID>" && git push
+     git add . && git commit -m "auto-tuning XAG ASIAN data ready: <RUN_ID>" && git push
      ```
 
 ---
@@ -83,7 +83,7 @@ Kiểm tra thư mục `workspaces/CFG_LTC_LONDON_V3_5/runs/`:
 - **Nếu CÓ máy rảnh (IDLE)**:
   Lấy `<RUN_ID>` từ Hàng Đợi (hoặc cái vừa tạo xong ở Bước 3) và phát lệnh cho máy rảnh:
   ```
-  python src/orchestration/host_controller.py train --client-id <client_rảnh> --session london --file workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID>
+  python src/orchestration/host_controller.py train --client-id <client_rảnh> --session asian --file workspaces/CFG_XAG_ASIAN_V3_5/runs/<RUN_ID>/config.json --script src/training_v3/train_v3.py --scratch --run-id <RUN_ID>
   ```
   *(Lặp lại nếu có nhiều máy rảnh và nhiều Run trong hàng đợi)*
 
