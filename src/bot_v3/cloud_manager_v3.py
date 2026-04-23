@@ -61,16 +61,24 @@ class V3CloudManager:
         scaler_feats = []
 
         try:
-            model_path = self._download_file(self.model_repo, f"runs/{run_id}/aamt_v3_{cfg_id_pure}_final.pth")
-        except Exception as e:
-            self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Model Weights: {e}")
-            # Thử tìm các file weights trong folder đó
+            # 1. Thử path chuẩn: runs/{run_id}/brains/aamt_v3_{cfg_id_pure}_final.pth
+            model_path = self._download_file(self.model_repo, f"workspaces/{config_id}/runs/{run_id}/brains/aamt_v3_{cfg_id_pure}_final.pth")
+        except Exception:
             try:
-                # Nếu không có final, thử tìm _best_val_loss.pth
-                model_path = self._download_file(self.model_repo, f"runs/{run_id}/aamt_v3_{cfg_id_pure}_best_val_loss.pth")
-            except Exception as e2:
-                self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Model Weights (kể cả best_val_loss): {e2}")
-                raise
+                # 2. Thử path không có workspaces/ (Legacy hoặc repo chuyên dụng)
+                model_path = self._download_file(self.model_repo, f"runs/{run_id}/brains/aamt_v3_{cfg_id_pure}_final.pth")
+            except Exception:
+                try:
+                    # 3. Thử path không có brains/ (V2)
+                    model_path = self._download_file(self.model_repo, f"runs/{run_id}/aamt_v3_{cfg_id_pure}_final.pth")
+                except Exception as e:
+                    self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Model Weights: {e}")
+                    # Thử tìm best_val_loss nếu các cái trên xịt
+                    try:
+                        model_path = self._download_file(self.model_repo, f"workspaces/{config_id}/runs/{run_id}/brains/aamt_v3_{cfg_id_pure}_best_val_loss.pth")
+                    except Exception as e2:
+                        self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Model Weights (kể cả best_val_loss): {e2}")
+                        raise
 
         try:
             scaler_cloud_path = self._download_file(self.dataset_repo, f"data/{cfg_id_pure}/scaler_{cfg_id_pure}.pkl")

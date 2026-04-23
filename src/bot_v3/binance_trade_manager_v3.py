@@ -35,7 +35,8 @@ class BinanceTradeManagerV3:
                 'secret': self.secret_key,
                 'enableRateLimit': True,
                 'options': {
-                    'defaultType': 'future'
+                    'defaultType': 'future',
+                    'adjustForTimeDifference': True
                 }
             })
             
@@ -162,30 +163,38 @@ class BinanceTradeManagerV3:
             
             time.sleep(1)
             
-            # 2. Đặt SL (STOP_MARKET) & TP (TAKE_PROFIT_MARKET) - Binance Futures cần ReduceOnly
+            # 2. Đặt SL (STOP_MARKET) & TP (TAKE_PROFIT_MARKET)
             sl_side = "sell" if side == "buy" else "buy"
             
             try:
-                self.exchange.create_order(
+                sl_order = self.exchange.create_order(
                     symbol=target_binance_sym,
                     type='STOP_MARKET',
                     side=sl_side,
                     amount=lot_size,
-                    params={'stopPrice': sl_price, 'reduceOnly': True}
+                    params={
+                        'stopPrice': self.exchange.price_to_precision(target_binance_sym, sl_price),
+                        'reduceOnly': True
+                    }
                 )
+                self.log_callback(f"[BinanceTradeManagerV3] ✅ Đã đặt Stop Loss tại {sl_price:.2f}")
             except Exception as estop:
-                self.log_callback(f"⚠️ Lỗi đặ StopMarket: {estop}")
+                self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Lỗi đặt StopLoss: {estop}")
             
             try:
-                self.exchange.create_order(
+                tp_order = self.exchange.create_order(
                     symbol=target_binance_sym,
                     type='TAKE_PROFIT_MARKET',
                     side=sl_side,
                     amount=lot_size,
-                    params={'stopPrice': tp_price, 'reduceOnly': True}
+                    params={
+                        'stopPrice': self.exchange.price_to_precision(target_binance_sym, tp_price),
+                        'reduceOnly': True
+                    }
                 )
+                self.log_callback(f"[BinanceTradeManagerV3] ✅ Đã đặt Take Profit tại {tp_price:.2f}")
             except Exception as etp:
-                self.log_callback(f"⚠️ Lỗi đặt TakeProfitMarket: {etp}")
+                self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Lỗi đặt TakeProfit: {etp}")
 
             ticket = f"pos_{target_binance_sym}_{pos_side}"
             self.active_trade_loggers[ticket] = {

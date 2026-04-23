@@ -1,0 +1,18 @@
+{
+    "description": "Lịch trình não bộ chạy cho LTC London V3.5",
+    "timezone": "UTC",
+    "mt5_path": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "schedule": {
+        "london": {
+            "start": "00:00",
+            "end": "23:59",
+            "run_id": "run_20260423_144700_v3_c",
+            "config_id": "CFG_LTC_LONDON_V3_5",
+            "dataset_repo": "dung5k/ltc_v3_tensor_london",
+            "trading_config": {
+                "min_prob_thresh": 0.67,
+                "mse_thresh_perc": 70.0
+            }
+        }
+    }
+}

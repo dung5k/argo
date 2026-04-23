@@ -21,8 +21,9 @@ from src.bot_v3.cloud_manager_v3 import V3CloudManager
 from src.bot_v3.data_processor_v3 import V3DataProcessor
 from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
-from src.core.mt5_data_manager import MT5DataManager
+from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
+from src.core.mt5_data_manager import MT5DataManager
 import logging
 
 log_dir = os.path.join(safe_script_dir, "workspaces", "shared_meta", "logs")
@@ -47,7 +48,7 @@ def custom_print(*args, **kwargs):
         return
 
     # 1. Force log cho các sự kiện CỰC QUAN TRỌNG (Lỗi, Mở/Đóng lệnh)
-    force_print_kws = ["❌", "⚠️", "✅", "FATAL", "Exception", "Lỗi", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "Bắt đầu Pipeline", "Kêt quả | Hành động"]
+    force_print_kws = ["❌", "⚠️", "✅", "FATAL", "Exception", "Lỗi", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "Bắt đầu Pipeline", "Kêt quả | Hành động", "Binance", "TradeManager", "🟢", "🔴"]
     if any(k in msg for k in force_print_kws):
         logging.info(msg)
         return
@@ -167,7 +168,12 @@ CONFIG = config_loader.load_base_config()
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
 TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAUUSD")
 
-trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+TRADE_PLATFORM = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "MT5")
+
+if TRADE_PLATFORM == "BINANCE":
+    trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+else:
+    trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
 gui_status = "Đang Sưởi Ấm Radar V3..."
 gui_prediction = "Chờ Tín Hiệu..."
@@ -182,7 +188,12 @@ def bot_background_loop():
     
     engine = V3InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
-    trade_manager.init_mt5()
+    
+    if TRADE_PLATFORM == "BINANCE":
+        trade_manager.init_client()
+    else:
+        trade_manager.init_mt5()
+        
     processor = None
     cloud = None
     
@@ -197,8 +208,9 @@ def bot_background_loop():
         backup_path = mt5_init_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
         if os.path.exists(backup_path): mt5_init_path = backup_path
         
-    gui_status = "Đang kết nối MT5..."
-    if not trade_manager.mt5.initialize(path=mt5_init_path):
+    gui_status = "Đang kết nối MT5 (Dữ liệu)..."
+    import MetaTrader5 as mt5
+    if not mt5.initialize(path=mt5_init_path):
         gui_status = "❌ Mất Kết Nối MT5 Terminal!"
         print("[BOT V3] ❌ FATAL: Không thể khởi tạo kết nối MT5.")
         return
@@ -279,15 +291,15 @@ def bot_background_loop():
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
-            trade_manager.mt5.shutdown()
-            trade_manager.mt5.initialize(path=trading_path)
+            mt5.shutdown()
+            mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
 
         mt5_exec_sym = CONFIG.get("EXECUTION_SYMBOL", TARGET_SYMBOL)
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
-        trade_manager.mt5.symbol_select(actual_sym, True)
+        mt5.symbol_select(actual_sym, True)
         
-        tick = trade_manager.mt5.symbol_info_tick(actual_sym)
+        tick = mt5.symbol_info_tick(actual_sym)
         if tick is None:
             if time.time() - last_tick_err_time > 10:
                 print(f"[BOT V3] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
@@ -346,8 +358,8 @@ def bot_background_loop():
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if mt5_manager.current_connected_path != trading_path:
-            trade_manager.mt5.shutdown()
-            trade_manager.mt5.initialize(path=trading_path)
+            mt5.shutdown()
+            mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
             
         trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)

@@ -131,6 +131,10 @@ class V3TradeManager:
                 }
                 self.tg_notify(f"🟢 AI V3 Open {'MUA' if order_type==self.mt5.ORDER_TYPE_BUY else 'BÁN'}\nSymbol: {symbol} | #{ticket} | {preds_info}")
                 return ticket
+            else:
+                err_msg = f"[TradeManagerV3] ❌ Lỗi MT5: {result.comment if result else 'Unknown'}"
+                self.log_callback(err_msg)
+                self.tg_notify(err_msg)
         except Exception as e:
             self.log_callback(f"[TradeManagerV3] ❌ Lỗi mở lệnh: {e}")
         return None
