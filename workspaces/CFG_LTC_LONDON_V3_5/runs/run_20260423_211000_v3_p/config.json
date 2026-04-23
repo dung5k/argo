@@ -1,0 +1,114 @@
+{
+    "HF_RUN_ID": "run_20260421_082810_v3_CFG_LTC_CRYPTO_V3_5",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "EXECUTION_SYMBOL": "LTCUSDm",
+    "TARGET_PREFIX": "LTCUSDT",
+    "RUN_ID": "run_20260423_211000_v3_p",
+    "CONFIG_ID": "CFG_LTC_LONDON_V3_5",
+    "VERSION": "3.5",
+    "SESSION": "london",
+    "SESSION_UTC": {
+        "START": "07:00",
+        "END": "13:00",
+        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
+    },
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/ltc_v3_tensor_london",
+        "MODEL_REPO": "dung5k/argo_data",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "\u00e2\u0161\u00a0\u00ef\u00b8\u008f_STRICT_WARNING_\u00e2\u0161\u00a0\u00ef\u00b8\u008f": "T\u00e1\u00ba\u00a4T C\u00e1\u00ba\u00a2 MODULE MACRO_FEATURES L\u00c3\u20ac B\u00e1\u00ba\u00aeT BU\u00e1\u00bb\u02dcC. THI\u00e1\u00ba\u00beU 1 M\u00c3\u20ac H\u00e1\u00bb\u2020 TH\u00e1\u00bb\u0090NG T\u00e1\u00bb\u00b0 H\u00e1\u00bb\u00a6Y!",
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.003,
+        "MAX_HOLD_BARS": 10,
+        "LABEL_MODE": "pct",
+        "PIP_SIZE": 0.01,
+        "WINDOW_SIZE": 30,
+        "STEP_SIZE": 1,
+        "CRYPTO_MODE": true,
+        "MACRO_FEATURES": {
+            "BTCUSDT": [
+                "log_ret",
+                "bb_width",
+                "volume",
+                "corr_60"
+            ],
+            "ETHUSDT": [
+                "log_ret",
+                "volume"
+            ],
+            "BCHUSDT": [
+                "log_ret"
+            ],
+            "DOGEUSDT": [
+                "log_ret",
+                "volume"
+            ],
+            "USTECm": [
+                "log_ret"
+            ],
+            "DXYm": [
+                "log_ret"
+            ],
+            "XAUUSDm": [
+                "log_ret"
+            ]
+        }
+    },
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 16,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 256,
+        "WARMUP_EPOCHS": 20,
+        "FINETUNE_EPOCHS": 50,
+        "LEARNING_RATE": 2e-05,
+        "TRAIN_START": "2025-01-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-20",
+        "EPOCHS_PHASE_1": 1,
+        "FREQ_MIN_N": 100,
+        "FREQ_MAX_N": 600
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "data/history",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "BINANCE": "BINANCE"
+        },
+        "ROUTING": {
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "LTCUSDm": "EXNESS",
+            "LTCUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "BCHUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE"
+        },
+        "CRYPTO_BINANCE": {
+            "SYMBOLS": [
+                "LTC/USDT",
+                "BTC/USDT",
+                "ETH/USDT",
+                "BCH/USDT",
+                "DOGE/USDT"
+            ],
+            "TIMEFRAME": "1m",
+            "SINCE": "2025-01-01T00:00:00Z"
+        }
+    },
+    "LIVE_BOT": {
+        "MAX_ABSOLUTE_MSE": 0.8,
+        "MIN_PROBABILITY_THRESH": 0.57,
+        "BINANCE_EXECUTION": {
+            "LOT_SIZE": 0.5,
+            "LEVERAGE": 10
+        }
+    }
+}
