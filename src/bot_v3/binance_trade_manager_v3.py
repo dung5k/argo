@@ -100,6 +100,27 @@ class BinanceTradeManagerV3:
         except Exception as e:
             self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Lỗi sync_existing_positions: {e}")
 
+    def get_active_positions_report(self) -> str:
+        """Returns a string summarizing current active positions and their P/L."""
+        if not self.exchange: return ""
+        try:
+            target_binance_sym = self._format_symbol(self.target_symbol)
+            positions = self.exchange.fetch_positions(symbols=[target_binance_sym])
+            active = [p for p in positions if float(p.get("contracts", 0)) > 0]
+            if not active: return ""
+            
+            reports = []
+            for pos in active:
+                pnl = float(pos.get("unrealizedProfit", 0))
+                pnl_icon = "🟢" if pnl >= 0 else "🔴"
+                side = pos.get('side', '').upper()
+                reports.append(f"{pnl_icon} {side} {target_binance_sym}: {pnl:+.2f}$")
+            
+            return "Vị thế Binance hiện tại:\n" + "\n".join(reports)
+        except Exception as e:
+            self.log_callback(f"[BinanceTradeManagerV3] ⚠️ get_active_positions_report lỗi: {e}")
+            return ""
+
     def close_binance_position(self, pos_info: dict, close_reason: str = "AAMT V3 Signal") -> bool:
         if not self.exchange: return False
         try:

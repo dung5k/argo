@@ -61,6 +61,25 @@ class V3TradeManager:
         except Exception:
             return 0.0
 
+    def get_active_positions_report(self) -> str:
+        """Returns a string summarizing current active positions and their P/L."""
+        if not self.mt5: return ""
+        try:
+            positions = self.mt5.positions_get(symbol=self.target_symbol) or []
+            if not positions: return ""
+            
+            reports = []
+            for pos in positions:
+                pnl = pos.profit
+                pnl_icon = "🟢" if pnl >= 0 else "🔴"
+                o_type = "BUY" if pos.type == self.mt5.ORDER_TYPE_BUY else "SELL"
+                reports.append(f"{pnl_icon} {o_type} #{pos.ticket}: {pnl:+.2f}$")
+            
+            return "Vị thế hiện tại:\n" + "\n".join(reports)
+        except Exception as e:
+            self.log_callback(f"[TradeManagerV3] ⚠️ get_active_positions_report lỗi: {e}")
+            return ""
+
     def _build_close_request(self, position) -> dict:
         tick = self.mt5.symbol_info_tick(position.symbol)
         if tick is None: raise ValueError(f"Không lấy được tick cho {position.symbol}")

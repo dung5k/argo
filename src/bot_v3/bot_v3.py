@@ -4,6 +4,7 @@ import io
 import time
 import json
 import threading
+import psutil
 
 if sys.stdout is not None:
     try:
@@ -38,6 +39,38 @@ logging.basicConfig(
     ]
 )
 bot_start_time = time.time()
+G_CURRENT_PRICE = 0.0
+
+def kill_old_instances():
+    """Kill other processes running bot_v3.py with the same config file."""
+    current_pid = os.getpid()
+    # Use config file from sys.argv as identifier
+    target_config = ""
+    if len(sys.argv) > 1:
+        # The first .json file is usually the config
+        json_args = [arg for arg in sys.argv if arg.endswith('.json')]
+        if json_args:
+            target_config = os.path.basename(json_args[0])
+    
+    if not target_config:
+        return
+
+    print(f"[PROCESS] Đang tìm và dọn dẹp các phiên bản cũ của {target_config}...")
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            if proc.info['pid'] == current_pid:
+                continue
+            
+            cmdline = proc.info['cmdline']
+            if cmdline and any('bot_v3.py' in arg for arg in cmdline):
+                # Check if this process uses the same config file
+                if any(target_config in arg for arg in cmdline):
+                    print(f"[PROCESS] ⚠️ Đang KILL tiến trình cũ PID {proc.info['pid']} ({target_config})")
+                    proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+
+kill_old_instances()
 
 def custom_print(*args, **kwargs):
     msg = " ".join(map(str, args))
@@ -105,7 +138,19 @@ tg_brain_count = 0
 
 def _send_raw_tg(msg):
     if tg_bot and tg_chat_id:
-        try: tg_bot.send_message(tg_chat_id, msg)
+        # Thêm thông tin giá và P/L nếu có
+        tm = globals().get('trade_manager')
+        report = ""
+        if G_CURRENT_PRICE > 0:
+            report += f"\n💰 Giá hiện tại: {G_CURRENT_PRICE:,.2f}"
+        
+        if tm and hasattr(tm, 'get_active_positions_report'):
+            pnl_report = tm.get_active_positions_report()
+            if pnl_report:
+                report += f"\n📊 {pnl_report}"
+        
+        full_msg = msg + report
+        try: tg_bot.send_message(tg_chat_id, full_msg)
         except: pass
 
 def tg_notify(msg):
@@ -307,6 +352,9 @@ def bot_background_loop():
             mt5_manager.current_connected_path = None
             time.sleep(1)
             continue
+            
+        global G_CURRENT_PRICE
+        G_CURRENT_PRICE = tick.bid if tick.bid > 0 else tick.last
             
         staleness_secs = time.time() - tick.time
         if staleness_secs > 300:
