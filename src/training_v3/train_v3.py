@@ -204,14 +204,16 @@ def main():
             print(f"Lỗi khi đồng bộ HuggingFace: {e}", flush=True)
             
         # DOWNLOAD TENSOR TỪ DATASET REPO (NẾU CÓ)
-        if not os.path.exists(x_path) and dataset_repo:
-            print(f"☁️ Đang tải trực tiếp Tensor từ Dataset Repo: {dataset_repo}...", flush=True)
+        if not os.path.exists(x_path):
+            # Cố gắng tải từ repo chung argo_workspaces (nơi upload_v3_dataset.py đẩy lên)
+            target_repo = "dung5k/argo_workspaces"
+            print(f"☁️ Đang tải trực tiếp Tensor từ Dataset Repo: {target_repo}...", flush=True)
             try:
                 from huggingface_hub import hf_hub_download
                 for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
                     remote_path = f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/{filename}"
                     local_dl_path = hf_hub_download(
-                        repo_id=dataset_repo,
+                        repo_id=target_repo,
                         repo_type="dataset",
                         filename=remote_path,
                         token=hf_token
