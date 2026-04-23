@@ -126,13 +126,11 @@ function sendTelegramMessage(chatId, text) {
     const token = getConfig().teleBotToken;
     if (!token) return;
     
-    // Tự động escape các ký tự Markdown nhạy cảm để tránh lỗi 400 Bad Request
-    const escapedText = text.replace(/[_*`[\]()]/g, '\\$&');
+
     
     const postData = JSON.stringify({
         chat_id: chatId,
-        text: escapedText,
-        parse_mode: 'Markdown'
+        text: text
     });
     
     const req = https.request({
@@ -148,9 +146,9 @@ function sendTelegramMessage(chatId, text) {
         let body = '';
         res.on('data', chunk => body += chunk);
         res.on('end', () => {
+            logDebug(`[SEND API RESPONSE] [${res.statusCode}] ${body}`);
             if (res.statusCode !== 200) {
                 console.error(`Telegram API Error (Send Message): [${res.statusCode}]`, body);
-                logDebug(`[SEND API ERROR] [${res.statusCode}] ${body}`);
             }
         });
     });
