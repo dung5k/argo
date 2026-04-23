@@ -92,6 +92,16 @@ Chỉ kết thúc và gọi `--done` sau khi:
 
 ---
 
+## BƯỚC 5: Dọn dẹp ổ cứng (Storage Cleanup)
+
+**BẮT BUỘC** chạy script dọn dẹp sau khi đã hoàn thành mọi thứ để xoá bớt Tensors của các run đã hoàn thành cũ (tránh tràn đĩa):
+```
+python scripts/cleanup_host_storage.py
+```
+Ghi nhận số GB rác đã dọn dẹp vào nội dung báo cáo Telegram cuối cùng.
+
+---
+
 > **LƯU Ý QUAN TRỌNG VỀ THÔNG BÁO TELEGRAM:**
 > - Trong quá trình thực hiện, bạn có thể gọi lệnh này nhiều lần để cập nhật tiến độ:
 >   `python .agent/send_to_tele.py "<Nội_dung_cập_nhật>"`
