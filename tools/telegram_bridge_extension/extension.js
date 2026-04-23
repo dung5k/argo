@@ -424,10 +424,12 @@ function startBridgeServer() {
             req.on('data', chunk => body += chunk.toString());
             req.on('end', () => {
                 try {
+                    logDebug(`[SERVER] Received /send-telegram: ${body}`);
                     let task = JSON.parse(body);
                     let text = task.text || task.message;
                     if (text) {
                         let targets = activeTypingChats.size > 0 ? Array.from(activeTypingChats) : getActiveChatIds();
+                        logDebug(`[SERVER] Sending to targets: ${JSON.stringify(targets)}`);
                         targets.forEach(t => {
                             sendTelegramMessage(t, `🤖 Antigravity:\n\n${text}`);
                         });
@@ -435,12 +437,15 @@ function startBridgeServer() {
                         res.end(JSON.stringify({ status: 'success' }));
                         
                         if (task.done) {
+                            logDebug("[SERVER] Task done, freeing agent.");
                             freeAgent(); // Chỉ Cập nhật trạng thái rảnh sau khi task.done = true
                         }
                     } else {
+                        logDebug("[SERVER] Missing text in request.");
                         res.writeHead(400); res.end(JSON.stringify({ error: 'Missing text' }));
                     }
                 } catch (e) {
+                    logDebug(`[SERVER ERROR] ${e}`);
                     res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
                 }
             });

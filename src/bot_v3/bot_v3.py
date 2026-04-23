@@ -289,6 +289,7 @@ def bot_background_loop():
     else:
         startup_msg += "\n\nℹ️ Không có vị thế nào đang mở."
         
+    print(startup_msg)
     tg_notify(startup_msg)
 
     while True:
