@@ -44,7 +44,8 @@ Ghi nhận danh sách máy rảnh và máy bận.
 
 ### 2.2. Đưa ra Giả thuyết (Hypothesis) cho lượt chạy tiếp theo
 - Dựa trên lịch sử, rút ra bài học (Sự kết hợp nào tốt? Cái nào gây sụp đổ?).
-- **LƯU Ý QUAN TRỌNG:** Phân tích Quant đã chứng minh việc giảm `WINDOW_SIZE` (ví dụ 30, 15) giúp khử rác/nhiễu của phiên NY cực kỳ hiệu quả. Hãy **ƯU TIÊN** đặt các giả thuyết xoay quanh `WINDOW_SIZE` thấp kết hợp với các biến thể kiến trúc khác (như thay đổi D_MODEL, LR, NUM_LAYERS).
+- **LƯU Ý 1 (TỔNG HỢP TRỌNG SỐ):** Khi quyết định thay đổi cho bộ mới, cần phân tích và **TỔNG HỢP** từ những bộ trọng số (hyperparameters) của các kết quả tốt nhất trước đó (ví dụ: lấy D_MODEL của top 1 kết hợp với LR của top 2 nếu thấy hợp lý). Không thay đổi các thông số một cách ngẫu nhiên.
+- **LƯU Ý 2 (WINDOW_SIZE):** Phân tích Quant đã chứng minh việc giảm `WINDOW_SIZE` (ví dụ 30, 15) giúp khử rác/nhiễu của phiên NY cực kỳ hiệu quả. Hãy **ƯU TIÊN** đặt các giả thuyết xoay quanh `WINDOW_SIZE` thấp kết hợp với các biến thể kiến trúc khác (như thay đổi D_MODEL, LR, NUM_LAYERS).
 - Đưa ra giả thuyết toán học rõ ràng cho lần chạy tới.
 - (Bạn chỉ áp dụng giả thuyết này ở BƯỚC 3 nếu cần tạo Run mới).
 
