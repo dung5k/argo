@@ -1,5 +1,5 @@
 {
-    "HF_RUN_ID": "run_20260421_082810_v3_CFG_LTC_CRYPTO_V3_5",
+    "HF_RUN_ID": "run_20260423_125300_v3_a",
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
@@ -23,7 +23,7 @@
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 30,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
@@ -64,13 +64,13 @@
         }
     },
     "TRAINING": {
-        "D_MODEL": 128,
-        "N_HEAD": 8,
-        "NUM_LAYERS": 4,
-        "BATCH_SIZE": 512,
+        "D_MODEL": 64,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 256,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 1e-05,
+        "LEARNING_RATE": 2e-05,
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-20",
