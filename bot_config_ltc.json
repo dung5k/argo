@@ -115,12 +115,12 @@
         }
     },
     "LIVE_BOT": {
-        "TRADE_PLATFORM": "BINANCE_SPOT",
+        "TRADE_PLATFORM": "BINANCE",
         "MAX_ABSOLUTE_MSE": 0.8,
         "MIN_PROBABILITY_THRESH": 0.7301,
-        "BINANCE_SPOT_EXECUTION": {
+        "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
-            "USE_OCO_SL_TP": true
+            "LEVERAGE": 10
         }
     }
 }
