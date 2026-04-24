@@ -105,11 +105,14 @@ class V3DataProcessor:
                 return None, msg
             final_cols = self.saved_column_order
         else:
-            # Fallback: format scaler cũ — dùng thứ tự từ DataFrame
-            valid_scaled_feats = self.inference_feats
-            static_context_feats = ['hour_sin', 'hour_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled', 'rsi_5_scaled']
-            allowed_features = set(valid_scaled_feats).union(set(static_context_feats))
-            final_cols = [c for c in scaled_df.columns if c in allowed_features]
+            # Fallback: format scaler cũ
+            final_cols = list(scaled_df.columns)
+            
+            # [HACK] Khả năng tương thích ngược cho LTC Asian (run_20260422_143008_v3) expect 36 features
+            if len(self.inference_feats) == 25 and len(final_cols) == 45:
+                static_context_feats = ['hour_sin', 'hour_cos', 'minute_sin', 'minute_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled', 'rsi_5_scaled', 'body_pct', 'adx_normalized']
+                allowed_features = set(self.inference_feats).union(set(static_context_feats))
+                final_cols = [c for c in scaled_df.columns if c in allowed_features]
 
         final_df = scaled_df[final_cols].copy()
 

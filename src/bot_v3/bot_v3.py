@@ -360,21 +360,32 @@ def bot_background_loop():
 
         mt5_exec_sym = CONFIG.get("EXECUTION_SYMBOL", TARGET_SYMBOL)
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
-        mt5.symbol_select(actual_sym, True)
         
-        tick = mt5.symbol_info_tick(actual_sym)
-        if tick is None:
-            if time.time() - last_tick_err_time > 10:
-                print(f"[BOT V3] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
-                last_tick_err_time = time.time()
-            mt5_manager.current_connected_path = None
-            time.sleep(1)
-            continue
-            
         global G_CURRENT_PRICE
-        G_CURRENT_PRICE = tick.bid if tick.bid > 0 else tick.last
+        if TRADE_PLATFORM == "BINANCE":
+            try:
+                ticker = trade_manager.exchange.fetch_ticker(trade_manager._format_symbol(TARGET_SYMBOL))
+                G_CURRENT_PRICE = ticker.get('last', 0)
+                staleness_secs = 0
+            except Exception as e:
+                if time.time() - last_tick_err_time > 10:
+                    print(f"[BOT V3] ⚠️ LỖI TICK BINANCE: {e}")
+                    last_tick_err_time = time.time()
+                time.sleep(1)
+                continue
+        else:
+            mt5.symbol_select(actual_sym, True)
+            tick = mt5.symbol_info_tick(actual_sym)
+            if tick is None:
+                if time.time() - last_tick_err_time > 10:
+                    print(f"[BOT V3] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
+                    last_tick_err_time = time.time()
+                mt5_manager.current_connected_path = None
+                time.sleep(1)
+                continue
+            G_CURRENT_PRICE = tick.bid if tick.bid > 0 else tick.last
+            staleness_secs = time.time() - tick.time
             
-        staleness_secs = time.time() - tick.time
         if staleness_secs > 300:
             gui_status = f"Giá Freeze ({int(staleness_secs/60)}p)..."
             time.sleep(10)
