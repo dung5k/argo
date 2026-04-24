@@ -2,9 +2,17 @@
 
 Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_ny_auto_tuning`). Bạn đóng vai trò Kỹ sư AI tự động hóa trên **máy GH** để tìm cấu hình tốt nhất cho bộ não `CFG_XAG_NY_V3_5`. 
 
-## BƯỚC 1: Đánh giá kết quả (Quant Expert)
-Đọc file `training_metrics_v3.json` mới nhất trong `workspaces/CFG_XAG_NY_V3_5/runs/` để xem tỷ lệ Win Rate và Composite Score. Rút ra giả thuyết cho thay đổi của cấu hình lượt chạy tiếp theo bằng cách tổng hợp siêu tham số tốt nhất.
-Nếu đã thử mọi cách nhưng Composite Score không cải thiện qua 25 lượt, hãy tắt task này bằng cách sửa file `.agent/tasks.json` (`enabled = false`), báo cáo Telegram và gọi `--done`.
+## BƯỚC 1: Đánh giá kết quả & Phân tích Tương quan (Quant Expert)
+1. **Đọc dữ liệu**: Mở file `training_metrics_v3.json` mới nhất trong `workspaces/CFG_XAG_NY_V3_5/runs/` (thường trong thư mục `results/`). Xem xét `Composite Score`, `Win Rate` và phân phối tín hiệu (Buy/Sell).
+2. **Phân tích Leading Indicators**: XAG NY là thị trường biến động mạnh và có độ trễ so với các chỉ số dẫn dắt. Hãy tập trung tìm sự phụ thuộc của XAG vào:
+   - **XAUUSD (Vàng)**: Thường chạy trước hoặc song song với Bạc.
+   - **USTEC (Nasdaq)**: Đại diện cho khẩu vị rủi ro (Risk-on/Risk-off).
+   - **DXY (Dollar Index)**: Biến động ngược chiều mạnh.
+3. **Giả thuyết cho lượt chạy tiếp theo**: 
+   - Nếu Win Rate thấp, có thể do `WINDOW_SIZE` quá ngắn chưa bao quát được độ trễ của chỉ số dẫn dắt (thử tăng 60-120 phút).
+   - Xem xét tăng độ phức tạp của bộ não (`D_MODEL`, `NUM_LAYERS`) để nhận diện các mẫu (pattern) biến động phức tạp giữa các mã macro.
+   - Thử nghiệm thay đổi `TP/SL` để bắt kịp các con sóng lớn do chỉ số dẫn dắt tạo ra.
+4. **Dừng Task**: Nếu đã thử mọi cách (thay đổi Macro, Window, Model size) nhưng Composite Score không cải thiện qua 25 lượt, hãy tắt task này bằng cách sửa file `.agent/tasks.json` (`enabled = false`), báo cáo Telegram và gọi `--done`.
 
 ## BƯỚC 2: Chuẩn bị dữ liệu (Hàng Đợi)
 Kiểm tra `workspaces/CFG_XAG_NY_V3_5/runs/`. Những thư mục chưa có `training_metrics_v3.json` là Pending Runs.
