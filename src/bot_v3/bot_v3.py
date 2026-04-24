@@ -23,6 +23,7 @@ from src.bot_v3.data_processor_v3 import V3DataProcessor
 from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
 from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
+from src.bot_v3.binance_spot_trade_manager_v3 import BinanceSpotTradeManagerV3
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
 from src.core.mt5_data_manager import MT5DataManager
 import logging
@@ -216,7 +217,9 @@ TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAUUSD")
 
 TRADE_PLATFORM = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "MT5")
 
-if TRADE_PLATFORM == "BINANCE":
+if TRADE_PLATFORM == "BINANCE_SPOT":
+    trade_manager = BinanceSpotTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+elif TRADE_PLATFORM == "BINANCE":
     trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 else:
     trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
@@ -235,7 +238,7 @@ def bot_background_loop():
     engine = V3InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
     
-    if TRADE_PLATFORM == "BINANCE":
+    if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT"):
         trade_manager.init_client()
     else:
         trade_manager.init_mt5()
@@ -274,7 +277,12 @@ def bot_background_loop():
     if hasattr(trade_manager, 'get_active_positions_report'):
         pos_report = trade_manager.get_active_positions_report()
     
-    mode_info = "Futures (Phái sinh)" if TRADE_PLATFORM == "BINANCE" else "MT5"
+    if TRADE_PLATFORM == "BINANCE_SPOT":
+        mode_info = "Spot (Giao ngay)"
+    elif TRADE_PLATFORM == "BINANCE":
+        mode_info = "Futures (Phái sinh)"
+    else:
+        mode_info = "MT5"
     startup_msg = f"🤖 [BOT V3 MASTER KHỞI ĐỘNG]\n⏰ {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n💹 Mã: {TARGET_SYMBOL} | Chế độ: {mode_info}\nConfig: {os.path.basename(config_file)}"
     if pos_report:
         startup_msg += f"\n\n{pos_report}"
@@ -362,7 +370,7 @@ def bot_background_loop():
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
         
         global G_CURRENT_PRICE
-        if TRADE_PLATFORM == "BINANCE":
+        if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT"):
             try:
                 ticker = trade_manager.exchange.fetch_ticker(trade_manager._format_symbol(TARGET_SYMBOL))
                 G_CURRENT_PRICE = ticker.get('last', 0)
