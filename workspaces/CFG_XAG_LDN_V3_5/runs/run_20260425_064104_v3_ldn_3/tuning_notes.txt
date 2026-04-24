@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 2 (Score 0.501, D_MODEL=64, TP/SL=40).
+- Thay đổi: Giảm tiếp TP_PIPS và SL_PIPS từ 40 xuống 30.
+
+Kỳ vọng điều gì xảy ra?
+- Việc giảm TP/SL từ 60 xuống 40 ở lượt trước đã tạo ra một cú nhảy vọt (Score từ 0.284 lên 0.501, Win Rate lên 58%). Điều này chứng tỏ sóng London rất ngắn và êm. Nếu ta ép mô hình đánh cực ngắn (Hit & Run 30 pips), có thể Win Rate sẽ còn bứt phá lên trên 65% giống như thành tích của Run 18 ở phiên NY.
