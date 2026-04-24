@@ -4,15 +4,9 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_ny_auto_t
 
 ## BƯỚC 1: Đánh giá kết quả & Phân tích Tương quan (Quant Expert)
 1. **Đọc dữ liệu**: Mở file `training_metrics_v3.json` mới nhất trong `workspaces/CFG_XAG_NY_V3_5/runs/` (thường trong thư mục `results/`). Xem xét `Composite Score`, `Win Rate` và phân phối tín hiệu (Buy/Sell).
-2. **Phân tích Leading Indicators**: XAG NY là thị trường biến động mạnh và có độ trễ so với các chỉ số dẫn dắt. Hãy tập trung tìm sự phụ thuộc của XAG vào:
-   - **XAUUSD (Vàng)**: Thường chạy trước hoặc song song với Bạc.
-   - **USTEC (Nasdaq)**: Đại diện cho khẩu vị rủi ro (Risk-on/Risk-off).
-   - **DXY (Dollar Index)**: Biến động ngược chiều mạnh.
-3. **Giả thuyết cho lượt chạy tiếp theo**: 
-   - Nếu Win Rate thấp, có thể do `WINDOW_SIZE` quá ngắn chưa bao quát được độ trễ của chỉ số dẫn dắt (thử tăng 60-120 phút).
-   - Xem xét tăng độ phức tạp của bộ não (`D_MODEL`, `NUM_LAYERS`) để nhận diện các mẫu (pattern) biến động phức tạp giữa các mã macro.
-   - Thử nghiệm thay đổi `TP/SL` để bắt kịp các con sóng lớn do chỉ số dẫn dắt tạo ra.
-4. **Dừng Task**: Nếu đã thử mọi cách (thay đổi Macro, Window, Model size) nhưng Composite Score không cải thiện qua 25 lượt, hãy tắt task này bằng cách sửa file `.agent/tasks.json` (`enabled = false`), báo cáo Telegram và gọi `--done`.
+2. **Phân tích Leading Indicators**: XAG NY có độ trễ nhất định so với các thị trường dẫn dắt. Dựa vào lịch sử các lượt chạy, hãy tự đánh giá xem các chỉ số Macro hiện tại trong `MACRO_FEATURES` (XAUUSD, USTEC, DXY,...) có đang đóng góp hiệu quả cho mô hình không. Nên chủ động **thêm, bớt hoặc thay thế** các chỉ số dẫn dắt trong `config.json` của lượt chạy mới nếu có lý do tin rằng một chỉ số khác sẽ phản ánh tốt hơn tương quan với XAG trong phiên NY.
+3. **Đề xuất thay đổi cấu hình**: Dựa trên kết quả thực tế từ các lượt chạy, hãy tự đưa ra giả thuyết và thay đổi siêu tham số phù hợp. Không có công thức cố định — hãy tư duy như một Quant Engineer và chịu trách nhiệm về quyết định cấu hình của lượt tiếp theo.
+4. **Dừng Task**: Nếu đã thử mọi cách nhưng Composite Score không cải thiện qua 25 lượt, hãy tắt task này bằng cách sửa file `.agent/tasks.json` (`enabled = false`), báo cáo Telegram và gọi `--done`.
 
 ## BƯỚC 2: Chuẩn bị dữ liệu (Hàng Đợi)
 Kiểm tra `workspaces/CFG_XAG_NY_V3_5/runs/`. Những thư mục chưa có `training_metrics_v3.json` là Pending Runs.
