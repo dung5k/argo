@@ -189,6 +189,9 @@ def main(config_file: str):
             rates = mt5.copy_rates_range(actual_mt5_sym, mt5.TIMEFRAME_M1,
                                           int(start_dt.timestamp()), int(end_dt.timestamp()))
             if rates is None or len(rates) == 0:
+                log(f"  ⚠️ copy_rates_range thất bại, thử copy_rates_from_pos...")
+                rates = mt5.copy_rates_from_pos(actual_mt5_sym, mt5.TIMEFRAME_M1, 0, 50000)
+            if rates is None or len(rates) == 0:
                 log(f"  ❌ Không có dữ liệu MT5 cho {actual_mt5_sym} ({sym})!")
                 missing.append(sym)
                 continue

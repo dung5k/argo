@@ -286,6 +286,12 @@ if __name__ == "__main__":
     repo_id = "dung5k/argo_workspaces"
     hf_token = os.environ.get("HF_TOKEN")
     
+    sync_chunks = config.get('HF_CLOUD', {}).get('SYNC_CHUNKS', True)
+    if not sync_chunks:
+        print("⚠️ BỎ QUA UPLOAD: Cấu hình 'SYNC_CHUNKS' = false (Chạy Cục bộ).")
+        sys.exit(0)
+    
+    
     if not hf_token:
         hf_token = "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"
                 

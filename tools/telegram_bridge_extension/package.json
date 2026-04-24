@@ -2,7 +2,7 @@
   "name": "antigravity-telegram-bridge",
   "displayName": "Antigravity Telegram Bridge",
   "description": "Receives Telegram requests and routes them to VS Code Agent",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "publisher": "antigravity",
   "repository": {
     "type": "git",
@@ -43,23 +43,17 @@
           "default": "",
           "description": "Comma separated list of allowed Chat IDs."
         },
-        "antigravityBridge.periodicInterval": {
-          "type": "number",
-          "scope": "resource",
-          "default": 60,
-          "description": "Interval in minutes for the periodic execution."
-        },
-        "antigravityBridge.periodicPromptFile": {
-          "type": "string",
-          "scope": "resource",
-          "default": ".agent/periodic_prompt.md",
-          "description": "Path to the prompt file for periodic execution. If relative, it uses the first open workspace."
-        },
         "antigravityBridge.agentWorkingDir": {
           "type": "string",
           "scope": "resource",
           "default": ".agent",
           "description": "Directory to watch for response.txt. If relative, it uses the first open workspace."
+        },
+        "antigravityBridge.tasksConfigFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": ".agent/tasks.json",
+          "description": "Path to the JSON file managing multiple periodic tasks."
         }
       }
     }

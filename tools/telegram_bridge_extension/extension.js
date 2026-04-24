@@ -106,18 +106,17 @@ function getConfig() {
         workingDir = path.join(root, workingDir);
     }
     
-    let promptDir = config.get('periodicPromptFile') || '.agent/periodic_prompt.md';
-    if (!path.isAbsolute(promptDir) && root) {
-        promptDir = path.join(root, promptDir);
+    let tasksConfig = config.get('tasksConfigFile') || '.agent/tasks.json';
+    if (!path.isAbsolute(tasksConfig) && root) {
+        tasksConfig = path.join(root, tasksConfig);
     }
     
     return {
         botActive: config.get('botActive') ?? true,
         teleBotToken: config.get('teleBotToken') || '',
         whitelistChatIds: config.get('whitelistChatIds') || '',
-        periodicInterval: config.get('periodicInterval') || 60,
         workingDir: workingDir,
-        periodicPromptFile: promptDir
+        tasksConfigFile: tasksConfig
     };
 }
 
@@ -344,26 +343,53 @@ function setupPeriodicExecution() {
     }
     
     const config = getConfig();
-    if (config.botActive && config.periodicInterval > 0) {
+    if (config.botActive) {
         periodicIntervalId = setInterval(() => {
             if (isAgentBusy) {
-                console.log("Agent đang bận, bỏ qua lệnh định kỳ ở chu kỳ này.");
                 return;
             }
-            if (fs.existsSync(config.periodicPromptFile)) {
-                console.log("Triggering periodic prompt...");
-                let query = fs.readFileSync(config.periodicPromptFile, 'utf8');
-                let fullQuery = `${query}\n\n__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+            if (fs.existsSync(config.tasksConfigFile)) {
                 try {
-                    setAgentBusy();
-                    vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery);
+                    let tasksData = JSON.parse(fs.readFileSync(config.tasksConfigFile, 'utf8'));
+                    let modified = false;
+                    let now = Date.now();
+                    
+                    for (let task of tasksData.tasks) {
+                        if (task.enabled && now >= task.nextRunTime) {
+                            let promptPath = task.promptFile;
+                            if (!path.isAbsolute(promptPath)) {
+                                promptPath = path.join(getWorkspaceRoot(), promptPath);
+                            }
+                            
+                            if (fs.existsSync(promptPath)) {
+                                console.log(`Triggering scheduled task: ${task.id}`);
+                                let query = fs.readFileSync(promptPath, 'utf8');
+                                let fullQuery = `${query}
+
+__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+                                
+                                task.nextRunTime = now + (task.intervalMinutes * 60 * 1000);
+                                modified = true;
+                                
+                                try {
+                                    setAgentBusy();
+                                    vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery);
+                                } catch(e) {
+                                    freeAgent();
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (modified) {
+                        fs.writeFileSync(config.tasksConfigFile, JSON.stringify(tasksData, null, 2));
+                    }
                 } catch(e) {
-                    freeAgent();
+                    console.error("Lỗi khi xử lý tasks.json:", e);
                 }
-            } else {
-                console.log(`Periodic prompt file not found: ${config.periodicPromptFile}`);
             }
-        }, config.periodicInterval * 60 * 1000);
+        }, 30 * 1000); // Polling 30s
     }
 }
 
