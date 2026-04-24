@@ -274,7 +274,20 @@ def main():
     print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
     
     # 2. Sinh mạng neural AAMTV3
-    model = AAMT_Model(input_dim=X.shape[2], seq_len=X.shape[1])
+    d_model = train_cfg.get("D_MODEL", 128)
+    nheads = train_cfg.get("N_HEADS", train_cfg.get("N_HEAD", 8))
+    num_layers = train_cfg.get("NUM_LAYERS", 4)
+    dropout = train_cfg.get("DROPOUT", 0.25)
+    
+    print(f"[MODEL] Init with: d_model={d_model}, nhead={nheads}, num_layers={num_layers}, dropout={dropout}", flush=True)
+    model = AAMT_Model(
+        input_dim=X.shape[2], 
+        seq_len=X.shape[1],
+        d_model=d_model,
+        nhead=nheads,
+        num_layers=num_layers,
+        dropout=dropout
+    )
     
     msg = ""
     # -------------------------------------
