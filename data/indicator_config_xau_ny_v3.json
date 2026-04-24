@@ -11,7 +11,7 @@
     },
     "HF_RUN_ID": "run_V3_AAMT_NY",
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {

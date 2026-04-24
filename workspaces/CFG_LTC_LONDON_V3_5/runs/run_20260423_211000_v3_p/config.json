@@ -13,8 +13,8 @@
         "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/ltc_v3_tensor_london",
-        "MODEL_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {

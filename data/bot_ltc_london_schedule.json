@@ -8,7 +8,7 @@
             "end": "23:59",
             "run_id": "run_20260423_125300_v3_a",
             "config_id": "CFG_LTC_LONDON_V3_5",
-            "dataset_repo": "dung5k/ltc_v3_tensor_london",
+            "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
                 "min_prob_thresh": 0.7301,
                 "mse_thresh_perc": 70.0

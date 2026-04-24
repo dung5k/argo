@@ -17,7 +17,7 @@
     },
     "HF_RUN_ID": "run_20260410_154329_xauusd_CFG_02_TRANSFORMER_V2",
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
         "MODEL_REPO": "dung5k/trading_models",
         "SYNC_CHUNKS": true,
         "REQUIRED_PARQUETS": [

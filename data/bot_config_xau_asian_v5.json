@@ -18,8 +18,8 @@
         "us": "v3_xauusd_ny_weights.pth"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/xau_v3_tensor_asian",
-        "MODEL_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
