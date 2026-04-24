@@ -1,0 +1,5 @@
+Lượt này thay đổi tham số gì?
+- Tiếp tục đà thu nhỏ não bộ từ Run 18. Lần này ép kích thước tới giới hạn cực đại của sự nhỏ bé: Giảm D_MODEL từ 64 xuống 32, và N_HEAD từ 2 xuống 1. Giữ nguyên toàn bộ cấu hình khác.
+
+Kỳ vọng điều gì xảy ra?
+- Run 18 (D_MODEL=64) đã tạo ra một kỳ tích (Score 0.573, WR 68%). Việc giảm xuống 32 nhằm mục đích duy nhất là tìm ra "Đáy Underfitting". Nếu mô hình 32 này điểm tụt lại, ta có thể chắc chắn 100% rằng 64 là kích thước hoàn hảo nhất cho dữ liệu 1 phút của XAG NY. Nếu nó vẫn tăng, thì dữ liệu này thực sự chỉ cần những quy luật rất cơ bản.
