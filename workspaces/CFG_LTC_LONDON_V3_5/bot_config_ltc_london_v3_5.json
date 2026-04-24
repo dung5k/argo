@@ -1,5 +1,5 @@
 {
-    "HF_RUN_ID": "run_20260423_144700_v3_c",
+    "HF_RUN_ID": "run_20260423_125300_v3_a",
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
@@ -116,7 +116,7 @@
     },
     "LIVE_BOT": {
         "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.7193,
+        "MIN_PROBABILITY_THRESH": 0.7301,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
