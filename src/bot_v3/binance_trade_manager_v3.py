@@ -52,7 +52,11 @@ class BinanceTradeManagerV3:
                         self.exchange.urls['api'][k] = v.replace('testnet.binance.vision', 'demo-fapi.binance.com')
                         
             self.exchange.load_markets()
-            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đ kết nối Binance Futures (Demo).")
+            try:
+                self.exchange.load_time_difference()
+            except Exception as e:
+                self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Không thể đồng bộ time offset: {e}")
+            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đã kết nối Binance Futures (Demo).")
             
             # Setup đòn bẩy
             exec_cfg = self.config.get("LIVE_BOT", {}).get("BINANCE_EXECUTION", {})
@@ -76,11 +80,24 @@ class BinanceTradeManagerV3:
             return sym.replace("USDT", "/USDT")
         return sym
 
+    def _safe_api_call(self, func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            if "-1021" in str(e) or "Timestamp for this request" in str(e):
+                self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Lỗi timestamp (-1021). Đang tự động đồng bộ lại thời gian với máy chủ Binance...")
+                try:
+                    self.exchange.load_time_difference()
+                except Exception as sync_err:
+                    pass
+                return func(*args, **kwargs)
+            raise e
+
     def sync_existing_positions(self, symbol: str = None):
         if not self.exchange: return
         try:
             target_binance_sym = self._format_symbol(symbol or self.target_symbol)
-            positions = self.exchange.fetch_positions(symbols=[target_binance_sym])
+            positions = self._safe_api_call(self.exchange.fetch_positions, symbols=[target_binance_sym])
             for pos in positions:
                 contracts = float(pos.get("contracts", 0))
                 if contracts > 0:
@@ -105,7 +122,7 @@ class BinanceTradeManagerV3:
         if not self.exchange: return ""
         try:
             target_binance_sym = self._format_symbol(self.target_symbol)
-            positions = self.exchange.fetch_positions(symbols=[target_binance_sym])
+            positions = self._safe_api_call(self.exchange.fetch_positions, symbols=[target_binance_sym])
             active = [p for p in positions if float(p.get("contracts", 0)) > 0]
             if not active: return ""
             
@@ -132,10 +149,11 @@ class BinanceTradeManagerV3:
             close_side = 'sell' if side == 'LONG' else 'buy'
             
             # Hủy hết lệnh open orders (như SL/TP)
-            self.exchange.cancel_all_orders(target_binance_sym)
+            self._safe_api_call(self.exchange.cancel_all_orders, target_binance_sym)
             
             # Bắn market order để đóng
-            order = self.exchange.create_order(
+            order = self._safe_api_call(
+                self.exchange.create_order,
                 symbol=target_binance_sym,
                 type='market',
                 side=close_side,
@@ -159,7 +177,7 @@ class BinanceTradeManagerV3:
         target_binance_sym = self._format_symbol(self.target_symbol)
         
         try:
-            ticker = self.exchange.fetch_ticker(target_binance_sym)
+            ticker = self._safe_api_call(self.exchange.fetch_ticker, target_binance_sym)
             current_price = ticker['last']
             
             # Tính SL TP Absolute
@@ -175,7 +193,8 @@ class BinanceTradeManagerV3:
                 pos_side = "SHORT"
                 
             # 1. Mở Market Order
-            order = self.exchange.create_order(
+            order = self._safe_api_call(
+                self.exchange.create_order,
                 symbol=target_binance_sym,
                 type='market',
                 side=side,
@@ -188,7 +207,8 @@ class BinanceTradeManagerV3:
             sl_side = "sell" if side == "buy" else "buy"
             
             try:
-                sl_order = self.exchange.create_order(
+                sl_order = self._safe_api_call(
+                    self.exchange.create_order,
                     symbol=target_binance_sym,
                     type='STOP_MARKET',
                     side=sl_side,
@@ -203,7 +223,8 @@ class BinanceTradeManagerV3:
                 self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Lỗi đặt StopLoss: {estop}")
             
             try:
-                tp_order = self.exchange.create_order(
+                tp_order = self._safe_api_call(
+                    self.exchange.create_order,
                     symbol=target_binance_sym,
                     type='TAKE_PROFIT_MARKET',
                     side=sl_side,
@@ -250,7 +271,7 @@ class BinanceTradeManagerV3:
 
         # Fetch Active Positions
         try:
-            positions = self.exchange.fetch_positions(symbols=[target_binance_sym])
+            positions = self._safe_api_call(self.exchange.fetch_positions, symbols=[target_binance_sym])
             active_positions = [p for p in positions if float(p.get("contracts", 0)) > 0]
         except Exception as e:
             self.log_callback(f"Lỗi fetch positions Binance: {e}")

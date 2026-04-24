@@ -32,7 +32,7 @@ class AAMT_Encoder(nn.Module):
     Module 1: Lõi Transformer Encoder.
     Nhiệm vụ: Nén ma trận [Batch, 60, N_features] thành một Latent Vector tóm tắt hình thái thị trường.
     """
-    def __init__(self, input_dim=15, d_model=128, nhead=8, num_layers=4, dropout=0.25):
+    def __init__(self, input_dim=15, d_model=128, nhead=8, num_layers=4, dropout=0.25, d_ff=512):
         super().__init__()
         self.d_model = d_model
         
@@ -43,7 +43,7 @@ class AAMT_Encoder(nn.Module):
         encoder_layers = nn.TransformerEncoderLayer(
             d_model=d_model, 
             nhead=nhead, 
-            dim_feedforward=d_model * 4, 
+            dim_feedforward=d_ff, 
             dropout=dropout, 
             activation='gelu',
             batch_first=True # Để tensor đầu vào là [Batch, Seq, Features]
@@ -118,10 +118,10 @@ class AAMT_Model(nn.Module):
     """
     Kết Nối Lõi: Khối AAMT Tổng Hợp Đa Nhiệm (Autoencoder-Augmented Multi-Task Transformer).
     """
-    def __init__(self, input_dim=15, seq_len=60, d_model=128, nhead=8, num_layers=4, dropout=0.25, num_classes=3):
+    def __init__(self, input_dim=15, seq_len=60, d_model=128, nhead=8, num_layers=4, dropout=0.25, num_classes=3, d_ff=512):
         super().__init__()
         
-        self.encoder = AAMT_Encoder(input_dim, d_model, nhead, num_layers, dropout)
+        self.encoder = AAMT_Encoder(input_dim, d_model, nhead, num_layers, dropout, d_ff)
         self.reconstructor = AAMT_ReconstructionHead(d_model, input_dim, seq_len)
         self.classifier = AAMT_ClassificationHead(d_model, num_classes)
         

@@ -53,14 +53,15 @@ Ghi nhận danh sách máy rảnh và máy bận.
 
 ## BƯỚC 3: Quản lý Hàng Đợi (Queue Management) & Chuẩn bị Data Trước
 
-Mục tiêu: Luôn có sẵn ít nhất 1-2 lượt chạy (runs) ĐÃ ĐƯỢC CHUẨN BỊ TENSOR để giao ngay cho Client khi rảnh.
+Mục tiêu: Đảm bảo có sẵn dữ liệu cho Client chạy tiếp theo, nhưng KHÔNG ĐƯỢC CHUẨN BỊ THỪA.
 Kiểm tra thư mục `workspaces/CFG_XAG_ASIAN_V3_5/runs/`:
 - Tìm các `<RUN_ID>` đã có thư mục `data/tensors/` hoặc đã tạo, nhưng CHƯA CÓ file `results/training_metrics_v3.json` (tức là chưa chạy xong).
 - Đối chiếu với kết quả Bước 1: Loại trừ những `<RUN_ID>` mà Client đang "BUSY" đang chạy.
 - Còn lại chính là **HÀNG ĐỢI (Pending Runs)**.
 
 **Xử lý:**
-- Nếu Hàng Đợi rỗng (hoặc quá ít), bạn CẦN TẠO RUN MỚI:
+- NGUYÊN TẮC: NẾU ĐÃ CÓ HÀNG ĐỢI (DÙ CHỈ CÒN 1 RUN), TUYỆT ĐỐI KHÔNG ĐƯỢC TẠO HAY CHUẨN BỊ THÊM RUN MỚI.
+- CHỈ KHI HÀNG ĐỢI HOÀN TOÀN RỖNG (0 runs), bạn MỚI CẦN TẠO 1 RUN MỚI:
   1. Sinh `<RUN_ID>` mới theo giả thuyết ở Bước 2.2.
   2. Tạo thư mục `runs/<RUN_ID>/` và copy/sửa đổi `base_config.json` thành `config.json`.
   3. BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!
