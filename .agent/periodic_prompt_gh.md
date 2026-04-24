@@ -1,6 +1,6 @@
-# NHIỆM VỤ ĐỊNH KỲ (GH): AUTO-TUNING LTC ASIAN BRAIN (CỤC BỘ)
+# NHIỆM VỤ ĐỊNH KỲ (GH): AUTO-TUNING SOL ASIAN BRAIN (CỤC BỘ)
 
-Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa trên **máy GH** để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_LTC_ASIAN_V3_5`. Training chạy **trực tiếp trên máy này** (không dispatch sang máy khác).
+Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa trên **máy GH** để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_SOL_ASIAN_V3_5`. Training chạy **trực tiếp trên máy này** (không dispatch sang máy khác).
 
 Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:
 
@@ -9,7 +9,7 @@ Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được 
 Đọc file `training_metrics_v3.json` trong thư mục `runs/` mới nhất. Dựa vào phân tích, **BẠN PHẢI ĐÓNG VAI TRÒ LÀ MỘT CHUYÊN GIA AI & ĐỊNH LƯỢNG TÀI CHÍNH**.
 
 ### 1.1. Kiểm tra Khả năng Hội Tụ
-- So sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_LTC_ASIAN_V3_5/runs/`.
+- So sánh kết quả mới nhất với toàn bộ lịch sử file metrics trong `workspaces/CFG_SOL_ASIAN_V3_5/runs/`.
 - Nếu **Composite Score không còn cải thiện qua 25 lần chạy**, hoặc mọi hướng tinh chỉnh hợp lý đã cạn kiệt -> Kết luận BÃO HOÀ.
   ```
   Rename-Item .agent/periodic_prompt_gh.md .agent/periodic_prompt_gh.DONE.md
@@ -25,7 +25,7 @@ Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được 
 ## BƯỚC 2: Quản lý Hàng Đợi (Queue Management) & Chuẩn bị Data Trước
 
 Mục tiêu: Luôn có sẵn ít nhất 1 lượt chạy (run) ĐÃ ĐƯỢC CHUẨN BỊ TENSOR để chạy ngay khi máy rảnh.
-Kiểm tra thư mục `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
+Kiểm tra thư mục `workspaces/CFG_SOL_ASIAN_V3_5/runs/`:
 - Tìm các `<RUN_ID>` đã có thư mục `data/tensors/` hoặc đã tạo, nhưng CHƯA CÓ file `results/training_metrics_v3.json` (tức là chưa chạy xong).
 - Còn lại chính là **HÀNG ĐỢI (Pending Runs)**.
 
@@ -36,8 +36,8 @@ Kiểm tra thư mục `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
   3. BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!
   4. Chạy hai lệnh sau để CHUẨN BỊ TENSOR trước:
      ```
-     python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json
-     python scripts/upload_v3_dataset.py --config workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json
+     python scripts/crawl_crypto_v3.py workspaces/CFG_SOL_ASIAN_V3_5/runs/<RUN_ID>/config.json
+     python scripts/upload_v3_dataset.py --config workspaces/CFG_SOL_ASIAN_V3_5/runs/<RUN_ID>/config.json
      ```
   5. Commit và đẩy lên Git:
      ```
@@ -52,7 +52,7 @@ Kiểm tra thư mục `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
 
 Lấy `<RUN_ID>` từ Hàng Đợi (hoặc cái vừa tạo xong ở Bước 2) và **chạy trực tiếp trên máy GH**:
 ```
-python src/training_v3/train_v3.py --config workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID>
+python src/training_v3/train_v3.py --config workspaces/CFG_SOL_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID>
 ```
 
 Chỉ kết thúc và gọi `--done` sau khi:
