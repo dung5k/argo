@@ -41,7 +41,7 @@ Kiểm tra thư mục `workspaces/CFG_SOL_ASIAN_V3_5/runs/`:
      ```
   5. Commit và đẩy lên Git:
      ```
-     git add . && git commit -m "auto-tuning LTC ASIAN data ready: <RUN_ID>" && git push
+     git add . && git commit -m "auto-tuning SOL ASIAN data ready: <RUN_ID>" && git push
      ```
 
 ---
