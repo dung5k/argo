@@ -52,7 +52,11 @@ class BinanceTradeManagerV3:
                         self.exchange.urls['api'][k] = v.replace('testnet.binance.vision', 'demo-fapi.binance.com')
                         
             self.exchange.load_markets()
-            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đ kết nối Binance Futures (Demo).")
+            try:
+                self.exchange.load_time_difference()
+            except Exception as e:
+                self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Không thể đồng bộ time offset: {e}")
+            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đã kết nối Binance Futures (Demo).")
             
             # Setup đòn bẩy
             exec_cfg = self.config.get("LIVE_BOT", {}).get("BINANCE_EXECUTION", {})
