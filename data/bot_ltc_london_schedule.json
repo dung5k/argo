@@ -10,7 +10,7 @@
             "config_id": "CFG_LTC_LONDON_V3_5",
             "dataset_repo": "dung5k/ltc_v3_tensor_london",
             "trading_config": {
-                "min_prob_thresh": 0.67,
+                "min_prob_thresh": 0.7193,
                 "mse_thresh_perc": 70.0
             }
         }

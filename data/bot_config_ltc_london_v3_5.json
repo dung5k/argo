@@ -117,7 +117,7 @@
     "LIVE_BOT": {
         "TRADE_PLATFORM": "BINANCE",
         "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.67,
+        "MIN_PROBABILITY_THRESH": 0.7193,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
