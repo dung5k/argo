@@ -27,12 +27,37 @@ Ghi nhận trạng thái: IDLE hay BUSY.
 
 ---
 
-## BƯỚC 2: Kiểm tra Kết quả & Phân tích Tương quan (Quant Expert)
+## BƯỚC 2: Phân tích Lịch sử & Tư duy Tối ưu hóa (Quant/ML Expert)
 
-1. **Đọc dữ liệu**: Mở file `training_metrics_v3.json` mới nhất trong `workspaces/CFG_LTC_NY_V3_5/runs/` (thường trong thư mục `results/`). Xem xét `Composite Score`, `Win Rate` và phân phối tín hiệu (Buy/Sell).
-2. **Phân tích Leading Indicators**: LTC NY bị dẫn dắt mạnh bởi BTC, ETH và chỉ số USTEC (dòng tiền Mỹ). Dựa vào lịch sử các lượt chạy, hãy tự đánh giá xem các chỉ số Macro hiện tại trong `MACRO_FEATURES` (BTC, ETH, USTEC, DXY,...) có đang đóng góp hiệu quả cho mô hình không. Nên chủ động **thêm, bớt hoặc thay thế** các chỉ số dẫn dắt trong `config.json` của lượt chạy mới nếu có lý do tin rằng một chỉ số khác sẽ phản ánh tốt hơn tương quan với LTC trong phiên NY.
-3. **Đề xuất thay đổi cấu hình**: Dựa trên kết quả thực tế từ các lượt chạy, hãy tự đưa ra giả thuyết và thay đổi siêu tham số phù hợp. Không có công thức cố định — hãy tư duy như một Quant Engineer và chịu trách nhiệm về quyết định cấu hình của lượt tiếp theo.
-4. **Dừng Task**: Nếu đã thử mọi cách nhưng Composite Score không cải thiện qua 25 lượt, hãy tắt task này bằng cách sửa file `.agent/tasks.json`: tìm task có id `ltc_ny_auto_tuning` và đặt `"enabled": false`. Báo cáo Telegram và gọi `--done`.
+Thay vì đoán mò ngẫu nhiên, bạn phải phân tích có hệ thống dựa trên lịch sử để tìm ra **hướng tối ưu (Gradient of Improvement)**.
+
+1. **Thu thập Ngữ cảnh (Context Gathering):**
+   - Đọc kết quả của lượt chạy mới nhất trong `workspaces/CFG_LTC_NY_V3_5/runs/<LATEST_RUN>/results/training_metrics_v3.json`.
+   - Đọc thêm `tuning_notes.txt` của **3 run gần nhất** để biết lần trước đã thay đổi gì và kỳ vọng gì — tránh lặp lại thử nghiệm đã thất bại.
+   - Nếu tồn tại file `workspaces/CFG_LTC_NY_V3_5/BEST_CONFIG.md`, đọc để lấy **mốc so sánh (Baseline)** tốt nhất hiện có.
+
+2. **Phân tích Hiệu suất (Performance Analysis):**
+   - So sánh `Composite Score`, `Win Rate`, `Val Loss` của lượt mới nhất với Baseline.
+   - Đánh giá bias tín hiệu: Mô hình có đang **thiên lệch Buy/Sell** quá nhiều không? (Tỷ lệ Buy:Sell lý tưởng ≈ 45:55 đến 55:45)
+   - Phát hiện **Overfitting**: Train loss giảm nhưng Val loss tăng?
+   - Nếu `Composite Score` của run mới **cao hơn Baseline**, hãy cập nhật file `workspaces/CFG_LTC_NY_V3_5/BEST_CONFIG.md` với config và score mới.
+
+3. **Đánh giá & Điều chỉnh Features (Feature Engineering):**
+   - **Phiên NY (New York):** LTC chịu ảnh hưởng mạnh bởi tin tức vĩ mô Mỹ và chứng khoán Mỹ mở cửa.
+   - Các chỉ số đang dùng: BTC, ETH, USTEC, DXY... Tự đánh giá sự đóng góp của từng chỉ số.
+   - *Chiến lược:* Nếu mô hình chững lại, thử **THÊM** features đo lường biến động (Volatility) như `bb_width`, `vroc`, hoặc Macro khác; **HOẶC LOẠI BỎ** features nghi ngờ gây nhiễu. Không giữ nguyên bộ features nếu điểm số không tăng sau 3 lượt liên tiếp.
+
+4. **Ra quyết định Siêu tham số (Hyperparameter Strategy):**
+   - Không gian tìm kiếm gợi ý:
+     + `WINDOW_SIZE` (độ dài chuỗi nhìn lại): Thử trong khoảng **15 - 120**.
+     + `LEARNING_RATE`: Thử tinh chỉnh trong khoảng **1e-5 đến 5e-4**.
+     + `BATCH_SIZE`: 32, 64, 128, 256.
+     + `D_MODEL` / `NUM_LAYERS`: 32/2, 64/3, 128/4.
+     + `TP_PCT` / `SL_PCT`: Điều chỉnh risk/reward ratio.
+   - **NGUYÊN TẮC A/B TESTING — BẮT BUỘC:** Mỗi lượt config mới, **CHỈ THAY ĐỔI TỐI ĐA 2 THAM SỐ** so với lượt trước để cô lập tác động. Nếu thay đổi nhiều tham số cùng lúc và kết quả xấu đi, bạn sẽ không biết nguyên nhân từ đâu.
+
+5. **Early Stopping (Dừng Task):**
+   - Nếu đã thử thay đổi tuần tự nhưng `Composite Score` không vượt qua Baseline trong **25 lượt gần nhất**, hãy tắt task: sửa `.agent/tasks.json`, tìm id `ltc_ny_auto_tuning` và đặt `"enabled": false`. Báo cáo Telegram và gọi `--done`.
 
 ---
 
@@ -49,7 +74,16 @@ Kiểm tra thư mục `workspaces/CFG_LTC_NY_V3_5/runs/`:
 - **NGUYÊN TẮC: NẾU ĐÃ CÓ HÀNG ĐỢI (DÙ CHỈ CÒN 1 RUN), TUYỆT ĐỐI KHÔNG ĐƯỢC TẠO HAY CHUẨN BỊ THÊM RUN MỚI.**
 - CHỈ KHI HÀNG ĐỢI HOÀN TOÀN RỖNG (0 runs), bạn MỚI CẦN TẠO 1 RUN MỚI:
   1. Sinh `<RUN_ID>` mới theo format `run_YYYYMMDD_HHMMSS_v3_ny_X` (X là số thứ tự).
-  2. Tạo thư mục `workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/` và copy `base_config.json` thành `config.json`. Áp dụng giả thuyết từ Bước 2.2 vào `config.json` mới. **BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!**
+  2. Tạo thư mục `workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/` và copy `base_config.json` thành `config.json`. Áp dụng các quyết định từ **Bước 2.4** vào `config.json` mới. **BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!**
+     - Tạo thêm file **`tuning_notes.txt`** trong cùng thư mục run, viết đúng **3-5 câu** theo mẫu:
+       ```
+       Run: <RUN_ID>
+       Thay đổi so với run trước: <tên tham số cũ → giá trị mới>
+       Lý do: <tại sao nghĩ rằng thay đổi này sẽ cải thiện?>
+       Kỳ vọng: <Composite Score tăng? Win Rate tăng? Bias giảm?>
+       Baseline hiện tại: <Composite Score tốt nhất đang có>
+       ```
+     - File này giúp lần gọi tiếp theo đọc lại lịch sử suy luận, tránh lặp lại thử nghiệm đã thất bại.
   3. Chạy hai lệnh sau để **CHUẨN BỊ TENSOR** trước:
      ```
      python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
