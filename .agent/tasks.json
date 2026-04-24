@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "id": "xag_ny_auto_tuning",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_xag_ny.md",
+      "nextRunTime": 1777043040170,
+      "intervalMinutes": 10
+    },
+    {
+      "id": "cleanup_storage",
+      "enabled": true,
+      "command": "python scripts/cleanup_host_storage.py",
+      "nextRunTime": 1777046130189,
+      "intervalMinutes": 60
+    }
+  ]
+}

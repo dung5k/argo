@@ -356,28 +356,43 @@ function setupPeriodicExecution() {
                     
                     for (let task of tasksData.tasks) {
                         if (task.enabled && now >= task.nextRunTime) {
-                            let promptPath = task.promptFile;
-                            if (!path.isAbsolute(promptPath)) {
-                                promptPath = path.join(getWorkspaceRoot(), promptPath);
-                            }
-                            
-                            if (fs.existsSync(promptPath)) {
-                                console.log(`Triggering scheduled task: ${task.id}`);
-                                let query = fs.readFileSync(promptPath, 'utf8');
-                                let fullQuery = `${query}
-
-__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
-                                
+                            if (task.command) {
+                                console.log(`Triggering scheduled command: ${task.id} - ${task.command}`);
                                 task.nextRunTime = now + (task.intervalMinutes * 60 * 1000);
                                 modified = true;
                                 
-                                try {
-                                    setAgentBusy();
-                                    vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery);
-                                } catch(e) {
-                                    freeAgent();
-                                }
+                                const { exec } = require('child_process');
+                                exec(task.command, { cwd: getWorkspaceRoot() }, (error, stdout, stderr) => {
+                                    if (error) {
+                                        console.error(`Task ${task.id} failed:`, error);
+                                        getActiveChatIds().forEach(c => sendTelegramMessage(c, `❌ Lỗi thực thi task ${task.id}:\n${error.message}`));
+                                    } else {
+                                        console.log(`Task ${task.id} stdout:`, stdout);
+                                    }
+                                });
                                 break;
+                            } else {
+                                let promptPath = task.promptFile;
+                                if (!path.isAbsolute(promptPath)) {
+                                    promptPath = path.join(getWorkspaceRoot(), promptPath);
+                                }
+                                
+                                if (fs.existsSync(promptPath)) {
+                                    console.log(`Triggering scheduled task: ${task.id}`);
+                                    let query = fs.readFileSync(promptPath, 'utf8');
+                                    let fullQuery = `${query}\n\n__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+                                    
+                                    task.nextRunTime = now + (task.intervalMinutes * 60 * 1000);
+                                    modified = true;
+                                    
+                                    try {
+                                        setAgentBusy();
+                                        vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery);
+                                    } catch(e) {
+                                        freeAgent();
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }
