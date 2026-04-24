@@ -4,7 +4,7 @@
     "CONFIG_ID": "CFG_XAG_V1_5",
     "DATA_SOURCE": {
         "DATASET_SUFFIX": "20260301_to_20260409",
-        "DATASET_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
         "MT5_PATH": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",

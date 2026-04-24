@@ -14,7 +14,7 @@
     },
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/sol_v3_tensor_asian",
-        "MODEL_REPO": "dung5k/argo_data",
+        "MODEL_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {

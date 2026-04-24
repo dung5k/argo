@@ -10,7 +10,7 @@
     },
     "DATA_SOURCE": {
         "DATASET_SUFFIX": "2025_2026",
-        "DATASET_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
         "MT5_PATH": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
         "BROKERS": {
             "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
