@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 18 (D_MODEL=64, Score 0.573).
+- Thay đổi: Giảm TP_PIPS và SL_PIPS từ 60 xuống 50.
+
+Kỳ vọng điều gì xảy ra?
+- Phiên NY rất giật và nhanh. Việc ăn 60 pips đã đem lại Score vô địch 0.573. Giờ thử hạ xuống 50 pips xem liệu việc 'chốt lời sớm hơn' có nâng cao Win Rate và tránh được những cú đảo chiều đột ngột hay không. Nếu Win Rate lên trên 70% thì 50 pips sẽ là một cấu hình Hit & Run tuyệt vời.
