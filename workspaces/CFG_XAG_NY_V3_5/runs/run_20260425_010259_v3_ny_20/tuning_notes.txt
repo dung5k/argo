@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 18 (D_MODEL=64, Score: 0.573).
+- Thay đổi duy nhất: Giảm DROPOUT từ 0.25 mặc định xuống 0.10.
+
+Kỳ vọng điều gì xảy ra?
+- Vì Run 18 đã thu nhỏ não bộ đáng kể, mức Dropout 0.25 (tắt 1/4 số neuron mỗi lần) có thể khiến các neuron học được quy luật tốt bị vô hiệu hóa quá đà, cản trở việc chắt lọc tối đa tín hiệu. Việc hạ Dropout xuống 0.10 sẽ thử nghiệm xem mô hình tí hon này có thể học trọn vẹn hơn mà không bị Overfit hay không. Kỳ vọng sẽ phá đỉnh 0.573.
