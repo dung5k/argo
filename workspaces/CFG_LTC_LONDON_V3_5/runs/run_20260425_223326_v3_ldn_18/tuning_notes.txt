@@ -1,0 +1,6 @@
+Run: run_20260425_223326_v3_ldn_18
+Thay đổi so với ldn_16 (best): WINDOW_SIZE: 30→60 (giữ nguyên BATCH=128, LR=3e-5, LAYERS=3, D_MODEL=128 — combo vàng đã xác nhận)
+Lý do: ldn_16 (WIN=30+BATCH=128+LR=3e-5) đạt 0.4743 — COMBO VÀNG. ldn_17 (BATCH=256) thất bại (WR=38-40%, Bias Sell nặng), xác nhận BATCH=128 là tối ưu. Hướng khai thác tiếp theo: tăng WINDOW_SIZE=60 để model nhìn context dài hơn (2 giờ vs 1 giờ @M1 bar). Phiên London kéo dài 3-4 tiếng — context 60 bar có thể nắm bắt được cả phase mở cửa Frankfurt và London đồng thời, cho tín hiệu tốt hơn.
+Kỳ vọng: Score vượt 0.4743 (ldn_16) nếu WIN=60 giúp model nhận ra pattern phiên London tốt hơn. WR@60% có thể tăng thêm 2-3%. Nếu thất bại → WIN=30 là tối ưu và cần thử hướng khác (D_MODEL hoặc features).
+Baseline hiện tại: 0.4743 (ldn_16: WIN=30, BATCH=128, LR=3e-5). Đây là thay đổi A/B thuần túy về WINDOW_SIZE — cô lập hoàn toàn tác động của context length.
+Ghi chú: ldn_17 (BATCH=256) đang chạy nhưng tín hiệu Ep14-16 rất xấu (WR=36-40%, Bias Sell). Xác nhận BATCH=128 > BATCH=256 cho dataset Binance-only WIN=30. Lộ trình WIN: 15(run_j,cloud)→30(ldn_16=0.4743)→60(ldn_18,thử nghiệm).
