@@ -281,6 +281,14 @@ def main():
     d_ff = train_cfg.get("D_FF", 512)
     
     print(f"[MODEL] Init with: d_model={d_model}, nhead={nheads}, num_layers={num_layers}, dropout={dropout}, d_ff={d_ff}", flush=True)
+    
+    # [MỚI V2] Đọc tùy chọn kiến trúc cao cấp từ config
+    pooling = train_cfg.get("POOLING", "mean")         # 'mean' hoặc 'attention'
+    cls_head = train_cfg.get("CLS_HEAD", "simple")      # 'simple' hoặc 'residual'
+    layer_drop = train_cfg.get("LAYER_DROP", 0.0)       # 0.0 = tắt, 0.1 = bật
+    if pooling != "mean" or cls_head != "simple" or layer_drop > 0:
+        print(f"[MODEL V2] Kiến trúc nâng cao: pooling={pooling}, cls_head={cls_head}, layer_drop={layer_drop}", flush=True)
+    
     model = AAMT_Model(
         input_dim=X.shape[2], 
         seq_len=X.shape[1],
@@ -288,7 +296,10 @@ def main():
         nhead=nheads,
         num_layers=num_layers,
         dropout=dropout,
-        d_ff=d_ff
+        d_ff=d_ff,
+        pooling=pooling,
+        cls_head=cls_head,
+        layer_drop=layer_drop
     )
     
     msg = ""
@@ -414,12 +425,22 @@ def main():
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     phoenix = None  # Đã tắt Auto Healing
 
-    # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau 10 epoch không cải thiện CE Loss val
-    # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=10,
-        min_lr=1e-6
-    )
+    # [V2] Chọn Learning Rate Scheduler theo config
+    lr_scheduler_type = train_cfg.get("LR_SCHEDULER", "plateau")  # 'plateau' hoặc 'cosine_warm'
+    if lr_scheduler_type == "cosine_warm":
+        # Cosine Annealing with Warm Restarts — khám phá tốt hơn cho data khó
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer, T_0=15, T_mult=2, eta_min=1e-6
+        )
+        print(f"[SCHEDULER] CosineAnnealingWarmRestarts (T_0=15, T_mult=2)", flush=True)
+    else:
+        # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau 10 epoch không cải thiện CE Loss val
+        # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.5, patience=10,
+            min_lr=1e-6
+        )
+        print(f"[SCHEDULER] ReduceLROnPlateau (patience=10, factor=0.5)", flush=True)
     # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp 20 epoch
     # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
     _ES_PATIENCE     = 20   # Số epoch chịu đựng CE tăng
@@ -485,8 +506,11 @@ def main():
         current_lr  = optimizer.param_groups[0]['lr']
         print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | LR={current_lr:.2e} | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
 
-        # [PHÁC ĐỒ 2] Báo ReduceLROnPlateau bước CE Loss val
-        lr_scheduler.step(val_ce_loss)
+        # [V2] Báo scheduler bước — tương thích cả 2 loại
+        if lr_scheduler_type == "cosine_warm":
+            lr_scheduler.step()  # CosineAnnealing step mỗi epoch
+        else:
+            lr_scheduler.step(val_ce_loss)  # ReduceLROnPlateau step theo val loss
 
         # [PHÁC ĐỒ 3] Early Stopping: theo dõi CE Loss val
         if val_ce_loss < _es_best_ce_val:

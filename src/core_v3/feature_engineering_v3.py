@@ -6,11 +6,20 @@ class FeatureEngineeringV3:
     """
     Module xử lý Feature Engineering chuẩn V3 AAMT.
     Tập trung vào tính toán 4 nhóm đặc trưng trực giao, loại bỏ nhiễu và dư thừa.
+    
+    [V2] Tùy chọn nâng cao (backward-compatible):
+    - mtf_windows: Multi-Timeframe log_return & ATR trên cửa sổ lớn hơn
+    - order_flow:  Delta Volume + Cumulative Delta proxy
+    - vol_regime:  Phân loại chế độ biến động High/Med/Low (one-hot)
     """
-    def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False):
+    def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False,
+                 mtf_windows=None, order_flow: bool = False, vol_regime: bool = False):
         self.target_prefix = target_prefix
         self.macro_features = macro_features if macro_features else {}
         self.crypto_mode = crypto_mode
+        self.mtf_windows = mtf_windows or []  # e.g. [5, 15, 60]
+        self.order_flow = order_flow
+        self.vol_regime = vol_regime
         self.scaler = RobustScaler()
         self.is_fitted = False
         
@@ -126,6 +135,73 @@ class FeatureEngineeringV3:
         adx = dx.ewm(span=adx_period, adjust=False).mean()
         features['adx_normalized'] = adx / 100.0  # [0, 1]
         
+        return features
+
+    # =====================================================================
+    # [MỚI] Multi-Timeframe Features — Nhìn bức tranh lớn từ M1
+    # =====================================================================
+    def calculate_multi_timeframe(self, df, close_col, high_col, low_col):
+        """
+        Tính log_return và ATR trên các cửa sổ lớn hơn (vd: 5, 15, 60 nến).
+        Cho phép model "zoom out" mà không cần thay đổi WINDOW_SIZE của input tensor.
+        """
+        features = pd.DataFrame(index=df.index)
+        for w in self.mtf_windows:
+            # Multi-timeframe log return
+            features[f'mtf_ret_{w}'] = np.log((df[close_col] / df[close_col].shift(w).bfill()) + 1e-6)
+            # Multi-timeframe ATR ratio (ATR_w / ATR_14)
+            prev_close = df[close_col].shift(1).bfill()
+            tr = pd.DataFrame({
+                'hl': df[high_col] - df[low_col],
+                'hc': (df[high_col] - prev_close).abs(),
+                'lc': (df[low_col] - prev_close).abs()
+            }).max(axis=1)
+            atr_w = tr.rolling(window=w, min_periods=1).mean()
+            atr_14 = tr.rolling(window=14, min_periods=1).mean()
+            features[f'mtf_atr_ratio_{w}'] = atr_w / (atr_14 + 1e-6)
+        return features
+
+    # =====================================================================
+    # [MỚI] Order Flow Proxy — Xấp xỉ Volume Delta từ M1 OHLCV
+    # =====================================================================
+    def calculate_order_flow(self, df, open_col, close_col, volume_col):
+        """
+        Tính delta_volume (volume × direction) và cumulative delta trong phiên.
+        Giúp AI nhận diện vùng hấp thụ (absorption) và áp lực mua/bán.
+        """
+        features = pd.DataFrame(index=df.index)
+        if not volume_col or volume_col not in df.columns:
+            return features
+        vol = df[volume_col].clip(lower=0)
+        direction = np.sign(df[close_col] - df[open_col])
+        features['delta_volume'] = vol * direction
+        # Cumulative delta reset hàng ngày
+        day_key = df.index.normalize()
+        features['cum_delta_session'] = features['delta_volume'].groupby(day_key).cumsum()
+        return features
+
+    # =====================================================================
+    # [MỚI] Volatility Regime — Phân loại chế độ biến động
+    # =====================================================================
+    def calculate_vol_regime(self, df, high_col, low_col, close_col):
+        """
+        Dùng ATR percentile 20 nến để one-hot encode 3 chế độ:
+        - Low vol (ATR < P33)
+        - Medium vol (P33 <= ATR < P66)  
+        - High vol (ATR >= P66)
+        """
+        features = pd.DataFrame(index=df.index)
+        prev_close = df[close_col].shift(1).bfill()
+        tr = pd.DataFrame({
+            'hl': df[high_col] - df[low_col],
+            'hc': (df[high_col] - prev_close).abs(),
+            'lc': (df[low_col] - prev_close).abs()
+        }).max(axis=1)
+        atr_20 = tr.rolling(window=20, min_periods=1).mean()
+        p33 = atr_20.rolling(window=200, min_periods=20).quantile(0.33)
+        p66 = atr_20.rolling(window=200, min_periods=20).quantile(0.66)
+        features['vol_regime_low'] = (atr_20 < p33).astype(float)
+        features['vol_regime_high'] = (atr_20 >= p66).astype(float)
         return features
 
         
@@ -278,6 +354,25 @@ class FeatureEngineeringV3:
         
         feature_blocks = [f_pa, f_vol, f_mom, f_time, f_micro]
         
+        # [MỚI V2] Multi-Timeframe Features
+        if self.mtf_windows:
+            f_mtf = self.calculate_multi_timeframe(df, close_col, high_col, low_col)
+            feature_blocks.append(f_mtf)
+            print(f"[FE] Multi-Timeframe features added: windows={self.mtf_windows}, cols={list(f_mtf.columns)}")
+        
+        # [MỚI V2] Order Flow Proxy
+        if self.order_flow:
+            f_of = self.calculate_order_flow(df, open_col, close_col, volume_col)
+            if not f_of.empty:
+                feature_blocks.append(f_of)
+                print(f"[FE] Order Flow features added: {list(f_of.columns)}")
+        
+        # [MỚI V2] Volatility Regime
+        if self.vol_regime:
+            f_vr = self.calculate_vol_regime(df, high_col, low_col, close_col)
+            feature_blocks.append(f_vr)
+            print(f"[FE] Volatility Regime features added: {list(f_vr.columns)}")
+        
         # Xử lý các mã Kinh tế Vĩ Mô (Macro)
         if self.macro_features:
             for sym, req_features in self.macro_features.items():
@@ -316,6 +411,17 @@ class FeatureEngineeringV3:
                             if sym_lower.startswith('dxy'):
                                 target_ret = np.log((df[close_col] / df[close_col].shift(1).bfill()) + 1e-6)
                                 f_macro[f"{sym}_dxy_xau_anomaly"] = macro_ret * target_ret
+                            
+                            # [MỚI V2] Cross-Asset Spread Return
+                            if "spread_ret" in req_features:
+                                target_ret = np.log((df[close_col] / df[close_col].shift(1).bfill()) + 1e-6)
+                                f_macro[f"{sym}_spread_ret"] = target_ret - macro_ret
+                            
+                            # [MỚI V2] Relative Strength (rolling cumulative return ratio)
+                            if "relative_strength" in req_features:
+                                target_cum = np.log((df[close_col] / df[close_col].shift(1).bfill()) + 1e-6).rolling(window=60, min_periods=5).sum()
+                                macro_cum = macro_ret.rolling(window=60, min_periods=5).sum()
+                                f_macro[f"{sym}_relative_strength"] = (target_cum - macro_cum).fillna(0.0)
                         
                         if "bb_width" in req_features and m_high and m_low:
                             vol_macro = self.calculate_volatility(df, m_high, m_low, m_close)
