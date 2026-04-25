@@ -1,0 +1,6 @@
+Run: run_20260425_235900_v3_asian_25
+Thay đổi: CLS_HEAD: "simple" → "residual" (Residual MLP 3-layer Head)
+Lý do: asian_24 thử POOLING=attention nhưng bị thất bại (Score giảm mạnh từ 0.5087 xuống 0.2987). Vì vậy ta quay về cấu hình chuẩn của asian_12 (POOLING=mean) và thử nghiệm một vũ khí V2 khác là CLS_HEAD="residual". Residual head có thể giúp mô hình học các biểu diễn phức tạp hơn từ output của transformer trước khi phân loại.
+Kỳ vọng: Score cải thiện và vượt qua 0.5087.
+Nguồn cảm hứng: asian_12 (Score=0.5087)
+Baseline: asian_12=0.5087 (Ep4)
