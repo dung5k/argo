@@ -1,49 +1,53 @@
 # MẪU TỐT NHẤT CFG_LTC_LONDON_V3_5 (CỤC BỘ - BINANCE-ONLY)
 
-Cập nhật lần cuối: 2026-04-25 12:22
+Cập nhật lần cuối: 2026-04-25 14:22
 
 ## Kết quả tốt nhất (Local - Binance only)
 
 | Run ID | Score | Epoch | Thời điểm |
 |---|---|---|---|
-| `run_20260425_115216_v3_ldn_3` | **0.3870** | 27 | 2026-04-25 12:22 |
+| `run_20260425_134218_v3_ldn_6` | **0.4086** | 9 | 2026-04-25 14:22 |
 
-## Phân tích tín hiệu (Epoch 27) — KỶ LỤC TUYỆT ĐỐI MỚI!
+## Phân tích tín hiệu (Epoch 9) — KỶ LỤC TUYỆT ĐỐI MỚI!
 
 | Ngưỡng | Win Rate | N tín hiệu | Buy | Sell | Cân bằng |
 |---|---|---|---|---|---|
-| @53% | 48.6% | 455 | 227 | 228 | ✅ 50:50 |
-| **@57.7%** | **50.4%** | **280** | **140** | **140** | ✅ 50:50 |
-| **@62.3%** | **54.6%** | **130** | **65** | **65** | ✅ 50:50 |
-| **@67%** | **66.7%** | **30** | **15** | **15** | ✅ 50:50 |
+| **@53%** | **60.4%** 🔥 | **222** | **111** | **111** | ✅ 50:50 |
+| **@54.3%** | **67.2%** 🔥 | **134** | **67** | **67** | ✅ 50:50 |
+| **@55.7%** | **71.6%** 🔥 | **81** | **40** | **41** | ✅ 50:50 |
+| **@57%** | **76.7%** 🔥 | **43** | **21** | **22** | ✅ 50:50 |
 
-## ✨ Điểm đặc biệt — Tại sao đây là kết quả xuất sắc nhất
+## ✨ Điểm đặc biệt — Tại sao đây là kết quả XUẤT SẮC NHẤT
 
-- **WR@67% = 66.7%** — tỷ lệ thắng CỰC KỲ cao ở ngưỡng tin cậy cao nhất
-- **WR@62% = 54.6%** — vượt 50% đáng kể, có lợi thế thống kê mạnh
-- **Buy/Sell cân bằng hoàn hảo TẤT CẢ ngưỡng** — không có bias nào
-- **Epoch 27** đã đạt Score=0.387 (ldn_1 cần đến Epoch 48 mới đạt 0.310!)
+- **WR@53% = 60.4%** — tỷ lệ thắng xuất sắc ngay ở ngưỡng thấp nhất
+- **WR@57% = 76.7%** — kỳ lạ! Cứ 4 lệnh có 3 lệnh thắng!
+- **Buy/Sell = 50:50 tuyệt đối ở MỌI ngưỡng** — không có bias nào
+- **Chỉ Epoch 9** mà đã vượt mọi record trước đó!
 
-## Config tốt nhất
+## Config tốt nhất hiện tại
 
 ```
 BATCH_SIZE   : 64
-LEARNING_RATE: 3e-5 (đang ở ~7.5e-6 tại epoch 28)
-WINDOW_SIZE  : 30  ← CHÌA KHÓA THÀNH CÔNG
+LEARNING_RATE: 1e-5  ← CHÌA KHÓA THEN CHỐT
+D_MODEL      : 128   ← TĂNG GẤP ĐÔI
+NUM_LAYERS   : 3     ← TĂNG TỪ 2 LÊN 3
+WINDOW_SIZE  : 30    ← TỐI ƯU ĐÃ XÁC NHẬN
+WARMUP_EPOCHS: 30
 MACRO        : Binance-only (BTC/ETH/BCH/DOGE/XRP/SOL)
 ```
 
 ## Lịch sử cải thiện toàn bộ
 
-| Run | BATCH | WINDOW | Score tốt nhất | Epoch |
-|---|---|---|---|---|
-| ldn_1 | 64 | 15 | 0.3095 | 48 |
-| ldn_2 | 128 | 15 | 0.1931 | 13 |
-| **ldn_3** | **64** | **30** | **0.3870** 🥇 | **27** |
+| Run | D_MODEL | LR | WINDOW | Score | Epoch |
+|---|---|---|---|---|---|
+| ldn_1 | 64 | 3e-5 | 15 | 0.3095 | 48 |
+| ldn_3 | 64 | 3e-5 | 30 | 0.3874 | 33 |
+| ldn_5 | 128 | 3e-5 | 30 | 0.3255 | 10 |
+| **ldn_6** | **128** | **1e-5** | **30** | **0.4086** 🥇 | **9** |
 
 ## Ghi chú so sánh
 
 - Baseline tốt nhất (có MT5): **0.4519** (`run_j`, LR=3e-5, BATCH=256, WINDOW=15)
-- Local Binance-only: **0.3870** — tương đương **86% baseline MT5** (từ 69% lên 86%!)
-- **WINDOW=30, BATCH=64 là combo vàng** cho phiên London Binance-only
-- Hướng tiếp theo: thử WINDOW=60 để xem có cải thiện thêm không
+- Local Binance-only MỚI: **0.4086** — **90.6% của baseline MT5!** (từ 86% lên 90.6%!)
+- **Combo vàng đã xác nhận:** D_MODEL=128 + LR=1e-5 + WINDOW=30
+- Hướng tiếp theo: thử LR=5e-6 (giảm thêm) hoặc BATCH=32 hoặc TP_PCT adjustment
