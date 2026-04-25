@@ -1,5 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Tiếp tục dựa trên Run 16. Thu nhỏ bộ não mạng Neural bằng cách giảm D_MODEL từ 128 xuống 64 và giảm N_HEAD từ 4 xuống 2.
-
-Kỳ vọng điều gì xảy ra?
-- Sau khi Run 13 (D_MODEL=128) đánh bại Run 8 (D_MODEL=256), ta thấy mô hình càng nhỏ càng ít overfit với nhiễu. Việc thử nghiệm D_MODEL=64 sẽ kiểm tra xem giới hạn dưới của việc thu nhỏ kích thước (underfitting threshold) nằm ở đâu. Nếu Score cao hơn 0.482, mô hình cực tiểu này sẽ lên ngôi. Nếu Score tụt, ta kết luận D_MODEL=128 là giới hạn tối ưu.

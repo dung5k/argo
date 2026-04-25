@@ -1,6 +1,0 @@
-Run: run_20260425_005024_v3_ny_z
-Thay đổi so với run trước (_y): LR: 5e-5 → 0.0001 | WINDOW_SIZE: 30 → 60 | WARMUP: 25 → 20 | BATCH_SIZE: 128 → 256 | MACRO_FEATURES: Bỏ BNBUSDT/DXYm/USTEC/DXY (MT5 không chạy headless), thêm lại BCHUSDT+DOGEUSDT
-Lý do: Run _u (Score=0.3758, Binance-only) chứng minh LR=0.0001 tốt hơn 5e-5. BCHUSDT/DOGEUSDT là altcoins tương quan cao với LTC. WINDOW_SIZE=60 giúp model nhìn 1h context thay vì 30 nến. MT5 (DXYm/USTEC) không khởi động được trong môi trường headless — phải dùng Binance-only.
-Kỳ vọng: Composite Score vượt Baseline 0.3758. Với Binance-only 6 symbols + WINDOW=60, feature space tinh gọn hơn.
-Baseline hiện tại: 0.3758 (run_20260423_115300_v3_u)
-Ghi chú kỹ thuật: MT5 EXNESS không chạy headless, mọi config local phải dùng BINANCE-only MACRO_FEATURES.

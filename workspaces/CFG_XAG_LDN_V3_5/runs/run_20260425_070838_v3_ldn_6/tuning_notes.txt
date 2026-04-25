@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 3 (Score 0.544, BATCH=512, WINDOW=60, TP/SL=30).
-- Thay đổi: Giảm LEARNING_RATE từ 1e-5 xuống 5e-6.
-
-Kỳ vọng điều gì xảy ra?
-- Thử nghiệm giảm Batch Size (Run 5) đã phá sản hoàn toàn vì gây quá nhiều nhiễu. Ta quay lại cấu hình siêu việt của Run 3. Tuy nhiên, thay vì giảm lượng mẫu cập nhật (Batch), ta giảm kích thước bước chân (Learning Rate). Nhịp độ chậm rãi của phiên London có thể phù hợp hơn với một tốc độ học tinh vi và từ tốn (5e-6), giúp dò dẫm chuẩn xác các vùng minima hẹp thay vì nhảy vọt qua nó.

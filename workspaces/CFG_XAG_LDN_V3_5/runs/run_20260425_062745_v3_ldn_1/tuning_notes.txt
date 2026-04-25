@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Đây là lươt chạy (Run 1) đầu tiên cho phiên London. Nó sử dụng cấu hình kế thừa trọn vẹn từ Run 18 xuất sắc nhất của phiên NY (D_MODEL=64, N_HEAD=2, TP/SL=60).
-- Không có thay đổi nào về siêu tham số.
-
-Kỳ vọng điều gì xảy ra?
-- Thiết lập một baseline cơ sở cho dữ liệu phiên London. Vì đặc tính thanh khoản và biến động của phiên London có thể khác biệt đôi chút so với phiên NY, mục tiêu là xem xem cấu hình tí hon này có bắt sóng tốt ở London hay không, từ đó làm bàn đạp tinh chỉnh tiếp.

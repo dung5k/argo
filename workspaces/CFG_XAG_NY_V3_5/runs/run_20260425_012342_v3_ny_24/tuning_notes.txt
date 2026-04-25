@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 18 (D_MODEL=64, Score 0.573).
-- Thay đổi: Giảm LEARNING_RATE từ 1e-5 xuống 5e-6.
-
-Kỳ vọng điều gì xảy ra?
-- Run 18 đang là "nhà vô địch tuyệt đối" với Score 0.573. Do não bộ của nó siêu nhỏ (64), một learning rate 1e-5 có thể vẫn khiến nó hơi "dao động" (oscillate) quanh điểm tối ưu. Việc hạ thấp learning rate xuống một nửa (5e-6) hy vọng sẽ giúp mô hình "bò" từ từ vào chính xác đáy của khe hẹp tối ưu (global minima), qua đó phá vỡ kỷ lục hiện tại.

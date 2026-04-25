@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 3 (Score 0.544, D_MODEL=64, BATCH=512, WINDOW=60).
-- Thay đổi: Giảm TP_PIPS và SL_PIPS từ 30 xuống 20 (Siêu Scalping).
-
-Kỳ vọng điều gì xảy ra?
-- Dù biên độ 30 pips của Run 3 đang rất tốt với Win Rate 61%, phiên London đôi khi vẫn rơi vào chu kỳ Sideway siêu hẹp. Thử nghiệm thu hẹp biên độ chốt lời cắt lỗ xuống 20 pips có thể giúp mô hình Hit & Run nhanh hơn nữa, tăng mạnh tần suất giao dịch (Total Signals) và ăn những con sóng siêu nhỏ mà biên 30 pips không với tới được. Mặc dù nhiễu sẽ tăng lên, nhưng nếu Win Rate giữ vững trên 55%, mức kỳ vọng EV vẫn sẽ dương mạnh!

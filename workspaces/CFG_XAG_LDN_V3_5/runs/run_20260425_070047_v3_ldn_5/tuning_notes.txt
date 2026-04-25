@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 3 (Score 0.544, D_MODEL=64, TP/SL=30, WINDOW=60).
-- Thay đổi: Giảm BATCH_SIZE từ 512 xuống 256.
-
-Kỳ vọng điều gì xảy ra?
-- Batch Size càng nhỏ thì Gradient càng nhiễu (noisy updates). Ở phiên NY, Batch Size lớn (512) giúp vượt qua sóng giật. Tuy nhiên, phiên London lại trôi khá êm ả, có thể một chút nhiễu từ Batch Size nhỏ (256) sẽ đóng vai trò như 'Regularization', giúp mô hình tí hon này không bị Overfit vào sự tẻ nhạt của thị trường và thoát khỏi các hố minima cục bộ.

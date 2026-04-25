@@ -1,6 +1,0 @@
-Run: run_20260425_212325_v3_ldn_16
-Thay đổi so với ldn_15: BATCH_SIZE: 64→128 (giữ nguyên WIN=30, LR=3e-5, LAYERS=3, D_MODEL=128)
-Lý do: ldn_15 (LR=3e-5, BATCH=64) bị Bias Buy cực nặng ngay từ Ep7 (243B/33S @53%) — LR=3e-5 tạo gradient quá lớn trên BATCH=64 nhỏ, gây dao động và collapse về một phía. Run_j đạt 0.4519 với LR=3e-5+BATCH=256 — batch lớn ổn định hóa gradient. BATCH=128 là điểm trung gian: gradient ổn hơn BATCH=64 nhưng mỗi step nhanh hơn BATCH=256. Đây là bước tiếp cận có hệ thống về phía combo run_j (LR=3e-5+BATCH=256).
-Kỳ vọng: Cân bằng Buy/Sell tốt hơn ldn_15 (thoát bias). WR ổn định >50%. Score vượt 0.40. Gradient ổn định → Best Score đạt sớm hơn (Ep8-12).
-Baseline hiện tại: 0.4086 (ldn_6). Cục bộ ldn_13=0.3847 (tốt nhất batch mới). ldn_15 đang chạy với Best=0.2851 (Ep6, cân bằng tốt nhưng WR thấp).
-Ghi chú: Lộ trình: BATCH=64(ldn_6,fail)+BATCH=64+LR=2e-5(ldn_13,14,fail)+BATCH=64+LR=3e-5(ldn_15,bias nặng)→BATCH=128+LR=3e-5(ldn_16). Nếu ldn_16 tốt → thử BATCH=256+LR=3e-5 (clone run_j hoàn toàn về LR+BATCH, chỉ khác WIN=30 vs 15).

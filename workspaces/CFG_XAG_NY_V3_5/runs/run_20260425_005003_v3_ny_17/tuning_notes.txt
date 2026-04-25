@@ -1,5 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Thay đổi LEARNING_RATE từ 1e-5 lên 2e-5. Giữ nguyên mọi cấu hình từ Run 16 (TP/SL=60, D_MODEL=128).
-
-Kỳ vọng điều gì xảy ra?
-- Việc tăng nhẹ Learning Rate sẽ giúp mô hình nhỏ hội tụ nhanh hơn và có khả năng tìm được một Global Minima sâu hơn, kỳ vọng đẩy Score vượt qua mốc 0.482.

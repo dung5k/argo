@@ -41,3 +41,5 @@ workspaces/
 # Thong tin may tinh cuc bo - khong commit
 MACHINE_INFO.md
 
+
+# Workspaces chi dung local + HF, khong push git

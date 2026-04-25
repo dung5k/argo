@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 3 (Score 0.544, D_MODEL=64, TP/SL=30).
-- Thay đổi: Tăng WINDOW_SIZE từ 60 lên 90 (và sửa corr_60 thành corr_90).
-
-Kỳ vọng điều gì xảy ra?
-- Phiên London đi êm và có xu hướng kéo dài hơn NY. Ở NY, WINDOW=90 làm hỏng kết quả vì sóng đảo chiều quá nhanh. Nhưng ở London, có thể một góc nhìn rộng 90 phút sẽ giúp mô hình tí hon (D_MODEL=64) có thêm ngữ cảnh để củng cố tín hiệu Hit & Run 30 pips. Nếu Score vượt 0.544, ta kết luận London chuộng tầm nhìn xa. Nếu giảm, 60 vẫn là tiêu chuẩn chung.

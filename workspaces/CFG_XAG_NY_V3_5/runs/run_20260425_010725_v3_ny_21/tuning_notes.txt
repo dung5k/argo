@@ -1,6 +1,0 @@
-Lượt này thay đổi tham số gì?
-- Base: Run 18 (D_MODEL=64, DROPOUT=0.25).
-- Thay đổi duy nhất: Tăng BATCH_SIZE từ 512 lên 1024.
-
-Kỳ vọng điều gì xảy ra?
-- Batch size lớn hơn sẽ làm quỹ đạo Gradient mượt mà hơn và tăng tốc độ xử lý. Với mô hình nhỏ D_MODEL=64, liệu một gradient mượt mà có giúp nó hội tụ vững chắc hơn (vượt 0.573) hay sẽ khiến nó bị mắc kẹt ở local minima? Lượt này sẽ trả lời câu hỏi đó.
