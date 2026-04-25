@@ -30,6 +30,7 @@ desktop.ini
 # Agent ignore
 .agent/*
 !.agent/periodic_prompt_*.md
+!.agent/tasks.json
 .agents/
 .vscode/
 workspaces/
@@ -38,3 +39,4 @@ workspaces/
 
 # Thong tin may tinh cuc bo - khong commit
 MACHINE_INFO.md
+
