@@ -166,8 +166,9 @@ Kiểm tra thư mục `workspaces/CFG_LTC_LONDON_V3_5/runs/`:
 - **Nếu máy đang IDLE**:
   Lấy `<RUN_ID>` từ Hàng Đợi (hoặc vừa tạo xong ở Bước 3) và phát lệnh chạy huấn luyện:
   ```powershell
-  python src/training_v3/train_v3.py --session london --file workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json --scratch --run-id <RUN_ID>
+  python src/training_v3/train_v3.py workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json --session london --scratch --run-id <RUN_ID>; python .agent/notify_done.py ltc_london_training_done
   ```
+  > **⚡ Lưu ý:** `notify_done.py` gọi extension ngay khi xong → kích hoạt vòng tiếp theo **ngay lập tức** (không cần chờ 10 phút!).
 
 Chỉ kết thúc và gọi `--done` sau khi:
 1. Đã chuẩn bị xong data (nếu cần).

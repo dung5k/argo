@@ -132,8 +132,9 @@ Kiểm tra `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
 - **Nếu BUSY:** Báo Telegram và gọi `--done`
 - **Nếu IDLE:** Lấy RUN_ID từ hàng đợi và chạy:
   ```powershell
-  python src/training_v3/train_v3.py --session asian --file workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json --scratch --run-id <RUN_ID>
+  python src/training_v3/train_v3.py workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID>; python .agent/notify_done.py ltc_asian_training_done
   ```
+  > **⚡ Lưu ý:** `notify_done.py` sẽ gọi extension ngay khi training xong → extension kích hoạt vòng đánh giá tiếp theo **ngay lập tức** (không cần chờ 10 phút!).
 
 ---
 
