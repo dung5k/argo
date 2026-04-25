@@ -1,0 +1,6 @@
+Run: run_20260425_203728_v3_ldn_14
+Thay đổi so với ldn_13: WARMUP_EPOCHS: 30→50 (giữ nguyên WIN=30, BATCH=64, LR=2e-5, LAYERS=3, D_MODEL=128)
+Lý do: ldn_13 (WIN=30, LR=2e-5) đạt Best=0.3847 tại Ep8 nhưng LR bị scheduler cắt xuống 1e-5→5e-6 từ Ep14, WR giảm liên tục xuống 41%. Nguyên nhân: WARMUP_EPOCHS=30 quá ngắn, LR chưa kịp khai thác hết. Tăng WARMUP_EPOCHS=50 sẽ giữ LR=2e-5 lâu hơn 20 epoch, cho model thêm thời gian học trước khi LR giảm. LR=2e-5 đã chứng minh hội tụ tốt hơn LR=1e-5 (ldn_13 Ep8 > ldn_6 Ep8).
+Kỳ vọng: Best Score tăng từ 0.3847 lên >0.41, vượt Baseline ldn_6 (0.4086). WR duy trì >52% trong dải Ep8-25. Score tại ngưỡng 60%+ tiếp tục cao (Ep11 @60%=0.523 là tín hiệu tốt).
+Baseline hiện tại: 0.4086 (ldn_6: WIN=30, BATCH=64, LR=1e-5, WARMUP=30). Kỷ lục mọi thời: 0.4519 (run_j). ldn_13 Best: 0.3847 (Ep8, WARMUP=30).
+Ghi chú: Đây là thử nghiệm quan trọng — xác nhận xem WARMUP dài hơn có giữ được WR cao hay không. Nếu thành công → WARMUP=50 + LR=3e-5 tiếp theo.
