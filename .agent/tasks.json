@@ -1,0 +1,27 @@
+{
+  "tasks": [
+    {
+      "id": "xag_ny_auto_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_ny.md",
+      "triggerOn": "xag_ny_training_done",
+      "nextRunTime": 1777054472954,
+      "intervalMinutes": 30
+    },
+    {
+      "id": "xag_ldn_auto_tuning",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_xag_ldn.md",
+      "triggerOn": "xag_ldn_training_done",
+      "nextRunTime": 1777076858215,
+      "intervalMinutes": 30
+    },
+    {
+      "id": "cleanup_storage",
+      "enabled": true,
+      "command": "python scripts/cleanup_host_storage.py",
+      "nextRunTime": 1777077908045,
+      "intervalMinutes": 60
+    }
+  ]
+}

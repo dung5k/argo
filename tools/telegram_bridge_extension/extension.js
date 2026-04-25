@@ -336,6 +336,50 @@ function pollTelegram() {
     });
 }
 
+// Fire a task immediately by triggerId (called from /trigger-task endpoint)
+function triggerTaskBySignal(triggerId) {
+    const config = getConfig();
+    if (!config.tasksConfigFile || !fs.existsSync(config.tasksConfigFile)) return false;
+    try {
+        let tasksData = JSON.parse(fs.readFileSync(config.tasksConfigFile, 'utf8'));
+        let found = false;
+        for (let task of tasksData.tasks) {
+            if (task.enabled && task.triggerOn === triggerId) {
+                console.log(`[TRIGGER] Task '${task.id}' fired by signal: ${triggerId}`);
+                logDebug(`[TRIGGER] Task '${task.id}' fired by signal: ${triggerId}`);
+                found = true;
+
+                if (task.command) {
+                    const { exec } = require('child_process');
+                    exec(task.command, { cwd: getWorkspaceRoot() }, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`Task ${task.id} (triggered) failed:`, error);
+                            getActiveChatIds().forEach(c => sendTelegramMessage(c, `❌ Lỗi task triggered ${task.id}:\n${error.message}`));
+                        }
+                    });
+                } else if (task.promptFile) {
+                    let promptPath = task.promptFile;
+                    if (!path.isAbsolute(promptPath)) promptPath = path.join(getWorkspaceRoot(), promptPath);
+                    if (fs.existsSync(promptPath)) {
+                        let query = fs.readFileSync(promptPath, 'utf8');
+                        let fullQuery = `${query}\n\n__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+                        if (!isAgentBusy) {
+                            setAgentBusy();
+                            vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery).catch(() => freeAgent());
+                        } else {
+                            queueMessage(getActiveChatIds()[0] || '', fullQuery);
+                        }
+                    }
+                }
+            }
+        }
+        return found;
+    } catch(e) {
+        console.error('[TRIGGER] Error:', e);
+        return false;
+    }
+}
+
 // Periodic Prompt Execution
 function setupPeriodicExecution() {
     if (periodicIntervalId) {
@@ -458,6 +502,25 @@ function startBridgeServer() {
                         res.writeHead(400); res.end(JSON.stringify({ error: 'Missing query' }));
                     }
                 } catch (e) {
+                    res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
+                }
+            });
+        } else if (req.method === 'POST' && req.url === '/trigger-task') {
+            let body = '';
+            req.on('data', chunk => body += chunk.toString());
+            req.on('end', () => {
+                try {
+                    const payload = JSON.parse(body);
+                    const triggerId = payload.triggerId || payload.trigger_id;
+                    if (!triggerId) {
+                        res.writeHead(400); res.end(JSON.stringify({ error: 'Missing triggerId' }));
+                        return;
+                    }
+                    logDebug(`[SERVER] Received /trigger-task: ${triggerId}`);
+                    const fired = triggerTaskBySignal(triggerId);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ status: fired ? 'triggered' : 'no_match', triggerId }));
+                } catch(e) {
                     res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
                 }
             });
