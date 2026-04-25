@@ -1,0 +1,6 @@
+Run: run_20260426_004100_v3_asian_27
+Thay đổi: Giữ nguyên ORDER_FLOW=true, thêm LR_SCHEDULER="cosine_warm" (thay vì "plateau").
+Lý do: asian_26 (ORDER_FLOW=true) đã mang lại kết quả cực kỳ cân bằng (Bal=1.0) và WinRate ấn tượng (69.6%), tuy nhiên Score tổng hợp dừng ở 0.4855 (hơi thấp hơn baseline 0.5087 một chút). Việc sử dụng Cosine Annealing Warm Restarts có thể giúp mô hình thoát khỏi local minima tốt hơn Plateau, từ đó tối ưu hóa được tín hiệu từ Order Flow để vượt mốc 0.51.
+Kỳ vọng: Score vượt 0.5087 nhờ sự kết hợp giữa tín hiệu dòng tiền (Order Flow) và hội tụ tốt hơn (Cosine Warm).
+Nguồn cảm hứng: asian_26 (WinRate 69.6% @ 57%)
+Baseline: asian_12=0.5087 (Ep4)
