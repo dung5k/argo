@@ -1,0 +1,6 @@
+Run: run_20260425_151219_v3_ldn_8
+Thay đổi so với run trước (ldn_6 - best): NUM_LAYERS: 3 → 4
+Lý do: ldn_6 (D_MODEL=128, LR=1e-5, BATCH=64, LAYERS=3, WIN=30) đạt kỷ lục 0.4086. Thử thêm 1 layer (4 thay vì 3) để model học thêm tầng biểu diễn — với D_MODEL=128 lớn và LR nhỏ 1e-5 đã ổn định, thêm depth có thể giúp model nắm bắt các pattern phức tạp hơn của phiên London mà 3 layers chưa khai thác được.
+Kỳ vọng: Score vượt 0.4086, WR@57%+ tăng từ 76.7%, bias vẫn cân bằng hoàn toàn.
+Baseline hiện tại: 0.4086 (ldn_6, Epoch 9, D_MODEL=128, LR=1e-5, BATCH=64, LAYERS=3, WINDOW=30, Binance-only)
+Ghi chú: Chỉ thay đổi NUM_LAYERS để cô lập hoàn toàn. Nếu LAYERS=4 không cải thiện → kiến trúc 3 layers là tối ưu, chuyển thử LR=5e-6 hoặc TP_PCT.
