@@ -2,16 +2,23 @@
   "tasks": [
     {
       "id": "ltc_ny_auto_tuning_local",
-      "enabled": true,
+      "enabled": false,
       "promptFile": ".agent/periodic_prompt_ltc_ny_local.md",
-      "nextRunTime": 1777078800000,
+      "nextRunTime": 1777082905966,
+      "intervalMinutes": 10
+    },
+    {
+      "id": "ltc_london_auto_tuning_local",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_ltc_london_local.md",
+      "nextRunTime": 1777082905966,
       "intervalMinutes": 10
     },
     {
       "id": "cleanup_storage",
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
-      "nextRunTime": 1777082484979,
+      "nextRunTime": 1777086505966,
       "intervalMinutes": 60
     }
   ]
