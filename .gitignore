@@ -30,11 +30,12 @@ desktop.ini
 # Agent ignore
 .agent/*
 !.agent/periodic_prompt_*.md
-!.agent/tasks.json
+# tasks.json chi dung cuc bo - khong dong bo git
 .agents/
 .vscode/
 workspaces/
 # Machine-specific task scheduler - do NOT sync
+.agent/tasks.json
 
 
 # Thong tin may tinh cuc bo - khong commit
