@@ -34,6 +34,7 @@ desktop.ini
 .vscode/
 workspaces/
 # Machine-specific task scheduler - do NOT sync
-.agent/tasks.json
 
-.agent/tasks.json
+
+# Thong tin may tinh cuc bo - khong commit
+MACHINE_INFO.md
