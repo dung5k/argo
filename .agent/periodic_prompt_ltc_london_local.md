@@ -2,20 +2,42 @@
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
+> **📅 PHIÊN GIAO DỊCH:** LTC LONDON — Hoạt động từ **02:00 đến 04:00 (GMT+7)**. Tập trung vào động lực mở cửa London/Frankfurt, tương quan BTC với XAU và chứng khoán EU. Volume cao, breakout mạnh → model cần nắm bắt momentum tốt.
+
 Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_LTC_LONDON_V3_5` và **trực tiếp chạy huấn luyện (train) trên máy cục bộ này**.
 
 Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:
 
 ---
 
-## BƯỚC TIỀN XỬ LÝ: Đồng bộ kết quả mới nhất từ HuggingFace về máy cục bộ
+## ⏰ BƯỚC -1: KIỂM TRA THỚI GIAN (BẮT BUỘC LÀM ĐẦU TIÊN)
 
-**BẮT BUỘC chạy lệnh này đầu tiên**, trước khi làm bất cứ điều gì khác, để đảm bảo dữ liệu là mới nhất:
+Lấy giờ hiện tại (GMT+7) và so sánh với ngưỡng **04:00 sáng**:
+
+```powershell
+$now = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, "SE Asia Standard Time")
+Write-Host "Giờ hiện tại (GMT+7): $($now.ToString('HH:mm'))"
+```
+
+**Nếu giờ hiện tại >= 04:00 (sáng):**
+1. Dừng lại NGAY, KHÔNG thực hiện bất kỳ bước nào tiếp theo.
+2. **Kích hoạt task NY:** Sửa `.agent/tasks.json` — tìm id `ltc_ny_auto_tuning_local`, đặt `"enabled": true` và `"nextRunTime"` = timestamp hiện tại.
+3. **Tắt task này:** Tìm id `ltc_london_auto_tuning_local`, đặt `"enabled": false`.
+4. Gọi Telegram: `python .agent/send_to_tele.py "⏰ [AUTO-SWITCH] 04:00 AM — Chuyển sang phiên NY!" --done`
+
+**Nếu giờ hiện tại < 04:00:** Tiếp tục các bước bên dưới bình thường.
+
+---
+
+## BƯỚC TIỀN XỬ LÝ: Đồng bộ từ HuggingFace
+
+**BẮT BUỘC chạy lệnh này đầu tiên**, trước khi làm bất cứ điều gì khác:
 ```
 python scripts/sync_workspaces.py pull CFG_LTC_LONDON_V3_5
 ```
 
 Sau đó mới tiếp tục các bước bên dưới.
+
 
 ---
 

@@ -2,6 +2,10 @@
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
+> **📅 PHIÊN GIAO DỊCH:** LTC NY — Hoạt động từ **04:00 trở đi (GMT+7)**. Tập trung vào phiên New York open, thanh khoản USD cao nhất trong ngày, tương quan mạnh với S&P500, DXY. Volume lớn → model cần xử lý momentum đảo chiều và breakout giả.
+
+> **⏱️ THỜI GIAN CHẠY:** Task NY **không có giới hạn thời gian** — chạy liên tục đến khi Early Stop tự động hoặc người dùng tắt thủ công.
+
 Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_LTC_NY_V3_5` và **trực tiếp chạy huấn luyện (train) trên máy cục bộ này**.
 
 Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:

@@ -2,7 +2,28 @@
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
+> **📅 PHIÊN GIAO DỊCH:** LTC ASIAN — Hoạt động từ **22:00 đến 02:00 (GMT+7)**. Tập trung vào liquidity châu Á, tín hiệu BTC/ETH sớm, volume thấp → cần model có ngưỡng confidence cao hơn để lọc noise.
+
 Hệ thống gọi bạn định kỳ mỗi 10 phút. Bạn đóng vai trò **Kỹ sư AI Quant cao cấp** để tìm cấu hình tốt nhất cho `CFG_LTC_ASIAN_V3_5` và **trực tiếp chạy huấn luyện trên máy cục bộ này**.
+
+---
+
+## ⏰ BƯỚC -1: KIỂM TRA THỜI GIAN (BẮT BUỘC LÀM ĐẦU TIÊN)
+
+Lấy giờ hiện tại (GMT+7) và so sánh với ngưỡng **02:00 sáng**:
+
+```powershell
+$now = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, "SE Asia Standard Time")
+Write-Host "Giờ hiện tại (GMT+7): $($now.ToString('HH:mm'))"
+```
+
+**Nếu giờ hiện tại >= 02:00 (sáng):**
+1. Dừng lại NGAY, KHÔNG thực hiện bất kỳ bước nào tiếp theo.
+2. **Kích hoạt task London:** Sửa `.agent/tasks.json` — tìm id `ltc_london_auto_tuning_local`, đặt `"enabled": true` và `"nextRunTime"` = timestamp hiện tại.
+3. **Tắt task này:** Tìm id `ltc_asian_auto_tuning_local`, đặt `"enabled": false`.
+4. Gọi Telegram: `python .agent/send_to_tele.py "⏰ [AUTO-SWITCH] 02:00 AM — Chuyển sang phiên LONDON!" --done`
+
+**Nếu giờ hiện tại < 02:00:** Tiếp tục các bước bên dưới bình thường.
 
 ---
 
