@@ -4,14 +4,14 @@
       "id": "ltc_ny_auto_tuning_local",
       "enabled": false,
       "promptFile": ".agent/periodic_prompt_ltc_ny_local.md",
-      "nextRunTime": 1777082905966,
+      "nextRunTime": 1777087261008,
       "intervalMinutes": 10
     },
     {
       "id": "ltc_london_auto_tuning_local",
       "enabled": true,
       "promptFile": ".agent/periodic_prompt_ltc_london_local.md",
-      "nextRunTime": 1777082905966,
+      "nextRunTime": 1777086014770,
       "intervalMinutes": 10
     },
     {
