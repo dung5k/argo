@@ -1,0 +1,6 @@
+Run: run_20260425_192853_v3_ldn_12
+Thay đổi so với ldn_11: NUM_LAYERS: 3→2 | D_MODEL: 128→64 (giữ nguyên WIN=15, BATCH=256, LR=1e-5)
+Lý do: ldn_11 (LAYERS=3, D_MODEL=128) EARLY STOP Ep58 với Best=0.2712 — WR < 50% liên tục, không cải thiện từ Ep5→Ep32. Phân tích lịch sử cho thấy run_j (Score=0.4519 🥇) dùng LAYERS=2+D_MODEL=64 (kiến trúc nhỏ hơn). Win=15 tạo chuỗi ngắn → ít thông tin mỗi bước → cần model đơn giản, ít tham số hơn để không overfit. Giả thuyết: kiến trúc nhỏ (LAYERS=2/D_MODEL=64) phù hợp hơn với window ngắn.
+Kỳ vọng: Composite Score vượt 0.40, WR > 53% tại Ep8-12 (như run_j), cân bằng Buy/Sell tốt. Nếu thành công, sẽ thử tăng LR lên 2e-5 hoặc 3e-5 (clone hoàn toàn run_j) để vượt 0.45.
+Baseline hiện tại: 0.4086 (ldn_6: WIN=30, BATCH=64, LR=1e-5, LAYERS=3, D_MODEL=128). Toàn lịch sử: 0.4519 (run_j: WIN=15, BATCH=256, LR=3e-5, LAYERS=2, D_MODEL=64).
+Ghi chú: Đây là lần đầu thử LAYERS=2+D_MODEL=64 trong dòng ldn_*. Đây là thử nghiệm kiến trúc quan trọng nhất. Nếu thất bại → kết luận ldn_* không thể tái lập run_j do dữ liệu khác biệt.
