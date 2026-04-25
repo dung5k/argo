@@ -1,0 +1,6 @@
+Run: run_20260425_143219_v3_ldn_7
+Thay đổi so với run trước (ldn_6): BATCH_SIZE: 64 → 32
+Lý do: ldn_6 (D_MODEL=128, LR=1e-5, WIN=30, BATCH=64) đạt kỷ lục 0.4086 tại Ep9 với WR@57%=76.7% và Buy/Sell hoàn toàn cân bằng. Thử BATCH=32 để gradient update dày hơn 2x mỗi epoch — với D_MODEL=128 lớn, batch nhỏ hơn có thể giúp model học được pattern vi mô tốt hơn, hội tụ tốt hơn ở giai đoạn đầu.
+Kỳ vọng: Score vượt 0.4086, WR@57%+ tăng thêm, Bias tiếp tục cân bằng. Nếu BATCH=32 hội tụ nhanh hơn BATCH=64 → xác nhận batch nhỏ phù hợp kiến trúc lớn cho London.
+Baseline hiện tại: 0.4086 (ldn_6, Epoch 9, D_MODEL=128, LR=1e-5, BATCH=64, WINDOW=30, Binance-only)
+Ghi chú: Chỉ thay đổi BATCH để cô lập tác động hoàn toàn. Nếu BATCH=32 kém hơn → BATCH=64 là tối ưu, chuyển hướng thử LR=5e-6.
