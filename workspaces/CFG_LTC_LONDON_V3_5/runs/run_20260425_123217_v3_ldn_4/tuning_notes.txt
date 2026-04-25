@@ -1,0 +1,6 @@
+Run: run_20260425_123217_v3_ldn_4
+Thay đổi so với run trước (ldn_3): WINDOW_SIZE: 30 → 60
+Lý do: ldn_3 (WINDOW=30) đạt Score=0.3874 — vượt xa ldn_1 (WINDOW=15, Score=0.3095). Xu hướng rõ ràng: WINDOW lớn hơn → Score tốt hơn. Tiếp tục kiểm tra WINDOW=60 để xem gradient cải thiện có còn dương không. WINDOW=60 tương đương 1 giờ dữ liệu M1, phù hợp với chu kỳ dao động phiên London.
+Kỳ vọng: Score vượt 0.3874, WR@65%+ tăng thêm, bias tiếp tục cân bằng.
+Baseline hiện tại: 0.3874 (ldn_3, Epoch 33, BATCH=64, LR=3e-5, WINDOW=30, Binance-only)
+Ghi chú: Nếu WINDOW=60 tốt hơn WINDOW=30, sẽ thử tiếp WINDOW=90 hoặc kết hợp D_MODEL lớn hơn.
