@@ -1,0 +1,6 @@
+Run: run_20260426_010800_v3_asian_28
+Thay đổi: Quay lui, tắt ORDER_FLOW và LR_SCHEDULER="cosine_warm". Bật VOL_REGIME=true.
+Lý do: asian_27 có Score giảm nhẹ xuống 0.4825. Dù có peak cao (0.621) nhưng epoch ổn định nhất theo Early Stopping lại không vượt được baseline (asian_12=0.5087). Theo nguyên tắc "Score GIẢM -> quay lui", tôi quyết định gỡ 2 vũ khí này. Thay vào đó, tôi thử nghiệm VOL_REGIME=true (One-hot High/Low volatility regime) để xem liệu việc đánh dấu các pha volatility thấp/cao có giúp mô hình phân biệt được đâu là tín hiệu nhiễu phiên Á hay không.
+Kỳ vọng: VOL_REGIME cung cấp context về độ biến động, giúp Score vượt 0.5087.
+Nguồn cảm hứng: asian_12
+Baseline: asian_12=0.5087 (Ep4)
