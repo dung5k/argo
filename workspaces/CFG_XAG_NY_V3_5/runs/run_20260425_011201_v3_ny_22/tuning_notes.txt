@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 18 (D_MODEL=64).
+- Thay đổi duy nhất: Tăng WINDOW_SIZE từ 60 lên 90 (và sửa corr_60 thành corr_90 tương ứng).
+
+Kỳ vọng điều gì xảy ra?
+- Với bộ não cực nhỏ (D_MODEL=64), có thể nó cần "nhìn" xa hơn về quá khứ (90 phút thay vì 60 phút) để thu thập đủ lượng thông tin cần thiết bù đắp cho kích thước nơ-ron bé gọn của mình. Nếu Score vượt 0.573, thì việc ghép não nhỏ + tầm nhìn xa là tối ưu. Nếu tụt, 60 nến vẫn là độ trễ lý tưởng nhất của dòng tiền.

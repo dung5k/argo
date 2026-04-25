@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 3 (Score 0.544, BATCH=512, WINDOW=60, TP/SL=30, LR=1e-5).
+- Thay đổi: Tăng MAX_HOLD_BARS từ 8 lên 15.
+
+Kỳ vọng điều gì xảy ra?
+- Các thử nghiệm giảm tốc độ (Run 6) và tăng tầm nhìn (Run 4) đều thất bại vì làm giảm đáng kể số lượng tín hiệu. Lần này ta giữ nguyên cấu hình vô địch Run 3 nhưng điều chỉnh thời gian giữ lệnh. Vì phiên London di chuyển chậm hơn NY, việc ép buộc đóng lệnh Hit & Run (30 pips) trong vỏn vẹn 8 phút có thể hơi gắt gao, khiến nhiều lệnh đang có lãi nhưng chưa chạm mốc bị đóng non. Tăng thời hạn lên 15 phút sẽ cho giá đủ thời gian trôi đến mốc 30 pips trong sự êm ả của London, kỳ vọng sẽ gia tăng lượng Win Rate và Total Signals.

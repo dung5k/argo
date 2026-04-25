@@ -1,0 +1,6 @@
+Lượt này thay đổi tham số gì?
+- Base: Run 1 (Score 0.284).
+- Thay đổi: Giảm TP_PIPS và SL_PIPS từ 60 xuống 40.
+
+Kỳ vọng điều gì xảy ra?
+- Phiên London thường di chuyển êm ả và ít giật cục hơn phiên New York. Việc giữ biên độ 60 pips của NY cho London là quá rộng, khiến giá thường đi ngang và dính hold-time limit hoặc bị quay đầu cắn Stoploss do nhiễu. Bằng cách hạ TP/SL xuống 40 pips, kỳ vọng mô hình sẽ chốt lời nhanh gọn hơn (hit & run), cải thiện đáng kể Win Rate và Score.

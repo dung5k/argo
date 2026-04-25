@@ -33,3 +33,7 @@ desktop.ini
 .agents/
 .vscode/
 workspaces/
+# Machine-specific task scheduler - do NOT sync
+.agent/tasks.json
+
+.agent/tasks.json
