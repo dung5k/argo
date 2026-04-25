@@ -1,6 +1,0 @@
-Run: run_20260425_090914_v3_ldn_1
-Thay đổi so với run tốt nhất trước (run_j): BATCH_SIZE: 256 → 64 | Macro: MT5 (DXYm/USTECm/XAUUSDm) → Binance-only (BTC/ETH/BCH/DOGE/XRP/SOL)
-Lý do: Bài học từ LTC NY run_aa (BATCH=64) cho thấy batch nhỏ giảm overfitting hiệu quả. London là phiên đầu tiên trên máy local nên bắt đầu với Binance-only, giữ LR=3e-5 của best run_j.
-Kỳ vọng: Score đạt 0.20+ (có thể thấp hơn 0.4519 do thiếu MT5 macro nhưng kiểm tra xem BATCH=64 có ổn định hơn không).
-Baseline hiện tại: 0.4519 (run_j - có MT5 macro, máy khác)
-Ghi chú: WINDOW=15 giữ nguyên theo best config của London. Đây là lần đầu chạy London trên máy local headless.

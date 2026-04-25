@@ -1,6 +1,0 @@
-Run: run_20260425_112216_v3_ldn_2
-Thay đổi so với run trước (ldn_1): BATCH_SIZE: 64 → 128
-Lý do: ldn_1 đạt Score=0.3095 tại Epoch 48 rồi plateau 13 epoch liên tiếp (Score dao động 0.24-0.30, không vượt). BATCH lớn hơn giúp gradient ổn định hơn trong giai đoạn fine-tune cuối, giảm nhiễu và có thể giúp model thoát plateau.
-Kỳ vọng: Score tăng vượt 0.32, bias Sell giảm (Bal tiến về 0.50), Val Loss ổn định hơn.
-Baseline hiện tại: 0.3095 (ldn_1, Epoch 48, BATCH=64, LR=3e-5, WINDOW=15, Binance-only)
-Ghi chú: Đây là A/B test đơn biến — chỉ thay BATCH để cô lập tác động. Giữ nguyên tất cả tham số còn lại.

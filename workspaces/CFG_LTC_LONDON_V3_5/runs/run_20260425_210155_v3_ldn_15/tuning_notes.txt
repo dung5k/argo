@@ -1,6 +1,0 @@
-Run: run_20260425_210155_v3_ldn_15
-Thay đổi so với ldn_14: LR: 2e-5→3e-5 (giữ nguyên WIN=30, BATCH=64, LAYERS=3, D_MODEL=128, WARMUP=30)
-Lý do: Phân tích source code train_v3.py phát hiện ReduceLROnPlateau(patience=10, factor=0.5) là cứng trong code — không override được từ config. WARMUP_EPOCHS không ảnh hưởng đến scheduler. Với LR=2e-5 scheduler giảm: 2e-5→1e-5→5e-6 (dead zone). Với LR=3e-5 scheduler giảm: 3e-5→1.5e-5→7.5e-6, mức 1.5e-5 vẫn còn lực học tốt. LR=3e-5 chính xác là LR của run_j (Score=0.4519 — kỷ lục mọi thời).
-Kỳ vọng: Score tại mức scheduler-1 (1.5e-5) sẽ cao hơn so với ldn_13/14. Best Score vượt 0.4086 (Baseline ldn_6). Đây là thử nghiệm A/B thuần túy: WIN=30+BATCH=64 (đã chứng minh tốt ở ldn_6) + LR=3e-5 (LR tốt nhất từ run_j).
-Baseline hiện tại: 0.4086 (ldn_6). Cục bộ tốt nhất: ldn_13=0.3847, ldn_14=0.3656 (cả 2 dùng LR=2e-5). Kỳ lục mọi thời: 0.4519 (run_j: LR=3e-5, BATCH=256, WIN=15 — cloud data).
-Ghi chú: Đây là thử nghiệm cuối cùng trong series LR tuning (1e-5→2e-5→3e-5). Nếu thất bại → kết luận WIN=30+BATCH=64 không phù hợp với LR cao, cần thử BATCH=128 hoặc BATCH=256 kết hợp LR=3e-5 (gần với run_j hơn).

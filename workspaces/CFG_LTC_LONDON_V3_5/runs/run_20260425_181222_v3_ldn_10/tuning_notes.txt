@@ -1,6 +1,0 @@
-Run: run_20260425_181222_v3_ldn_10
-Thay đổi so với run trước (ldn_6 - best baseline): WINDOW_SIZE: 30 → 15; giữ nguyên LR=1e-5, LAYERS=3, D_MODEL=128, BATCH=64
-Lý do: ldn_9 xác nhận LR=1e-5 là tối ưu tuyệt đối (LR=5e-6 chậm hội tụ và kém 18.5%). Chiều hướng chưa khai thác: WINDOW_SIZE. WIN=15 (ngắn hơn) giúp model tập trung vào mẫu hình ngắn hạn của phiên London (mở cửa châu Âu 14:00-16:00 GMT+7), phản ứng nhanh hơn với biến động giờ đầu.
-Kỳ vọng: Composite Score tăng vượt 0.4086, hội tụ nhanh hơn (tại Ep5-8 thay vì Ep9), WR cải thiện tại ngưỡng cao, bias Buy/Sell cân bằng hơn do window ngắn lọc noise tốt hơn.
-Baseline hiện tại: 0.4086 (ldn_6, Epoch 9, D_MODEL=128, LR=1e-5, BATCH=64, LAYERS=3, WINDOW=30, Binance-only)
-Ghi chú: Đây là thử nghiệm WINDOW_SIZE đầu tiên. Nếu WIN=15 thành công → thử WIN=20 hoặc WIN=45. Nếu thất bại → kết luận WIN=30 là tối ưu và chuyển sang thử TP/SL ratio.

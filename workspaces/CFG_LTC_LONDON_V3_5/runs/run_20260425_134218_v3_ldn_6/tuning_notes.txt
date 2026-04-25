@@ -1,6 +1,0 @@
-Run: run_20260425_134218_v3_ldn_6
-Thay đổi so với run trước (ldn_5): LEARNING_RATE: 3e-5 → 1e-5; WARMUP_EPOCHS: 20 → 30 (phù hợp LR thấp hơn)
-Lý do: ldn_5 (D_MODEL=128, LR=3e-5) đạt Best=0.3255 tại Ep10 nhưng sau đó Overfitting rõ ràng (Val Loss tăng từ Ep10, Bias Buy ngày càng nặng đến Ep16). D_MODEL=128 có nhiều tham số hơn D_MODEL=64 nên cần LR thấp hơn để gradient ổn định và không overfit sớm.
-Kỳ vọng: Score vượt 0.3874 (ldn_3 baseline), Bias Buy giảm về cân bằng, hội tụ ổn định hơn ở giai đoạn cuối.
-Baseline hiện tại: 0.3874 (ldn_3, Epoch 33, BATCH=64, LR=3e-5, WINDOW=30, D_MODEL=64, Binance-only)
-Ghi chú: Chỉ thay đổi LR để cô lập tác động. Nếu LR=1e-5 + D_MODEL=128 vượt 0.3874 → xác nhận kiến trúc lớn cần LR thấp hơn cho London.

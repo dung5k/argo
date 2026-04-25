@@ -1,6 +1,0 @@
-Run: run_20260425_115216_v3_ldn_3
-Thay đổi so với run trước (ldn_2): BATCH_SIZE: 128 → 64 (quay lại best); WINDOW_SIZE: 15 → 30
-Lý do: A/B test ldn_2 (BATCH=128) thất bại — Score chỉ đạt 0.1931 vs baseline 0.3095 (kém hơn 38%). BATCH=64 đã được xác nhận là tốt hơn. Thử WINDOW=30 để model nhìn lại chuỗi dài hơn (30 nến thay vì 15), có thể giúp nắm bắt các pattern phiên London tốt hơn.
-Kỳ vọng: Score vượt 0.3095, bias Buy/Sell cân bằng ổn định hơn ldn_1, WR @57%+ tăng lên.
-Baseline hiện tại: 0.3095 (ldn_1, Epoch 48, BATCH=64, LR=3e-5, WINDOW=15, Binance-only)
-Ghi chú: Đây là A/B test hai biến (BATCH quay lại 64 + WINDOW tăng lên 30). Nếu kết quả tốt hơn, lần sau sẽ thử WINDOW=60 hoặc giảm LR xuống 1e-5.

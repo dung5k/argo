@@ -1,6 +1,0 @@
-Run: run_20260425_130217_v3_ldn_5
-Thay đổi so với run trước (ldn_3, WINDOW=30 best): D_MODEL: 64 → 128; NUM_LAYERS: 2 → 3; WINDOW=30 (giữ nguyên config tốt nhất)
-Lý do: ldn_3 (WINDOW=30, D_MODEL=64) đạt Score=0.3874 — tốt nhất hiện tại. ldn_4 (WINDOW=60) đang gặp Bias Sell nặng (Bal<0.2) không cải thiện được sau Ep10. Thử tăng kiến trúc model (D_MODEL=128, 3 layers) trên nền WINDOW=30 đã được xác nhận — model lớn hơn có thể học các pattern phức tạp hơn của phiên London.
-Kỳ vọng: Score vượt 0.3874, WR@65%+ tăng thêm nhờ model lớn hơn, bias tiếp tục cân bằng.
-Baseline hiện tại: 0.3874 (ldn_3, Epoch 33, BATCH=64, LR=3e-5, WINDOW=30, D_MODEL=64, Binance-only)
-Ghi chú: Đây là A/B test hai biến (D_MODEL + NUM_LAYERS). Nếu cải thiện, sẽ xác nhận kiến trúc lớn hơn có lợi cho London.

@@ -1,6 +1,0 @@
-Run: run_20260425_200224_v3_ldn_13
-Thay đổi so với ldn_12: WIN: 15→30 | BATCH: 256→64 | LAYERS: 2→3 | D_MODEL: 64→128 | LR: 1e-5→2e-5 (quay về baseline ldn_6 + tăng LR)
-Lý do: Sau loạt thử nghiệm WIN=15 (ldn_10,11,12) đều thất bại (Best Score ≤ 0.27), quay về cấu hình gốc của Baseline tốt nhất ldn_6 (0.4086: WIN=30, BATCH=64, LAYERS=3, D_MODEL=128, LR=1e-5). Thay đổi DUY NHẤT là tăng LR từ 1e-5 lên 2e-5 — khám phá xem LR cao hơn có giúp hội tụ nhanh hơn và Score cao hơn không. Đây là A/B test chính xác nhất so với ldn_6.
-Kỳ vọng: Composite Score vượt 0.4086 (Baseline ldn_6), hội tụ nhanh hơn ldn_6 tại Ep5-9. WR ổn định >55%, cân bằng Buy/Sell. Nếu thành công, thử LR=3e-5 (clone hoàn toàn run_j với WIN=30) để xem có vượt 0.45 không.
-Baseline hiện tại: 0.4086 (ldn_6: WIN=30, BATCH=64, LR=1e-5, LAYERS=3, D_MODEL=128). Toàn lịch sử: 0.4519 (run_j: WIN=15, BATCH=256, LR=3e-5, LAYERS=2, D_MODEL=64 — nhưng không thể tái lập với Binance-only data).
-Ghi chú: WIN=15+BATCH nhỏ thất bại; WIN=15+BATCH=256 thất bại (WR<50%); WIN=30+BATCH=64 thành công ở ldn_6. Giả thuyết: dữ liệu Binance-only phù hợp WIN=30 hơn WIN=15. Thử LR=2e-5 để fine-tune trên kiến trúc đã hoạt động.

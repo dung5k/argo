@@ -1,6 +1,0 @@
-Run: run_20260425_220326_v3_ldn_17
-Thay đổi so với ldn_16: BATCH_SIZE: 128→256 (giữ nguyên WIN=30, LR=3e-5, LAYERS=3, D_MODEL=128)
-Lý do: ldn_15 (BATCH=64) đạt Best=0.4212 nhưng bị bias nặng giai đoạn đầu. ldn_16 (BATCH=128) cho WR ổn định hơn ngay từ Ep5-6 (55.3% @53%, cân bằng B/S). Xu hướng rõ: BATCH lớn hơn → gradient ổn định hơn với LR=3e-5. BATCH=256 là bước tiếp cận hoàn toàn combo run_j (run_j: LR=3e-5+BATCH=256+WIN=15=Score 0.4519). ldn_17 chỉ khác WIN=30 vs WIN=15 của run_j — test xem WIN=30 có đủ tốt không.
-Kỳ vọng: Score vượt 0.4212 (ldn_15). Gradient ổn định nhất trong tất cả các lượt thử với BATCH=256. Cân bằng Buy/Sell tốt ngay từ Ep3-5. Nếu thành công → xác nhận WIN=30+LR=3e-5+BATCH=256 là combo tốt nhất cho Binance-only data.
-Baseline hiện tại: 0.4212 (ldn_15: WIN=30, BATCH=64, LR=3e-5). ldn_16 (BATCH=128) đang chạy với WR=55.3% @Ep6 — rất tích cực. Kỷ lục mọi thời (cloud): 0.4519 (run_j: LR=3e-5+BATCH=256+WIN=15).
-Ghi chú: Lộ trình BATCH: 64(ldn_6=0.4086)→64+LR=3e-5(ldn_15=0.4212)→128+LR=3e-5(ldn_16,đang chạy)→256+LR=3e-5(ldn_17). Sau ldn_17, nếu vẫn chưa vượt 0.45 → thử WIN=60 hoặc WIN=45 kết hợp BATCH=256+LR=3e-5 (mở rộng context window).

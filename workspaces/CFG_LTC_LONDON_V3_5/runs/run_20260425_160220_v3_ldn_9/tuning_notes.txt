@@ -1,6 +1,0 @@
-Run: run_20260425_160220_v3_ldn_9
-Thay đổi so với run trước (ldn_6 - best): LEARNING_RATE: 1e-5 → 5e-6; NUM_LAYERS: quay về 3 (đã xác nhận LAYERS=4 kém hơn)
-Lý do: ldn_6 (LR=1e-5, LAYERS=3) đạt kỷ lục 0.4086 tại Ep9 nhưng Early Stop ở Ep29. ldn_8 (LAYERS=4) chỉ đạt 0.2953 — xác nhận LAYERS=3 là kiến trúc tối ưu. Thử LR=5e-6 (giảm 2x) để xem gradient cực nhỏ có giúp hội tụ ổn định hơn, tránh overfitting từ Ep10 trở đi như ldn_6.
-Kỳ vọng: Score vượt 0.4086, hội tụ chậm hơn nhưng ổn định hơn qua nhiều epoch, không overfitting sớm.
-Baseline hiện tại: 0.4086 (ldn_6, Epoch 9, D_MODEL=128, LR=1e-5, BATCH=64, LAYERS=3, WINDOW=30, Binance-only)
-Ghi chú: Đây là thử nghiệm LR thấp hơn trên nền kiến trúc đã tối ưu. Nếu LR=5e-6 không cải thiện → kết luận LR=1e-5 là tối ưu tuyệt đối, không còn hướng LR để khai thác.

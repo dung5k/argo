@@ -1,6 +1,0 @@
-Run: run_20260425_190211_v3_ldn_11
-Thay đổi so với ldn_10: BATCH_SIZE: 64 → 256 (giữ nguyên WIN=15, LR=1e-5, LAYERS=3, D_MODEL=128)
-Lý do: ldn_10 (WIN=15+BATCH=64) thất bại hoàn toàn — WR < 50% liên tục (Ep27: 44.1%), Score chỉ đạt 0.2048 sau 27 epoch. Phân tích Top 3 toàn lịch sử cho thấy BATCH=256 là yếu tố quyết định: run_j (Score=0.4519: WIN=15+BATCH=256+LR=3e-5) và run_n (Score=0.4505: WIN=15+BATCH=256+LR=2e-5) đều dùng BATCH=256. BATCH lớn → gradient ổn định hơn → hội tụ tốt hơn với WIN=15.
-Kỳ vọng: Composite Score vượt 0.40 (tốt hơn ldn_6=0.4086), hội tụ nhanh từ Ep5-10 như các run Top 3, Buy/Sell cân bằng và WR > 55%.
-Baseline hiện tại: 0.4086 (ldn_6) — và tổng thể toàn bộ lịch sử là 0.4519 (run_j: WIN=15+BATCH=256+LR=3e-5+LAYERS=2+D_MODEL=64).
-Ghi chú: Đây là combo vàng cần tái lập với LR=1e-5 (sweet spot đã xác nhận) và LAYERS=3/D_MODEL=128 (cấu trúc hiện tại). Nếu thành công → thử tăng LR lên 2e-5 hoặc 3e-5 để xem có vượt 0.45 không.
