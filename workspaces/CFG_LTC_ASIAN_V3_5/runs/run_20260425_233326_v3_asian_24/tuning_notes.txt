@@ -1,6 +1,0 @@
-Run: run_20260425_233326_v3_asian_24
-Thay đổi: POOLING: "mean" (mặc định) → "attention" (V2 Learnable Attention Pooling)
-Lý do: asian_12 (0.5087, Ep4) đạt kỷ lục với kiến trúc V1 thuần túy (WIN=20, BATCH=256, D=64, LAYERS=2) — cân bằng Buy/Sell tuyệt đối (91/91). Bước tiếp theo: kiểm tra xem Attention Pooling có giúp model tập trung vào timestep quan trọng của phiên Asian hay không. Giữ NGUYÊN mọi tham số khác để cô lập tác động của 1 biến duy nhất.
-Kỳ vọng: Score > 0.5087. Attention Pooling thường hiệu quả hơn Mean Pooling khi chuỗi thời gian có vùng quan trọng cục bộ (như spike volume lúc market open châu Á). Nếu score giảm → kết luận POOLING=mean là tối ưu cho phiên Asian.
-Nguồn cảm hứng: asian_12 (Score=0.5087, Ep4) — WIN=20, BATCH=256, LR=3e-5, D=64, LAYERS=2, V1 thuần túy
-Baseline: asian_12=0.5087 (Ep4) | GAP với London: 0.4743-0.5087 = âm (Asian đang TỐT HƠN London!)

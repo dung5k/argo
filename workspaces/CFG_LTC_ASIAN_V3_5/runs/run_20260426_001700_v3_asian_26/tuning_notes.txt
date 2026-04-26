@@ -1,6 +1,0 @@
-Run: run_20260426_001700_v3_asian_26
-Thay đổi: Bật ORDER_FLOW = true (Delta Volume + Cumulative Delta). POOLING và CLS_HEAD trả về default.
-Lý do: asian_25 (CLS_HEAD="residual") đã thất bại hoàn toàn (Score ~0.195) và Early Stopping ở Epoch 42. Các cải tiến NN (Attention Pooling, Residual Head) chưa hiệu quả với dữ liệu hiện tại. Vì vậy ta chuyển sang thử nghiệm Feature Engineering V2: ORDER_FLOW. Volume và Delta Volume rất quan trọng trong việc xác định dòng tiền phiên Asian (khi volume thấp).
-Kỳ vọng: Score cải thiện và vượt qua 0.5087 nhờ tín hiệu Order Flow.
-Nguồn cảm hứng: asian_12 (Score=0.5087)
-Baseline: asian_12=0.5087 (Ep4)

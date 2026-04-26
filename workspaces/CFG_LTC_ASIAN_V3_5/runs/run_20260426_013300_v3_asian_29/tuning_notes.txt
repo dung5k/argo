@@ -1,6 +1,0 @@
-Run: run_20260426_013300_v3_asian_29
-Thay đổi: Bỏ VOL_REGIME. Thử vũ khí cuối cùng trong kho V2: MTF_WINDOWS = [15, 60] (Multi-Timeframe).
-Lý do: asian_28 với VOL_REGIME=true cho tín hiệu cân bằng cực tốt nhưng WinRate thấp khiến Score chỉ đạt 0.3978 (giảm mạnh). Quay lui về baseline. Việc thêm dữ liệu đa khung thời gian (15m, 60m) có thể giúp mạng lưới "nhìn" được bức tranh dài hạn của thị trường khi thanh khoản ngắn hạn (5m) bị nhiễu.
-Kỳ vọng: Cung cấp góc nhìn vĩ mô giúp Score vượt mốc 0.5087.
-Nguồn cảm hứng: asian_12
-Baseline: asian_12=0.5087 (Ep4)
