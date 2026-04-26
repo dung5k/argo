@@ -133,7 +133,7 @@ Kiểm tra thư mục `workspaces/CFG_LTC_NY_V3_5/runs/`:
   3. Chạy hai lệnh sau để **CHUẨN BỊ TENSOR** trước:
      ```
      python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
-     python scripts/upload_v3_dataset.py --config workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
+     python scripts/upload_v3_dataset.py --no-push --config workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
      ```
   4. Commit và đẩy lên Git:
      ```

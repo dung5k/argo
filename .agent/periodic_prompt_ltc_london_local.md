@@ -10,24 +10,7 @@ Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được 
 
 ---
 
-## ⏰ BƯỚC -1: KIỂM TRA THỚI GIAN (BẮT BUỘC LÀM ĐẦU TIÊN)
 
-Lấy giờ hiện tại (GMT+7) và so sánh với ngưỡng **04:00 sáng**:
-
-```powershell
-$now = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, "SE Asia Standard Time")
-Write-Host "Giờ hiện tại (GMT+7): $($now.ToString('HH:mm'))"
-```
-
-**Nếu giờ hiện tại >= 04:00 (sáng):**
-1. Dừng lại NGAY, KHÔNG thực hiện bất kỳ bước nào tiếp theo.
-2. **Kích hoạt task NY:** Sửa `.agent/tasks.json` — tìm id `ltc_ny_auto_tuning_local`, đặt `"enabled": true` và `"nextRunTime"` = timestamp hiện tại.
-3. **Tắt task này:** Tìm id `ltc_london_auto_tuning_local`, đặt `"enabled": false`.
-4. Gọi Telegram: `python .agent/send_to_tele.py "⏰ [AUTO-SWITCH] 04:00 AM — Chuyển sang phiên NY!" --done`
-
-**Nếu giờ hiện tại < 04:00:** Tiếp tục các bước bên dưới bình thường.
-
----
 
 ## BƯỚC TIỀN XỬ LÝ: Đồng bộ từ HuggingFace
 
@@ -150,7 +133,7 @@ Kiểm tra thư mục `workspaces/CFG_LTC_LONDON_V3_5/runs/`:
        ```
   3. Chạy lệnh sau để **CHUẨN BỊ TENSOR** trước:
      ```
-     python scripts/upload_v3_dataset.py --config workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json
+     python scripts/upload_v3_dataset.py --no-push --config workspaces/CFG_LTC_LONDON_V3_5/runs/<RUN_ID>/config.json
      ```
   4. Commit và đẩy lên Git:
      ```

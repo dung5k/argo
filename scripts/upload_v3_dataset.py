@@ -95,6 +95,7 @@ def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='data/bot_config_xau_ny_v3.json')
+    parser.add_argument('--no-push', action='store_true', help='Do not upload to HuggingFace')
     args = parser.parse_args()
 
     # 1. Đọc config
@@ -287,8 +288,8 @@ if __name__ == "__main__":
     hf_token = os.environ.get("HF_TOKEN")
     
     sync_chunks = config.get('HF_CLOUD', {}).get('SYNC_CHUNKS', True)
-    if not sync_chunks:
-        print("⚠️ BỎ QUA UPLOAD: Cấu hình 'SYNC_CHUNKS' = false (Chạy Cục bộ).")
+    if not sync_chunks or getattr(args, 'no_push', False):
+        print("⚠️ BỎ QUA UPLOAD: Cấu hình 'SYNC_CHUNKS' = false hoặc dùng --no-push (Chạy Cục bộ).")
         sys.exit(0)
     
     
