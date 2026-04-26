@@ -81,10 +81,29 @@ def plot_and_notify_v3(
         _project_root = os.path.dirname(os.path.dirname(_this_dir))
         tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
         tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        
+        # Đọc từ cấu hình của Extension VSCode
+        settings_path = os.path.join(_project_root, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            import re
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                if not tg_token:
+                    m = re.search(r'"antigravityBridge.teleBotToken"\s*:\s*"([^"]+)"', content)
+                    if m: tg_token = m.group(1)
+                if not tg_chat_id:
+                    m = re.search(r'"antigravityBridge.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                    if m: 
+                        chat_id_str = m.group(1).split(",")[0].strip()
+                        if chat_id_str: tg_chat_id = chat_id_str
+            except Exception:
+                pass
+
         if tg_token and tg_chat_id:
             try:
                 bot = TelegramBot(tg_token)
-                bot.send_photo(int(tg_chat_id), out_path, caption=f"📊 [V3] NY Validation ({cfg_id}) - Epoch {epoch}")
+                bot.send_photo(int(tg_chat_id), chart_path, caption=f"📊 [V3] Validation ({cfg_name}) - Epoch {epoch}")
                 print(f"  ✅ Đã gửi biểu đồ Telegram cho Epoch {epoch}.", flush=True)
             except Exception as e:
                 print(f"  ❌ Lỗi gửi Telegram Plot: {e}", flush=True)

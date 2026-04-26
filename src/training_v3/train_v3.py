@@ -350,14 +350,31 @@ def main():
     if not client_id or client_id == "UnknownClient":
         client_id = socket.gethostname()[:8]
     try:
-        # Cố gắng lấy Telegram credentials từ file JSON rồi fallback sang biến môi trường
-        # Ưu tiên lấy từ biến môi trường
+        # Cố gắng lấy Telegram credentials
         tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
         tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
         
+        # 1. Đọc từ cấu hình của Extension VSCode
+        settings_path = os.path.join(_ROOT, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            import re
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                if not tg_token:
+                    m = re.search(r'"antigravityBridge.teleBotToken"\s*:\s*"([^"]+)"', content)
+                    if m: tg_token = m.group(1)
+                if not tg_chat_id:
+                    m = re.search(r'"antigravityBridge.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                    if m: 
+                        chat_id_str = m.group(1).split(",")[0].strip()
+                        if chat_id_str: tg_chat_id = chat_id_str
+            except Exception:
+                pass
+                
         if tg_chat_id: tg_chat_id = int(tg_chat_id)
 
-        # Danh sách đường dẫn thử theo thứ tự ưu tiên
+        # 2. Danh sách đường dẫn thử theo thứ tự ưu tiên (Fallback)
         tg_config_candidates = [
             os.path.join(_ROOT, ".agent", "telegram_bot.json"),
             os.path.join(_ROOT, "tg_config.json"),
@@ -370,14 +387,8 @@ def main():
                         tcfg = json.load(f)
                     tg_token   = tcfg.get("bot_token")
                     tg_chat_id = tcfg.get("allowed_chat_ids", [None])[0]
+                    if tg_chat_id: tg_chat_id = int(tg_chat_id)
                     break
-
-        if not tg_token:
-            # Fallback: đọc từ biến môi trường (client không có file config)
-            tg_token   = os.environ.get("TELEGRAM_BOT_TOKEN")
-            tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-            if tg_chat_id:
-                tg_chat_id = int(tg_chat_id)
 
         if not tg_token or not tg_chat_id:
             raise ValueError("Không tìm thấy Telegram credentials (file JSON hoặc env vars)")
