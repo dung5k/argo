@@ -79,6 +79,17 @@ def plot_and_notify_v3(
     if not tg_config_path:
         _this_dir = os.path.dirname(os.path.abspath(__file__))
         _project_root = os.path.dirname(os.path.dirname(_this_dir))
+        tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        if tg_token and tg_chat_id:
+            try:
+                bot = TelegramBot(tg_token)
+                bot.send_photo(int(tg_chat_id), out_path, caption=f"📊 [V3] NY Validation ({cfg_id}) - Epoch {epoch}")
+                print(f"  ✅ Đã gửi biểu đồ Telegram cho Epoch {epoch}.", flush=True)
+            except Exception as e:
+                print(f"  ❌ Lỗi gửi Telegram Plot: {e}", flush=True)
+            return
+
         _candidates = [
             os.path.join(_project_root, ".agent", "telegram_bot.json"),
             os.path.join("C:/argo/.agent", "telegram_bot.json"),

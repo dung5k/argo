@@ -12,7 +12,7 @@ function logDebug(msg) {
     } catch(e) { console.error("logDebug Error:", e); }
 }
 let server;
-const PORT = 38124;
+let PORT = 0;
 
 let telegramPollingTimeout;
 let periodicIntervalId;
@@ -111,10 +111,16 @@ function getConfig() {
         tasksConfig = path.join(root, tasksConfig);
     }
     
+    const token = config.get('teleBotToken') || '';
+    const chatId = config.get('whitelistChatIds') || '';
+    
+    if (token) process.env.TELEGRAM_BOT_TOKEN = token;
+    if (chatId) process.env.TELEGRAM_CHAT_ID = chatId;
+
     return {
         botActive: config.get('botActive') ?? true,
-        teleBotToken: config.get('teleBotToken') || '',
-        whitelistChatIds: config.get('whitelistChatIds') || '',
+        teleBotToken: token,
+        whitelistChatIds: chatId,
         workingDir: workingDir,
         tasksConfigFile: tasksConfig
     };
@@ -242,21 +248,14 @@ async function handleMessage(message) {
     }
     
     if (text === '/reset' || text === '/cancel' || text === '/stop') {
-        isAgentBusy = false;
         activeTypingChats.clear();
-        if (busyTimeout) clearTimeout(busyTimeout);
-        const config = getConfig();
-        if (config.workingDir) {
-            const pendingPath = path.join(config.workingDir, 'pending_messages.json');
-            try { fs.unlinkSync(pendingPath); } catch(e){}
-        }
         
         // Thử gọi lệnh Stop của hệ thống Chat/Agent trong VS Code
         try {
             vscode.commands.executeCommand('workbench.action.chat.cancel');
         } catch (e) {}
 
-        sendTelegramMessage(chatId, "🛑 Đã phát lệnh Stop tới Agent, gỡ kẹt trạng thái bận và xoá toàn bộ hàng đợi!");
+        sendTelegramMessage(chatId, "🛑 Đã phát lệnh Stop tới Agent!");
         return;
     }
     
@@ -269,20 +268,10 @@ async function handleMessage(message) {
     }
     
     const fullQuery = `${queryToAgent}\n\n__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__`;
-    
-    if (isAgentBusy) {
-        logDebug(`[QUEUEING] Agent is busy, adding message to queue for ChatId: ${chatId}`);
-        queueMessage(chatId, queryToAgent);
-        sendTelegramMessage(chatId, "⏳ Anti đang bận xử lý tác vụ khác. Tin nhắn của bạn đã được đưa vào hàng đợi và sẽ tự động được xử lý ngay khi Anti rảnh! (Dùng /reset nếu muốn ngắt tác vụ hiện tại)");
-        return;
-    }
 
-    // Khởi tạo/cập nhật thông báo đã nhận
-    sendTelegramMessage(chatId, "✅ Đã nhận lệnh, Anti đang bắt đầu xử lý...");
+    // Luôn forward thẳng tới Agent, không cần đợi rảnh
+    sendTelegramMessage(chatId, "✅ Đã nhận, đang chuyển tới Anti...");
     activeTypingChats.add(chatId.toString());
-    
-    // Đặt typing indicator timeout (chỉ dùng cho mục đích hiển thị typing)
-    setAgentBusy();
     
     try {
         await vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery);
@@ -561,7 +550,16 @@ function startBridgeServer() {
     });
 
     server.listen(PORT, '127.0.0.1', () => {
+        PORT = server.address().port;
         console.log(`Auto Click Bridge Server listening on port ${PORT}`);
+        const config = getConfig();
+        if (config && config.workingDir) {
+            try {
+                if (!fs.existsSync(config.workingDir)) fs.mkdirSync(config.workingDir, { recursive: true });
+                fs.writeFileSync(path.join(config.workingDir, '.bridge_port'), PORT.toString());
+            } catch(e) { console.error("Error writing .bridge_port", e); }
+        }
+        ensureSendScript();
     });
 }
 
@@ -570,6 +568,27 @@ function setupTypingIndicator() {
         clearInterval(typingIntervalId);
     }
     typingIntervalId = setInterval(sendTypingAction, 4000);
+}
+
+// Watch .agent_done file signal (fallback khi send_to_tele.py gọi thẳng Telegram API)
+let doneFileWatcher = null;
+function setupDoneFileWatcher() {
+    if (doneFileWatcher) { try { doneFileWatcher.close(); } catch(e){} }
+    const config = getConfig();
+    if (!config.workingDir) return;
+    const doneFile = path.join(config.workingDir, '.agent_done');
+    // Poll mỗi 2 giây kiểm tra file .agent_done
+    doneFileWatcher = setInterval(() => {
+        if (fs.existsSync(doneFile)) {
+            try {
+                fs.unlinkSync(doneFile);
+                logDebug('[DONE SIGNAL] Received .agent_done file signal, freeing agent.');
+                freeAgent();
+            } catch(e) {
+                logDebug(`[DONE SIGNAL ERROR] ${e}`);
+            }
+        }
+    }, 2000);
 }
 
 function ensureSendScript() {
@@ -583,23 +602,95 @@ function ensureSendScript() {
 import json
 import urllib.request
 import urllib.error
+import os
 
-def send_to_telegram(content, is_done=False):
-    if not content:
-        return
-    url = 'http://127.0.0.1:38124/send-telegram'
+def get_bridge_port():
+    port_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".bridge_port")
+    try:
+        if os.path.exists(port_file):
+            with open(port_file, "r") as f:
+                return int(f.read().strip())
+    except:
+        pass
+    return None
+
+def get_telegram_config():
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        try:
+            agent_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(agent_dir)
+            settings_path = os.path.join(project_root, '.vscode', 'settings.json')
+            if os.path.exists(settings_path):
+                import re
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                if not token:
+                    m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+                    if m: token = m.group(1)
+                if not chat_id:
+                    m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                    if m: chat_id = m.group(1)
+        except Exception:
+            pass
+    return token, chat_id
+
+def send_via_bridge(content, is_done=False):
+    port = get_bridge_port()
+    if port is None: return False
+    url = f'http://127.0.0.1:{port}/send-telegram'
     data = json.dumps({'text': content, 'done': is_done}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
-        with urllib.request.urlopen(req) as response:
-            pass
-    except Exception as e:
-        print(f"Lỗi gửi HTTP request: {e}", file=sys.stderr)
+        with urllib.request.urlopen(req, timeout=3) as response:
+            return True
+    except:
+        return False
+
+def signal_done_to_extension():
+    agent_dir = os.path.dirname(os.path.abspath(__file__))
+    done_file = os.path.join(agent_dir, ".agent_done")
+    try:
+        with open(done_file, "w") as f:
+            f.write(str(os.getpid()))
+    except:
+        pass
+
+def send_via_telegram_api(content, is_done=False):
+    token, chat_ids = get_telegram_config()
+    if not token or not chat_ids:
+        print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
+        return False
+    
+    text = f"🤖 Antigravity:\n\n{content}"
+    success = False
+    for chat_id in chat_ids.split(","):
+        chat_id = chat_id.strip()
+        if not chat_id: continue
+        url = f'https://api.telegram.org/bot{token}/sendMessage'
+        data = json.dumps({'chat_id': chat_id, 'text': text}).encode('utf-8')
+        headers = {'Content-Type': 'application/json'}
+        req = urllib.request.Request(url, data=data, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as response:
+                success = True
+        except Exception as e:
+            print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
+    
+    if is_done:
+        signal_done_to_extension()
+    
+    return success
+
+def send_to_telegram(content, is_done=False):
+    if not content: return
+    if send_via_bridge(content, is_done): return
+    send_via_telegram_api(content, is_done)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        sys.exit(1)
+    if len(sys.argv) < 2: sys.exit(1)
     is_done = '--done' in sys.argv
     content = sys.argv[1]
     send_to_telegram(content, is_done)
@@ -610,7 +701,7 @@ if __name__ == '__main__':
 function activate(context) {
     console.log('Antigravity Bridge Bot is active');
     
-    ensureSendScript();
+    // ensureSendScript() is now called after server binds port
     
     // Start local server backward compatibility
     startBridgeServer();
@@ -619,6 +710,7 @@ function activate(context) {
     pollTelegram();
     setupPeriodicExecution();
     setupTypingIndicator();
+    setupDoneFileWatcher();
 
     let cmdRestart = vscode.commands.registerCommand('auto-click-bridge.restart', function () {
         isAgentBusy = false;
@@ -652,6 +744,7 @@ function deactivate() {
     if (telegramPollingTimeout) clearTimeout(telegramPollingTimeout);
     if (periodicIntervalId) clearInterval(periodicIntervalId);
     if (typingIntervalId) clearInterval(typingIntervalId);
+    if (doneFileWatcher) clearInterval(doneFileWatcher);
 }
 
 module.exports = {

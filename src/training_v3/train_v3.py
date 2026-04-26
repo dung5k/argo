@@ -351,21 +351,26 @@ def main():
         client_id = socket.gethostname()[:8]
     try:
         # Cố gắng lấy Telegram credentials từ file JSON rồi fallback sang biến môi trường
-        tg_token = None
-        tg_chat_id = None
+        # Ưu tiên lấy từ biến môi trường
+        tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        
+        if tg_chat_id: tg_chat_id = int(tg_chat_id)
 
         # Danh sách đường dẫn thử theo thứ tự ưu tiên
         tg_config_candidates = [
             os.path.join(_ROOT, ".agent", "telegram_bot.json"),
             os.path.join(_ROOT, "tg_config.json"),
         ]
-        for tg_config_path in tg_config_candidates:
-            if os.path.exists(tg_config_path):
-                with open(tg_config_path, "r", encoding="utf-8") as f:
-                    tcfg = json.load(f)
-                tg_token   = tcfg.get("bot_token")
-                tg_chat_id = tcfg.get("allowed_chat_ids", [None])[0]
-                break
+        
+        if not tg_token:
+            for tg_config_path in tg_config_candidates:
+                if os.path.exists(tg_config_path):
+                    with open(tg_config_path, "r", encoding="utf-8") as f:
+                        tcfg = json.load(f)
+                    tg_token   = tcfg.get("bot_token")
+                    tg_chat_id = tcfg.get("allowed_chat_ids", [None])[0]
+                    break
 
         if not tg_token:
             # Fallback: đọc từ biến môi trường (client không có file config)
