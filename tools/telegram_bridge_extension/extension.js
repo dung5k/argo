@@ -615,25 +615,28 @@ def get_bridge_port():
     return None
 
 def get_telegram_config():
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
-    if not token or not chat_id:
-        try:
-            agent_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(agent_dir)
-            settings_path = os.path.join(project_root, '.vscode', 'settings.json')
-            if os.path.exists(settings_path):
-                import re
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                if not token:
-                    m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
-                    if m: token = m.group(1)
-                if not chat_id:
-                    m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
-                    if m: chat_id = m.group(1)
-        except Exception:
-            pass
+    token = ""
+    chat_id = ""
+    try:
+        agent_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(agent_dir)
+        settings_path = os.path.join(project_root, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            import re
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+            if m: token = m.group(1)
+            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+            if m: chat_id = m.group(1)
+    except Exception:
+        pass
+        
+    if not token:
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    if not chat_id:
+        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+        
     return token, chat_id
 
 def send_via_bridge(content, is_done=False):
