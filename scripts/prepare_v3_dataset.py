@@ -332,9 +332,13 @@ def main():
         label_mode=label_mode,
         tp_pct=fe_cfg.get("TP_PCT", 0.003),
         sl_pct=fe_cfg.get("SL_PCT", 0.003),
+        spread_pct=fe_cfg.get("SPREAD_PCT", 0.0005),
+        tp_pips=fe_cfg.get("TP_PIPS", 10),
+        sl_pips=fe_cfg.get("SL_PIPS", 10),
+        spread_pips=fe_cfg.get("SPREAD_PIPS", 2),
         pip_size=fe_cfg.get("PIP_SIZE", 0.01)
     )
-    print(f"  TP={fe_cfg.get('TP_PCT',0.003)*100:.2f}% | SL={fe_cfg.get('SL_PCT',0.003)*100:.2f}% | MaxHold={fe_cfg['MAX_HOLD_BARS']}",
+    print(f"  TP={fe_cfg.get('TP_PCT',0.003)*100:.2f}% | SL={fe_cfg.get('SL_PCT',0.003)*100:.2f}% | SPREAD_PCT={fe_cfg.get('SPREAD_PCT',0.0005)*100:.2f}% | MaxHold={fe_cfg['MAX_HOLD_BARS']}",
           flush=True)
 
     label_df = labeler.apply_triple_barrier_fast_hit(df_raw, actual_open, actual_high, actual_low)

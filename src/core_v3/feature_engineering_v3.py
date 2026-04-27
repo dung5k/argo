@@ -541,7 +541,8 @@ class LabelingV3:
     - Pct mode (Crypto):     TP/SL tính theo % của giá vào lệnh (tp_pct, sl_pct)
     """
     def __init__(self, tp_pips=10, sl_pips=10, max_hold_bars=15, pip_size=0.1,
-                 label_mode='pip', tp_pct=0.003, sl_pct=0.003):
+                 label_mode='pip', tp_pct=0.003, sl_pct=0.003,
+                 spread_pips=0.0, spread_pct=0.0):
         self.max_hold_bars = max_hold_bars
         self.label_mode = label_mode  # 'pip' hoặc 'pct'
 
@@ -551,10 +552,12 @@ class LabelingV3:
         self.pip_size = pip_size
         self.tp_price = tp_pips * pip_size
         self.sl_price = sl_pips * pip_size
+        self.spread_price = spread_pips * pip_size
 
         # Pct mode params (dùng cho Crypto)
         self.tp_pct = tp_pct
         self.sl_pct = sl_pct
+        self.spread_pct = spread_pct
 
     def apply_triple_barrier(self, df, open_col, high_col, low_col):
         """
@@ -579,34 +582,60 @@ class LabelingV3:
             entry_price = open_prices[i + 1]  # Vào lệnh tại nến MỞ CỬA của nến tiếp theo
 
             if use_pct:
-                # % mode: TP/SL là tỷ lệ phần trăm của giá vào lệnh — bền vững với mọi mức giá
-                upper_barrier = entry_price * (1.0 + self.tp_pct)
-                lower_barrier = entry_price * (1.0 - self.sl_pct)
+                # % mode: TP/SL là tỷ lệ phần trăm của giá vào lệnh
+                buy_tp_barrier  = entry_price * (1.0 + self.tp_pct + self.spread_pct)
+                buy_sl_barrier  = entry_price * (1.0 - self.sl_pct + self.spread_pct)
+                sell_tp_barrier = entry_price * (1.0 - self.tp_pct - self.spread_pct)
+                sell_sl_barrier = entry_price * (1.0 + self.sl_pct - self.spread_pct)
             else:
-                # Pip mode: TP/SL là khoảng giá cố định (pips * pip_size)
-                upper_barrier = entry_price + self.tp_price
-                lower_barrier = entry_price - self.sl_price
+                # Pip mode: Tính cả Spread vào cản
+                buy_tp_barrier  = entry_price + self.tp_price + self.spread_price
+                buy_sl_barrier  = entry_price - self.sl_price + self.spread_price
+                sell_tp_barrier = entry_price - self.tp_price - self.spread_price
+                sell_sl_barrier = entry_price + self.sl_price - self.spread_price
 
             limit_idx = min(i + 1 + self.max_hold_bars, n_rows)
             
+            buy_result = 2  # 1=win, 0=loss, 2=pending
+            sell_result = 2 # 1=win, 0=loss, 2=pending
+
             for j in range(i + 1, limit_idx):
                 h = high_prices[j]
                 l = low_prices[j]
                 
-                # Kiểm tra nến nào cắn trên hoặc dưới trước
-                hit_upper = h >= upper_barrier
-                hit_lower = l <= lower_barrier
-                
-                if hit_upper and hit_lower:
-                    # Râu nến quét 2 đầu, ưu tiên Sideway để bảo toàn vốn
-                    labels[i] = 2
+                # Check lệnh BUY
+                if buy_result == 2:
+                    hit_buy_tp = h >= buy_tp_barrier
+                    hit_buy_sl = l <= buy_sl_barrier
+                    if hit_buy_tp and hit_buy_sl:
+                        buy_result = 0 # Quét 2 đầu -> Tính thua cho an toàn
+                    elif hit_buy_tp:
+                        buy_result = 1 # Chạm TP
+                    elif hit_buy_sl:
+                        buy_result = 0 # Chạm SL
+                        
+                # Check lệnh SELL
+                if sell_result == 2:
+                    hit_sell_tp = l <= sell_tp_barrier
+                    hit_sell_sl = h >= sell_sl_barrier
+                    if hit_sell_tp and hit_sell_sl:
+                        sell_result = 0 # Quét 2 đầu -> Tính thua cho an toàn
+                    elif hit_sell_tp:
+                        sell_result = 1
+                    elif hit_sell_sl:
+                        sell_result = 0
+                        
+                # Nếu cả 2 chiều đã có kết quả (thắng hoặc thua) thì không cần chạy tiếp các nến sau
+                if buy_result != 2 and sell_result != 2:
                     break
-                elif hit_upper:
-                    labels[i] = 1 # Market đâm lên -> Buy Win
-                    break
-                elif hit_lower:
-                    labels[i] = 0 # Market đâm xuống -> Sell Win
-                    break
+                    
+            # Gán nhãn cuối cùng
+            if buy_result == 1 and sell_result != 1:
+                labels[i] = 1 # Buy Win rõ ràng
+            elif sell_result == 1 and buy_result != 1:
+                labels[i] = 0 # Sell Win rõ ràng
+            else:
+                labels[i] = 2 # Cả 2 cùng thắng (mâu thuẫn) hoặc cả 2 cùng thua/timeout -> Sideway
                     
         return pd.Series(labels, index=df.index, name='target_class')
 
@@ -646,32 +675,66 @@ class LabelingV3:
             entry_price = open_prices[i + 1]
 
             if use_pct:
-                upper_barrier = entry_price * (1.0 + self.tp_pct)
-                lower_barrier = entry_price * (1.0 - self.sl_pct)
+                buy_tp_barrier  = entry_price * (1.0 + self.tp_pct + self.spread_pct)
+                buy_sl_barrier  = entry_price * (1.0 - self.sl_pct + self.spread_pct)
+                sell_tp_barrier = entry_price * (1.0 - self.tp_pct - self.spread_pct)
+                sell_sl_barrier = entry_price * (1.0 + self.sl_pct - self.spread_pct)
             else:
-                upper_barrier = entry_price + self.tp_price
-                lower_barrier = entry_price - self.sl_price
+                buy_tp_barrier  = entry_price + self.tp_price + self.spread_price
+                buy_sl_barrier  = entry_price - self.sl_price + self.spread_price
+                sell_tp_barrier = entry_price - self.tp_price - self.spread_price
+                sell_sl_barrier = entry_price + self.sl_price - self.spread_price
 
             limit_idx = min(i + 1 + self.max_hold_bars, n_rows)
+            
+            buy_result = 2
+            sell_result = 2
+            
+            buy_hit_bars = -1
+            sell_hit_bars = -1
 
             for j in range(i + 1, limit_idx):
                 h = high_prices[j]
                 l = low_prices[j]
-                hit_upper = h >= upper_barrier
-                hit_lower = l <= lower_barrier
+                
+                if buy_result == 2:
+                    hit_buy_tp = h >= buy_tp_barrier
+                    hit_buy_sl = l <= buy_sl_barrier
+                    if hit_buy_tp and hit_buy_sl:
+                        buy_result = 0
+                        buy_hit_bars = j - i
+                    elif hit_buy_tp:
+                        buy_result = 1
+                        buy_hit_bars = j - i
+                    elif hit_buy_sl:
+                        buy_result = 0
+                        buy_hit_bars = j - i
+                        
+                if sell_result == 2:
+                    hit_sell_tp = l <= sell_tp_barrier
+                    hit_sell_sl = h >= sell_sl_barrier
+                    if hit_sell_tp and hit_sell_sl:
+                        sell_result = 0
+                        sell_hit_bars = j - i
+                    elif hit_sell_tp:
+                        sell_result = 1
+                        sell_hit_bars = j - i
+                    elif hit_sell_sl:
+                        sell_result = 0
+                        sell_hit_bars = j - i
 
-                if hit_upper and hit_lower:
-                    labels[i]   = 2
-                    hit_bars[i] = j - i
+                if buy_result != 2 and sell_result != 2:
                     break
-                elif hit_upper:
-                    labels[i]   = 1
-                    hit_bars[i] = j - i
-                    break
-                elif hit_lower:
-                    labels[i]   = 0
-                    hit_bars[i] = j - i
-                    break
+                    
+            if buy_result == 1 and sell_result != 1:
+                labels[i] = 1
+                hit_bars[i] = buy_hit_bars
+            elif sell_result == 1 and buy_result != 1:
+                labels[i] = 0
+                hit_bars[i] = sell_hit_bars
+            else:
+                labels[i] = 2
+                hit_bars[i] = -1
 
         return pd.DataFrame({
             'target_class': labels,

@@ -231,14 +231,19 @@ if __name__ == "__main__":
             label_mode='pct',
             tp_pct=fe_cfg.get('TP_PCT', 0.003),
             sl_pct=fe_cfg.get('SL_PCT', 0.003),
+            spread_pct=fe_cfg.get('SPREAD_PCT', 0.0005),
             pip_size=fe_cfg.get('PIP_SIZE', 0.01)
         )
-        print(f"  [Crypto mode] TP={fe_cfg.get('TP_PCT',0.003)*100:.2f}% | SL={fe_cfg.get('SL_PCT',0.003)*100:.2f}%")
+        print(f"  [Crypto mode] TP={fe_cfg.get('TP_PCT',0.003)*100:.2f}% | SL={fe_cfg.get('SL_PCT',0.003)*100:.2f}% | SPREAD={fe_cfg.get('SPREAD_PCT', 0.0005)*100:.2f}%")
     else:
         labeler = LabelingV3(
-            tp_pips=fe_cfg.get('TP_PIPS', 10), sl_pips=fe_cfg.get('SL_PIPS', 10),
-            max_hold_bars=fe_cfg['MAX_HOLD_BARS'], pip_size=fe_cfg['PIP_SIZE']
+            tp_pips=fe_cfg.get('TP_PIPS', 10), 
+            sl_pips=fe_cfg.get('SL_PIPS', 10),
+            spread_pips=fe_cfg.get('SPREAD_PIPS', 2),
+            max_hold_bars=fe_cfg['MAX_HOLD_BARS'], 
+            pip_size=fe_cfg['PIP_SIZE']
         )
+        print(f"  [Forex mode] TP={fe_cfg.get('TP_PIPS', 10)} pips | SL={fe_cfg.get('SL_PIPS', 10)} pips | SPREAD={fe_cfg.get('SPREAD_PIPS', 2)} pips")
     targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
 
     # Feature Eng trên dữ liệu 24/24 (để Scaler hiểu toàn bộ biến động)

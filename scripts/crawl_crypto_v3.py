@@ -146,7 +146,7 @@ def main(config_file: str):
     import MetaTrader5 as mt5_module
     broker_groups = {}
     for sym, brk in routing.items():
-        if brk == "BINANCE":
+        if brk in ["BINANCE", "YFINANCE"]:
             continue
         path = brokers.get(brk, brokers.get("DEFAULT"))
         broker_groups.setdefault(path, []).append(sym)
