@@ -13,13 +13,15 @@ class FeatureEngineeringV3:
     - vol_regime:  Phân loại chế độ biến động High/Med/Low (one-hot)
     """
     def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False,
-                 mtf_windows=None, order_flow: bool = False, vol_regime: bool = False):
+                 mtf_windows=None, order_flow: bool = False, vol_regime: bool = False,
+                 zero_noise_target: bool = False):
         self.target_prefix = target_prefix
         self.macro_features = macro_features if macro_features else {}
         self.crypto_mode = crypto_mode
         self.mtf_windows = mtf_windows or []  # e.g. [5, 15, 60]
         self.order_flow = order_flow
         self.vol_regime = vol_regime
+        self.zero_noise_target = zero_noise_target
         self.scaler = RobustScaler()
         self.is_fitted = False
         
@@ -89,6 +91,17 @@ class FeatureEngineeringV3:
             daily_low = df[low_col].groupby(day_key).cummin()
             features['dist_to_daily_high'] = (daily_high - df[close_col]) / (df[close_col] + 1e-6)
             features['dist_to_daily_low'] = (df[close_col] - daily_low) / (daily_low + 1e-6)
+            
+            # -- [MỚI - London Session] Asian Session Liquidity Magnets
+            asian_mask = df.index.hour < 7
+            asian_highs = df[high_col].where(asian_mask).groupby(day_key).cummax().groupby(day_key).ffill()
+            asian_lows = df[low_col].where(asian_mask).groupby(day_key).cummin().groupby(day_key).ffill()
+            features['asian_high_dist'] = ((asian_highs - df[close_col]) / (df[close_col] + 1e-6)).fillna(0.0)
+            features['asian_low_dist'] = ((df[close_col] - asian_lows) / (asian_lows + 1e-6)).fillna(0.0)
+            
+            # -- [MỚI - London Session] Volume Surge Ratio
+            sma_vol_60 = vol.rolling(window=60, min_periods=1).mean()
+            features['vol_surge_ratio'] = vol / (sma_vol_60 + 1e-6)
             
             # -- [MỚI - NY Session] Exhaustion & Acceleration
             features['vol_accel'] = vol - vol.shift(1).bfill()
@@ -352,7 +365,27 @@ class FeatureEngineeringV3:
         volume_col = cols.get(f"{prefix}_volume".lower()) or cols.get(f"{prefix}_real_volume".lower())
         f_micro = self.calculate_microstructure(df, open_col, high_col, low_col, close_col, volume_col=volume_col)
         
-        feature_blocks = [f_pa, f_vol, f_mom, f_time, f_micro]
+        if getattr(self, 'zero_noise_target', False):
+            print("[FE] CẢNH BÁO: Kích hoạt ZERO_NOISE_TARGET! Loại bỏ toàn bộ TA rác của Target Symbol (chỉ giữ log_ret, spread, volume, time).")
+            # Chỉ giữ log_ret từ f_pa
+            f_pa = f_pa[['log_ret']] if 'log_ret' in f_pa.columns else pd.DataFrame(index=df.index)
+            # Giữ lại bb_width và atr_normalized nếu có, không giữ chop_14, bb_zscore
+            cols_to_keep = [c for c in f_vol.columns if c in ['atr_normalized', 'bb_width']]
+            f_vol = f_vol[cols_to_keep]
+            # Loại bỏ hoàn toàn f_mom, f_micro
+            feature_blocks = [f_pa, f_vol, f_time]
+            
+            # Thêm thủ công volume và spread (nếu có) vào f_micro tạm thời để không bị rỗng
+            f_micro = pd.DataFrame(index=df.index)
+            if volume_col and volume_col in df.columns:
+                f_micro['volume'] = np.log1p(df[volume_col].clip(lower=0).fillna(0))
+            spread_col = cols.get(f"{prefix}_spread".lower())
+            if spread_col and spread_col in df.columns:
+                f_micro['spread'] = np.log1p(df[spread_col].clip(lower=0).fillna(0))
+            if not f_micro.empty:
+                feature_blocks.append(f_micro)
+        else:
+            feature_blocks = [f_pa, f_vol, f_mom, f_time, f_micro]
         
         # [MỚI V2] Multi-Timeframe Features
         if self.mtf_windows:
@@ -423,9 +456,14 @@ class FeatureEngineeringV3:
                                 macro_cum = macro_ret.rolling(window=60, min_periods=5).sum()
                                 f_macro[f"{sym}_relative_strength"] = (target_cum - macro_cum).fillna(0.0)
                         
-                        if "bb_width" in req_features and m_high and m_low:
+                        if any(f in req_features for f in ["bb_width", "bb_zscore", "chop_14"]) and m_high and m_low:
                             vol_macro = self.calculate_volatility(df, m_high, m_low, m_close)
-                            f_macro[f"{sym}_bb_width"] = vol_macro['bb_width']
+                            if "bb_width" in req_features:
+                                f_macro[f"{sym}_bb_width"] = vol_macro['bb_width']
+                            if "bb_zscore" in req_features:
+                                f_macro[f"{sym}_bb_zscore"] = vol_macro['bb_zscore']
+                            if "chop_14" in req_features:
+                                f_macro[f"{sym}_chop_14"] = vol_macro['chop_14']
                             
                         if "volume" in req_features:
                             m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower()) or cols.get(f"{sym_clean}_volume".lower()) or cols.get(f"{sym_clean}_tick_volume".lower())
