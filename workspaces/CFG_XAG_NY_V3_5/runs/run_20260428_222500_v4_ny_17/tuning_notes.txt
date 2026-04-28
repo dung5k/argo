@@ -1,0 +1,2 @@
+Lượt này thay đổi: Kế thừa hoàn toàn cấu hình từ New Baseline Lượt 15 (Pure Macro, TP=80, SL=80, MAX_HOLD=30). Thay đổi duy nhất là nới rộng WINDOW_SIZE từ 20 lên 30.
+Kỳ vọng: Thời gian gồng lệnh (MAX_HOLD_BARS) đã được nới ra 30 phút. Việc tăng Tầm nhìn vĩ mô (Lookback Window) lên mức tương đương 30 phút sẽ cung cấp cho mô hình đủ dữ liệu lịch sử đối xứng để học và suy diễn trọn vẹn cơn sóng, kỳ vọng phá kỷ lục Baseline hiện tại.
