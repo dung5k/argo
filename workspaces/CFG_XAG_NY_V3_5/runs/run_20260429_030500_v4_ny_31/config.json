@@ -46,7 +46,7 @@
         "ZERO_NOISE_TARGET": false
     },
     "TRAINING": {
-        "D_MODEL": 16,
+        "D_MODEL": 8,
         "N_HEAD": 2,
         "NUM_LAYERS": 1,
         "BATCH_SIZE": 512,
