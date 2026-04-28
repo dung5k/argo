@@ -1,0 +1,2 @@
+Lượt này thay đổi: Kế thừa cấu trúc từ New Baseline Lượt 15 (Pure Macro, WINDOW=20, MAX_HOLD=30, SL=80). Tinh chỉnh giảm TP_PIPS từ 80 xuống 60.
+Kỳ vọng: Lượt 15 Swing Mode đã thành công rực rỡ với TP=80/SL=80. Bằng cách giảm TP xuống 60 (R:R bất đối xứng), ta chốt lời sớm hơn trong khi vẫn giữ nguyên mức dừng lỗ rộng. Điều này hứa hẹn đẩy Win Rate cao hơn mức 60% hiện tại.
