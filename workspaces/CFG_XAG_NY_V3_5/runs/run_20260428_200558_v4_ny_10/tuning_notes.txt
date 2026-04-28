@@ -1,0 +1,2 @@
+Lượt này thay đổi: Quay về thông số Baseline (WINDOW=20, TP=50, SL=50) nhưng CÓ BẬT ZERO_NOISE_TARGET=true.
+Kỳ vọng: Lượt trước thất bại thảm hại do thay đổi quá nhiều thứ. Lượt này chỉ test 1 biến số (lọc nhiễu) trên nền cấu hình đang có điểm cao nhất để xem có thực sự cải thiện Win Rate mà không làm mất đi các tín hiệu tốt hay không.
