@@ -1,2 +1,0 @@
-Lượt này thay đổi: Cấu hình Baseline (D_MODEL=32, WINDOW=20, TP=50, SL=50) nhưng loại bỏ hoàn toàn mã USTECm khỏi MACRO_FEATURES.
-Kỳ vọng: Lượt 12 nâng não bị overfit. NY là phiên chịu ảnh hưởng của chứng khoán nhưng có thể USTECm đang mang tín hiệu nhiễu cho XAG. Lượt này tinh giản đầu vào chỉ giữ lại XAUUSD và DXY để mô hình có thể tìm thấy core macro correlation tốt hơn.
