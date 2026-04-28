@@ -1,0 +1,2 @@
+Lượt này thay đổi: Cấu hình chuẩn Baseline 100% (Pure Macro, WINDOW=20, TP=50, SL=50). Thay đổi duy nhất là tăng LEARNING_RATE từ 1e-5 lên 3e-5.
+Kỳ vọng: Lượt trước tinh giản Nasdaq làm hỏng bét mô hình, chứng tỏ bộ Features của Baseline đang cực kỳ tối ưu. Lượt này chỉ tinh chỉnh siêu tham số tối ưu học (Optimizer) để xem mô hình có thể đạt được một đỉnh (Local Minima) tốt hơn hay không.
