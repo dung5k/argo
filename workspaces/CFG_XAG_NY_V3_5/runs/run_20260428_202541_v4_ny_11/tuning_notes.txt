@@ -1,2 +1,0 @@
-Lượt này thay đổi: Cấu hình Baseline (WINDOW=20, TP=50, SL=50) nhưng kích hoạt thêm ORDER_FLOW=true.
-Kỳ vọng: Lượt trước dùng ZERO_NOISE độc lập đã làm giảm Win Rate xuống 44.5%. NY là phiên bị chi phối mạnh bởi dòng tiền, hy vọng tính năng Order Flow sẽ giúp mô hình bắt đúng nhịp đập thị trường hơn so với chỉ dùng Macro.
