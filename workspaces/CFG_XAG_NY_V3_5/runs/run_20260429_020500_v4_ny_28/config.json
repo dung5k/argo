@@ -1,0 +1,82 @@
+{
+    "TARGET_SYMBOL": "XAGUSDm",
+    "TARGET_PREFIX": "XAGUSD",
+    "CONFIG_ID": "CFG_XAG_NY_V3_5",
+    "VERSION": "3.5",
+    "SESSION": "ny",
+    "SESSION_UTC": {
+        "START": "13:00",
+        "END": "22:00",
+        "DESCRIPTION": "New York session - XAG Hit & Run (13:00-22:00 UTC)"
+    },
+    "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "HF_RUN_ID": "",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
+        "SYNC_CHUNKS": false
+    },
+    "FEATURE_ENGINEERING": {
+        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "CHI\u1ebeN L\u01af\u1ee2C V4: T\u1eacP TRUNG T\u00ccM S\u1ef0 PH\u1ee4 THU\u1ed8C V\u00c0O LEADER (DXY, NASDAQ, XAU). KH\u00d4NG D\u00d9NG WINDOW SIZE L\u1edaN!",
+        "TP_PIPS": 80,
+        "SL_PIPS": 80,
+        "MAX_HOLD_BARS": 30,
+        "PIP_SIZE": 0.001,
+        "WINDOW_SIZE": 20,
+        "STEP_SIZE": 1,
+        "MACRO_FEATURES": {
+            "XAUUSDm": [
+                "log_ret",
+                "volume",
+                "bb_width",
+                "corr_60",
+                "spread_ret",
+                "dxy_xau_anomaly"
+            ],
+            "DXYm": [
+                "log_ret",
+                "volume",
+                "bb_width",
+                "corr_60",
+                "spread_ret"
+            ]
+        },
+        "ORDER_FLOW": false,
+        "VOL_REGIME": false,
+        "ZERO_NOISE_TARGET": false
+    },
+    "TRAINING": {
+        "D_MODEL": 32,
+        "N_HEAD": 2,
+        "NUM_LAYERS": 1,
+        "BATCH_SIZE": 512,
+        "WARMUP_EPOCHS": 20,
+        "FINETUNE_EPOCHS": 100,
+        "LEARNING_RATE": 1e-05,
+        "TRAIN_START": "2024-01-01",
+        "TRAIN_END": "2026-03-31",
+        "VAL_END": "2026-04-20",
+        "EPOCHS_PHASE_1": 1,
+        "FREQ_MIN_N": 30,
+        "FREQ_MAX_N": 250,
+        "DROPOUT": 0.25
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_NY_V3_5/data/raw",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "EXNESS": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAGUSDm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS"
+        }
+    },
+    "LIVE_BOT": {
+        "MAX_ABSOLUTE_MSE": 1.0,
+        "MIN_PROBABILITY_THRESH": 0.7
+    }
+}
