@@ -1,2 +1,0 @@
-Lượt này thay đổi: Kế thừa hoàn toàn cấu hình từ New Baseline Lượt 15 (Pure Macro, TP=80, SL=80, MAX_HOLD=30, WINDOW=20). Thay đổi duy nhất là tăng BATCH_SIZE từ 512 lên 1024.
-Kỳ vọng: Lượt 18 loại bỏ nhiễu đã thất bại vì đánh mất tính ngẫu nhiên của thị trường dẫn tới Early Stopping. Thay vì loại bỏ nhiễu, ta học cách sống chung với nhiễu. Việc tăng Batch Size lên 1024 sẽ làm mượt đáng kể Gradient Descent, giúp mô hình bớt nhạy cảm với các biến động cục bộ của từng cây nến và tập trung sâu hơn vào các Trend lớn của phiên NY. Hy vọng đẩy Composite Score lên tầm cao mới.
