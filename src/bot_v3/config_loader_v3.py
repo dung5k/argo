@@ -14,7 +14,7 @@ class V3ConfigLoader:
     def load_base_config(self) -> dict:
         """Đọc file config json chính làm khung nền."""
         try:
-            with open(self.main_config_path, "r", encoding="utf-8") as f:
+            with open(self.main_config_path, "r", encoding="utf-8-sig") as f:
                 return json.load(f)
         except Exception as e:
             self.log_callback(f"[V3ConfigLoader] Lỗi đọc base config: {e}")
@@ -26,7 +26,7 @@ class V3ConfigLoader:
             if not os.path.exists(self.schedule_path): 
                 return None, None, None
                 
-            with open(self.schedule_path, "r", encoding="utf-8") as fs:
+            with open(self.schedule_path, "r", encoding="utf-8-sig") as fs:
                 full_data = json.load(fs)
                 sched = full_data.get("schedule", {})
                 global_mt5_path = full_data.get("mt5_path")
