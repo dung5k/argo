@@ -24,6 +24,7 @@ from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
 from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
 from src.bot_v3.binance_spot_trade_manager_v3 import BinanceSpotTradeManagerV3
+from src.bot_v3.simulated_trade_manager_v3 import SimulatedTradeManagerV3
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
 from src.core.mt5_data_manager import MT5DataManager
 import logging
