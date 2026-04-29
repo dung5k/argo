@@ -64,7 +64,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** TP/SL 30 là tỷ lệ vàng của phiên London. Do Loss của Run 31 giảm rất chậm (early stopping kích hoạt sớm khi mô hình chưa hội tụ xong), việc tăng cường Learning Rate lên 3e-5 sẽ giúp mạng D16 có những bước nhảy gradient mạnh hơn, vượt qua được các local minima để tối ưu hóa Win Rate từ 48.9% lên >50%.
 - **Trạng thái:** Hoàn thành. Composite Score: 0.231. Win Rate max 41.6%. Sự thất bại của Run 34 chứng minh Learning Rate cao (3e-5) là độc hại đối với London. Môi trường London cực kỳ nhiễu, bước nhảy LR lớn khiến mô hình học nhầm các noise thành pattern, dẫn đến việc dự đoán loạn xạ (hơn 1140 tín hiệu được phát ra) nhưng độ chính xác lại sụt giảm thê thảm.
 
-### 8. `run_20260429_110000_v4_ldn_35` (Đang tiến hành)
+### 8. `run_20260429_110000_v4_ldn_35` (Đã hoàn thành)
 - **Tham số thay đổi:** Revert `LEARNING_RATE` về 1e-05. Giảm `BATCH_SIZE` từ 512 xuống 256.
 - **Kỳ vọng:** Trở lại hoàn toàn cấu hình kỷ lục của Run 31 (TP 30, LR 1e-5, Window 60) nhưng giảm quy mô Batch Size xuống 256. Batch size nhỏ hơn sẽ đưa thêm một chút "nhiễu gradient" tự nhiên vào quá trình huấn luyện, đóng vai trò như một bộ điều chuẩn (Regularizer) giúp mô hình tìm được các đặc trưng sắc nét hơn thay vì bị san phẳng (smoothed out) bởi Batch 512. Kỳ vọng mô hình sẽ học sâu hơn và đẩy Win Rate vượt mốc 50%.
+- **Trạng thái:** Hoàn thành. Composite Score: 0.261. Win Rate max 48.5%. Sự bổ sung nhiễu gradient từ Batch 256 đã gây phản tác dụng! Mô hình tạo ra nhiều tín hiệu hơn (416 tín hiệu) nhưng độ chính xác lại giảm so với Run 31 (48.9%). Điều này chứng tỏ thị trường London ĐÃ QUÁ NHIỄU, ta CẦN BATCH SIZE LỚN (512) để làm phẳng nhiễu (smooth out the noise) chứ không được bơm thêm nhiễu vào mạng.
+
+### 9. `run_20260429_113000_v4_ldn_36` (Đang tiến hành)
+- **Tham số thay đổi:** Revert `BATCH_SIZE` về lại 512. Tăng cường độ sâu kiến trúc: `NUM_LAYERS` từ 1 lên 2.
+- **Kỳ vọng:** Trở về nền tảng ổn định tuyệt đối của Run 31 (Batch 512, TP 30, LR 1e-5, Window 60). Để phá vỡ ngưỡng Win Rate 48.9%, thay vì dùng các trick tối ưu hóa, tôi sẽ trực tiếp mở rộng dung lượng bộ não (Capacity). Việc tăng thêm 1 lớp Layer (NUM_LAYERS=2) sẽ cho phép D16 học được các mối liên hệ phi tuyến tính sâu hơn (Deep Hierarchical Features) từ chuỗi 60 nến, từ đó chắt lọc Alpha tinh khiết hơn và đẩy Win Rate vượt mốc sinh lời.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
