@@ -1,0 +1,2 @@
+Lượt này thay đổi: Giảm LEARNING_RATE từ 1e-05 xuống 5e-06.
+Kỳ vọng: Cấu hình của Run 37 (Window 30) là cực kỳ hoàn hảo, mang lại Kỷ lục điểm số cao nhất với Win Rate vượt 50%. Tuy nhiên mô hình học quá nhanh và bị Early Stopping ở Epoch 5, làm giới hạn số lượng tín hiệu. Bằng cách giảm tốc độ học xuống 5e-06, tôi kỳ vọng mô hình sẽ học chậm lại, tối ưu hóa điểm đáy Loss tốt hơn, tạo ra nhiều tín hiệu hơn (N > 100) mà vẫn giữ được Win Rate chiến thắng > 50%.
