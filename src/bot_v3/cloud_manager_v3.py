@@ -85,12 +85,16 @@ class V3CloudManager:
                 scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
             except Exception:
                 try:
-                    scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
+                    # V4 runs lưu scaler trong brains/
+                    scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/brains/scaler_{cfg_id_pure}.pkl")
                 except Exception:
                     try:
-                        scaler_cloud_path = self._download_file(self.dataset_repo, f"data/{cfg_id_pure}/scaler_{cfg_id_pure}.pkl")
+                        scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
                     except Exception:
-                        scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/data/{config_id}/scaler_{cfg_id_pure}.pkl")
+                        try:
+                            scaler_cloud_path = self._download_file(self.dataset_repo, f"data/{cfg_id_pure}/scaler_{cfg_id_pure}.pkl")
+                        except Exception:
+                            scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/data/{config_id}/scaler_{cfg_id_pure}.pkl")
             local_scaler_path = self._save_to_data_dir(scaler_cloud_path, f"scaler_{cfg_id_pure}.pkl")
             
             # Extract features logic
