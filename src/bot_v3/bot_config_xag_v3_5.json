@@ -28,7 +28,7 @@
         "ny": {
             "start": "13:00",
             "end": "23:59",
-            "run_id": "run_20260429_024500_v4_ny_30",
+            "run_id": "run_20260429_031500_v3_5_ny_fixed",
             "config_id": "CFG_XAG_NY_V3_5",
             "trading_config": {
                 "min_prob_thresh": 0.55,

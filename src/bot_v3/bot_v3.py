@@ -24,7 +24,6 @@ from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
 from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
 from src.bot_v3.binance_spot_trade_manager_v3 import BinanceSpotTradeManagerV3
-from src.bot_v3.simulated_trade_manager_v3 import SimulatedTradeManagerV3
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
 from src.core.mt5_data_manager import MT5DataManager
 import logging
@@ -114,21 +113,7 @@ def custom_print(*args, **kwargs):
             has_position = True
 
     if has_position:
-        pnl_report = ""
-        if hasattr(tm, 'get_active_positions_report'):
-            # Lấy chuỗi mô tả vị thế hiện tại và thay thế xuống dòng bằng dấu phân cách
-            pnl_report = tm.get_active_positions_report().replace('\n', ' | ')
-        if hasattr(tm, '_get_daily_pnl'):
-            try:
-                daily_pnl = tm._get_daily_pnl()
-                pnl_report += f" | Tổng Lãi/Lỗ ngày: {daily_pnl:+.2f}$"
-            except Exception:
-                pass
-                
-        if pnl_report:
-            logging.info(f"{msg} | {pnl_report}")
-        else:
-            logging.info(msg)
+        logging.info(msg)
         return
 
     # 4. Thời gian giá gần đến ngưỡng (Xác suất BUY/SELL >= 80% của Ngưỡng yêu cầu)
@@ -234,14 +219,24 @@ if TRADE_PLATFORM == "BINANCE_SPOT":
 elif TRADE_PLATFORM == "BINANCE":
     trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 elif TRADE_PLATFORM == "SIMULATED":
-    # Paper trading manager — giả lập đầy đủ có vị thế, SL/TP, P&L
-    trade_manager = SimulatedTradeManagerV3(
-        TARGET_SYMBOL, CONFIG,
-        log_callback=print,
-        tg_notify_callback=tg_notify,
-        get_price_fn=lambda: G_CURRENT_PRICE,
-    )
-    print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (Paper Trading — có lệnh ảo, SL/TP, P&L thật)")
+    # Dummy trade manager cho chế độ mô phỏng — chỉ log, không giao dịch thật
+    class _SimulatedTM:
+        def __init__(self):
+            self.gui_action = "🎭 SIMULATED"
+            self.gui_thr_text = "SIM"
+            self.exchange = None
+        def init_mt5(self): pass
+        def init_client(self): pass
+        def execute_trade(self, *a, **kw): print("[SIMULATED] Signal received — no real trade executed.")
+        def check_positions(self, *a, **kw): return []
+        def manage_positions(self, *a, **kw): pass
+        def early_reversal_check(self, *a, **kw): pass
+        def trailing_sl(self, *a, **kw): pass
+        def sync_existing_positions(self): pass
+        def update_gui_threshold(self): pass
+        def get_active_positions_report(self): return "Mô phỏng (SIMULATED): Đang theo dõi, không trade thật."
+    trade_manager = _SimulatedTM()
+    print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
     trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
