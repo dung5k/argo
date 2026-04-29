@@ -80,40 +80,10 @@ class V3DataProcessor:
             self.log_callback(f"[DataProcessorV3] ❌ {msg}")
             return None, msg
 
-        # 2. Scale — đảm bảo chỉ dùng features mà scaler biết
+        # 2. Scale — transform_scaler tự xử lý: scale features nó biết, passthrough phần còn lại
         try:
             n_model = len(self.inference_feats)
-            
-            if hasattr(self.fe.scaler, 'feature_names_in_'):
-                scaler_cols = list(self.fe.scaler.feature_names_in_)
-                n_scaler = len(scaler_cols)
-                fe_df_original = fe_df.copy()  # Lưu bản gốc trước khi modify
-                
-                # Tìm columns scaler biết trong fe_df
-                available = [c for c in scaler_cols if c in fe_df.columns]
-                
-                if len(available) == n_scaler:
-                    # Scale chỉ các cột scaler biết
-                    df_to_scale = fe_df[available]
-                    extra_cols = [c for c in fe_df.columns if c not in scaler_cols]
-                else:
-                    # Thiếu cột → positional fallback
-                    self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {n_scaler - len(available)} cột scaler → positional fallback")
-                    df_to_scale = fe_df.iloc[:, :n_scaler].copy()
-                    df_to_scale.columns = scaler_cols
-                    extra_cols = list(fe_df_original.columns[n_scaler:])
-                
-                scaled_df = self.fe.transform_scaler(df_to_scale)
-                
-                # Nếu model cần nhiều features hơn scaler → thêm extra features (unscaled)
-                if n_model > n_scaler and extra_cols:
-                    n_extra_needed = min(n_model - n_scaler, len(extra_cols))
-                    extra_df = fe_df_original[extra_cols[:n_extra_needed]].copy()
-                    scaled_df = pd.concat([scaled_df, extra_df], axis=1)
-                    self.log_callback(f"[DataProcessorV3] 📊 Concat: {n_scaler} scaled + {n_extra_needed} raw = {len(scaled_df.columns)} cols")
-            else:
-                scaled_df = self.fe.transform_scaler(fe_df)
-            
+            scaled_df = self.fe.transform_scaler(fe_df)
             self.log_callback(f"[DataProcessorV3] ✅ Scale xong | rows={len(scaled_df)} cols={len(scaled_df.columns)}")
             
             # Auto-trim: cắt cho khớp model input_dim

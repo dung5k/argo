@@ -73,12 +73,12 @@
         }
     },
     "LIVE_BOT": {
-        "TRADE_PLATFORM": "BINANCE",
+        "TRADE_PLATFORM": "SIMULATED",
         "MAX_ABSOLUTE_MSE": 0.6,
         "MIN_PROBABILITY_THRESH": 0.65,
-        "BINANCE_EXECUTION": {
-            "LOT_SIZE": 0.5,
-            "LEVERAGE": 10
+        "SIMULATED_EXECUTION": {
+            "INITIAL_BALANCE": 1000,
+            "LOT_SIZE": 0.5
         }
     }
 }
