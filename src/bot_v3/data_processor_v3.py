@@ -80,10 +80,23 @@ class V3DataProcessor:
             self.log_callback(f"[DataProcessorV3] ❌ {msg}")
             return None, msg
 
-        # 2. Scale
+        # 2. Scale — đảm bảo chỉ dùng features mà scaler biết
         try:
+            if hasattr(self.fe.scaler, 'feature_names_in_'):
+                scaler_cols = list(self.fe.scaler.feature_names_in_)
+                available = [c for c in scaler_cols if c in fe_df.columns]
+                if len(available) < len(scaler_cols):
+                    missing = set(scaler_cols) - set(available)
+                    self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {len(missing)} cột scaler: {list(missing)[:3]}...")
+                fe_df = fe_df[available]
             scaled_df = self.fe.transform_scaler(fe_df)
             self.log_callback(f"[DataProcessorV3] ✅ Scale xong | rows={len(scaled_df)} cols={len(scaled_df.columns)}")
+            
+            # Auto-trim: nếu model cần ít features hơn scaler → cắt bớt
+            n_model = len(self.inference_feats)
+            if len(scaled_df.columns) > n_model and isinstance(self.inference_feats[0], int):
+                self.log_callback(f"[DataProcessorV3] ⚠️ Auto-trim: {len(scaled_df.columns)} cols → {n_model} (model input_dim)")
+                scaled_df = scaled_df.iloc[:, :n_model]
         except Exception as e:
             msg = f"Lỗi Áp dụng Scaler: {e}"
             self.log_callback(f"[DataProcessorV3] ❌ {msg}")
