@@ -1,0 +1,2 @@
+Lượt này thay đổi: Reset toàn bộ kiến trúc về chuẩn "Holy Grail" của NY (D16, TP/SL=50, W20, B512).
+Kỳ vọng: Phiên London ít biến động hơn NY, nhưng nếu dùng chuẩn D32 cũ thì sẽ bị Overfit. Việc kế thừa kiến trúc D16 tinh gọn và Pure Macro (XAU, DXY) kết hợp với TP/SL 50 (1:1) kỳ vọng sẽ thiết lập một Baseline mới cao hơn nhiều so với kỷ lục 0.258 tồi tệ của Run 27. Khởi động lại cuộc đua cho London!
