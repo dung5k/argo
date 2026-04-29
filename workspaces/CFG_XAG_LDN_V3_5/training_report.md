@@ -54,7 +54,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Do việc tăng Window từ 15 lên 60 đã giúp tăng Composite Score đáng kể (từ 0.247 lên 0.274), giả thuyết đặt ra là phiên London dao động rất chậm chạp. Việc nới rộng tầm nhìn lên 90 phút (1 tiếng rưỡi) sẽ giúp bộ não D16 nhìn thấy toàn bộ hành vi giá của thị trường kể từ lúc mở cửa phiên Frankfurt, từ đó củng cố độ chính xác và đưa Win Rate vượt mốc 50% hòa vốn.
 - **Trạng thái:** THẤT BẠI THẢM HẠI. Mô hình hoàn toàn mất phương hướng và không dám đưa ra bất kỳ dự đoán nào (Composite Score 0.0, N=0 tín hiệu). Cửa sổ 90 nến là quá dài đối với bộ não nhỏ bé D16, khiến tín hiệu hoàn toàn bị "loãng" vào nhiễu. Thư mục đã bị xóa.
 
-### 6. `run_20260429_100000_v4_ldn_33` (Đang tiến hành)
+### 6. `run_20260429_100000_v4_ldn_33` (Đã hoàn thành)
 - **Tham số thay đổi:** Hạ `WINDOW_SIZE` về lại mốc lý tưởng 60. Thu hẹp biên độ `TP_PIPS` = 20, `SL_PIPS` = 20.
 - **Kỳ vọng:** Quay về với "điểm ngọt" Window 60. Việc giảm biên độ ăn/thua xuống 20 pips sẽ chuyển đổi chiến thuật thành Micro-Scalping (ăn mỏng, cắt nhanh), hoàn toàn phù hợp với môi trường sideway chậm chạp của London. Kỳ vọng Win Rate sẽ chính thức vượt xa mốc 50% để sinh lời dương.
+- **Trạng thái:** THẤT BẠI THẢM HẠI. Composite Score: 0.0. Với TP/SL = 20 pips và spread thực tế 2 pips, mục tiêu là quá hẹp khiến nhãn dán (labels) bị chi phối hoàn toàn bởi nhiễu ngẫu nhiên (noise). Mô hình không thể học được bất kỳ quy luật nào và không dám đánh trên mốc 53% tự tin. Thư mục đã bị xóa.
+
+### 7. `run_20260429_103000_v4_ldn_34` (Đang tiến hành)
+- **Tham số thay đổi:** Revert `TP_PIPS` = 30, `SL_PIPS` = 30 (Mốc duy nhất tạo ra tín hiệu thành công ở Run 31). Tăng `LEARNING_RATE` từ 1e-05 lên 3e-05.
+- **Kỳ vọng:** TP/SL 30 là tỷ lệ vàng của phiên London. Do Loss của Run 31 giảm rất chậm (early stopping kích hoạt sớm khi mô hình chưa hội tụ xong), việc tăng cường Learning Rate lên 3e-5 sẽ giúp mạng D16 có những bước nhảy gradient mạnh hơn, vượt qua được các local minima để tối ưu hóa Win Rate từ 48.9% lên >50%.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
