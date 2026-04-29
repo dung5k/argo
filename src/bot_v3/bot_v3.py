@@ -200,16 +200,13 @@ def tg_notify(msg):
     pass
 
 config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "base_config.json")
-schedule_file = os.path.join(safe_script_dir, "workspaces", "shared_meta", "bot_v3_brain_schedule.json")
 if len(sys.argv) > 1:
     args_json = [arg for arg in sys.argv if arg.endswith('.json')]
     if len(args_json) >= 1:
         config_file = args_json[0]
-    if len(args_json) >= 2:
-        schedule_file = args_json[1]
 
 # Khởi tạo Config Loader
-config_loader = V3ConfigLoader(config_file, schedule_file, log_callback=print)
+config_loader = V3ConfigLoader(config_file, log_callback=print)
 CONFIG = config_loader.load_base_config()
 
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
@@ -236,6 +233,7 @@ elif TRADE_PLATFORM == "SIMULATED":
         def early_reversal_check(self, *a, **kw): pass
         def trailing_sl(self, *a, **kw): pass
         def sync_existing_positions(self): pass
+        def update_gui_threshold(self): pass
         def get_active_positions_report(self): return "Mô phỏng (SIMULATED): Đang theo dõi, không trade thật."
     trade_manager = _SimulatedTM()
     print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
@@ -380,7 +378,7 @@ def bot_background_loop():
         if base_cfg:
             CONFIG = base_cfg
             
-        sess_name, sinfo, global_mt5 = config_loader.get_current_schedule()
+        sess_name, sinfo, global_mt5 = config_loader.get_current_schedule(CONFIG)
         if sinfo:
             CONFIG = config_loader.apply_schedule_overrides(CONFIG, sinfo, global_mt5)
             
