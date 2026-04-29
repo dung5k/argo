@@ -113,7 +113,21 @@ def custom_print(*args, **kwargs):
             has_position = True
 
     if has_position:
-        logging.info(msg)
+        pnl_report = ""
+        if hasattr(tm, 'get_active_positions_report'):
+            # Lấy chuỗi mô tả vị thế hiện tại và thay thế xuống dòng bằng dấu phân cách
+            pnl_report = tm.get_active_positions_report().replace('\n', ' | ')
+        if hasattr(tm, '_get_daily_pnl'):
+            try:
+                daily_pnl = tm._get_daily_pnl()
+                pnl_report += f" | Tổng Lãi/Lỗ ngày: {daily_pnl:+.2f}$"
+            except Exception:
+                pass
+                
+        if pnl_report:
+            logging.info(f"{msg} | {pnl_report}")
+        else:
+            logging.info(msg)
         return
 
     # 4. Thời gian giá gần đến ngưỡng (Xác suất BUY/SELL >= 80% của Ngưỡng yêu cầu)
