@@ -49,7 +49,7 @@ python scripts/upload_v3_dataset.py --config workspaces/CFG_XAG_LDN_V3_5/runs/<R
 ## BƯỚC 3: Training Cục bộ
 Lấy RUN_ID từ hàng đợi và chạy:
 ```
-python src/training_v3/train_v3.py --config workspaces/CFG_XAG_LDN_V3_5/runs/<RUN_ID>/config.json --session ldn --scratch --run-id <RUN_ID>; python .agent/notify_done.py xag_ldn_training_done
+python src/training_v3/train_v3.py workspaces/CFG_XAG_LDN_V3_5/runs/<RUN_ID>/config.json --session ldn --scratch --run-id <RUN_ID>; python .agent/notify_done.py xag_ldn_training_done
 ```
 (Lưu ý: Gọi `notify_done.py` sau lệnh training giúp kích hoạt luồng nhận biết training xong để nhận nhiệm vụ tiếp theo ngay lập tức).
 

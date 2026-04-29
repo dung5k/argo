@@ -78,7 +78,8 @@
         "ROUTING": {
             "XAGUSDm": "EXNESS",
             "DXYm": "EXNESS",
-            "XAUUSDm": "EXNESS"
+            "XAUUSDm": "EXNESS",
+            "USTECm": "EXNESS"
         }
     },
     "LIVE_BOT": {

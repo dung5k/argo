@@ -64,9 +64,9 @@ def send_via_telegram_api(content, is_done=False):
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
         return False
     
-    text = f"""🤖 Antigravity:
+    text = f"🤖 Antigravity:
 
-{content}"""
+{content}"
     success = False
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()

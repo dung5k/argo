@@ -1,2 +1,0 @@
-Lượt này thay đổi: Tăng WINDOW_SIZE từ 60 lên 90.
-Kỳ vọng: Phiên London dao động chậm, việc nhìn lại 90 phút (bao gồm luôn cả thời điểm mở cửa phiên Frankfurt) sẽ giúp D16 nắm bắt được bức tranh lớn hơn và tránh tín hiệu rác. Kỳ vọng Win Rate phá mốc 50%.
