@@ -225,10 +225,16 @@ elif TRADE_PLATFORM == "SIMULATED":
     # Dummy trade manager cho chế độ mô phỏng — chỉ log, không giao dịch thật
     class _SimulatedTM:
         def __init__(self):
-            self.gui_action = "SIMULATED MODE"
+            self.gui_action = "🎭 SIMULATED"
+            self.gui_thr_text = "SIM"
             self.exchange = None
+        def init_mt5(self): pass
+        def init_client(self): pass
         def execute_trade(self, *a, **kw): print("[SIMULATED] Signal received — no real trade executed.")
         def check_positions(self, *a, **kw): return []
+        def manage_positions(self, *a, **kw): pass
+        def early_reversal_check(self, *a, **kw): pass
+        def trailing_sl(self, *a, **kw): pass
     trade_manager = _SimulatedTM()
     print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
