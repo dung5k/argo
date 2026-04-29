@@ -2,9 +2,9 @@
   "tasks": [
     {
       "id": "xag_london_auto_tuning_local",
-      "enabled": true,
+      "enabled": false,
       "promptFile": ".agent/periodic_prompt_xag_ldn.md",
-      "nextRunTime": 1777426395880,
+      "nextRunTime": 1777440799430,
       "intervalMinutes": 20
     },
     {
@@ -19,7 +19,7 @@
       "id": "cleanup_storage",
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
-      "nextRunTime": 1777427055429,
+      "nextRunTime": 1777441458977,
       "intervalMinutes": 60
     },
     {
