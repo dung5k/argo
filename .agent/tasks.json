@@ -1,0 +1,49 @@
+{
+  "tasks": [
+    {
+      "id": "xag_london_auto_tuning_local",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_xag_ldn.md",
+      "nextRunTime": 1777426395880,
+      "intervalMinutes": 20
+    },
+    {
+      "id": "xag_asian_v4_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_asian_v4.md",
+      "triggerOn": "xag_asian_v4_training_done",
+      "nextRunTime": 1777269499875,
+      "intervalMinutes": 20
+    },
+    {
+      "id": "cleanup_storage",
+      "enabled": true,
+      "command": "python scripts/cleanup_host_storage.py",
+      "nextRunTime": 1777427055429,
+      "intervalMinutes": 60
+    },
+    {
+      "id": "xag_london_v2_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_london_v2.md",
+      "triggerOn": "xag_london_training_done",
+      "nextRunTime": 1777183762718,
+      "intervalMinutes": 20
+    },
+    {
+      "id": "xag_london_v3_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_v4_smc.md",
+      "triggerOn": "xag_london_v3_training_done",
+      "nextRunTime": 1777297299421,
+      "intervalMinutes": 20
+    },
+    {
+      "id": "xag_ny_auto_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_ny.md",
+      "nextRunTime": 1777415083109,
+      "intervalMinutes": 20
+    }
+  ]
+}
