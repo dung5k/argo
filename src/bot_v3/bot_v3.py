@@ -230,9 +230,55 @@ gui_probs = {'buy': 0.0, 'sell': 0.0, 'loss': 0.0}
 gui_time = "00:00:00"
 gui_session = "Phiên: Đang khởi chạy..."
 gui_market_data = []
+gui_brain_tooltip = "Chưa tải não..."  # Tooltip thành tích đào tạo
+
+def _load_brain_metrics(run_id: str, config_id: str) -> str:
+    """Đọc training metrics từ local cache hoặc HF để tạo tooltip."""
+    import glob as _glob
+    base = os.path.join(safe_script_dir, 'workspaces', 'workspaces', config_id, 'runs', run_id, 'results')
+    metric_file = os.path.join(base, 'training_metrics_v3.json')
+    
+    if not os.path.isfile(metric_file):
+        # Thử tải từ HF cache
+        cache_base = os.path.expanduser('~/.cache/huggingface/hub/datasets--dung5k--argo_workspaces')
+        pattern = os.path.join(cache_base, '**', 'workspaces', config_id, 'runs', run_id, 'results', 'training_metrics_v3.json')
+        found = _glob.glob(pattern, recursive=True)
+        if found:
+            metric_file = found[0]
+        else:
+            return f"🧠 Não: {run_id}\n📊 Không tìm thấy metrics"
+    
+    try:
+        with open(metric_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        sessions = data.get('sessions', {})
+        lines = [f"🧠 Não: {run_id}"]
+        for sess_name, sess_data in sessions.items():
+            best = sess_data.get('BEST_VLOSS', {})
+            score = best.get('composite_score', 0)
+            val_loss = best.get('val_loss', 0)
+            epoch = best.get('epoch', 0)
+            
+            best_wr, best_thr, best_sigs = 0, 0, 0
+            for tm in best.get('threshold_metrics', []):
+                wr = tm.get('win_rate', 0)
+                sigs = tm.get('total_signals', 0)
+                if wr > best_wr and sigs >= 10:
+                    best_wr = wr
+                    best_thr = tm.get('threshold', 0)
+                    best_sigs = sigs
+            
+            lines.append(f"📊 Phiên: {sess_name.upper()}")
+            lines.append(f"⭐ Score: {score:.4f}")
+            lines.append(f"🎯 WR: {best_wr:.1%} @thr={best_thr:.3f}")
+            lines.append(f"📈 Signals: {best_sigs} | Epoch: {epoch}")
+            lines.append(f"📉 Val Loss: {val_loss:.4f}")
+        return '\n'.join(lines)
+    except Exception as e:
+        return f"🧠 Não: {run_id}\n❌ Lỗi đọc metrics: {e}"
 
 def bot_background_loop():
-    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs
+    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs, gui_brain_tooltip
     print("[BOT V3] ===== Khởi động OOP Modules V3.0 (MASTER SCHEDULER) =====")
     
     engine = V3InferenceEngine(log_callback=print)
@@ -342,6 +388,9 @@ def bot_background_loop():
                 # Sửa lỗi hiển thị "Unknown" - Fallback về SESSION trong config chính
                 display_sess = sess_name if sess_name else CONFIG.get("SESSION", "Unknown")
                 gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)[:10]})"
+                
+                # Tải training metrics cho tooltip
+                gui_brain_tooltip = _load_brain_metrics(target_run_id, cfg_id)
                 
                 msg_done = f"✅ Lắp ráp NÃO V3 Xong!\nKhởi tạo thành công Mạng Nơ-ron (Loss %: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)})\nBot đang nghe ngóng thị trường..."
                 print(f"[BOT V3] {msg_done}")
@@ -505,6 +554,39 @@ def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, 
     
     root.after(500, update_ui, root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
 
+class ToolTip:
+    """Tooltip nhỏ gọn cho tkinter widget — hiển thị khi di chuột qua."""
+    def __init__(self, widget, text_func):
+        self.widget = widget
+        self.text_func = text_func  # Callable trả về text động
+        self.tipwindow = None
+        widget.bind('<Enter>', self.show)
+        widget.bind('<Leave>', self.hide)
+
+    def show(self, event=None):
+        if self.tipwindow:
+            return
+        text = self.text_func() if callable(self.text_func) else str(self.text_func)
+        if not text:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        self.tipwindow = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.attributes('-topmost', True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        frame = tk.Frame(tw, bg='#1a1a2e', bd=1, relief=tk.SOLID, highlightbackground='#00ffff', highlightthickness=1)
+        frame.pack()
+        label = tk.Label(frame, text=text, justify=tk.LEFT, bg='#1a1a2e', fg='#e0e0e0',
+                         font=('Consolas', 9), padx=8, pady=6)
+        label.pack()
+
+    def hide(self, event=None):
+        if self.tipwindow:
+            self.tipwindow.destroy()
+            self.tipwindow = None
+
 def start_overlay_dashboard():
     root = tk.Tk()
     root.title(f"AAMT TERMINATOR V3 - {TARGET_SYMBOL}")
@@ -525,8 +607,10 @@ def start_overlay_dashboard():
     root.bind("<B1-Motion>", do_move)
     
     tk.Label(root, text=f"🌌 {TARGET_SYMBOL} MASTER V3 🌌", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
-    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9))
+    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9), cursor="hand2")
     lbl_session.pack()
+    # Tooltip thành tích đào tạo — hiển thị khi di chuột qua tên não
+    ToolTip(lbl_session, lambda: gui_brain_tooltip)
     canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
     canvas_pred.pack(pady=3, fill=tk.X, padx=15)
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))
