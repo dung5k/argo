@@ -221,6 +221,16 @@ if TRADE_PLATFORM == "BINANCE_SPOT":
     trade_manager = BinanceSpotTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 elif TRADE_PLATFORM == "BINANCE":
     trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+elif TRADE_PLATFORM == "SIMULATED":
+    # Dummy trade manager cho chế độ mô phỏng — chỉ log, không giao dịch thật
+    class _SimulatedTM:
+        def __init__(self):
+            self.gui_action = "SIMULATED MODE"
+            self.exchange = None
+        def execute_trade(self, *a, **kw): print("[SIMULATED] Signal received — no real trade executed.")
+        def check_positions(self, *a, **kw): return []
+    trade_manager = _SimulatedTM()
+    print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
     trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
@@ -441,9 +451,17 @@ def bot_background_loop():
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
         
         global G_CURRENT_PRICE
-        if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT"):
+        is_crypto = CONFIG.get("FEATURE_ENGINEERING", {}).get("CRYPTO_MODE", False)
+        if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT", "SIMULATED") and is_crypto:
             try:
-                ticker = trade_manager.exchange.fetch_ticker(trade_manager._format_symbol(TARGET_SYMBOL))
+                import ccxt
+                if not hasattr(bot_background_loop, '_sim_exchange'):
+                    bot_background_loop._sim_exchange = ccxt.binance()
+                ex = bot_background_loop._sim_exchange
+                if hasattr(trade_manager, 'exchange') and trade_manager.exchange:
+                    ex = trade_manager.exchange
+                fmt_sym = TARGET_SYMBOL.replace("USDT", "/USDT")
+                ticker = ex.fetch_ticker(fmt_sym)
                 G_CURRENT_PRICE = ticker.get('last', 0)
                 staleness_secs = 0
             except Exception as e:
