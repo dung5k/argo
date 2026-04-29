@@ -1,0 +1,2 @@
+Lượt này thay đổi: Giảm `TP_PIPS` và `SL_PIPS` từ 50 xuống 30. Giảm `WINDOW_SIZE` từ 20 xuống 15.
+Kỳ vọng: Do phiên London thanh khoản mỏng hơn NY, việc thu hẹp biên độ chốt lời/cắt lỗ xuống 30 pips và giảm Window xuống 15 phút (nhanh hơn) sẽ giúp mô hình bắt được nhiều tín hiệu hợp lệ hơn, đồng thời vẫn kế thừa được sức mạnh của bộ não D16 Pure Macro từ NY.
