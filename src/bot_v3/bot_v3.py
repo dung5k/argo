@@ -534,12 +534,22 @@ def bot_background_loop():
             
         gui_prediction = f"B:{probs['buy']:.2f} S:{probs['sell']:.2f} (Loss:{mse:.3f})"
         gui_probs = {'buy': probs['buy'], 'sell': probs['sell'], 'loss': mse}
+
+        # Tính hành động hiển thị thực tế (có xét vị thế đang giữ)
+        display_action = action
+        if hasattr(trade_manager, 'active_trade_loggers') and trade_manager.active_trade_loggers:
+            for ticket, pos in trade_manager.active_trade_loggers.items():
+                side = pos.get('side', '')
+                if (side == 'SELL' and action == 'SELL') or (side == 'BUY' and action == 'BUY'):
+                    display_action = f"GIỮ LỆNH {side} (#{ticket})"
+                    break
+
         msg_pred = (
             f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\n"
             f"Thời gian: Nến {gui_time}\n"
             f"Giá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\n"
             f"Tỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\n"
-            f"Hành động: {action}"
+            f"Hành động: {display_action}"
         )
 
         # Nối thông tin vị thế + P&L ngày (nếu trade_manager hỗ trợ)
