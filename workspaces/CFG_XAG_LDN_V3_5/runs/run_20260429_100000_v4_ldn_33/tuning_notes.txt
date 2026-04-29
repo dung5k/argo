@@ -1,0 +1,2 @@
+Lượt này thay đổi: WINDOW_SIZE giảm lại về mốc 60. Thu hẹp TP_PIPS và SL_PIPS xuống 20 pips.
+Kỳ vọng: Cửa sổ 90 nến làm nhiễu tín hiệu nghiêm trọng. Trở về "điểm ngọt" 60 nến. Tuy nhiên, việc giảm biên độ ăn/thua từ 30 xuống 20 pips sẽ chuyển chiến thuật thành Micro-Scalping (chốt lời cực nhanh). Điều này rất hợp lý với sự nhàm chán và biên độ hẹp của phiên London. Kỳ vọng Win Rate bứt phá khỏi mức 48.9% của Run 31.

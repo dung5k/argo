@@ -49,7 +49,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Loại bỏ tối đa nhiễu từ các thị trường không hoạt động mạnh trong phiên London. Việc nới rộng tầm nhìn (Window=60) kết hợp với duy nhất tương quan Vàng-Bạc (XAU-XAG) hy vọng sẽ giúp mô hình nhìn ra được trend dài hạn của phiên thay vì bị nhiễu bởi các dao động siêu ngắn.
 - **Trạng thái:** Hoàn thành. Composite Score: 0.274. Win Rate cao nhất: 48.9%. Đây là một bước tiến RẤT LỚN (phá vỡ kỷ lục Baseline cũ 0.258). Việc nới rộng tầm nhìn lên 60 phút và cắt giảm nhiễu Macro đã giúp nơ-ron hoạt động mượt mà hơn, tránh bị nhiễu bởi noise ngắn hạn.
 
-### 5. `run_20260429_094500_v4_ldn_32` (Đang tiến hành)
+### 5. `run_20260429_094500_v4_ldn_32` (Đã hoàn thành)
 - **Tham số thay đổi:** Nâng `WINDOW_SIZE` từ 60 lên 90.
 - **Kỳ vọng:** Do việc tăng Window từ 15 lên 60 đã giúp tăng Composite Score đáng kể (từ 0.247 lên 0.274), giả thuyết đặt ra là phiên London dao động rất chậm chạp. Việc nới rộng tầm nhìn lên 90 phút (1 tiếng rưỡi) sẽ giúp bộ não D16 nhìn thấy toàn bộ hành vi giá của thị trường kể từ lúc mở cửa phiên Frankfurt, từ đó củng cố độ chính xác và đưa Win Rate vượt mốc 50% hòa vốn.
+- **Trạng thái:** THẤT BẠI THẢM HẠI. Mô hình hoàn toàn mất phương hướng và không dám đưa ra bất kỳ dự đoán nào (Composite Score 0.0, N=0 tín hiệu). Cửa sổ 90 nến là quá dài đối với bộ não nhỏ bé D16, khiến tín hiệu hoàn toàn bị "loãng" vào nhiễu. Thư mục đã bị xóa.
+
+### 6. `run_20260429_100000_v4_ldn_33` (Đang tiến hành)
+- **Tham số thay đổi:** Hạ `WINDOW_SIZE` về lại mốc lý tưởng 60. Thu hẹp biên độ `TP_PIPS` = 20, `SL_PIPS` = 20.
+- **Kỳ vọng:** Quay về với "điểm ngọt" Window 60. Việc giảm biên độ ăn/thua xuống 20 pips sẽ chuyển đổi chiến thuật thành Micro-Scalping (ăn mỏng, cắt nhanh), hoàn toàn phù hợp với môi trường sideway chậm chạp của London. Kỳ vọng Win Rate sẽ chính thức vượt xa mốc 50% để sinh lời dương.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
