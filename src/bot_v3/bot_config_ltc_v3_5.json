@@ -19,7 +19,7 @@
             "run_id": "run_20260428_024500_v4_ldn_74",
             "config_id": "CFG_LTC_LONDON_V3_5",
             "trading_config": {
-                "min_prob_thresh": 0.65,
+                "min_prob_thresh": 0.537,
                 "mse_thresh_perc": 70.0
             }
         },
