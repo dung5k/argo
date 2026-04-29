@@ -1,0 +1,2 @@
+Lượt này thay đổi: Revert NUM_LAYERS về 1 để chống overfit nhanh. Giảm WINDOW_SIZE xuống 30 nến.
+Kỳ vọng: Lớp L2 đã giúp mô hình đột phá Win Rate 52% nhưng overfit ngay lập tức. Bằng cách quay lại L1 (não nông) nhưng kết hợp với góc nhìn ngắn hơn (30 phút đầu của phiên London lúc Frankfurt mở cửa), kỳ vọng mô hình sẽ duy trì được Win Rate > 50% đồng thời phát ra nhiều tín hiệu chất lượng hơn, tối đa hoá lợi nhuận tổng hợp.

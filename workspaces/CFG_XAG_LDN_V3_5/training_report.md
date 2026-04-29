@@ -69,7 +69,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Trở lại hoàn toàn cấu hình kỷ lục của Run 31 (TP 30, LR 1e-5, Window 60) nhưng giảm quy mô Batch Size xuống 256. Batch size nhỏ hơn sẽ đưa thêm một chút "nhiễu gradient" tự nhiên vào quá trình huấn luyện, đóng vai trò như một bộ điều chuẩn (Regularizer) giúp mô hình tìm được các đặc trưng sắc nét hơn thay vì bị san phẳng (smoothed out) bởi Batch 512. Kỳ vọng mô hình sẽ học sâu hơn và đẩy Win Rate vượt mốc 50%.
 - **Trạng thái:** Hoàn thành. Composite Score: 0.261. Win Rate max 48.5%. Sự bổ sung nhiễu gradient từ Batch 256 đã gây phản tác dụng! Mô hình tạo ra nhiều tín hiệu hơn (416 tín hiệu) nhưng độ chính xác lại giảm so với Run 31 (48.9%). Điều này chứng tỏ thị trường London ĐÃ QUÁ NHIỄU, ta CẦN BATCH SIZE LỚN (512) để làm phẳng nhiễu (smooth out the noise) chứ không được bơm thêm nhiễu vào mạng.
 
-### 9. `run_20260429_113000_v4_ldn_36` (Đang tiến hành)
+### 9. `run_20260429_113000_v4_ldn_36` (Đã hoàn thành)
 - **Tham số thay đổi:** Revert `BATCH_SIZE` về lại 512. Tăng cường độ sâu kiến trúc: `NUM_LAYERS` từ 1 lên 2.
 - **Kỳ vọng:** Trở về nền tảng ổn định tuyệt đối của Run 31 (Batch 512, TP 30, LR 1e-5, Window 60). Để phá vỡ ngưỡng Win Rate 48.9%, thay vì dùng các trick tối ưu hóa, tôi sẽ trực tiếp mở rộng dung lượng bộ não (Capacity). Việc tăng thêm 1 lớp Layer (NUM_LAYERS=2) sẽ cho phép D16 học được các mối liên hệ phi tuyến tính sâu hơn (Deep Hierarchical Features) từ chuỗi 60 nến, từ đó chắt lọc Alpha tinh khiết hơn và đẩy Win Rate vượt mốc sinh lời.
+- **Trạng thái:** Hoàn thành. Composite Score: 0.257. Win Rate MỞ RỘNG lên 52% (Lần đầu tiên vượt mốc 50%!). Tuy nhiên, vì kiến trúc L2 quá lớn so với lượng dữ liệu nhiễu của London, mô hình bị overfit cực nhanh (chỉ sau 1 epoch) và phát ra rất ít tín hiệu (chỉ 50 lệnh so với 227 lệnh của Run 31), khiến Score tổng hợp bị kéo xuống.
+
+### 10. `run_20260429_120000_v4_ldn_37` (Đang tiến hành)
+- **Tham số thay đổi:** Revert `NUM_LAYERS` về 1 (chống overfit nhanh). Giảm `WINDOW_SIZE` từ 60 xuống 30.
+- **Kỳ vọng:** Dữ liệu lịch sử đã thử nghiệm Window 15 (thất bại), 60 (kỷ lục), 90 (thất bại). Tuy nhiên mốc 30 nến (nửa giờ đầu tiên cực kỳ biến động của phiên London khi Frankfurt vừa mở cửa) chưa được khai phá. Việc cắt giảm Window về 30 kết hợp với bộ não nông (L1) sẽ giúp mô hình không bị quá tải thông tin, học thẳng vào pattern đột phá của 30 phút mở cửa và tạo ra tần suất tín hiệu lớn với Win Rate bảo toàn ở mức >50%.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
