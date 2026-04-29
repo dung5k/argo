@@ -19,7 +19,7 @@
       "id": "cleanup_storage",
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
-      "nextRunTime": 1777483204795,
+      "nextRunTime": 1777486814757,
       "intervalMinutes": 60
     },
     {
@@ -43,7 +43,13 @@
       "enabled": false,
       "promptFile": ".agent/periodic_prompt_xag_ny.md",
       "nextRunTime": 1777415083109,
-      "intervalMinutes": 20
+    },
+    {
+      "id": "bot_health_monitor",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_bot_monitor.md",
+      "nextRunTime": 0,
+      "intervalMinutes": 30
     }
   ]
 }
