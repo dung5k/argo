@@ -44,7 +44,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Để bù đắp điểm yếu của dữ liệu Macro tĩnh trong môi trường sideway của London, mô hình sẽ được cung cấp thêm luồng Order Flow (động lượng khối lượng) và Volatility Regime (chế độ biến động) nội tại của XAGUSD. Bộ lọc Zero Noise sẽ chặn các tín hiệu quét hai đầu. Kỳ vọng độ chính xác (Win Rate) sẽ vượt mốc 55%!
 - **Trạng thái:** Hoàn thành. Composite Score: 0.247. Win Rate cao nhất đạt 48.7%. Việc bổ sung Microstructure và Nasdaq không giúp cải thiện tình hình, chứng tỏ thị trường London quá nhiễu và những features này không mang lại Alpha.
 
-### 4. `run_20260429_093000_v4_ldn_31` (Đang tiến hành)
+### 4. `run_20260429_093000_v4_ldn_31` (Đã hoàn thành)
 - **Tham số thay đổi:** Nâng `WINDOW_SIZE` từ 15 lên 60. Lọc bỏ hoàn toàn `DXYm` và `USTECm`, chỉ giữ duy nhất `XAUUSDm` (Vàng) làm Macro Feature.
 - **Kỳ vọng:** Loại bỏ tối đa nhiễu từ các thị trường không hoạt động mạnh trong phiên London. Việc nới rộng tầm nhìn (Window=60) kết hợp với duy nhất tương quan Vàng-Bạc (XAU-XAG) hy vọng sẽ giúp mô hình nhìn ra được trend dài hạn của phiên thay vì bị nhiễu bởi các dao động siêu ngắn.
+- **Trạng thái:** Hoàn thành. Composite Score: 0.274. Win Rate cao nhất: 48.9%. Đây là một bước tiến RẤT LỚN (phá vỡ kỷ lục Baseline cũ 0.258). Việc nới rộng tầm nhìn lên 60 phút và cắt giảm nhiễu Macro đã giúp nơ-ron hoạt động mượt mà hơn, tránh bị nhiễu bởi noise ngắn hạn.
+
+### 5. `run_20260429_094500_v4_ldn_32` (Đang tiến hành)
+- **Tham số thay đổi:** Nâng `WINDOW_SIZE` từ 60 lên 90.
+- **Kỳ vọng:** Do việc tăng Window từ 15 lên 60 đã giúp tăng Composite Score đáng kể (từ 0.247 lên 0.274), giả thuyết đặt ra là phiên London dao động rất chậm chạp. Việc nới rộng tầm nhìn lên 90 phút (1 tiếng rưỡi) sẽ giúp bộ não D16 nhìn thấy toàn bộ hành vi giá của thị trường kể từ lúc mở cửa phiên Frankfurt, từ đó củng cố độ chính xác và đưa Win Rate vượt mốc 50% hòa vốn.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
