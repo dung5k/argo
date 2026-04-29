@@ -31,7 +31,7 @@
             "run_id": "run_20260427_060900_v4_ny_8",
             "config_id": "CFG_XAG_NY_V3_5",
             "trading_config": {
-                "min_prob_thresh": 0.570,
+                "min_prob_thresh": 0.55,
                 "mse_thresh_perc": 70.0
             }
         }
@@ -50,9 +50,27 @@
         "WINDOW_SIZE": 10,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
-            "XAUUSDm": ["log_ret", "volume", "bb_width", "corr_60", "spread_ret", "dxy_xau_anomaly"],
-            "USTECm": ["log_ret", "volume", "corr_60", "relative_strength"],
-            "DXYm": ["log_ret", "volume", "bb_width", "corr_60", "spread_ret"]
+            "XAUUSDm": [
+                "log_ret",
+                "volume",
+                "bb_width",
+                "corr_60",
+                "spread_ret",
+                "dxy_xau_anomaly"
+            ],
+            "USTECm": [
+                "log_ret",
+                "volume",
+                "corr_60",
+                "relative_strength"
+            ],
+            "DXYm": [
+                "log_ret",
+                "volume",
+                "bb_width",
+                "corr_60",
+                "spread_ret"
+            ]
         },
         "ORDER_FLOW": false,
         "VOL_REGIME": false,
