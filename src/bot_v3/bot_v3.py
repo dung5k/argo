@@ -393,7 +393,15 @@ def bot_background_loop():
                 active_run_id = target_run_id
                 
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, window_size)
-                processor = V3DataProcessor(s_path, i_feats, window_size, config=CONFIG, log_callback=print)
+                actual_input_dim = engine.num_features
+                
+                # Đồng bộ feature list với model weights
+                dp_feats = i_feats  # Mặc định dùng feature list từ scaler
+                if actual_input_dim != n_feat:
+                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Đồng bộ...")
+                    dp_feats = list(range(actual_input_dim))
+                processor = V3DataProcessor(s_path, dp_feats, window_size, config=CONFIG, log_callback=print)
+                # MT5 manager chỉ cần feature names (strings) để cào data, dùng i_feats gốc
                 mt5_manager.force_reload_dynamic_features(i_feats)
                 
                 brain_loaded = True
