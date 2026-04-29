@@ -1,0 +1,2 @@
+Lượt này thay đổi: Trả LEARNING_RATE về 1e-05. Giảm BATCH_SIZE từ 512 xuống 256.
+Kỳ vọng: Khôi phục cấu trúc của Run 31 (TP 30, Window 60, LR 1e-05). Việc giảm BATCH_SIZE xuống 256 giúp thêm một chút "nhiễu gradient" có ích vào quá trình huấn luyện, đóng vai trò như Regularizer để chống lại việc network bị lún vào local minima nông. Kỳ vọng mô hình học được các pattern khó hơn và kéo Win Rate lên > 50%.

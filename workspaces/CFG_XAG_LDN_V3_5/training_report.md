@@ -59,7 +59,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Quay về với "điểm ngọt" Window 60. Việc giảm biên độ ăn/thua xuống 20 pips sẽ chuyển đổi chiến thuật thành Micro-Scalping (ăn mỏng, cắt nhanh), hoàn toàn phù hợp với môi trường sideway chậm chạp của London. Kỳ vọng Win Rate sẽ chính thức vượt xa mốc 50% để sinh lời dương.
 - **Trạng thái:** THẤT BẠI THẢM HẠI. Composite Score: 0.0. Với TP/SL = 20 pips và spread thực tế 2 pips, mục tiêu là quá hẹp khiến nhãn dán (labels) bị chi phối hoàn toàn bởi nhiễu ngẫu nhiên (noise). Mô hình không thể học được bất kỳ quy luật nào và không dám đánh trên mốc 53% tự tin. Thư mục đã bị xóa.
 
-### 7. `run_20260429_103000_v4_ldn_34` (Đang tiến hành)
+### 7. `run_20260429_103000_v4_ldn_34` (Đã hoàn thành)
 - **Tham số thay đổi:** Revert `TP_PIPS` = 30, `SL_PIPS` = 30 (Mốc duy nhất tạo ra tín hiệu thành công ở Run 31). Tăng `LEARNING_RATE` từ 1e-05 lên 3e-05.
 - **Kỳ vọng:** TP/SL 30 là tỷ lệ vàng của phiên London. Do Loss của Run 31 giảm rất chậm (early stopping kích hoạt sớm khi mô hình chưa hội tụ xong), việc tăng cường Learning Rate lên 3e-5 sẽ giúp mạng D16 có những bước nhảy gradient mạnh hơn, vượt qua được các local minima để tối ưu hóa Win Rate từ 48.9% lên >50%.
+- **Trạng thái:** Hoàn thành. Composite Score: 0.231. Win Rate max 41.6%. Sự thất bại của Run 34 chứng minh Learning Rate cao (3e-5) là độc hại đối với London. Môi trường London cực kỳ nhiễu, bước nhảy LR lớn khiến mô hình học nhầm các noise thành pattern, dẫn đến việc dự đoán loạn xạ (hơn 1140 tín hiệu được phát ra) nhưng độ chính xác lại sụt giảm thê thảm.
+
+### 8. `run_20260429_110000_v4_ldn_35` (Đang tiến hành)
+- **Tham số thay đổi:** Revert `LEARNING_RATE` về 1e-05. Giảm `BATCH_SIZE` từ 512 xuống 256.
+- **Kỳ vọng:** Trở lại hoàn toàn cấu hình kỷ lục của Run 31 (TP 30, LR 1e-5, Window 60) nhưng giảm quy mô Batch Size xuống 256. Batch size nhỏ hơn sẽ đưa thêm một chút "nhiễu gradient" tự nhiên vào quá trình huấn luyện, đóng vai trò như một bộ điều chuẩn (Regularizer) giúp mô hình tìm được các đặc trưng sắc nét hơn thay vì bị san phẳng (smoothed out) bởi Batch 512. Kỳ vọng mô hình sẽ học sâu hơn và đẩy Win Rate vượt mốc 50%.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
