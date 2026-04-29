@@ -235,6 +235,8 @@ elif TRADE_PLATFORM == "SIMULATED":
         def manage_positions(self, *a, **kw): pass
         def early_reversal_check(self, *a, **kw): pass
         def trailing_sl(self, *a, **kw): pass
+        def sync_existing_positions(self): pass
+        def get_active_positions_report(self): return "Mô phỏng (SIMULATED): Đang theo dõi, không trade thật."
     trade_manager = _SimulatedTM()
     print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
