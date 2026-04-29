@@ -253,6 +253,20 @@ def _load_brain_metrics(run_id: str, config_id: str) -> str:
             data = json.load(f)
         sessions = data.get('sessions', {})
         lines = [f"🧠 Não: {run_id}"]
+        
+        # Thông tin trading platform
+        platform = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "?")
+        exec_sym = CONFIG.get("EXECUTION_SYMBOL", CONFIG.get("TARGET_SYMBOL", "?"))
+        if platform == "BINANCE":
+            is_demo = os.getenv("BINANCE_FUTURES_DEMO", "True").lower() == "true"
+            lines.append(f"💹 Trade: Binance {'DEMO' if is_demo else 'REAL'} | {exec_sym}")
+        elif platform == "BINANCE_SPOT":
+            lines.append(f"💹 Trade: Binance Spot | {exec_sym}")
+        else:
+            mt5_path = CONFIG.get("MT5_PATH", "")
+            mt5_name = os.path.basename(os.path.dirname(mt5_path)) if mt5_path else "?"
+            lines.append(f"💹 Trade: MT5 {mt5_name} | {exec_sym}")
+        lines.append("─" * 28)
         for sess_name, sess_data in sessions.items():
             best = sess_data.get('BEST_VLOSS', {})
             score = best.get('composite_score', 0)
