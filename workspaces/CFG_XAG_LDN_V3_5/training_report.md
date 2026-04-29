@@ -39,7 +39,12 @@ Cấu trúc cũ của London (D32, Layer 2, TP/SL=30/30) đã đem lại kết q
 - **Kỳ vọng:** Do phiên London có biên độ dao động hẹp hơn NY, việc thu hẹp khoảng cách TP/SL xuống 30 pips và giảm Window xuống 15 phút (phản ứng nhanh hơn) sẽ giúp mô hình "bắt mạch" được nhiều tín hiệu hơn, đồng thời vẫn kế thừa được sức mạnh của bộ não D16 Pure Macro.
 - **Trạng thái:** Hoàn thành. Composite Score: 0.252 (Rất thấp). Win Rate chỉ đạt tối đa 47.6%. Mặc dù đã giảm biên độ TP/SL xuống 30/30 pips giúp số lượng tín hiệu tăng lên đáng kể (84 lệnh hợp lệ), nhưng độ chính xác lại nằm dưới mức hòa vốn (50%). Kết luận: Việc chỉ sử dụng dữ liệu vĩ mô tĩnh (Macro) cho phiên London là KHÔNG ĐỦ, vì phiên này bị chi phối nhiều bởi dòng tiền ngắn hạn và thiếu xu hướng dẫn dắt rõ ràng.
 
-### 3. `run_20260429_091500_v4_ldn_30` (Đang tiến hành)
+### 3. `run_20260429_091500_v4_ldn_30` (Đã hoàn thành)
 - **Tham số thay đổi:** Bật `ORDER_FLOW=true`, `VOL_REGIME=true`, `ZERO_NOISE_TARGET=true`. Thêm lại `USTECm` vào bộ Macro.
 - **Kỳ vọng:** Để bù đắp điểm yếu của dữ liệu Macro tĩnh trong môi trường sideway của London, mô hình sẽ được cung cấp thêm luồng Order Flow (động lượng khối lượng) và Volatility Regime (chế độ biến động) nội tại của XAGUSD. Bộ lọc Zero Noise sẽ chặn các tín hiệu quét hai đầu. Kỳ vọng độ chính xác (Win Rate) sẽ vượt mốc 55%!
+- **Trạng thái:** Hoàn thành. Composite Score: 0.247. Win Rate cao nhất đạt 48.7%. Việc bổ sung Microstructure và Nasdaq không giúp cải thiện tình hình, chứng tỏ thị trường London quá nhiễu và những features này không mang lại Alpha.
+
+### 4. `run_20260429_093000_v4_ldn_31` (Đang tiến hành)
+- **Tham số thay đổi:** Nâng `WINDOW_SIZE` từ 15 lên 60. Lọc bỏ hoàn toàn `DXYm` và `USTECm`, chỉ giữ duy nhất `XAUUSDm` (Vàng) làm Macro Feature.
+- **Kỳ vọng:** Loại bỏ tối đa nhiễu từ các thị trường không hoạt động mạnh trong phiên London. Việc nới rộng tầm nhìn (Window=60) kết hợp với duy nhất tương quan Vàng-Bạc (XAU-XAG) hy vọng sẽ giúp mô hình nhìn ra được trend dài hạn của phiên thay vì bị nhiễu bởi các dao động siêu ngắn.
 - **Trạng thái:** Đang chuẩn bị dữ liệu và huấn luyện.
