@@ -87,6 +87,7 @@ class V3DataProcessor:
             if hasattr(self.fe.scaler, 'feature_names_in_'):
                 scaler_cols = list(self.fe.scaler.feature_names_in_)
                 n_scaler = len(scaler_cols)
+                fe_df_original = fe_df.copy()  # Lưu bản gốc trước khi modify
                 
                 # Tìm columns scaler biết trong fe_df
                 available = [c for c in scaler_cols if c in fe_df.columns]
@@ -100,14 +101,14 @@ class V3DataProcessor:
                     self.log_callback(f"[DataProcessorV3] ⚠️ Thiếu {n_scaler - len(available)} cột scaler → positional fallback")
                     df_to_scale = fe_df.iloc[:, :n_scaler].copy()
                     df_to_scale.columns = scaler_cols
-                    extra_cols = list(fe_df.columns[n_scaler:])
+                    extra_cols = list(fe_df_original.columns[n_scaler:])
                 
                 scaled_df = self.fe.transform_scaler(df_to_scale)
                 
                 # Nếu model cần nhiều features hơn scaler → thêm extra features (unscaled)
                 if n_model > n_scaler and extra_cols:
                     n_extra_needed = min(n_model - n_scaler, len(extra_cols))
-                    extra_df = fe_df[extra_cols[:n_extra_needed]].copy()
+                    extra_df = fe_df_original[extra_cols[:n_extra_needed]].copy()
                     scaled_df = pd.concat([scaled_df, extra_df], axis=1)
                     self.log_callback(f"[DataProcessorV3] 📊 Concat: {n_scaler} scaled + {n_extra_needed} raw = {len(scaled_df.columns)} cols")
             else:
@@ -130,7 +131,10 @@ class V3DataProcessor:
             return None, msg
 
         # 3. Khớp Khối Dữ Liệu Toán Học — ÉP THỨ TỰ CỘT KHỚP VỚI TRAINING
-        if self.saved_column_order:
+        # Bỏ qua khi inference_feats là integers (auto-trim mode từ model weights)
+        if isinstance(self.inference_feats[0], int):
+            final_df = scaled_df.copy()
+        elif self.saved_column_order:
             available = set(scaled_df.columns)
             missing = [c for c in self.saved_column_order if c not in available]
             if missing:
