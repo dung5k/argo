@@ -53,8 +53,20 @@ class V3InferenceEngine:
                 if detected_dim != num_features:
                     self.log_callback(f"[InferenceEngineV3] ⚠️ Ghi đè Cột Đầu Vào từ {num_features} -> {detected_dim} theo Model Weights.")
                     num_features = detected_dim
-            except KeyError:
-                pass
+                
+                detected_d_model = state_dict['encoder.input_projection.weight'].shape[0]
+                if detected_d_model != d_model:
+                    self.log_callback(f"[InferenceEngineV3] ⚠️ Ghi đè d_model từ {d_model} -> {detected_d_model} theo Model Weights.")
+                    d_model = detected_d_model
+                    
+                layer_indices = [int(k.split('.')[3]) for k in state_dict.keys() if 'encoder.transformer_encoder.layers.' in k]
+                if layer_indices:
+                    detected_layers = max(layer_indices) + 1
+                    if detected_layers != num_attn_layers:
+                        self.log_callback(f"[InferenceEngineV3] ⚠️ Ghi đè num_layers từ {num_attn_layers} -> {detected_layers} theo Model Weights.")
+                        num_attn_layers = detected_layers
+            except Exception as e:
+                self.log_callback(f"[InferenceEngineV3] ⚠️ Lỗi auto-detect model dims: {e}")
 
             self.model = AAMT_Model(
                 input_dim=num_features,

@@ -526,7 +526,8 @@ class FeatureEngineeringV3:
         
         if cols_to_scale:
             # Chỉ scale những cột mà scaler đã được fit (fix lỗi Feature unseen at fit time)
-            valid_cols = [c for c in cols_to_scale if c in self.scaler.feature_names_in_]
+            # [VÁ LỖI] Bắt buộc phải giữ đúng thứ tự cột như lúc fit
+            valid_cols = [c for c in self.scaler.feature_names_in_ if c in cols_to_scale]
             if valid_cols:
                 scaled_vals = self.scaler.transform(features_df[valid_cols])
                 scaled_vals = np.clip(scaled_vals, -15.0, 15.0)

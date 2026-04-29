@@ -408,14 +408,16 @@ def bot_background_loop():
                 m_path, s_path, i_feats, n_feat = cloud.sync_session_model(cfg_id)
                 active_run_id = target_run_id
                 
-                engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, window_size)
-                actual_input_dim = engine.num_features
+                if not engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, window_size):
+                    raise Exception("Load weights failed!")
+                actual_input_dim = getattr(engine, 'num_features', n_feat)
                 
                 # Đồng bộ feature list với model weights
                 dp_feats = i_feats  # Mặc định dùng feature list từ scaler
                 if actual_input_dim != n_feat:
-                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Đồng bộ...")
-                    dp_feats = list(range(actual_input_dim))
+                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Cảnh báo, nhưng vẫn giữ feature names.")
+                    # KHÔNG ghi đè dp_feats thành số nguyên, vì cần chuỗi để parse MACRO_FEATURES và ROUTING!
+                    
                 processor = V3DataProcessor(s_path, dp_feats, window_size, config=CONFIG, log_callback=print)
                 # MT5 manager chỉ cần feature names (strings) để cào data, dùng i_feats gốc
                 mt5_manager.force_reload_dynamic_features(i_feats)

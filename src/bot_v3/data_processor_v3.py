@@ -36,7 +36,23 @@ class V3DataProcessor:
             fe_cfg = self.config.get('FEATURE_ENGINEERING', {})
             macro_features = fe_cfg.get('MACRO_FEATURES', {})
             
-            self.fe = FeatureEngineeringV3(target_prefix=target_prefix, macro_features=macro_features)
+            # Tự động cắt tỉa các Mã Vĩ Mô không nằm trong bộ Não (backward compatibility)
+            filtered_macro = {}
+            for m_sym, m_cols in macro_features.items():
+                m_sym_lower = m_sym.lower()
+                if any(isinstance(feat, str) and m_sym_lower in feat.lower() for feat in self.inference_feats):
+                    filtered_macro[m_sym] = m_cols
+                else:
+                    self.log_callback(f"[DataProcessorV3] ⚠️ Bỏ qua mã Vĩ Mô '{m_sym}' vì không có trong bộ Não (Scaler).")
+            
+            self.fe = FeatureEngineeringV3(
+                target_prefix=target_prefix, 
+                macro_features=filtered_macro,
+                mtf_windows=fe_cfg.get('MTF_WINDOWS', None),
+                order_flow=fe_cfg.get('ORDER_FLOW', False),
+                vol_regime=fe_cfg.get('VOL_REGIME', False),
+                crypto_mode=fe_cfg.get('CRYPTO_MODE', False)
+            )
             
             # Load scaler (hỗ trợ cả format cũ và mới)
             raw_pickle = joblib.load(self.scaler_path)
@@ -103,7 +119,7 @@ class V3DataProcessor:
         # 3. Khớp Khối Dữ Liệu Toán Học — ÉP THỨ TỰ CỘT KHỚP VỚI TRAINING
         # Bỏ qua khi inference_feats là integers (auto-trim mode từ model weights)
         if isinstance(self.inference_feats[0], int):
-            final_df = scaled_df.copy()
+            final_cols = list(scaled_df.columns)
         elif self.saved_column_order:
             available = set(scaled_df.columns)
             missing = [c for c in self.saved_column_order if c not in available]
