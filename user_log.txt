@@ -1,0 +1,134 @@
+<USER_REQUEST>
+Hello client1
+
+__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-04-27T09:30:18+07:00.
+
+The user's current state is as follows:
+Active Document: d:\DungLA\client1\.agent\periodic_prompt_ltc_v4_smc_local.md (LANGUAGE_MARKDOWN)
+Cursor is on line: 1
+Other open documents:
+- d:\DungLA\client1\workspaces\CFG_LTC_LONDON_V3_5\runs\run_20260425_203728_v3_ldn_14\tuning_notes.txt (LANGUAGE_PLAINTEXT)
+- d:\DungLA\client1\workspaces\CFG_LTC_LONDON_V3_5\runs\run_20260425_134218_v3_ldn_6\tuning_notes.txt (LANGUAGE_PLAINTEXT)
+- d:\DungLA\client1\workspaces\CFG_LTC_LONDON_V3_5\_prep_ldn36.py (LANGUAGE_PYTHON)
+<truncated 638 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4524 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+Trong lúc bạn đang bận, người dùng đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng:
+
+--- Tin nhắn 1 ---
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4854 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4524 bytes>
+<USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+2. **Thị trường bị giật dây bởi Tin tức và Chỉ số Dẫn dắt (Leaders).** LTC không tự di chuyển. Khi tin tức vĩ mô ra, các Leaders (như BTC, ETH) sẽ phản ứng ĐẦU TIÊN. LTC chỉ là kẻ chạy theo và bị Đội Lái thao túng quét thanh khoản.
+<truncated 4039 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+Trong lúc bạn đang bận, người dùng đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng:
+
+--- Tin nhắn 1 ---
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4854 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4524 bytes>
+Leaving a comment while you're working so you take this into account: <USER_REQUEST>
+# NHIỆM VỤ CHIẾN THUẬT V4: SMART MONEY & LEADER DEPENDENCY (LTC LONDON)
+
+Hệ thống gọi bạn từ bộ quản lý Task JSON. Bạn đóng vai trò **Kỹ sư AI Quant theo trường phái Dòng Tiền (SMC/Macro)** để tối ưu hóa bộ não giao dịch cho cấu hình `CFG_LTC_LONDON_V3_5`.
+
+## TRIẾT LÝ CỐT LÕI (BẮT BUỘC TUÂN THỦ)
+1. **SỰ THẬT TÀN KHỐC VỀ THỊ TRƯỜNG:** Một Win Rate 65.8% trong môi trường backtest/training là RÁC RƯỞI khi ra thực chiến vì Spread, Commission và Slippage (Trượt giá) sẽ ăn sạch lợi nhuận. Đừng bao giờ tự mãn. Phải nhìn nhận mọi con số dưới góc độ cực kỳ khắt khe.
+<truncated 4524 bytes>
+

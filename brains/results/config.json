@@ -1,40 +1,61 @@
 {
-    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
-    "HF_RUN_ID": "run_20260423_095000_v3_n",
+    "HF_RUN_ID": "run_20260421_082810_v3_CFG_LTC_CRYPTO_V3_5",
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
-    "CONFIG_ID": "CFG_LTC_NY_V3_5",
+    "CONFIG_ID": "CFG_LTC_LONDON_V3_5",
     "VERSION": "3.5",
-    "SESSION": "ny",
+    "SESSION": "london",
     "SESSION_UTC": {
-        "START": "13:00",
-        "END": "22:00",
-        "DESCRIPTION": "New York session - LTC (13:00-22:00 UTC)"
+        "START": "07:00",
+        "END": "13:00",
+        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/argo_workspaces",
-        "MODEL_REPO": "dung5k/argo_workspaces",
+        "DATASET_REPO": "dung5k/ltc_v3_tensor_london",
+        "MODEL_REPO": "dung5k/argo_data",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
         "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC. THIẾU 1 MÀ HỆ THỐNG TỰ HỦY!",
-        "TP_PCT": 0.005,
-        "SL_PCT": 0.004,
-        "MAX_HOLD_BARS": 5,
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.003,
+        "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 30,
+        "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
-            "BTCUSDT": ["log_ret", "corr_60", "bb_width", "volume"],
-            "ETHUSDT": ["log_ret", "volume"],
-            "BCHUSDT": ["log_ret"],
-            "DOGEUSDT": ["log_ret", "volume"],
-            "USTECm": ["log_ret"],
-            "DXYm": ["log_ret"],
-            "XAUUSDm": ["log_ret"]
+            "BTCUSDT": [
+                "log_ret",
+                "bb_width",
+                "volume",
+                "corr_60"
+            ],
+            "ETHUSDT": [
+                "log_ret",
+                "volume"
+            ],
+            "BCHUSDT": [
+                "log_ret"
+            ],
+            "DOGEUSDT": [
+                "log_ret",
+                "volume"
+            ],
+            "USTECm": [
+                "log_ret"
+            ],
+            "DXYm": [
+                "log_ret"
+            ],
+            "XAUUSDm": [
+                "log_ret"
+            ],
+            "DE30m": [
+                "log_ret"
+            ]
         },
         "_ENHANCED_FEATURES_V2": {
             "_note": "Các features dưới đây được tự động tính trong feature_engineering_v3.py, không cần cấu hình thêm",
@@ -46,19 +67,21 @@
         }
     },
     "TRAINING": {
-        "D_MODEL": 128,
-        "N_HEAD": 8,
-        "NUM_LAYERS": 4,
+        "D_MODEL": 64,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 3,
         "BATCH_SIZE": 512,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 0.00001,
+        "LEARNING_RATE": 1e-05,
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-20",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 100,
-        "FREQ_MAX_N": 600
+        "FREQ_MAX_N": 600,
+        "DROPOUT": 0.35,
+        "LR_SCHEDULER": "cosine_warm"
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "data/history",
@@ -71,6 +94,7 @@
         },
         "ROUTING": {
             "USTECm": "EXNESS",
+            "DE30m": "EXNESS",
             "DXYm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "LTCUSDm": "EXNESS",
@@ -81,19 +105,24 @@
             "DOGEUSDT": "BINANCE"
         },
         "CRYPTO_BINANCE": {
-            "SYMBOLS": ["LTC/USDT", "BTC/USDT", "ETH/USDT", "BCH/USDT", "DOGE/USDT"],
+            "SYMBOLS": [
+                "LTC/USDT",
+                "BTC/USDT",
+                "ETH/USDT",
+                "BCH/USDT",
+                "DOGE/USDT"
+            ],
             "TIMEFRAME": "1m",
             "SINCE": "2025-01-01T00:00:00Z"
         }
     },
     "LIVE_BOT": {
-        "PAPER_TRADE": true,
-        "TRADE_PLATFORM": "BINANCE",
         "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.67,
+        "MIN_PROBABILITY_THRESH": 0.57,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
         }
-    }
+    },
+    "RUN_ID": "run_20260427_074338_v3_ldn_35"
 }

@@ -26,21 +26,29 @@ def log(msg):
 # PHẦN 1: Cào từ Binance
 # ==============================================================
 def fetch_binance(symbol: str, timeframe: str, since_str: str) -> tuple[str, pd.DataFrame]:
-    """Cào OHLCV từ Binance cho 1 symbol. Trả về (symbol, DataFrame)."""
-    exchange = ccxt.binance({'enableRateLimit': True})
+    """Cào OHLCV từ Binance cho 1 symbol (Hỗ trợ Taker Buy Volume và Funding Rate)."""
+    exchange = ccxt.binance({'enableRateLimit': True, 'options': {'defaultType': 'future'}})
     since_ts = exchange.parse8601(since_str)
     now_ts   = exchange.milliseconds()
     all_ohlcv = []
     limit = 1000
+    
+    binance_sym = symbol.replace('/', '')
 
-    log(f"  → Cào Binance: {symbol} ({timeframe}) từ {since_str}")
+    log(f"  → Cào Binance Futures: {symbol} ({timeframe}) từ {since_str}")
     while since_ts < now_ts:
         try:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since_ts, limit)
+            # Dùng fapi để lấy Taker Buy Volume
+            ohlcv = exchange.fapiPublicGetKlines({
+                'symbol': binance_sym,
+                'interval': timeframe,
+                'startTime': since_ts,
+                'limit': limit
+            })
             if not ohlcv:
                 break
             all_ohlcv.extend(ohlcv)
-            since_ts = ohlcv[-1][0] + (60_000 if timeframe == '1m' else 300_000)
+            since_ts = int(ohlcv[-1][0]) + (60_000 if timeframe == '1m' else 300_000)
         except ccxt.NetworkError as e:
             log(f"    [WARN] NetworkError {symbol}: {e}. Retry sau 3s...")
             time.sleep(3)
@@ -52,13 +60,52 @@ def fetch_binance(symbol: str, timeframe: str, since_str: str) -> tuple[str, pd.
         log(f"  ❌ KHÔNG CÓ DỮ LIỆU CHO {symbol}!")
         return symbol, pd.DataFrame()
 
-    df = pd.DataFrame(all_ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+    # Parse columns từ Binance klines
+    # [0: Open time, 1: Open, 2: High, 3: Low, 4: Close, 5: Volume, 6: Close time, 7: Quote vol, 8: Trades, 9: Taker buy base vol, 10: Taker buy quote vol]
+    df = pd.DataFrame(all_ohlcv)
+    df = df.iloc[:, [0, 1, 2, 3, 4, 5, 9]]
+    df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'taker_buy_volume']
+    
+    # Ép kiểu dữ liệu
+    for col in ['open', 'high', 'low', 'close', 'volume', 'taker_buy_volume']:
+        df[col] = df[col].astype(float)
+        
     df['time'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True)
     df.set_index('time', inplace=True)
-    df = df[['open', 'high', 'low', 'close', 'volume']]
-    # Thêm cột tick_volume và spread để tương thích schema V3 (dùng 0 vì Binance không có)
+    df = df[['open', 'high', 'low', 'close', 'volume', 'taker_buy_volume']]
+    
     df['real_volume'] = df['volume']
     df['spread'] = 0
+    
+    # ------------------------------------------------------------------
+    # Lấy Funding Rate
+    # ------------------------------------------------------------------
+    log(f"  → Cào Funding Rate cho {symbol}...")
+    fr_since_ts = exchange.parse8601(since_str)
+    all_fr = []
+    while fr_since_ts < now_ts:
+        try:
+            fr_data = exchange.fetch_funding_rate_history(symbol + ':USDT', since=fr_since_ts, limit=500)
+            if not fr_data:
+                break
+            all_fr.extend(fr_data)
+            fr_since_ts = fr_data[-1]['timestamp'] + 1000
+        except Exception as e:
+            log(f"    [WARN] Lỗi kéo Funding Rate {symbol}: {e}")
+            break
+            
+    if all_fr:
+        fr_df = pd.DataFrame(all_fr)
+        fr_df['time'] = pd.to_datetime(fr_df['timestamp'], unit='ms', utc=True)
+        fr_df.set_index('time', inplace=True)
+        fr_df = fr_df[['fundingRate']]
+        
+        # Merge Funding Rate vào df chính (sử dụng forward fill vì FR 8 tiếng mới có 1 lần)
+        df = df.join(fr_df, how='left')
+        df['fundingRate'] = df['fundingRate'].ffill().fillna(0) # Fill NaN bằng 0 hoặc ffill
+    else:
+        df['fundingRate'] = 0.0
+
     log(f"  ✔️ {symbol}: {len(df)} nến. Latest={df.index[-1]}")
     return symbol, df
 
@@ -211,6 +258,21 @@ def main(config_file: str):
         mt5.shutdown()
 
     log(f"\n🎉 HOÀN TẤT. Tổng nến đã cào xong.")
+
+    # --- YFINANCE symbols ---
+    log(f"[3/3] Cào mã từ YFINANCE...")
+    try:
+        import yfinance as yf
+        for sym, brk in routing.items():
+            if brk == "YFINANCE":
+                log(f"  → YFINANCE: {sym}")
+                # yf.download(symbol, start=..., interval="1m")
+                # Note: yfinance 1m data is only available for the last 7 days!
+                # If we need history back to 2024, we might need a higher timeframe like 5m or 1h, 
+                # or we just use MT5 for historical data.
+                pass
+    except Exception as e:
+        log(f"  [ERROR] YFINANCE: {e}")
 
     if missing:
         log("\n" + "="*50)

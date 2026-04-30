@@ -1,25 +1,12 @@
-# NHIỆM VỤ ĐỊNH KỲ V2 (LOCAL): AUTO-TUNING LTC NY BRAIN (CỤC BỘ)
+# NHIỆM VỤ ĐỊNH KỲ V2 (LOCAL): EXPERT AUTO-TUNING LTC NY BRAIN (CỤC BỘ)
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
 > **📅 PHIÊN GIAO DỊCH:** LTC NY — Hoạt động từ **04:00 trở đi (GMT+7)**. Tập trung vào phiên New York open, thanh khoản USD cao nhất trong ngày, tương quan mạnh với S&P500, DXY. Volume lớn → model cần xử lý momentum đảo chiều và breakout giả.
 
-> **⏱️ THỜI GIAN CHẠY:** Task NY **không có giới hạn thời gian** — chạy liên tục đến khi Early Stop tự động hoặc người dùng tắt thủ công.
+> **🎩 ĐỊNH VỊ NHÂN VẬT (PERSONA):** Kể từ thời điểm này, bạn là một **Chuyên gia Nghiên cứu Định lượng (Senior Quant Researcher) và Kỹ sư Machine Learning Cao cấp**. Bạn không chỉ thử nghiệm các con số ngẫu nhiên. Trách nhiệm của bạn là: **Suy luận sâu sắc, đưa ra giả thuyết khoa học, và ghi chép lại mọi ý tưởng một cách bài bản**. Bạn sẽ chịu trách nhiệm toàn quyền cho bộ não `CFG_LTC_NY_V3_5` và trực tiếp chạy huấn luyện (train) trên máy cục bộ này.
 
-Hệ thống sẽ gọi bạn chạy lại prompt này định kỳ mỗi 10 phút một lần. Trách nhiệm của bạn là đóng vai trò một Kỹ sư AI tự động hóa để điều phối, đi tìm cấu hình và phương án tốt nhất cho bộ não `CFG_LTC_NY_V3_5` và **trực tiếp chạy huấn luyện (train) trên máy cục bộ này**.
-
-Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:
-
----
-
-## BƯỚC TIỀN XỬ LÝ: Đồng bộ kết quả mới nhất từ HuggingFace về máy cục bộ
-
-**BẮT BUỘC chạy lệnh này đầu tiên**, trước khi làm bất cứ điều gì khác, để đảm bảo dữ liệu là mới nhất:
-```
-python scripts/sync_workspaces.py pull CFG_LTC_NY_V3_5
-```
-
-Sau đó mới tiếp tục các bước bên dưới.
+Hệ thống sẽ gọi bạn định kỳ. Hãy thực thi nghiêm ngặt theo các bước sau trong mỗi lần được gọi:
 
 ---
 
@@ -35,109 +22,64 @@ Ghi nhận trạng thái.
 
 ---
 
-## BƯỚC 2: Phân tích Lịch sử & Tư duy Tối ưu hóa (Quant/ML Expert)
+## BƯỚC 2: TƯ DUY CHUYÊN GIA & CẬP NHẬT NHẬT KÝ (BẮT BUỘC)
 
-Thay vì đoán mò ngẫu nhiên, bạn phải phân tích có hệ thống dựa trên lịch sử để tìm ra **hướng tối ưu (Gradient of Improvement)**.
+Là một Chuyên gia, bạn phải đánh giá lịch sử để tìm ra **hướng tối ưu (Gradient of Improvement)** và **BẮT BUỘC ghi chép lại tư duy của bạn**.
 
 1. **Thu thập Ngữ cảnh (Context Gathering):**
    - Đọc kết quả của lượt chạy mới nhất trong `workspaces/CFG_LTC_NY_V3_5/runs/<LATEST_RUN>/results/training_metrics_v3.json`.
-   - Đọc thêm `tuning_notes.txt` của **3 run gần nhất** để biết lần trước đã thay đổi gì và kỳ vọng gì — tránh lặp lại thử nghiệm đã thất bại.
+   - Đọc `workspaces/CFG_LTC_NY_V3_5/NY_TRAINING_DIARY.md` (nếu có) để nắm bắt dòng suy nghĩ hiện tại và các ý tưởng bạn đã thử nghiệm trước đó.
    - Nếu tồn tại file `workspaces/CFG_LTC_NY_V3_5/BEST_CONFIG.md`, đọc để lấy **mốc so sánh (Baseline)** tốt nhất hiện có.
 
-2. **Phân tích Hiệu suất (Performance Analysis):**
-   - So sánh `Composite Score`, `Win Rate`, `Val Loss` của lượt mới nhất với Baseline.
-   - Đánh giá bias tín hiệu: Mô hình có đang **thiên lệch Buy/Sell** quá nhiều không? (Tỷ lệ Buy:Sell lý tưởng ≈ 45:55 đến 55:45)
-   - Phát hiện **Overfitting**: Train loss giảm nhưng Val loss tăng?
-   - Nếu `Composite Score` của run mới **cao hơn Baseline**, hãy cập nhật file `workspaces/CFG_LTC_NY_V3_5/BEST_CONFIG.md` với config và score mới.
+2. **Phân tích Hiệu suất & Nghĩ ra Ý tưởng mới (Expert Ideation):**
+   - Hãy suy nghĩ như một chuyên gia: Mô hình đang bị lỗi gì? Overfitting (train loss giảm, val loss tăng)? Tỷ lệ Win Rate thực tế quá thấp? Quá thiên lệch tín hiệu Buy hoặc Sell? Cấu trúc NY cần tốc độ (momentum) hay sự ổn định (volatility filtering)?
+   - Từ đó, **Đề xuất ít nhất 1 ý tưởng tối ưu hóa hoàn toàn mới hoặc điều chỉnh logic** (VD: Thêm feature đo biến động bb_width, giảm số lượng lớp ẩn để chống overfit, sử dụng pooling attention, thay đổi khung thời gian...).
 
-3. **Đánh giá & Điều chỉnh Features (Feature Engineering):**
-   - **Phiên NY (New York):** LTC chịu ảnh hưởng mạnh bởi tin tức vĩ mô Mỹ và chứng khoán Mỹ mở cửa.
-   - Các chỉ số đang dùng: BTC, ETH, USTEC, DXY... Tự đánh giá sự đóng góp của từng chỉ số.
-   - *Chiến lược:* Nếu mô hình chững lại, thử **THÊM** features đo lường biến động (Volatility) như `bb_width`, `vroc`, hoặc Macro khác; **HOẶC LOẠI BỎ** features nghi ngờ gây nhiễu. Không giữ nguyên bộ features nếu điểm số không tăng sau 3 lượt liên tiếp.
+3. **Cập nhật Nhật ký Ý Tưởng (Training Diary):**
+   - Cập nhật thêm nội dung vào cuối file `workspaces/CFG_LTC_NY_V3_5/NY_TRAINING_DIARY.md` (hoặc tạo mới nếu chưa có).
+   - Nội dung cập nhật phải tuân theo định dạng:
+     ```markdown
+     ### [Thời gian hiện tại] - Lượt đánh giá Run: <LATEST_RUN_ID>
+     - **Kết quả Run trước:** Composite Score = X, Win Rate = Y%.
+     - **Phân tích chuyên gia:** <Tại sao mô hình lại đạt/không đạt điểm cao? Điều gì đang kìm hãm mô hình ở phiên NY?>
+     - **Ý tưởng thử nghiệm tiếp theo:** <Trình bày ý tưởng mới: thay đổi tham số gì, kiến trúc nào, feature nào?>
+     - **Giả thuyết (Hypothesis):** <Kỳ vọng ý tưởng mới sẽ giải quyết được vấn đề gì?>
+     ```
+   - **LƯU Ý QUAN TRỌNG:** Sau khi cập nhật file Diary, **BẮT BUỘC ĐẨY LÊN HUGGINGFACE NGAY LẬP TỨC** để người dùng có thể theo dõi tiến trình tư duy của bạn:
+     ```
+     python scripts/sync_workspaces.py push CFG_LTC_NY_V3_5
+     ```
 
 4. **Ra quyết định Siêu tham số (Hyperparameter Strategy):**
+   Dựa vào ý tưởng vừa chốt trong Diary, tiến hành chọn tham số để thay đổi.
+   **KHO VŨ KHÍ:**
+   - *Architecture:* `POOLING` ("mean" | "attention"), `CLS_HEAD` ("simple" | "residual"), `LAYER_DROP` (0.0-0.3)
+   - *Features:* `MTF_WINDOWS` ([5,15], [15,60]), `ORDER_FLOW` (true/false), `VOL_REGIME` (true/false)
+   - *Basics:* `WINDOW_SIZE` (15, 30, 60, 90), `LEARNING_RATE` (1e-5 -> 5e-5), `BATCH_SIZE` (64, 128, 256)
+   - **NGUYÊN TẮC:** Mỗi lượt mới CHỈ THAY ĐỔI TỐI ĐA 2 THAM SỐ để cô lập tác động!
 
-   **🆕 KHO VŨ KHÍ V2 — ƯU TIÊN THỬ TRƯỚC khi lặp lại tham số cũ:**
-
-   *Kiến trúc Neural Network (keys trong TRAINING):*
-   | Tham số | Mặc định | Tùy chọn | Mô tả |
-   |---|---|---|---|
-   | `POOLING` | `"mean"` | `"attention"` | Learnable Attention Pooling |
-   | `CLS_HEAD` | `"simple"` | `"residual"` | Residual MLP 3-layer Head |
-   | `LAYER_DROP` | `0.0` | `0.1`–`0.3` | Stochastic Depth regularization |
-   | `LR_SCHEDULER` | `"plateau"` | `"cosine_warm"` | Cosine Annealing Warm Restarts |
-
-   *Feature Engineering (keys trong FEATURE_ENGINEERING):*
-   | Tham số | Mặc định | Tùy chọn | Mô tả |
-   |---|---|---|---|
-   | `MTF_WINDOWS` | `[]` | `[5,15]`, `[15,60]` | Multi-Timeframe log_return & ATR |
-   | `ORDER_FLOW` | `false` | `true` | Delta Volume + Cumulative Delta |
-   | `VOL_REGIME` | `false` | `true` | One-hot High/Low volatility regime |
-
-   *Macro Features (thêm vào từng symbol):*
-   - `"spread_ret"` — Log return spread LTC vs macro asset
-   - `"relative_strength"` — Relative Strength ratio rolling 60 nến
-
-   *Siêu tham số cơ bản:*
-   - `WINDOW_SIZE`: 15, 30, 60, 90, 120
-   - `LEARNING_RATE`: 1e-5 đến 5e-5
-   - `BATCH_SIZE`: 64, 128, 256
-   - `D_MODEL` / `NUM_LAYERS`: 64/2, 128/3, 256/4
-
-   - **🏆 Baseline hiện tại: run_n=0.4409 (NY)** — mục tiêu vượt 0.50
-   - **NGUYÊN TẮC A/B TESTING — BẮT BUỘC:** Mỗi lượt config mới, **CHỈ THAY ĐỔI TỐI ĐA 2 THAM SỐ** so với lượt trước để cô lập tác động. Nếu thay đổi nhiều tham số cùng lúc và kết quả xấu đi, bạn sẽ không biết nguyên nhân từ đâu.
-
-5. **Early Stopping (Dừng Task) — Kích hoạt khi thoả MỘT TRONG HAI điều kiện sau:**
-
-   **Điều kiện A — Không cải thiện sau nhiều lượt:**
-   - Nếu đã thử thay đổi tuần tự nhưng `Composite Score` không vượt qua Baseline trong **25 lượt gần nhất**, hãy tắt task.
-
-   **Điều kiện B — Đã cạn kiệt ý tưởng thử nghiệm:**
-   - Nếu bạn đã lần lượt khai thác hết các hướng sau mà vẫn không cải thiện, hãy khai báo "hết ý tưởng" và dừng task:
-     + Đã thử đủ các mức `LEARNING_RATE` (từ 1e-5 đến 5e-4)
-     + Đã thử đủ `WINDOW_SIZE` ở nhiều mức (15, 30, 60, 90, 120)
-     + Đã thử thay đổi `D_MODEL` / `NUM_LAYERS` (kiến trúc model)
-     + Đã thử thêm và bớt nhiều bộ `MACRO_FEATURES` khác nhau
-     + Đã thử điều chỉnh `TP_PCT` / `SL_PCT` (risk/reward ratio)
-     + Đã thử `BATCH_SIZE` ở các mức khác nhau
-   - Khi khai báo hết ý tưởng, **BẮT BUỘC** ghi rõ trong báo cáo Telegram: danh sách tất cả những gì đã thử và lý do không còn hướng nào khả thi.
-
-   **Hành động khi kích hoạt Early Stopping (cho cả hai điều kiện):**
-   Sửa `.agent/tasks.json`, tìm id `ltc_ny_auto_tuning_local` và đặt `"enabled": false`. Báo cáo Telegram đầy đủ và gọi `--done`.
+5. **Kích hoạt Early Stopping (Dừng Task):**
+   Nếu đã thử thay đổi tuần tự nhưng `Composite Score` không vượt qua Baseline trong **25 lượt gần nhất**, HOẶC bạn cảm thấy "cạn kiệt ý tưởng thử nghiệm" hợp lý, hãy dừng task (Sửa `.agent/tasks.json`, đặt `"enabled": false` cho `ltc_ny_auto_tuning_local`). Báo cáo Telegram đầy đủ và gọi `--done`.
 
 ---
 
-
 ## BƯỚC 3: Quản lý Hàng Đợi (Queue Management) & Chuẩn bị Data Trước
 
-Mục tiêu: Đảm bảo có sẵn dữ liệu cho lượt chạy tiếp theo, nhưng KHÔNG ĐƯỢC CHUẨN BỊ THỪA.
+Mục tiêu: Đảm bảo có sẵn dữ liệu cho lượt chạy tiếp theo, nhưng KHÔNG CHUẨN BỊ THỪA.
 Kiểm tra thư mục `workspaces/CFG_LTC_NY_V3_5/runs/`:
 - Tìm các `<RUN_ID>` đã có thư mục `data/tensors/`, nhưng CHƯA CÓ file `results/training_metrics_v3.json` (tức là chưa chạy xong).
-- Đối chiếu với kết quả Bước 1: Loại trừ `<RUN_ID>` mà máy cục bộ đang BUSY chạy.
-- Còn lại chính là **HÀNG ĐỢI (Pending Runs)**.
+- Tách khỏi `<RUN_ID>` mà máy cục bộ đang BUSY chạy. Phần còn lại là **HÀNG ĐỢI (Pending Runs)**.
 
 **Xử lý:**
-- **NGUYÊN TẮC: NẾU ĐÃ CÓ HÀNG ĐỢI (DÙ CHỈ CÒN 1 RUN), TUYỆT ĐỐI KHÔNG ĐƯỢC TẠO HAY CHUẨN BỊ THÊM RUN MỚI.**
-- CHỈ KHI HÀNG ĐỢI HOÀN TOÀN RỖNG (0 runs), bạn MỚI CẦN TẠO 1 RUN MỚI:
-  1. Sinh `<RUN_ID>` mới theo format `run_YYYYMMDD_HHMMSS_v3_ny_X` (X là số thứ tự).
-  2. Tạo thư mục `workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/` và copy `base_config.json` thành `config.json`. Áp dụng các quyết định từ **Bước 2.4** vào `config.json` mới. **BẮT BUỘC KHÔNG SỬA `base_config.json` GỐC!**
-     - Tạo thêm file **`tuning_notes.txt`** trong cùng thư mục run, viết đúng **3-5 câu** theo mẫu:
-       ```
-       Run: <RUN_ID>
-       Thay đổi so với run trước: <tên tham số cũ → giá trị mới>
-       Lý do: <tại sao nghĩ rằng thay đổi này sẽ cải thiện?>
-       Kỳ vọng: <Composite Score tăng? Win Rate tăng? Bias giảm?>
-       Baseline hiện tại: <Composite Score tốt nhất đang có>
-       ```
-     - File này giúp lần gọi tiếp theo đọc lại lịch sử suy luận, tránh lặp lại thử nghiệm đã thất bại.
-  3. Chạy hai lệnh sau để **CHUẨN BỊ TENSOR** trước:
+- **NẾU ĐÃ CÓ HÀNG ĐỢI (DÙ CHỈ 1 RUN), KHÔNG CHUẨN BỊ THÊM RUN MỚI.**
+- CHỈ KHI HÀNG ĐỢI RỖNG (0 runs), MỚI TẠO 1 RUN MỚI:
+  1. Sinh `<RUN_ID>` mới theo format `run_YYYYMMDD_HHMMSS_v3_ny_X`.
+  2. Tạo thư mục `workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/` và copy `base_config.json` thành `config.json`.
+  3. Áp dụng các quyết định tham số từ **Bước 2** vào `config.json` mới. **KHÔNG SỬA `base_config.json` GỐC!**
+  4. Chạy hai lệnh sau để CHUẨN BỊ TENSOR trước:
      ```
      python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
      python scripts/upload_v3_dataset.py --no-push --config workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json
-     ```
-  4. Commit và đẩy lên Git:
-     ```
-     git add . && git commit -m "auto-tuning LTC NY local data ready: <RUN_ID>" && git push
      ```
 
 ---
@@ -145,40 +87,21 @@ Kiểm tra thư mục `workspaces/CFG_LTC_NY_V3_5/runs/`:
 ## BƯỚC 4: Điều Phối Huấn Luyện Cục Bộ (Local Dispatching)
 
 - **Nếu máy đang BUSY**:
-  Bạn đã làm xong nhiệm vụ chuẩn bị data ở Bước 3. Thông báo Telegram: "`máy cục bộ` đang bận, đã chuẩn bị sẵn data cho `<RUN_ID>` vào hàng đợi" và gọi `--done` để kết thúc.
+  Thông báo Telegram: "Tiến trình NY đang bận. Đã phân tích ý tưởng mới (cập nhật HF Diary) và đưa cấu hình mới vào hàng đợi chờ." và gọi `--done` để kết thúc.
 - **Nếu máy đang IDLE**:
-  Lấy `<RUN_ID>` từ Hàng Đợi (hoặc vừa tạo xong ở Bước 3) và phát lệnh chạy huấn luyện:
+  Lấy `<RUN_ID>` từ Hàng Đợi và phát lệnh chạy huấn luyện ẩn:
   ```powershell
-  python src/training_v3/train_v3.py workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json --session ny --scratch --run-id <RUN_ID>; python .agent/notify_done.py ltc_ny_training_done
+  Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && python src/training_v3/train_v3.py workspaces/CFG_LTC_NY_V3_5/runs/<RUN_ID>/config.json --session ny --scratch --run-id <RUN_ID> && python .agent/notify_done.py ltc_ny_training_done`""
   ```
-  > **⚡ Lưu ý:** `notify_done.py` gọi extension ngay khi xong → kích hoạt vòng đánh giá tiếp theo **ngay lập tức** (không cần chờ 10 phút!).
+  > Lưu ý: Chạy lệnh ngầm bằng `Start-Process` để giải phóng tiến trình của bạn!
 
-
-Chỉ kết thúc và gọi `--done` sau khi:
-1. Đã chuẩn bị xong data (nếu cần).
-2. Phát lệnh huấn luyện (nếu máy IDLE).
-3. Thông báo đầy đủ kết quả, giả thuyết và hành động lên Telegram.
-
-### Điều chỉnh Lịch trình (Tuỳ chọn)
-Nếu quá trình crawling hoặc training mất nhiều thời gian hoặc muốn theo dõi kết quả sau N phút, hãy tự sửa trường `nextRunTime` của task này trong file `.agent/tasks.json` thành `(timestamp_hiện_tại + N * 60) * 1000`. Nếu không sửa, Extension sẽ tự lặp lại theo `intervalMinutes` mặc định.
-
----
-
-## BƯỚC 5: Dọn dẹp ổ cứng (Storage Cleanup)
-
-**BẮT BUỘC** chạy script dọn dẹp sau khi đã hoàn thành mọi thứ để xoá bớt Tensors của các run đã hoàn thành cũ (tránh tràn đĩa):
-```
-python scripts/cleanup_host_storage.py
-```
-Ghi nhận số GB rác đã dọn dẹp vào nội dung báo cáo Telegram cuối cùng.
+Chỉ kết thúc và gọi `--done` sau khi đã đưa ra phân tích, ghi nhận nhật ký, cập nhật HF, và kích hoạt tiến trình train.
 
 ---
 
 > **LƯU Ý QUAN TRỌNG VỀ THÔNG BÁO TELEGRAM:**
-> - Trong quá trình thực hiện, bạn có thể gọi lệnh này nhiều lần để cập nhật tiến độ:
->   `python .agent/send_to_tele.py "<Nội_dung_cập_nhật>"`
-> - Khi đã hoàn tất toàn bộ tiến trình (sau khi đã phát lệnh train hoặc thêm vào hàng đợi), **BẮT BUỘC** chạy lệnh cuối cùng với flag `--done`:
->   `python .agent/send_to_tele.py "<Kết_quả_cuối_cùng>" --done`
+> - Báo cáo tiến trình định kỳ: `python .agent/send_to_tele.py "<Nội_dung>"`
+> - Khi gọi Báo cáo cuối cùng để kết thúc, **BẮT BUỘC** tóm tắt ngắn gọn Giả thuyết & Ý tưởng mới nhất của bạn:
+>   `python .agent/send_to_tele.py "🚀 [NY Expert] Đã nảy ra ý tưởng mới: <tóm tắt ý tưởng>. Nhật ký đã đẩy lên HF. Đang train <RUN_ID>..." --done`
 
-
-__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__
+__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối cùng đi kèm cờ --done để báo hệ thống rảnh!)__

@@ -260,8 +260,17 @@ def main():
     label_dist = dict(zip(unique.tolist(), counts.tolist()))
     print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
 
-    # Đã gỡ bỏ tính toán trọng số cân bằng lớp (class weights) để chống conflict với Triple Barrier.
-    # Mạng sẽ học thẳng vào phân bố nhãn thật.
+    # PHỤC HỒI CLASS WEIGHTS: Bắt buộc phải có để trị bệnh Sideway Bias (tỷ lệ 1:1:6)
+    # Lấy phân bố của tập Train để tính toán
+    unique_tr, counts_tr = np.unique(Y, return_counts=True)
+    n_samples = sum(counts_tr)
+    n_classes = len(unique_tr)
+    # Trọng số = Tổng số mẫu / (Số class * Số mẫu của class đó)
+    cw_dict = {u: n_samples / (n_classes * c) for u, c in zip(unique_tr, counts_tr)}
+    # Khởi tạo mảng weights đảm bảo độ dài 3 (cho 3 class: 0, 1, 2)
+    cw_array = [cw_dict.get(i, 1.0) for i in range(3)]
+    
+    print(f"[CLASS WEIGHTS] Trọng số cân bằng lớp: {cw_array}", flush=True)
 
     # Chia Validation set - BẮT BUỘC shuffle=False để bảo toàn trục thời gian (Time-Series)
     # shuffle=True gây Data Leakage: mẫu i và i+1 chia sẻ 59/60 nến trùng nhau với Sliding Window
@@ -436,8 +445,11 @@ def main():
         print(f"⚠️ [TELEGRAM] Lỗi gửi thông báo khởi động: {e}", flush=True)
     
     model.to(device)
-
-    criterion = AAMT_JointLoss()
+    
+    class_weights_tensor = torch.tensor(cw_array, dtype=torch.float32).to(device)
+    focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
+    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma}", flush=True)
+    criterion = AAMT_JointLoss(class_weights=class_weights_tensor, focal_gamma=focal_gamma)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     phoenix = None  # Đã tắt Auto Healing
 
@@ -502,6 +514,7 @@ def main():
     print("--- \U0001f680 BẮT ĐẦU VÒNG LẶP FINE-TUNING ĐA NHIỆM (Infinite Loop) ---", flush=True)
     epoch = 0
     best_score = 0.0
+    best_win_rate = 0.0
     # Bỏ qua logic tạo repo riêng lẻ vì đã dùng chung dung5k/argo_workspaces
     
     report_interval_seconds = train_cfg.get("TELEGRAM_REPORT_INTERVAL_MINUTES", 10) * 60
@@ -549,6 +562,7 @@ def main():
         improved = comp_score > best_score
         if improved:
             best_score      = comp_score
+            best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
             _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
             _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
             print(f"  🌟 KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
@@ -637,6 +651,32 @@ def main():
                     print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
                 except Exception as e:
                     print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
+
+    # ==========================================
+    # QUẢN LÝ DUNG LƯỢNG & ĐỒNG BỘ SAU TRAINING
+    # ==========================================
+    sys.stdout = sys.__stdout__
+    print(f"\n[CLEANUP] Đã kết thúc Training. Kỷ lục Score: {best_score:.4f} | Kỷ lục Win Rate: {best_win_rate*100:.2f}%", flush=True)
+    if best_win_rate < 0.60:
+        print(f"🗑️ Win Rate {best_win_rate*100:.2f}% < 60%. Đang xóa thư mục Run rác để tiết kiệm ổ cứng: {run_dir}", flush=True)
+        try:
+            import shutil
+            shutil.rmtree(run_dir, ignore_errors=True)
+            print(f"✅ Đã xóa thành công run rác: {run_dir}", flush=True)
+            if tbot and chat_id:
+                tbot.send_message(chat_id, f"🗑️ <b>[{client_id}] Đã xóa Run rác</b>\nThư mục: {run_id}\nLý do: Win Rate {best_win_rate*100:.2f}% < 60%")
+        except Exception as e:
+            print(f"❌ Lỗi khi xóa run rác: {e}", flush=True)
+    else:
+        print(f"🏆 Win Rate {best_win_rate*100:.2f}% >= 60%. Đang PUSH lên HuggingFace...", flush=True)
+        try:
+            from scripts.sync_workspaces import push_run
+            push_run(cfg_id, run_id)
+            print("✅ Đã Push thành công!", flush=True)
+            if tbot and chat_id:
+                tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
+        except Exception as e:
+            print(f"❌ Lỗi khi Push: {e}", flush=True)
 
 if __name__ == "__main__":
     main()

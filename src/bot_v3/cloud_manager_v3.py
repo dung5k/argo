@@ -32,6 +32,11 @@ class V3CloudManager:
         )
 
     def _download_file(self, repo_id, remote_path: str) -> str:
+        # Tự động lấy file ở dưới local trước (nếu chạy local & file có sẵn)
+        if os.path.exists(remote_path):
+            self.log_callback(f"[CloudManagerV3] ⚡ Tìm thấy cache trên máy Local: {remote_path}")
+            return os.path.abspath(remote_path)
+            
         self.log_callback(f"[CloudManagerV3] ⬇ Đang tải: {remote_path} từ {repo_id}")
         local_path = hf_hub_download(
             repo_id=repo_id,
@@ -82,15 +87,18 @@ class V3CloudManager:
 
         try:
             try:
-                scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
+                scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/brains/scaler_{cfg_id_pure}.pkl")
             except Exception:
                 try:
-                    scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
+                    scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
                 except Exception:
                     try:
-                        scaler_cloud_path = self._download_file(self.dataset_repo, f"data/{cfg_id_pure}/scaler_{cfg_id_pure}.pkl")
+                        scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/{config_id}/data/tensors/scaler_{cfg_id_pure}.pkl")
                     except Exception:
-                        scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/data/{config_id}/scaler_{cfg_id_pure}.pkl")
+                        try:
+                            scaler_cloud_path = self._download_file(self.dataset_repo, f"data/{cfg_id_pure}/scaler_{cfg_id_pure}.pkl")
+                        except Exception:
+                            scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/data/{config_id}/scaler_{cfg_id_pure}.pkl")
             local_scaler_path = self._save_to_data_dir(scaler_cloud_path, f"scaler_{cfg_id_pure}.pkl")
             
             # Extract features logic

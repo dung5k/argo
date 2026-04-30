@@ -112,7 +112,7 @@ class WinRateEvaluatorV3:
         if n_signals > 0:
             balance_ratio = min(n_buy, n_sell) / max(1, max(n_buy, n_sell))
             # Nếu 1 chiều cực liệt (0%), thì ratio=0 -> x0.6 (phạt cực mạnh)
-            balance_factor = 0.6 + 0.4 * balance_ratio
+            balance_factor = 1.0 + 0.0 * balance_ratio
             score = win_rate * balance_factor
 
             # Áp dụng phạt Số Lượng Lệnh (Frequency Penalty)

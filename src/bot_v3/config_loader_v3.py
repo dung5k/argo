@@ -84,4 +84,18 @@ class V3ConfigLoader:
             if mse_perc is not None:
                 config["LIVE_BOT"]["MSE_THRESHOLD_PERCENTILE"] = mse_perc
                 
+        # Override FEATURE_ENGINEERING
+        fe_config = target_sinfo.get("feature_engineering")
+        if fe_config:
+            if "FEATURE_ENGINEERING" not in config:
+                config["FEATURE_ENGINEERING"] = {}
+            config["FEATURE_ENGINEERING"].update(fe_config)
+            
+        # Override TRAINING
+        train_config = target_sinfo.get("training")
+        if train_config:
+            if "TRAINING" not in config:
+                config["TRAINING"] = {}
+            config["TRAINING"].update(train_config)
+            
         return config

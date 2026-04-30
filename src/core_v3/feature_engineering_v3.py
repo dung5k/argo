@@ -86,6 +86,27 @@ class FeatureEngineeringV3:
             vwap = cum_pv / (cum_vol + 1e-6)
             features['vwap_distance'] = (df[close_col] - vwap) / (vwap + 1e-6)
             
+            # -- [MỚI V4] NY Anchored VWAP (reset lúc 13:30 UTC)
+            ny_open_mask = (df.index.hour == 13) & (df.index.minute == 30)
+            ny_session_key = ny_open_mask.cumsum()
+            cum_pv_ny = pv.groupby(ny_session_key).cumsum()
+            cum_vol_ny = vol.groupby(ny_session_key).cumsum()
+            vwap_ny = cum_pv_ny / (cum_vol_ny + 1e-6)
+            features['vwap_distance_ny'] = (df[close_col] - vwap_ny) / (vwap_ny + 1e-6)
+
+            # -- [MỚI V4] Order Flow Imbalance (Taker Buy vs Taker Sell)
+            if 'taker_buy_volume' in df.columns:
+                taker_buy = df['taker_buy_volume'].clip(lower=0)
+                taker_sell = (vol - taker_buy).clip(lower=0)
+                features['order_flow_imbalance'] = (taker_buy - taker_sell) / (vol + 1e-6)
+                # Tích luỹ Order Flow Imbalance trong phiên NY (từ 13:30 UTC)
+                features['cum_ofi_ny'] = features['order_flow_imbalance'].groupby(ny_session_key).cumsum()
+            
+            # -- [MỚI V4] Funding Rate
+            if 'fundingRate' in df.columns:
+                features['funding_rate'] = df['fundingRate']
+                features['funding_rate_change'] = df['fundingRate'] - df['fundingRate'].shift(1).bfill()
+
             # -- [MỚI - NY Session] Daily High / Low Liquidity Magnets
             daily_high = df[high_col].groupby(day_key).cummax()
             daily_low = df[low_col].groupby(day_key).cummin()
@@ -494,7 +515,7 @@ class FeatureEngineeringV3:
         def _no_scale(col):
             return (
                 col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count')
+                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
@@ -518,7 +539,7 @@ class FeatureEngineeringV3:
         def _no_scale(col):
             return (
                 col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count')
+                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]

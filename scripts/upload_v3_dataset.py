@@ -85,7 +85,7 @@ def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str,
         window       = feature_vals[i: i + window_size]
         target_label = label_vals[target_idx]
 
-        if not np.isnan(window).any() and not np.isnan(target_label):
+        if not np.isnan(window).any() and not np.isnan(target_label) and target_label != -1:
             X_list.append(window)
             Y_list.append(target_label)
 
@@ -189,7 +189,10 @@ if __name__ == "__main__":
         df_raw = df_raw.sort_index()
         # Forward fill ngắn (tối đa 5 phút) để xử lý lệch timestamp nhỏ
         df_raw = df_raw.ffill(limit=5)
-        print(f"  ✅ Crypto df_raw: {df_raw.shape[0]} dòng x {df_raw.shape[1]} cột")
+        
+        # Giảm dung lượng dữ liệu để tránh OOM (chỉ lấy từ tháng 08/2025)
+        df_raw = df_raw.loc['2025-08-01':]
+        print(f"  ✅ Crypto df_raw (sau khi cắt từ 2025-08): {df_raw.shape[0]} dòng x {df_raw.shape[1]} cột")
     else:
         # --- Chế độ Forex/Vàng: dùng hàm gộp cũ ---
         try:
@@ -244,7 +247,17 @@ if __name__ == "__main__":
             pip_size=fe_cfg['PIP_SIZE']
         )
         print(f"  [Forex mode] TP={fe_cfg.get('TP_PIPS', 10)} pips | SL={fe_cfg.get('SL_PIPS', 10)} pips | SPREAD={fe_cfg.get('SPREAD_PIPS', 2)} pips")
-    targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
+    clean_data_diet = fe_cfg.get('CLEAN_DATA_DIET', False)
+    fast_hit_bars = fe_cfg.get('FAST_HIT_BARS', 5)
+    
+    if clean_data_diet:
+        print(f"  [Clean Data Diet] Kích hoạt chế độ Chân Sóng Vĩ Đại (fast_hit_bars={fast_hit_bars})...")
+        target_df = labeler.apply_triple_barrier_fast_hit(df_raw, actual_open, actual_high, actual_low, fast_hit_bars=fast_hit_bars)
+        targets = target_df['target_class']
+        clean_mask = labeler.get_clean_mask(target_df, fast_hit_bars=fast_hit_bars)
+        targets.loc[~clean_mask] = -1
+    else:
+        targets = labeler.apply_triple_barrier(df_raw, actual_open, actual_high, actual_low)
 
     # Feature Eng trên dữ liệu 24/24 (để Scaler hiểu toàn bộ biến động)
     print(f"[2] Khởi tạo Features Target ({target_prefix_mapped}) + Macro (AAMT V3)...")

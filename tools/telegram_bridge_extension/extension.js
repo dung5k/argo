@@ -127,8 +127,8 @@ function getConfig() {
 }
 
 // Send Message to Telegram
-function sendTelegramMessage(chatId, text) {
-    const token = getConfig().teleBotToken;
+function sendTelegramMessage(chatId, text, overrideToken = '') {
+    const token = overrideToken || getConfig().teleBotToken;
     if (!token) return;
     
 
@@ -521,11 +521,18 @@ function startBridgeServer() {
                     logDebug(`[SERVER] Received /send-telegram: ${body}`);
                     let task = JSON.parse(body);
                     let text = task.text || task.message;
+                    let overrideToken = task.token || '';
+                    let overrideChatId = task.chat_id || '';
                     if (text) {
-                        let targets = activeTypingChats.size > 0 ? Array.from(activeTypingChats) : getActiveChatIds();
+                        let targets = [];
+                        if (overrideChatId) {
+                            targets = overrideChatId.split(',').map(id => id.trim()).filter(id => id);
+                        } else {
+                            targets = activeTypingChats.size > 0 ? Array.from(activeTypingChats) : getActiveChatIds();
+                        }
                         logDebug(`[SERVER] Sending to targets: ${JSON.stringify(targets)}`);
                         targets.forEach(t => {
-                            sendTelegramMessage(t, `🤖 Antigravity:\n\n${text}`);
+                            sendTelegramMessage(t, `🤖 Antigravity:\n\n${text}`, overrideToken);
                         });
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ status: 'success' }));
@@ -558,6 +565,17 @@ function startBridgeServer() {
                 if (!fs.existsSync(config.workingDir)) fs.mkdirSync(config.workingDir, { recursive: true });
                 fs.writeFileSync(path.join(config.workingDir, '.bridge_port'), PORT.toString());
             } catch(e) { console.error("Error writing .bridge_port", e); }
+        }
+        
+        if (vscode.workspace.workspaceFolders) {
+            vscode.workspace.workspaceFolders.forEach(f => {
+                try {
+                    const agentDir = path.join(f.uri.fsPath, '.agent');
+                    if (fs.existsSync(agentDir)) {
+                        fs.writeFileSync(path.join(agentDir, '.bridge_port'), PORT.toString());
+                    }
+                } catch(e) {}
+            });
         }
         ensureSendScript();
     });
@@ -639,11 +657,11 @@ def get_telegram_config():
         
     return token, chat_id
 
-def send_via_bridge(content, is_done=False):
+def send_via_bridge(content, is_done=False, token="", chat_id=""):
     port = get_bridge_port()
     if port is None: return False
     url = f'http://127.0.0.1:{port}/send-telegram'
-    data = json.dumps({'text': content, 'done': is_done}).encode('utf-8')
+    data = json.dumps({'text': content, 'done': is_done, 'token': token, 'chat_id': chat_id}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
@@ -689,7 +707,8 @@ def send_via_telegram_api(content, is_done=False):
 
 def send_to_telegram(content, is_done=False):
     if not content: return
-    if send_via_bridge(content, is_done): return
+    token, chat_ids = get_telegram_config()
+    if send_via_bridge(content, is_done, token, chat_ids): return
     send_via_telegram_api(content, is_done)
 
 if __name__ == '__main__':
@@ -730,6 +749,13 @@ function activate(context) {
     });
     
     context.subscriptions.push(cmdRestart);
+    
+    // Auto clear errors periodically
+    setInterval(() => {
+        try {
+            vscode.commands.executeCommand('antigravityAgentManager.clearErrors');
+        } catch(e) {}
+    }, 15000);
     
     // Listen to configuration change
     vscode.workspace.onDidChangeConfiguration(e => {

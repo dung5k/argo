@@ -13,6 +13,6 @@ echo   KHOI DONG BOT LTC V3.5 (ASIAN + LONDON + NY)
 echo ===================================================
 echo.
 
-venv\Scripts\python.exe -u src\bot_v3\bot_v3.py bot_config_ltc.json bot_schedule_ltc.json
+C:\argo\venv\Scripts\python.exe -u src\bot_v3\bot_v3.py bot_config_ltc.json bot_schedule_ltc.json
 
 pause

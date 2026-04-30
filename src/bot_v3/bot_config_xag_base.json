@@ -1,0 +1,43 @@
+{
+    "TARGET_SYMBOL": "XAGUSDm",
+    "EXECUTION_SYMBOL": "XAGUSDm",
+    "TARGET_PREFIX": "XAGUSD",
+    "VERSION": "3.5",
+    "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
+        "SYNC_CHUNKS": false
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PIPS": 50,
+        "SL_PIPS": 50,
+        "MAX_HOLD_BARS": 12,
+        "PIP_SIZE": 0.001,
+        "STEP_SIZE": 1,
+        "ORDER_FLOW": false,
+        "VOL_REGIME": false
+    },
+    "TRAINING": {
+        "D_MODEL": 32,
+        "N_HEAD": 2,
+        "NUM_LAYERS": 1
+    },
+    "DATA_SOURCE": {
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "EXNESS": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAGUSDm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS"
+        }
+    },
+    "LIVE_BOT": {
+        "TRADE_PLATFORM": "EXNESS",
+        "MAX_ABSOLUTE_MSE": 1.0,
+        "MIN_PROBABILITY_THRESH": 0.57
+    }
+}

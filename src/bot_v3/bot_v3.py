@@ -24,6 +24,7 @@ from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
 from src.bot_v3.binance_trade_manager_v3 import BinanceTradeManagerV3
 from src.bot_v3.binance_spot_trade_manager_v3 import BinanceSpotTradeManagerV3
+from src.bot_v3.virtual_trade_manager_v3 import V3VirtualTradeManager
 from src.bot_v3.config_loader_v3 import V3ConfigLoader
 from src.core.mt5_data_manager import MT5DataManager
 import logging
@@ -217,7 +218,9 @@ TARGET_PREFIX = CONFIG.get("TARGET_PREFIX", "XAUUSD")
 
 TRADE_PLATFORM = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "MT5")
 
-if TRADE_PLATFORM == "BINANCE_SPOT":
+if CONFIG.get("LIVE_BOT", {}).get("PAPER_TRADE", False):
+    trade_manager = V3VirtualTradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+elif TRADE_PLATFORM == "BINANCE_SPOT":
     trade_manager = BinanceSpotTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 elif TRADE_PLATFORM == "BINANCE":
     trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
@@ -332,6 +335,12 @@ def bot_background_loop():
                 m_path, s_path, i_feats, n_feat = cloud.sync_session_model(cfg_id)
                 active_run_id = target_run_id
                 
+                arch = CONFIG.get("TRAINING", {})
+                window_size = CONFIG.get("FEATURE_ENGINEERING", {}).get("WINDOW_SIZE", 60)
+                d_model = arch.get("D_MODEL", 128)
+                nhead = arch.get("N_HEAD", 8)
+                num_attn_layers = arch.get("NUM_LAYERS", 4)
+                
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, window_size)
                 processor = V3DataProcessor(s_path, i_feats, window_size, config=CONFIG, log_callback=print)
                 mt5_manager.force_reload_dynamic_features(i_feats)
@@ -370,10 +379,16 @@ def bot_background_loop():
         actual_sym = mt5_manager.IN_MEMORY_SYMBOL_HINT.get(mt5_exec_sym, mt5_exec_sym)
         
         global G_CURRENT_PRICE
+        current_bid = G_CURRENT_PRICE
+        current_ask = G_CURRENT_PRICE
+        current_point = 0.01
+
         if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT"):
             try:
                 ticker = trade_manager.exchange.fetch_ticker(trade_manager._format_symbol(TARGET_SYMBOL))
                 G_CURRENT_PRICE = ticker.get('last', 0)
+                current_bid = ticker.get('bid', G_CURRENT_PRICE)
+                current_ask = ticker.get('ask', G_CURRENT_PRICE)
                 staleness_secs = 0
             except Exception as e:
                 if time.time() - last_tick_err_time > 10:
@@ -392,7 +407,15 @@ def bot_background_loop():
                 time.sleep(1)
                 continue
             G_CURRENT_PRICE = tick.bid if tick.bid > 0 else tick.last
+            current_bid = tick.bid
+            current_ask = tick.ask
+            p_info = mt5.symbol_info(actual_sym)
+            if p_info:
+                current_point = p_info.point
             staleness_secs = time.time() - tick.time
+            
+        if isinstance(trade_manager, V3VirtualTradeManager):
+            trade_manager.update_virtual_positions(current_bid, current_ask, current_point)
             
         if staleness_secs > 300:
             gui_status = f"Giá Freeze ({int(staleness_secs/60)}p)..."
@@ -446,7 +469,10 @@ def bot_background_loop():
             mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
             
-        trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)
+        if isinstance(trade_manager, V3VirtualTradeManager):
+            trade_manager.execute_trade(action, probs, mse, current_bid, current_ask, current_point, actual_target_sym=actual_sym)
+        else:
+            trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)
         gui_status = f"Khóa Mốc. Hành động: {action}"
         time.sleep(1)
 
