@@ -436,7 +436,7 @@ def bot_background_loop():
             except Exception as ce:
                 gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
                 print(f"[BOT V3] ❌ Lỗi tải não: {ce}")
-                time.sleep(5)
+                time.sleep(60)  # Tăng lên 60s để tránh spam log liên tục khi não chưa sẵn sàng
                 continue
                 
         if not brain_loaded:
