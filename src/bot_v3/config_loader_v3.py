@@ -5,32 +5,29 @@ from datetime import datetime, timezone
 class V3ConfigLoader:
     """Quản lý nạp và merge Hot-reload cấu hình cho V3 Master Bot."""
     
-    def __init__(self, main_config_path: str, schedule_path: str, log_callback=print):
+    def __init__(self, main_config_path: str, log_callback=print):
         self.main_config_path = main_config_path
-        self.schedule_path = schedule_path
         self.log_callback = log_callback
         self.last_logged_session = None
         
     def load_base_config(self) -> dict:
         """Đọc file config json chính làm khung nền."""
         try:
-            with open(self.main_config_path, "r", encoding="utf-8") as f:
+            with open(self.main_config_path, "r", encoding="utf-8-sig") as f:
                 return json.load(f)
         except Exception as e:
             self.log_callback(f"[V3ConfigLoader] Lỗi đọc base config: {e}")
             return {}
             
-    def get_current_schedule(self):
-        """Đọc và tìm kiếm phiên giao dịch theo thời gian thực (UTC)."""
+    def get_current_schedule(self, base_config: dict):
+        """Đọc và tìm kiếm phiên giao dịch theo thời gian thực (UTC) từ base config."""
         try:
-            if not os.path.exists(self.schedule_path): 
+            if not base_config:
                 return None, None, None
                 
-            with open(self.schedule_path, "r", encoding="utf-8") as fs:
-                full_data = json.load(fs)
-                sched = full_data.get("schedule", {})
-                global_mt5_path = full_data.get("mt5_path")
-                
+            sched = base_config.get("SCHEDULE", {})
+            global_mt5_path = base_config.get("MT5_PATH")
+            
             now_utc = datetime.now(timezone.utc)
             hm = now_utc.strftime("%H:%M")
             for sess_name, sinfo in sched.items():

@@ -266,7 +266,9 @@ if __name__ == "__main__":
         target_prefix=target_prefix_mapped,
         macro_features=fe_cfg.get('MACRO_FEATURES', {}),
         crypto_mode=crypto_mode,
-        zero_noise_target=fe_cfg.get('ZERO_NOISE_TARGET', False)
+        zero_noise_target=fe_cfg.get('ZERO_NOISE_TARGET', False),
+        order_flow=fe_cfg.get('ORDER_FLOW', False),
+        vol_regime=fe_cfg.get('VOL_REGIME', False)
     )
     df_features = fe.process_features(df_raw)
 
@@ -296,7 +298,10 @@ if __name__ == "__main__":
     np.save(x_path, X)
     np.save(y_path, Y)
     with open(scaler_path, "wb") as f:
-        pickle.dump(fe.scaler, f)
+        pickle.dump({
+            "scaler": fe.scaler,
+            "column_order": list(df_features.columns)
+        }, f)
         
     print(f"✅ Đã đóng gói DỮ LIỆU RIÊNG rẽ nhánh cho {cfg_id} tại {out_dir}/")
     print("Bây giờ đã sẵn sàng Train bằng src/training_v3/train_v3.py!")

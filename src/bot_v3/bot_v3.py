@@ -201,16 +201,13 @@ def tg_notify(msg):
     pass
 
 config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "base_config.json")
-schedule_file = os.path.join(safe_script_dir, "workspaces", "shared_meta", "bot_v3_brain_schedule.json")
 if len(sys.argv) > 1:
     args_json = [arg for arg in sys.argv if arg.endswith('.json')]
     if len(args_json) >= 1:
         config_file = args_json[0]
-    if len(args_json) >= 2:
-        schedule_file = args_json[1]
 
 # Khởi tạo Config Loader
-config_loader = V3ConfigLoader(config_file, schedule_file, log_callback=print)
+config_loader = V3ConfigLoader(config_file, log_callback=print)
 CONFIG = config_loader.load_base_config()
 
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
@@ -224,6 +221,25 @@ elif TRADE_PLATFORM == "BINANCE_SPOT":
     trade_manager = BinanceSpotTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 elif TRADE_PLATFORM == "BINANCE":
     trade_manager = BinanceTradeManagerV3(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
+elif TRADE_PLATFORM == "SIMULATED":
+    # Dummy trade manager cho chế độ mô phỏng — chỉ log, không giao dịch thật
+    class _SimulatedTM:
+        def __init__(self):
+            self.gui_action = "🎭 SIMULATED"
+            self.gui_thr_text = "SIM"
+            self.exchange = None
+        def init_mt5(self): pass
+        def init_client(self): pass
+        def execute_trade(self, *a, **kw): print("[SIMULATED] Signal received — no real trade executed.")
+        def check_positions(self, *a, **kw): return []
+        def manage_positions(self, *a, **kw): pass
+        def early_reversal_check(self, *a, **kw): pass
+        def trailing_sl(self, *a, **kw): pass
+        def sync_existing_positions(self): pass
+        def update_gui_threshold(self): pass
+        def get_active_positions_report(self): return "Mô phỏng (SIMULATED): Đang theo dõi, không trade thật."
+    trade_manager = _SimulatedTM()
+    print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
     trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
@@ -233,9 +249,69 @@ gui_probs = {'buy': 0.0, 'sell': 0.0, 'loss': 0.0}
 gui_time = "00:00:00"
 gui_session = "Phiên: Đang khởi chạy..."
 gui_market_data = []
+gui_brain_tooltip = "Chưa tải não..."  # Tooltip thành tích đào tạo
+
+def _load_brain_metrics(run_id: str, config_id: str) -> str:
+    """Đọc training metrics từ local cache hoặc HF để tạo tooltip."""
+    import glob as _glob
+    base = os.path.join(safe_script_dir, 'workspaces', 'workspaces', config_id, 'runs', run_id, 'results')
+    metric_file = os.path.join(base, 'training_metrics_v3.json')
+    
+    if not os.path.isfile(metric_file):
+        # Thử tải từ HF cache
+        cache_base = os.path.expanduser('~/.cache/huggingface/hub/datasets--dung5k--argo_workspaces')
+        pattern = os.path.join(cache_base, '**', 'workspaces', config_id, 'runs', run_id, 'results', 'training_metrics_v3.json')
+        found = _glob.glob(pattern, recursive=True)
+        if found:
+            metric_file = found[0]
+        else:
+            return f"🧠 Não: {run_id}\n📊 Không tìm thấy metrics"
+    
+    try:
+        with open(metric_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        sessions = data.get('sessions', {})
+        lines = [f"🧠 Não: {run_id}"]
+        
+        # Thông tin trading platform
+        platform = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "?")
+        exec_sym = CONFIG.get("EXECUTION_SYMBOL", CONFIG.get("TARGET_SYMBOL", "?"))
+        if platform == "BINANCE":
+            is_demo = os.getenv("BINANCE_FUTURES_DEMO", "True").lower() == "true"
+            lines.append(f"💹 Trade: Binance {'DEMO' if is_demo else 'REAL'} | {exec_sym}")
+        elif platform == "BINANCE_SPOT":
+            lines.append(f"💹 Trade: Binance Spot | {exec_sym}")
+        else:
+            mt5_path = CONFIG.get("MT5_PATH", "")
+            mt5_name = os.path.basename(os.path.dirname(mt5_path)) if mt5_path else "?"
+            lines.append(f"💹 Trade: MT5 {mt5_name} | {exec_sym}")
+        lines.append("─" * 28)
+        for sess_name, sess_data in sessions.items():
+            best = sess_data.get('BEST_VLOSS', {})
+            score = best.get('composite_score', 0)
+            val_loss = best.get('val_loss', 0)
+            epoch = best.get('epoch', 0)
+            
+            best_wr, best_thr, best_sigs = 0, 0, 0
+            for tm in best.get('threshold_metrics', []):
+                wr = tm.get('win_rate', 0)
+                sigs = tm.get('total_signals', 0)
+                if wr > best_wr and sigs >= 10:
+                    best_wr = wr
+                    best_thr = tm.get('threshold', 0)
+                    best_sigs = sigs
+            
+            lines.append(f"📊 Phiên: {sess_name.upper()}")
+            lines.append(f"⭐ Score: {score:.4f}")
+            lines.append(f"🎯 WR: {best_wr:.1%} @thr={best_thr:.3f}")
+            lines.append(f"📈 Signals: {best_sigs} | Epoch: {epoch}")
+            lines.append(f"📉 Val Loss: {val_loss:.4f}")
+        return '\n'.join(lines)
+    except Exception as e:
+        return f"🧠 Não: {run_id}\n❌ Lỗi đọc metrics: {e}"
 
 def bot_background_loop():
-    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs
+    global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs, gui_brain_tooltip
     print("[BOT V3] ===== Khởi động OOP Modules V3.0 (MASTER SCHEDULER) =====")
     
     engine = V3InferenceEngine(log_callback=print)
@@ -305,7 +381,7 @@ def bot_background_loop():
         if base_cfg:
             CONFIG = base_cfg
             
-        sess_name, sinfo, global_mt5 = config_loader.get_current_schedule()
+        sess_name, sinfo, global_mt5 = config_loader.get_current_schedule(CONFIG)
         if sinfo:
             CONFIG = config_loader.apply_schedule_overrides(CONFIG, sinfo, global_mt5)
             
@@ -342,7 +418,15 @@ def bot_background_loop():
                 num_attn_layers = arch.get("NUM_LAYERS", 4)
                 
                 engine.load_weights(m_path, n_feat, d_model, nhead, num_attn_layers, window_size)
-                processor = V3DataProcessor(s_path, i_feats, window_size, config=CONFIG, log_callback=print)
+                actual_input_dim = engine.num_features
+                
+                # Đồng bộ feature list với model weights
+                dp_feats = i_feats  # Mặc định dùng feature list từ scaler
+                if actual_input_dim != n_feat:
+                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Đồng bộ...")
+                    dp_feats = list(range(actual_input_dim))
+                processor = V3DataProcessor(s_path, dp_feats, window_size, config=CONFIG, log_callback=print)
+                # MT5 manager chỉ cần feature names (strings) để cào data, dùng i_feats gốc
                 mt5_manager.force_reload_dynamic_features(i_feats)
                 
                 brain_loaded = True
@@ -352,13 +436,16 @@ def bot_background_loop():
                 display_sess = sess_name if sess_name else CONFIG.get("SESSION", "Unknown")
                 gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)[:10]})"
                 
+                # Tải training metrics cho tooltip
+                gui_brain_tooltip = _load_brain_metrics(target_run_id, cfg_id)
+                
                 msg_done = f"✅ Lắp ráp NÃO V3 Xong!\nKhởi tạo thành công Mạng Nơ-ron (Loss %: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)})\nBot đang nghe ngóng thị trường..."
                 print(f"[BOT V3] {msg_done}")
                 tg_notify(msg_done)
             except Exception as ce:
                 gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
                 print(f"[BOT V3] ❌ Lỗi tải não: {ce}")
-                time.sleep(5)
+                time.sleep(60)  # Tăng lên 60s để tránh spam log liên tục khi não chưa sẵn sàng
                 continue
                 
         if not brain_loaded:
@@ -385,7 +472,14 @@ def bot_background_loop():
 
         if TRADE_PLATFORM in ("BINANCE", "BINANCE_SPOT"):
             try:
-                ticker = trade_manager.exchange.fetch_ticker(trade_manager._format_symbol(TARGET_SYMBOL))
+                import ccxt
+                if not hasattr(bot_background_loop, '_sim_exchange'):
+                    bot_background_loop._sim_exchange = ccxt.binance()
+                ex = bot_background_loop._sim_exchange
+                if hasattr(trade_manager, 'exchange') and trade_manager.exchange:
+                    ex = trade_manager.exchange
+                fmt_sym = TARGET_SYMBOL.replace("USDT", "/USDT")
+                ticker = ex.fetch_ticker(fmt_sym)
                 G_CURRENT_PRICE = ticker.get('last', 0)
                 current_bid = ticker.get('bid', G_CURRENT_PRICE)
                 current_ask = ticker.get('ask', G_CURRENT_PRICE)
@@ -457,7 +551,32 @@ def bot_background_loop():
             
         gui_prediction = f"B:{probs['buy']:.2f} S:{probs['sell']:.2f} (Loss:{mse:.3f})"
         gui_probs = {'buy': probs['buy'], 'sell': probs['sell'], 'loss': mse}
-        msg_pred = f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\nThời gian: Nến {gui_time}\nGiá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\nTỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\nHành động: {action}"
+
+        # Tính hành động hiển thị thực tế (có xét vị thế đang giữ)
+        display_action = action
+        if hasattr(trade_manager, 'active_trade_loggers') and trade_manager.active_trade_loggers:
+            for ticket, pos in trade_manager.active_trade_loggers.items():
+                side = pos.get('side', '')
+                if (side == 'SELL' and action == 'SELL') or (side == 'BUY' and action == 'BUY'):
+                    display_action = f"GIỮ LỆNH {side} (#{ticket})"
+                    break
+
+        msg_pred = (
+            f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\n"
+            f"Thời gian: Nến {gui_time}\n"
+            f"Giá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\n"
+            f"Tỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\n"
+            f"Hành động: {display_action}"
+        )
+
+        # Nối thông tin vị thế + P&L ngày (nếu trade_manager hỗ trợ)
+        if hasattr(trade_manager, 'get_active_positions_report'):
+            pos_rpt = trade_manager.get_active_positions_report()
+            if pos_rpt:
+                msg_pred += f"\n{pos_rpt}"
+        if hasattr(trade_manager, 'get_daily_pnl_summary'):
+            msg_pred += f"\n{trade_manager.get_daily_pnl_summary()}"
+
         print(f"[BOT V3] {msg_pred}")
         # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
         # Để tránh spam, tg_notify đã được cấu hình chỉ gửi tin quan trọng
@@ -531,6 +650,39 @@ def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, 
     
     root.after(500, update_ui, root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target)
 
+class ToolTip:
+    """Tooltip nhỏ gọn cho tkinter widget — hiển thị khi di chuột qua."""
+    def __init__(self, widget, text_func):
+        self.widget = widget
+        self.text_func = text_func  # Callable trả về text động
+        self.tipwindow = None
+        widget.bind('<Enter>', self.show)
+        widget.bind('<Leave>', self.hide)
+
+    def show(self, event=None):
+        if self.tipwindow:
+            return
+        text = self.text_func() if callable(self.text_func) else str(self.text_func)
+        if not text:
+            return
+        x = self.widget.winfo_rootx() + 20
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        self.tipwindow = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.attributes('-topmost', True)
+        tw.wm_geometry(f"+{x}+{y}")
+        
+        frame = tk.Frame(tw, bg='#1a1a2e', bd=1, relief=tk.SOLID, highlightbackground='#00ffff', highlightthickness=1)
+        frame.pack()
+        label = tk.Label(frame, text=text, justify=tk.LEFT, bg='#1a1a2e', fg='#e0e0e0',
+                         font=('Consolas', 9), padx=8, pady=6)
+        label.pack()
+
+    def hide(self, event=None):
+        if self.tipwindow:
+            self.tipwindow.destroy()
+            self.tipwindow = None
+
 def start_overlay_dashboard():
     root = tk.Tk()
     root.title(f"AAMT TERMINATOR V3 - {TARGET_SYMBOL}")
@@ -551,8 +703,10 @@ def start_overlay_dashboard():
     root.bind("<B1-Motion>", do_move)
     
     tk.Label(root, text=f"🌌 {TARGET_SYMBOL} MASTER V3 🌌", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
-    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9))
+    lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9), cursor="hand2")
     lbl_session.pack()
+    # Tooltip thành tích đào tạo — hiển thị khi di chuột qua tên não
+    ToolTip(lbl_session, lambda: gui_brain_tooltip)
     canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
     canvas_pred.pack(pady=3, fill=tk.X, padx=15)
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))

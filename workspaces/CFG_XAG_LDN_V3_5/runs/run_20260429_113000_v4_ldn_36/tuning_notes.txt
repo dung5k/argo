@@ -1,0 +1,2 @@
+Lượt này thay đổi: Revert BATCH_SIZE về 512. Tăng NUM_LAYERS lên 2.
+Kỳ vọng: Lô nhỏ 256 gây ra quá nhiều nhiễu gradient (hơn 400 tín hiệu nhưng sai lệch cao). Phiên London cần Lô lớn 512 để dập nhiễu. Trở về cấu hình của Run 31, nhưng nâng cấp bộ não (thêm 1 Layer) để mô hình có khả năng học các mối quan hệ phi tuyến sâu hơn từ chuỗi 60 nến, kỳ vọng sẽ bứt phá giới hạn Win Rate 48.9%.

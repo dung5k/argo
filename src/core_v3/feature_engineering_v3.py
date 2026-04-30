@@ -532,7 +532,7 @@ class FeatureEngineeringV3:
         return scaled_data
         
     def transform_scaler(self, features_df):
-        """Scale data trong lúc Live Inference"""
+        """Scale data trong lúc Live Inference — trả lại TẤT CẢ cột (cả scaled lẫn passthrough)."""
         if not self.is_fitted:
             raise ValueError("Scaler chưa được fit. Vui lòng gọi fit_transform trước.")
         
@@ -547,10 +547,12 @@ class FeatureEngineeringV3:
         
         if cols_to_scale:
             # Chỉ scale những cột mà scaler đã được fit (fix lỗi Feature unseen at fit time)
-            valid_cols = [c for c in cols_to_scale if c in self.scaler.feature_names_in_]
-            scaled_vals = self.scaler.transform(features_df[valid_cols])
-            scaled_vals = np.clip(scaled_vals, -15.0, 15.0)
-            scaled_data[valid_cols] = scaled_vals
+            # [VÁ LỖI] Bắt buộc phải giữ đúng thứ tự cột như lúc fit
+            valid_cols = [c for c in self.scaler.feature_names_in_ if c in cols_to_scale]
+            if valid_cols:
+                scaled_vals = self.scaler.transform(features_df[valid_cols])
+                scaled_vals = np.clip(scaled_vals, -15.0, 15.0)
+                scaled_data[valid_cols] = scaled_vals
             
         return scaled_data
 

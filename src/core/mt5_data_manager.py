@@ -149,7 +149,8 @@ class MT5DataManager:
                 scaler = joblib.load(scaler_path)
                 self.features = list(scaler.feature_names_in_)
             except Exception as e:
-                self.log_message(f"⚠️ Không tìm thấy biến từ Scaler.")
+                # Trong V3, MT5DataManager sẽ được cung cấp features sau thông qua force_reload_dynamic_features()
+                pass
 
     def _build_active_mappings(self):
         self.active_mappings = []
