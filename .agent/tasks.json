@@ -8,10 +8,10 @@
       "intervalMinutes": 20
     },
     {
-      "id": "xag_asian_v4_tuning",
+      "id": "xag_asian_auto_tuning",
       "enabled": false,
-      "promptFile": ".agent/periodic_prompt_xag_asian_v4.md",
-      "triggerOn": "xag_asian_v4_training_done",
+      "promptFile": ".agent/periodic_prompt_xag_asian.md",
+      "triggerOn": "xag_asian_training_done",
       "nextRunTime": 1777269499875,
       "intervalMinutes": 20
     },

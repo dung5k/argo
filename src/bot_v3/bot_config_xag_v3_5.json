@@ -64,6 +64,11 @@
                 "corr_60",
                 "relative_strength"
             ],
+            "USDJPYm": [
+                "log_ret",
+                "volume",
+                "bb_width"
+            ],
             "DXYm": [
                 "log_ret",
                 "volume",
@@ -103,6 +108,7 @@
             "XAGUSDm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "USTECm": "EXNESS",
+            "USDJPYm": "EXNESS",
             "DXYm": "EXNESS"
         }
     },
