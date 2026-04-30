@@ -1,0 +1,14 @@
+[
+    {
+        "TP": 15,
+        "SL": 15,
+        "ZERO_NOISE": true,
+        "D_MODEL": 32
+    },
+    {
+        "TP": 30,
+        "SL": 30,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32
+    }
+]

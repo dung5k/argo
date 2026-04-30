@@ -18,8 +18,8 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "CHI\u1ebeN L\u01af\u1ee2C V4: T\u1eacP TRUNG T\u00ccM S\u1ef0 PH\u1ee4 THU\u1ed8C V\u00c0O LEADER (DXY, NASDAQ, XAU). KH\u00d4NG D\u00d9NG WINDOW SIZE L\u1edaN!",
-        "TP_PIPS": 15,
-        "SL_PIPS": 15,
+        "TP_PIPS": 30,
+        "SL_PIPS": 30,
         "MAX_HOLD_BARS": 12,
         "PIP_SIZE": 0.001,
         "WINDOW_SIZE": 15,
@@ -45,7 +45,7 @@
                 "bb_width"
             ]
         },
-        "ZERO_NOISE_TARGET": true
+        "ZERO_NOISE_TARGET": false
     },
     "TRAINING": {
         "D_MODEL": 32,
