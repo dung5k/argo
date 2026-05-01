@@ -448,8 +448,9 @@ def main():
     
     class_weights_tensor = torch.tensor(cw_array, dtype=torch.float32).to(device)
     focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
-    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma}", flush=True)
-    criterion = AAMT_JointLoss(class_weights=class_weights_tensor, focal_gamma=focal_gamma)
+    mse_gate = train_cfg.get("MSE_GATE_PERCENTILE", 0.0)
+    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate}", flush=True)
+    criterion = AAMT_JointLoss(class_weights=class_weights_tensor, focal_gamma=focal_gamma, mse_gate_percentile=mse_gate)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     phoenix = None  # Đã tắt Auto Healing
 
