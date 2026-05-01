@@ -1,2 +1,0 @@
-Lượt này thay đổi: Bật ORDER_FLOW, VOL_REGIME và ZERO_NOISE_TARGET lên True. Thêm USTECm vào MACRO_FEATURES.
-Kỳ vọng: Phiên London quá sideway, việc chỉ dùng Macro tĩnh như Run 29 đã thất bại (Win rate chỉ 47%). Bổ sung các features liên quan đến vi cấu trúc (Dòng tiền và Chế độ biến động) kết hợp bộ lọc rác Zero Noise để mô hình nhạy bén hơn với các điểm nổ của thị trường London. Kỳ vọng Win rate > 55%.

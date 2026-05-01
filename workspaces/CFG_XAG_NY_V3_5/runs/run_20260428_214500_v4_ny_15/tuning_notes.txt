@@ -1,2 +1,0 @@
-Lượt này thay đổi: Cấu hình chuẩn Baseline 100% (Pure Macro, WINDOW=20, LEARNING_RATE=1e-5). Đổi chiến thuật nhãn: TP_PIPS=80, SL_PIPS=80, MAX_HOLD_BARS=30.
-Kỳ vọng: Thay vì cố gắng thay đổi não bộ (thất bại ở run 12, 14) hay nhồi nhét feature (thất bại ở run 10, 11, 13), ta thay đổi định nghĩa chiến thắng. NY là phiên biên độ cực lớn, việc TP/SL=50 và Hold=12 phút có thể khiến mô hình dính stoploss nhiễu. Việc nới lỏng sang Swing Mode có thể cung cấp nhãn (Y) mượt mà hơn cho mạng nơ ron.

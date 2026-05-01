@@ -1,2 +1,0 @@
-Lượt này thay đổi: Tăng WINDOW_SIZE lên 60. Lọc bỏ DXYm và USTECm khỏi MACRO_FEATURES. Chỉ giữ XAUUSDm.
-Kỳ vọng: Lọc bỏ nhiễu từ các thị trường không sôi động trong phiên London. Dùng Window 60 (1 tiếng) để lấy bối cảnh lớn kết hợp với Microstructure để tìm điểm vào. Kỳ vọng mô hình sẽ không bị nhiễu và tìm được Win Rate cao hơn.

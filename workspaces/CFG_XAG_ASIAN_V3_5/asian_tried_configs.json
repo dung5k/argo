@@ -10,5 +10,194 @@
         "SL": 30,
         "ZERO_NOISE": false,
         "D_MODEL": 32
+    },
+    {
+        "TP": 20,
+        "SL": 20,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 10
+    },
+    {
+        "TP": 40,
+        "SL": 40,
+        "ZERO_NOISE": false,
+        "D_MODEL": 16,
+        "WINDOW_SIZE": 15
+    },
+    {
+        "TP": 15,
+        "SL": 45,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 20,
+        "LR": 3e-05
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 20,
+        "SL": 30,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 30,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 35,
+        "SL": 35,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 20,
+        "SL": 20,
+        "ZERO_NOISE": true,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 15,
+        "MACRO": "ALL_4_LEADERS"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm",
+        "VOL_REGIME": true
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm",
+        "ORDER_FLOW": true
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "ONLY_XAUUSDm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 60,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 64,
+        "WINDOW_SIZE": 60,
+        "MACRO": "USTECm_instead_of_DXYm",
+        "NOTE": "Fix bug WINDOW_SIZE_SYNC"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 128,
+        "NUM_LAYERS": 2,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm",
+        "DROPOUT": 0.15,
+        "BATCH_SIZE": 128
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "ONLY_USDJPYm"
+    },
+    {
+        "TP": 20,
+        "SL": 20,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 10,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 15,
+        "SL": 30,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_instead_of_DXYm"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_No_Volume"
+    },
+    {
+        "TP": 25,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_only",
+        "BATCH_SIZE": 1024
+    },
+    {
+        "TP": 30,
+        "SL": 30,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_only"
+    },
+    {
+        "TP": 20,
+        "SL": 25,
+        "ZERO_NOISE": false,
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 15,
+        "MACRO": "USTECm_only"
     }
 ]

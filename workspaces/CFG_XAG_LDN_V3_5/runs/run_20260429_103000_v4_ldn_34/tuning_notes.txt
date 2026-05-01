@@ -1,2 +1,0 @@
-Lượt này thay đổi: Trả TP_PIPS và SL_PIPS về lại 30. Tăng LEARNING_RATE từ 1e-05 lên 3e-05.
-Kỳ vọng: TP/SL 30 là tỷ lệ vàng duy nhất tạo ra tín hiệu thành công (Run 31). Tuy nhiên ở Run 31, Loss giảm khá chậm nên mô hình bị Early Stopping ép dừng sớm. Tăng Learning Rate lên 3e-05 sẽ giúp mạng học nhanh hơn và vượt qua được mức lợi nhuận hòa vốn (Win Rate > 50%).

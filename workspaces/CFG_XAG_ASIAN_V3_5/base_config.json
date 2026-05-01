@@ -18,8 +18,8 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "CHI\u1ebeN L\u01af\u1ee2C V4: T\u1eacP TRUNG T\u00ccM S\u1ef0 PH\u1ee4 THU\u1ed8C V\u00c0O LEADER (DXY, NASDAQ, XAU). KH\u00d4NG D\u00d9NG WINDOW SIZE L\u1edaN!",
-        "TP_PIPS": 30,
-        "SL_PIPS": 30,
+        "TP_PIPS": 20,
+        "SL_PIPS": 20,
         "MAX_HOLD_BARS": 12,
         "PIP_SIZE": 0.001,
         "WINDOW_SIZE": 15,
@@ -48,7 +48,7 @@
         "ZERO_NOISE_TARGET": false
     },
     "TRAINING": {
-        "D_MODEL": 32,
+        "D_MODEL": 64,
         "N_HEAD": 2,
         "NUM_LAYERS": 1,
         "BATCH_SIZE": 512,
@@ -66,7 +66,8 @@
         "POOLING": "attention",
         "CLS_HEAD": "residual",
         "LAYER_DROP": 0.1,
-        "LR_SCHEDULER": "cosine_warm"
+        "LR_SCHEDULER": "cosine_warm",
+        "WINDOW_SIZE": 10
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_XAG_ASIAN_V3_5/data/raw",
