@@ -38,7 +38,7 @@ python scripts/upload_v3_dataset.py --config workspaces/CFG_XAG_LDN_V3_5/runs/<R
 ## BƯỚC 3: Kích hoạt Training
 Lấy RUN_ID từ hàng đợi và thực thi:
 ```
-python src/training_v3/train_v3.py workspaces/CFG_XAG_LDN_V3_5/runs/<RUN_ID>/config.json --session ldn --scratch --run-id <RUN_ID>; python .agent/notify_done.py xag_ldn_training_done
+start "XAG LDN Training" cmd /k "python src/training_v3/train_v3.py workspaces/CFG_XAG_LDN_V3_5/runs/<RUN_ID>/config.json --session ldn --scratch --run-id <RUN_ID> & python .agent/notify_done.py xag_ldn_training_done"
 ```
 
 ## BƯỚC 4: Báo cáo Nghiêm ngặt (Strict Reporting)
