@@ -17,10 +17,10 @@
         "SYNC_CHUNKS": false
     },
     "FEATURE_ENGINEERING": {
-        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "CHI\u1ebeN L\u01af\u1ee2C V4: T\u1eacP TRUNG T\u00ccM S\u1ef0 PH\u1ee4 THU\u1ed8C V\u00c0O LEADER (DXY, NASDAQ, XAU). KH\u00d4NG D\u00d9NG WINDOW SIZE L\u1edaN!",
-        "TP_PIPS": 30,
-        "SL_PIPS": 30,
-        "MAX_HOLD_BARS": 30,
+        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "C\u1eaeT GI\u1ea2M NHI\u1ec4U V\u0128 M\u00d4. T\u1eacP TRUNG V\u00c0O XAUUSD V\u00c0 NASDAQ.",
+        "TP_PIPS": 120,
+        "SL_PIPS": 120,
+        "MAX_HOLD_BARS": 8,
         "PIP_SIZE": 0.001,
         "WINDOW_SIZE": 30,
         "STEP_SIZE": 1,
@@ -29,18 +29,23 @@
                 "log_ret",
                 "volume",
                 "bb_width",
-                "corr_60",
-                "spread_ret"
+                "corr_60"
+            ],
+            "USTECm": [
+                "log_ret",
+                "volume",
+                "corr_60"
+            ],
+            "DXYm": [
+                "log_ret",
+                "bb_width"
             ]
-        },
-        "ORDER_FLOW": true,
-        "VOL_REGIME": true,
-        "ZERO_NOISE_TARGET": true
+        }
     },
     "TRAINING": {
-        "D_MODEL": 16,
-        "N_HEAD": 2,
-        "NUM_LAYERS": 1,
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 4,
         "BATCH_SIZE": 512,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
@@ -50,8 +55,7 @@
         "VAL_END": "2026-04-20",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 40,
-        "FREQ_MAX_N": 250,
-        "DROPOUT": 0.25
+        "FREQ_MAX_N": 250
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_XAG_LDN_V3_5/data/raw",
@@ -62,7 +66,9 @@
         },
         "ROUTING": {
             "XAGUSDm": "EXNESS",
-            "XAUUSDm": "EXNESS"
+            "XAUUSDm": "EXNESS",
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS"
         }
     },
     "LIVE_BOT": {
