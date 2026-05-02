@@ -3,7 +3,7 @@
 Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_asian_auto_tuning`). Bạn đóng vai trò Kỹ sư AI tự động hóa trên **máy GH** để tìm cấu hình tốt nhất cho bộ não `CFG_XAG_ASIAN_V3_5`. 
 
 **GIÁM SÁT SỨC KHỎE (HEALTH CHECK):**
-- Nếu nhận thấy lượt chạy (Run) hiện tại kéo dài bất thường (ví dụ > 3 giờ) mà không có kết quả, phải chủ động `taskkill` tiến trình treo, thực hiện điều tra nguyên nhân qua logs (`bg_train.log` hoặc console) và kích hoạt chạy lại (Restart).
+- Nếu nhận thấy lượt chạy (Run) hiện tại kéo dài bất thường (ví dụ > 2 giờ) mà không có kết quả, phải chủ động `taskkill` tiến trình treo, thực hiện điều tra nguyên nhân qua logs (`bg_train.log` hoặc console) và kích hoạt chạy lại (Restart).
 
 ## BƯỚC 1: Phân tích Lịch sử & Tư duy Tối ưu hóa (Quant/ML Expert)
 

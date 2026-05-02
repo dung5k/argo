@@ -450,14 +450,15 @@ def main():
     focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
     mse_gate = train_cfg.get("MSE_GATE_PERCENTILE", 0.0)
     recon_weight = train_cfg.get("RECON_LOSS_WEIGHT", 1.0)
-    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | recon_weight = {recon_weight}", flush=True)
+    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | lambda_recon = {recon_weight}", flush=True)
     criterion = AAMT_JointLoss(
         class_weights=class_weights_tensor, 
         focal_gamma=focal_gamma, 
         mse_gate_percentile=mse_gate,
-        recon_weight=recon_weight
+        lambda_recon=recon_weight
     )
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    weight_decay = train_cfg.get("WEIGHT_DECAY", 1e-4)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     phoenix = None  # Đã tắt Auto Healing
 
     # [V2] Chọn Learning Rate Scheduler theo config
@@ -469,16 +470,17 @@ def main():
         )
         print(f"[SCHEDULER] CosineAnnealingWarmRestarts (T_0=15, T_mult=2)", flush=True)
     else:
-        # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau 10 epoch không cải thiện CE Loss val
+        # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau X epoch không cải thiện CE Loss val
         # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
+        patience_val = train_cfg.get("PATIENCE", 10)
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=10,
+            optimizer, mode='min', factor=0.5, patience=patience_val,
             min_lr=1e-6
         )
-        print(f"[SCHEDULER] ReduceLROnPlateau (patience=10, factor=0.5)", flush=True)
-    # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp 20 epoch
+        print(f"[SCHEDULER] ReduceLROnPlateau (patience={patience_val}, factor=0.5)", flush=True)
+    # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp X epoch
     # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
-    _ES_PATIENCE     = 20   # Số epoch chịu đựng CE tăng
+    _ES_PATIENCE     = train_cfg.get("ES_PATIENCE", 20)   # Số epoch chịu đựng CE tăng
     _es_streak       = 0    # Biến đếm streak tăng hiện tại
     _es_best_ce_val  = float('inf')  # CE val tốt nhất từ trước đến nay
     
