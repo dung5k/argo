@@ -25,6 +25,10 @@ python src/orchestration/host_controller.py listen --client-id client1 --time 10
 ```
 Ghi nhận trạng thái: IDLE hay BUSY.
 
+**GIÁM SÁT SỨC KHỎE (HEALTH CHECK):**
+- Nếu `client1` đang **BUSY** nhưng tiến trình huấn luyện đã chạy quá lâu (ví dụ > 3 giờ) mà không sinh ra file kết quả `training_metrics_v3.json` trên HOST (sau khi sync), bạn ĐƯỢC PHÉP phát lệnh `stop` hoặc can thiệp để khởi động lại tiến trình của Client.
+- Điều tra lỗi qua logs được sync về từ Client.
+
 ---
 
 ## BƯỚC 2: Phân tích Lịch sử & Tư duy Tối ưu hóa (Quant/ML Expert)

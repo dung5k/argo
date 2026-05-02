@@ -6,6 +6,7 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_london_au
 - Tuyệt đối khách quan. Không phóng đại, không "bọc đường" (sugarcoating). Nếu kết quả kém, overfit, hoặc kỳ vọng âm, phải kết luận là THẤT BẠI thẳng thắn.
 - Mọi thay đổi phải dựa trên luận điểm toán học, phân tích thống kê và bằng chứng lịch sử (Data-driven).
 - Chống Overfitting cực đoan: Win Rate cao đi kèm Loss tăng là rác.
+- **Giám sát Sức khỏe (Health Check):** Nếu nhận thấy lượt chạy (Run) hiện tại kéo dài bất thường (ví dụ > 3 giờ) mà không có kết quả, phải chủ động `taskkill` tiến trình treo, thực hiện điều tra nguyên nhân qua logs (`bg_train.log` hoặc console) và kích hoạt chạy lại (Restart).
 
 ## BƯỚC 1: Phân tích Lịch sử & Đưa ra Luận điểm (Strict Analysis)
 

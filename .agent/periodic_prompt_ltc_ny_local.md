@@ -20,6 +20,11 @@ Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'" | Selec
 Nếu có tiến trình đang chạy, máy ở trạng thái **BUSY**. Nếu không có, máy ở trạng thái **IDLE**.
 Ghi nhận trạng thái.
 
+**GIÁM SÁT SỨC KHỎE (HEALTH CHECK):**
+- Nếu máy đang **BUSY** nhưng tiến trình `train_v3.py` đã chạy quá lâu (ví dụ > 3 giờ) mà không sinh ra file kết quả `training_metrics_v3.json`, bạn ĐƯỢC PHÉP chủ động `taskkill` tiến trình đó.
+- Kiểm tra logs hoặc console để điều tra lỗi (VD: CUDA OOM, treo driver). 
+- Sau khi dọn dẹp, chuyển máy về trạng thái **IDLE** để kích hoạt chạy lại (Restart) ở Bước 4.
+
 ---
 
 ## BƯỚC 2: TƯ DUY CHUYÊN GIA & CẬP NHẬT NHẬT KÝ (BẮT BUỘC)
