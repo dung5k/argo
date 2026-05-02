@@ -42,8 +42,8 @@ start "XAG LDN Training" cmd /k "python src/training_v3/train_v3.py workspaces/C
 ```
 
 ## BƯỚC 4: Báo cáo Nghiêm ngặt (Strict Reporting)
-Sau khi Pipeline được kích hoạt an toàn, báo cáo tình hình qua Telegram. 
-- Yêu cầu: Báo cáo số liệu thực, không cảm xúc, đưa ra nhận định lạnh lùng về kỳ vọng.
+Sau khi Pipeline được kích hoạt an toàn (hoặc khi đọc được kết quả của lượt chạy trước), báo cáo tình hình qua Telegram. 
+- Yêu cầu: Báo cáo số liệu thực, không cảm xúc, đưa ra nhận định lạnh lùng về kỳ vọng. **BẮT BUỘC BÁO CÁO KÈM THÔNG TIN MAX WIN RATE VÀ COMPOSITE SCORE CỦA LƯỢT CHẠY GẦN NHẤT.**
 ```
 python .agent/send_to_tele.py "<Báo cáo tình hình>" --done
 ```
