@@ -74,6 +74,14 @@ def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str,
 
         # Kiểm tra nến mục tiêu có nằm trong Session không
         time_in_minutes = target_time.hour * 60 + target_time.minute
+        
+        # [MỚI] Hỗ trợ lọc Cuối tuần
+        is_weekend_session = config.get('SESSION', '').lower() == 'weekend'
+        if is_weekend_session:
+            # Chỉ lấy Thứ 7 (5) và Chủ Nhật (6)
+            if target_time.weekday() < 5:
+                continue
+        
         if start_min <= end_min:
             in_session = (start_min <= time_in_minutes <= end_min)
         else:  # Phiên xuyên nửa đêm

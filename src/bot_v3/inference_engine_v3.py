@@ -15,10 +15,7 @@ class V3InferenceEngine:
     """
 
     def __init__(self, log_callback=None):
-        self.device = (
-            torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            if torch else "mock"
-        )
+        self.device = torch.device('cpu') if torch else "mock"
         self.model = None
         self.log_callback = log_callback or print
         
@@ -68,13 +65,26 @@ class V3InferenceEngine:
             except Exception as e:
                 self.log_callback(f"[InferenceEngineV3] ⚠️ Lỗi auto-detect model dims: {e}")
 
+            # Tự động phát hiện cấu trúc Classification Head và Pooling
+            detected_cls_head = 'simple'
+            if 'classifier.fc1.weight' in state_dict:
+                detected_cls_head = 'residual'
+            
+            detected_pooling = 'mean'
+            if 'encoder.pooler.query' in state_dict:
+                detected_pooling = 'attention'
+                
+            self.log_callback(f"[InferenceEngineV3] 🕵️ Tự động phát hiện: head={detected_cls_head}, pooling={detected_pooling}")
+
             self.model = AAMT_Model(
                 input_dim=num_features,
                 seq_len=window_size,
                 d_model=d_model,
                 nhead=nhead,
                 num_layers=num_attn_layers,
-                num_classes=3
+                num_classes=3,
+                pooling=detected_pooling,
+                cls_head=detected_cls_head
             ).to(self.device)
 
             self.model.load_state_dict(state_dict)
