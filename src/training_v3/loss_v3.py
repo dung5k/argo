@@ -19,7 +19,7 @@ class AAMT_JointLoss(nn.Module):
         lambda_class (float): Trọng số nhánh Classification.
         mse_gate_percentile (float): Phân vị MSE để làm ngưỡng lọc (0.0=tắt, 0.75=lọc 25% nhiễu nhất).
     """
-    def __init__(self, lambda_recon=1.0, lambda_class=1.0, mse_gate_percentile=0.0, class_weights=None, focal_gamma=2.0):
+    def __init__(self, lambda_recon=1.0, lambda_class=1.0, mse_gate_percentile=0.0, class_weights=None, focal_gamma=2.0, label_smoothing=0.15):
         super().__init__()
         self.mse_loss = nn.MSELoss()
         
@@ -29,9 +29,9 @@ class AAMT_JointLoss(nn.Module):
             if not isinstance(class_weights, torch.Tensor):
                 class_weights = torch.tensor(class_weights, dtype=torch.float32)
         
-        # label_smoothing=0.15: ngăn model đặt probability ~0 vào class đúng
-        self.ce_loss_mean = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15, reduction='mean')
-        self.ce_loss_none = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.15, reduction='none')
+        # label_smoothing: ngăn model đặt probability ~0 vào class đúng
+        self.ce_loss_mean = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=label_smoothing, reduction='mean')
+        self.ce_loss_none = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=label_smoothing, reduction='none')
 
         self.lambda_recon = lambda_recon
         self.lambda_class = lambda_class

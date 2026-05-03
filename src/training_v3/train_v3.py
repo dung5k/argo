@@ -450,12 +450,14 @@ def main():
     focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
     mse_gate = train_cfg.get("MSE_GATE_PERCENTILE", 0.0)
     recon_weight = train_cfg.get("RECON_LOSS_WEIGHT", 1.0)
-    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | lambda_recon = {recon_weight}", flush=True)
+    label_smoothing = train_cfg.get("LABEL_SMOOTHING", 0.15)
+    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | lambda_recon = {recon_weight} | label_smoothing = {label_smoothing}", flush=True)
     criterion = AAMT_JointLoss(
         class_weights=class_weights_tensor, 
         focal_gamma=focal_gamma, 
         mse_gate_percentile=mse_gate,
-        lambda_recon=recon_weight
+        lambda_recon=recon_weight,
+        label_smoothing=label_smoothing
     )
     weight_decay = train_cfg.get("WEIGHT_DECAY", 1e-4)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
