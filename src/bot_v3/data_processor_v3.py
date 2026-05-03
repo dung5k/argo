@@ -51,7 +51,8 @@ class V3DataProcessor:
                 mtf_windows=fe_cfg.get('MTF_WINDOWS', None),
                 order_flow=fe_cfg.get('ORDER_FLOW', False),
                 vol_regime=fe_cfg.get('VOL_REGIME', False),
-                crypto_mode=fe_cfg.get('CRYPTO_MODE', False)
+                crypto_mode=fe_cfg.get('CRYPTO_MODE', False),
+                zero_noise_target=fe_cfg.get('ZERO_NOISE_TARGET', False)
             )
             
             # Load scaler (hỗ trợ cả format cũ và mới)

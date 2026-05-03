@@ -89,9 +89,22 @@ Kiểm tra thư mục `workspaces/CFG_LTC_NY_V3_5/runs/`:
 
 ---
 
-## BƯỚC 4: Điều Phối Huấn Luyện Cục Bộ (Local Dispatching)
+---
 
-- **Nếu máy đang BUSY**:
+## BƯỚC 4: Giám sát & Điều phối Huấn Luyện Cục Bộ (Local Dispatching & Monitoring)
+
+1. **Giám sát Tiến trình (Process Monitoring):**
+   - Kiểm tra xem có tiến trình `train_v3.py` nào đang chạy không bằng lệnh `Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'"`.
+   - Nếu có tiến trình đang chạy, hãy kiểm tra file log `train_v3.log` trong thư mục `results/` của lượt chạy đó.
+   - **TÌNH HUỐNG GIẢI CỨU:** Nếu tiến trình đã chạy quá 4 giờ hoặc file log không có cập nhật mới trong 20 phút (bị treo/OOM ẩn), hãy:
+     1. Kill tiến trình đó bằng lệnh `Stop-Process -Id <PID> -Force`.
+     2. Đọc 50 dòng cuối của file log để điều tra nguyên nhân (Lỗi CUDA, OOM, hay lỗi logic).
+     3. Báo cáo chi tiết lỗi qua Telegram.
+     4. Xóa thư mục run lỗi đó (nếu nó chưa kịp tạo ra kết quả WR > 60%).
+     5. Sau đó mới tiếp tục các bước dưới đây để hàng đợi được thông suốt.
+
+2. **Điều phối (Dispatching):**
+   - **Nếu máy đang BUSY** (có tiến trình hợp lệ đang chạy và vẫn đang update log):
   Thông báo Telegram: "Tiến trình NY đang bận. Đã phân tích ý tưởng mới (cập nhật HF Diary) và đưa cấu hình mới vào hàng đợi chờ." và gọi `--done` để kết thúc.
 - **Nếu máy đang IDLE**:
   Lấy `<RUN_ID>` từ Hàng Đợi và phát lệnh chạy huấn luyện ẩn:

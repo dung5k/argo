@@ -1,154 +1,106 @@
-# NHIỆM VỤ ĐỊNH KỲ V2 (LOCAL): AUTO-TUNING LTC ASIAN BRAIN (CỤC BỘ)
+# NHIỆM VỤ ĐỊNH KỲ (LOCAL): AUTO-TUNING LTC ASIAN BRAIN (CỤC BỘ)
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
-> **📅 PHIÊN GIAO DỊCH:** LTC ASIAN — Hoạt động từ **22:00 đến 02:00 (GMT+7)**. Tập trung vào liquidity châu Á, tín hiệu BTC/ETH sớm, volume thấp → cần model có ngưỡng confidence cao hơn để lọc noise.
-
-Hệ thống gọi bạn định kỳ mỗi 10 phút. Bạn đóng vai trò **Kỹ sư AI Quant cao cấp** để tìm cấu hình tốt nhất cho `CFG_LTC_ASIAN_V3_5` và **trực tiếp chạy huấn luyện trên máy cục bộ này**.
+Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `ltc_asian_auto_tuning_local`). Bạn đóng vai trò **Kỹ sư AI Quant khắt khe, không bao giờ bỏ cuộc** trên **máy Local** để tìm cấu hình tốt nhất cho bộ não `CFG_LTC_ASIAN_V3_5`.
 
 ---
 
+## BƯỚC 1: Thu thập Ngữ cảnh & Lịch sử (Context Gathering)
 
+1. **Đọc Lịch sử & Baseline:**
+   - Đọc kết quả của lượt chạy mới nhất `workspaces/CFG_LTC_ASIAN_V3_5/runs/<LATEST_RUN_ID>/results/training_metrics_v3.json`.
+   - Đọc `workspaces/CFG_LTC_ASIAN_V3_5/ASIAN_TRAINING_DIARY.md` (nếu có) để nắm bắt dòng suy nghĩ hiện tại và các ý tưởng bạn đã thử nghiệm trước đó.
+   - Nếu tồn tại file `workspaces/CFG_LTC_ASIAN_V3_5/BEST_CONFIG.md`, đọc để lấy **mốc so sánh (Baseline)** tốt nhất hiện có.
 
-## BƯỚC TIỀN XỬ LÝ: Đồng bộ từ HuggingFace
+2. **Phân tích Hiệu suất & Nghĩ ra ý tưởng mới (Expert Ideation):**
+   - Hãy suy nghĩ như một chuyên gia khắt khe nhất: Tại sao mô hình chưa đạt Win Rate trên 60%? Nhiễu ở phiên Á đến từ đâu? Có phải do thanh khoản mỏng? Dòng tiền Crypto nội bộ đang bị phân tán? Phiên Á thường dao động hẹp và đi ngang, liệu Stop Loss có đang quá hẹp hoặc Take Profit quá tham lam?
+   - **Đề xuất ít nhất 1 ý tưởng tối ưu hóa hoàn toàn mới hoặc điều chỉnh logic** (VD: Giảm số chiều dữ liệu, thay đổi cơ chế Attention Pooling, ngắt bớt Order Flow vì phiên Á rất nhiễu, hoặc điều chỉnh `MAX_HOLD_BARS`).
 
-```
-python scripts/sync_workspaces.py pull CFG_LTC_ASIAN_V3_5
-```
+3. **Cập nhật Nhật ký Ý Tưởng (Training Diary):**
+   - Cập nhật thêm nội dung vào cuối file `workspaces/CFG_LTC_ASIAN_V3_5/ASIAN_TRAINING_DIARY.md` (hoặc tạo mới nếu chưa có).
+   - Nội dung cập nhật phải tuân theo định dạng:
+     ```markdown
+     ### [Thời gian hiện tại] - Lượt đánh giá Run: <LATEST_RUN_ID>
+     - **Kết quả Run trước:** Composite Score = X, Win Rate = Y%.
+     - **Phân tích chuyên gia:** <Tại sao mô hình lại đạt/không đạt điểm cao? Sự cố ở phiên Á là gì?>
+     - **Ý tưởng thử nghiệm tiếp theo:** <Trình bày ý tưởng mới: thay đổi tham số gì, kiến trúc nào, feature nào?>
+     - **Giả thuyết (Hypothesis):** <Kỳ vọng ý tưởng mới sẽ giải quyết được vấn đề gì?>
+     ```
+   - **LƯU Ý QUAN TRỌNG:** Sau khi cập nhật file Diary, **BẮT BUỘC ĐẨY LÊN HUGGINGFACE NGAY LẬP TỨC**:
+     ```
+     python scripts/sync_workspaces.py push CFG_LTC_ASIAN_V3_5
+     ```
 
----
+4. **Ra quyết định Siêu tham số (Hyperparameter Strategy):**
+   Dựa vào ý tưởng vừa chốt trong Diary, tiến hành chọn tham số để thay đổi trong file config.
+   **KHO VŨ KHÍ TỐI THƯỢNG:**
+   - *Architecture:* `POOLING` ("mean" | "attention"), `CLS_HEAD` ("simple" | "residual"), `LAYER_DROP` (0.0-0.3), `D_MODEL` (32, 64, 128).
+   - *Features (Cực quan trọng):* `MTF_WINDOWS` ([5,15], [15,60]), `ORDER_FLOW` (true/false), `VOL_REGIME` (true/false), `ZERO_NOISE_TARGET` (Bắt buộc thử nghiệm nếu WR thấp).
+   - *Mã đầu vào (Input Channels):* 
+     - `MACRO_FEATURES`: Có thể loại bỏ hoàn toàn `DXYm`, `XAUUSDm` nếu phiên Á quá nhiễu. 
+     - `CRYPTO_BINANCE.SYMBOLS`: Thêm/bớt các mã dẫn dắt như `BTC/USDT`, `ETH/USDT` hoặc các mã cùng nhóm `BCH/USDT`, `DOGE/USDT`.
+   - *Basics:* `WINDOW_SIZE` (15, 30, 45, 60), `LEARNING_RATE` (1e-5 -> 5e-5), `BATCH_SIZE` (64, 128, 256, 512).
+   - **NGUYÊN TẮC VÀNG:** Mỗi lượt mới CHỈ THAY ĐỔI TỐI ĐA 2 THAM SỐ để cô lập tác động! Đặc biệt ưu tiên tinh chỉnh mã đầu vào để tìm ra "Bộ lọc chuẩn" cho phiên Á.
 
-## BƯỚC 0: TRINH SÁT (Thu thập dữ liệu)
-
-1. **Đọc kết quả London tốt nhất** (mốc tham chiếu):
-   - `workspaces/CFG_LTC_LONDON_V3_5/runs/<BEST_RUN>/results/training_metrics_v3.json`
-   - Ghi nhận: `SCORE_LDN` (hiện tại: ldn_16 = 0.4743)
-
-2. **Đọc kết quả Asian hiện tại:**
-   - Quét `workspaces/CFG_LTC_ASIAN_V3_5/runs/*/results/training_metrics_v3.json`
-   - Ghi nhận `SCORE_ASIAN`, `WIN_RATE`, `TOTAL_SIGNALS`, `VAL_LOSS`
-   - Đọc `BEST_CONFIG.md` nếu có.
-   - **Top 2 hiện tại:** `asian_12` (0.5087, Ep4) > `asian_17` (0.4163, Ep8)
-
-3. **Tính GAP:** `GAP = SCORE_LDN - SCORE_ASIAN`. Mục tiêu: thu hẹp GAP mỗi lượt.
-
-4. **Kiểm tra config.json của run gần nhất** — xác nhận các vũ khí V2 đã bật/tắt:
-   `POOLING? CLS_HEAD? LAYER_DROP? LR_SCHEDULER? MTF_WINDOWS? ORDER_FLOW? VOL_REGIME? spread_ret? relative_strength?`
-
----
-
-## BƯỚC 1: ĐÁNH GIÁ TRẠNG THÁI MÁY
-
-```powershell
-Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'" | Select-Object ProcessId, CommandLine
-```
-- Có tiến trình → **BUSY** (chỉ chuẩn bị data, không dispatch)
-- Không có → **IDLE** (dispatch ngay)
-
-**GIÁM SÁT SỨC KHỎE (HEALTH CHECK):**
-- Nếu máy đang **BUSY** nhưng tiến trình `train_v3.py` đã chạy quá lâu (ví dụ > 2 giờ) mà không sinh ra file kết quả `training_metrics_v3.json`, bạn ĐƯỢC PHÉP chủ động `taskkill` tiến trình đó.
-- Kiểm tra logs hoặc console để điều tra lỗi (VD: CUDA OOM, treo driver). 
-- Sau khi dọn dẹp, chuyển máy về trạng thái **IDLE** để kích hoạt chạy lại (Restart) ở Bước 4.
-
----
-
-## BƯỚC 2: RA QUYẾT ĐỊNH CHIẾN THUẬT (Vai trò Chuyên gia Quant/ML)
-
-Dựa trên phân tích Bước 0, chọn **1-2 biến** từ **kho vũ khí V2** để thử nghiệm:
-
-### Kiến trúc Neural Network (keys trong TRAINING):
-| Tham số | Mặc định | Tùy chọn | Mô tả |
-|---|---|---|---|
-| `POOLING` | `"mean"` | `"attention"` | Learnable Attention Pooling |
-| `CLS_HEAD` | `"simple"` | `"residual"` | Residual MLP 3-layer Head |
-| `LAYER_DROP` | `0.0` | `0.1`–`0.3` | Stochastic Depth regularization |
-| `LR_SCHEDULER` | `"plateau"` | `"cosine_warm"` | Cosine Annealing Warm Restarts |
-
-### Feature Engineering (keys trong FEATURE_ENGINEERING):
-| Tham số | Mặc định | Tùy chọn | Mô tả |
-|---|---|---|---|
-| `MTF_WINDOWS` | `[]` | `[5,15]`, `[15,60]` | Multi-Timeframe log_return & ATR |
-| `ORDER_FLOW` | `false` | `true` | Delta Volume + Cumulative Delta |
-| `VOL_REGIME` | `false` | `true` | One-hot High/Low volatility regime |
-
-### Macro Features (thêm vào từng symbol trong MACRO_FEATURES):
-- `"spread_ret"` — Log return spread giữa LTC và macro asset
-- `"relative_strength"` — Relative Strength ratio rolling 60 nến
-
-### Siêu tham số cơ bản (A/B Testing truyền thống):
-- `WINDOW_SIZE`: 30, 60, 90
-- `LEARNING_RATE`: 1e-5 đến 5e-5
-- `BATCH_SIZE`: 64, 128, 256
-- `D_MODEL` / `NUM_LAYERS`: 64/2, 128/3, 256/4
-
-**NGUYÊN TẮC BẮT BUỘC: CHỈ THAY ĐỔI TỐI ĐA 2 THAM SỐ mỗi lượt!**
+5. **Chống Early Stopping (Chiến đấu đến cùng - Không bao giờ dừng lại):**
+   - **TUYỆT ĐỐI KHÔNG TẮT TASK SỚM.** Bạn phải duy trì trạng thái huấn luyện và đưa ra ý tưởng mới liên tục không ngừng nghỉ.
+   - Nếu "cạn kiệt ý tưởng", hãy đập đi làm lại hoặc thử những ý tưởng rủi ro cao nhất (thay đổi Take Profit, Stop Loss). Phải chạy cho đến khi mặt trời đứng bóng, cấm tuyệt đối việc bỏ cuộc!
 
 ---
 
-## BƯỚC 3: QUẢN LÝ HÀNG ĐỢI & CHUẨN BỊ DATA
+## BƯỚC 2: Quản lý Hàng Đợi (Queue Management) & Chuẩn bị Data Trước
 
-Kiểm tra `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
-- Tìm runs có `data/tensors/` nhưng CHƯA có `results/training_metrics_v3.json` → **HÀNG ĐỢI**
-- **NẾU ĐÃ CÓ HÀNG ĐỢI → KHÔNG TẠO THÊM RUN MỚI**
-- CHỈ khi hàng đợi rỗng, tạo run mới:
+Mục tiêu: Đảm bảo có sẵn dữ liệu cho lượt chạy tiếp theo, nhưng KHÔNG CHUẨN BỊ THỪA.
+Kiểm tra thư mục `workspaces/CFG_LTC_ASIAN_V3_5/runs/`:
+- Tìm các `<RUN_ID>` đã có thư mục `data/tensors/`, nhưng CHƯA CÓ file `results/training_metrics_v3.json` (tức là chưa chạy xong).
+- Tách khỏi `<RUN_ID>` mà máy cục bộ đang BUSY chạy. Phần còn lại là **HÀNG ĐỢI (Pending Runs)**.
 
-1. Sinh `<RUN_ID>`: `run_YYYYMMDD_HHMMSS_v3_asian_X`
-2. Copy `base_config.json` → `config.json`, áp dụng quyết định Bước 2
-   - **BINANCE-ONLY:** Chỉ dùng `BTCUSDT`, `ETHUSDT`, `BCHUSDT`, `DOGEUSDT`, `XRPUSDT`, `SOLUSDT` (không MT5)
-3. Tạo `tuning_notes.txt`:
-   ```
-   Run: <RUN_ID>
-   Thay đổi: [1-2 tham số đã đổi]
-   Lý do: [phân tích dựa trên Bước 0]
-   Kỳ vọng: [dự đoán kết quả cụ thể]
-   Nguồn cảm hứng: [run tốt nhất hiện tại và config của nó]
-   Baseline: asian_12=0.5087 (Ep4)
-   ```
-4. Chuẩn bị tensor:
-   ```
-   python scripts/upload_v3_dataset.py --no-push --config workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json
-   ```
-5. Commit & push:
-   ```
-   git add . && git commit -m "auto-tuning LTC Asian V2 data ready: <RUN_ID>" && git push
-   ```
+**Xử lý:**
+- **NẾU ĐÃ CÓ HÀNG ĐỢI (DÙ CHỈ 1 RUN), KHÔNG CHUẨN BỊ THÊM RUN MỚI.**
+- CHỈ KHI HÀNG ĐỢI RỖNG (0 runs), MỚI TẠO 1 RUN MỚI:
+  1. Sinh `<RUN_ID>` mới theo format `run_YYYYMMDD_HHMMSS_v3_asian_auto_X`.
+  2. Tạo thư mục `workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/` và copy `base_config.json` thành `config.json`.
+  3. Áp dụng các quyết định tham số từ **Bước 1** vào `config.json` mới. **KHÔNG SỬA `base_config.json` GỐC!**
+  4. Chạy hai lệnh sau để CHUẨN BỊ TENSOR trước:
+     ```
+     python scripts/crawl_crypto_v3.py workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json
+     python scripts/upload_v3_dataset.py --no-push --config workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json
+     ```
 
 ---
 
-## BƯỚC 4: ĐIỀU PHỐI HUẤN LUYỆN
+---
 
-- **Nếu BUSY:** Báo Telegram và gọi `--done`
-- **Nếu IDLE:** Lấy RUN_ID từ hàng đợi và chạy:
+## BƯỚC 3: Giám sát & Điều phối Huấn Luyện Cục Bộ (Local Dispatching & Monitoring)
+
+1. **Giám sát Tiến trình (Process Monitoring):**
+   - Kiểm tra xem có tiến trình `train_v3.py` nào đang chạy không bằng lệnh `Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'"`.
+   - Nếu có tiến trình đang chạy, hãy kiểm tra file log `train_v3.log` trong thư mục `results/` của lượt chạy đó.
+   - **TÌNH HUỐNG GIẢI CỨU:** Nếu tiến trình đã chạy quá 4 giờ hoặc file log không có cập nhật mới trong 20 phút (bị treo/OOM ẩn), hãy:
+     1. Kill tiến trình đó bằng lệnh `Stop-Process -Id <PID> -Force`.
+     2. Đọc 50 dòng cuối của file log để điều tra nguyên nhân (Lỗi CUDA, OOM, hay lỗi logic).
+     3. Báo cáo chi tiết lỗi qua Telegram.
+     4. Xóa thư mục run lỗi đó (nếu nó chưa kịp tạo ra kết quả WR > 60%).
+     5. Sau đó mới tiếp tục các bước dưới đây để hàng đợi được thông suốt.
+
+2. **Điều phối (Dispatching):**
+   - **Nếu máy đang BUSY** (có tiến trình hợp lệ đang chạy và vẫn đang update log):
+  Thông báo Telegram: "Tiến trình Asian đang bận. Đã phân tích ý tưởng mới (cập nhật HF Diary) và đưa cấu hình mới vào hàng đợi chờ." và gọi `--done` để kết thúc.
+- **Nếu máy đang IDLE**:
+  Lấy `<RUN_ID>` từ Hàng Đợi và phát lệnh chạy huấn luyện ẩn:
   ```powershell
-  python src/training_v3/train_v3.py workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID>; python .agent/notify_done.py ltc_asian_training_done
+  Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && python src/training_v3/train_v3.py workspaces/CFG_LTC_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID> && python .agent/notify_done.py ltc_asian_training_done`""
   ```
-  > **⚡ Lưu ý:** `notify_done.py` sẽ gọi extension ngay khi training xong → extension kích hoạt vòng đánh giá tiếp theo **ngay lập tức** (không cần chờ 10 phút!).
+  > Lưu ý: Chạy lệnh ngầm bằng `Start-Process` để giải phóng tiến trình của bạn!
+
+Chỉ kết thúc và gọi `--done` sau khi đã đưa ra phân tích, ghi nhận nhật ký, cập nhật HF, và kích hoạt tiến trình train.
 
 ---
 
-## BƯỚC 5: ĐÁNH GIÁ SAU TRAINING
+> **LƯU Ý QUAN TRỌNG VỀ THÔNG BÁO TELEGRAM:**
+> - Báo cáo tiến trình định kỳ: `python .agent/send_to_tele.py "<Nội_dung>"`
+> - Khi gọi Báo cáo cuối cùng để kết thúc, **BẮT BUỘC** tóm tắt ngắn gọn Giả thuyết & Ý tưởng mới nhất của bạn:
+>   `python .agent/send_to_tele.py "🚀 [Asian Expert] Đã nảy ra ý tưởng mới: <tóm tắt ý tưởng>. Nhật ký đã đẩy lên HF. Đang train <RUN_ID>..." --done`
 
-Sau khi training xong:
-1. So sánh Score mới với `asian_12` (0.5087) và `SCORE_LDN` (0.4743)
-2. **Score TĂNG** → tiếp tục hướng, đẩy thêm tham số cùng chiều
-3. **Score GIẢM** → quay lui, thử hướng ngược lại
-4. Nếu Score mới > Baseline → cập nhật `BEST_CONFIG.md`
-
----
-
-## BƯỚC 6: EARLY STOPPING
-
-Tắt task (`"enabled": false` trong `.agent/tasks.json`, id `ltc_asian_auto_tuning_local`) NẾU:
-1. Composite Score >= 0.55 (mục tiêu phiên Asian LTC)
-2. Đã thử 5+ trục tối ưu V2 khác nhau mà không vượt qua mốc cao nhất sau 20 lượt
-
----
-
-## BƯỚC 7: DỌN DẸP & BÁO CÁO
-
-```
-python scripts/cleanup_host_storage.py
-python .agent/send_to_tele.py "<Báo cáo: Score, GAP với LDN, vũ khí đã dùng, hướng tiếp theo>" --done
-```
-
-__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần: python .agent/send_to_tele.py "<Nội_dung>". Khi hoàn tất: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done)__
+__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối cùng đi kèm cờ --done để báo hệ thống rảnh!)__

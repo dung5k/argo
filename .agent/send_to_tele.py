@@ -25,9 +25,9 @@ def get_telegram_config():
             import re
             with open(settings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            m = re.search(r'"antigravityBridge.teleBotToken"s*:s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge.teleBotToken"\s*:\s*"([^"]+)"', content)
             if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge.whitelistChatIds"s*:s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge.whitelistChatIds"\s*:\s*"([^"]+)"', content)
             if m: chat_id = m.group(1)
     except Exception:
         pass
@@ -68,7 +68,11 @@ def send_via_telegram_api(content, is_done=False):
         return False
     
     text = f"🤖 Antigravity:\n\n{content}"
-    success = False
+    import ssl
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+    
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
         if not chat_id: continue
@@ -77,7 +81,7 @@ def send_via_telegram_api(content, is_done=False):
         headers = {'Content-Type': 'application/json'}
         req = urllib.request.Request(url, data=data, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            with urllib.request.urlopen(req, timeout=20, context=ssl_ctx) as response:
                 success = True
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
@@ -89,8 +93,15 @@ def send_via_telegram_api(content, is_done=False):
 
 def send_to_telegram(content, is_done=False):
     if not content: return
-    if send_via_bridge(content, is_done): return
-    send_via_telegram_api(content, is_done)
+    print(f"--- Đang gửi Telegram: {content[:50]}...")
+    if send_via_bridge(content, is_done): 
+        print("✅ Gửi qua Bridge thành công.")
+        return
+    print("⚠️ Bridge thất bại hoặc không khả dụng. Chuyển sang gửi trực tiếp qua API...")
+    if send_via_telegram_api(content, is_done):
+        print("✅ Gửi trực tiếp qua API thành công.")
+    else:
+        print("❌ Cả Bridge và API đều thất bại.")
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
