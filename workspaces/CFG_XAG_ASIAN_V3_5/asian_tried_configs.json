@@ -206,6 +206,6 @@
         "ZERO_NOISE": false,
         "D_MODEL": 32,
         "WINDOW_SIZE": 15,
-        "MACRO": "XAU_USTEC_DXY"
+        "MACRO": "XAU_DXY_JP225_HK50"
     }
 ]

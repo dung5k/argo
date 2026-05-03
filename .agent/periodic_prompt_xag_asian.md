@@ -51,12 +51,10 @@ Lấy RUN_ID từ hàng đợi và chạy:
 python src/training_v3/train_v3.py workspaces/CFG_XAG_ASIAN_V3_5/runs/<RUN_ID>/config.json --session asian --scratch --run-id <RUN_ID>
 ```
 
-## BƯỚC 4: Tự động điều chỉnh lịch trình CHẠY LIÊN TỤC (Fix Lỗi đứt gãy)
-- Khắc phục lỗi trigger đứt gãy: Hệ thống giờ đây sử dụng chuỗi thời gian (time-chain) thay vì sự kiện. 
-- Kiểm tra giờ hệ thống hiện tại. Nếu đang là trước 12:00 PM (12 giờ trưa):
-  - HÃY dùng Python tự động sửa `.agent/tasks.json`, tìm task `xag_asian_auto_tuning` và đặt `"nextRunTime": 0` (để hệ thống gọi lại bạn NGAY LẬP TỨC).
-- Nếu thời gian hiện tại ĐÃ QUA 12:00 PM (12 giờ trưa):
-  - Hãy sửa `.agent/tasks.json`, tìm task `xag_asian_auto_tuning` và đặt `"enabled": false` để dừng vòng lặp đào tạo.
+## BƯỚC 4: Tự động điều chỉnh lịch trình CHẠY LIÊN TỤC
+- Để duy trì vòng lặp đào tạo không ngừng nghỉ:
+  - HÃY dùng Python tự động sửa `.agent/tasks.json`, tìm task `xag_asian_auto_tuning` và đặt `"nextRunTime": 0` (để hệ thống gọi lại bạn NGAY LẬP TỨC sau khi hoàn thành lượt chạy này).
+  - TUYỆT ĐỐI KHÔNG tự động chuyển `"enabled": false` trừ khi có lệnh trực tiếp từ người dùng.
 
 ## BƯỚC 5: Nhả trạng thái rảnh
 Sau khi mọi thứ chạy xong (dù thành công hay thất bại), Gửi Telegram và báo xong (BẮT BUỘC):
