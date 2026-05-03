@@ -204,8 +204,8 @@
         "TP": 20,
         "SL": 25,
         "ZERO_NOISE": false,
-        "D_MODEL": 64,
-        "WINDOW_SIZE": 15,
-        "MACRO": "XAU_DXY_USTEC_JP225"
+        "D_MODEL": 32,
+        "WINDOW_SIZE": 10,
+        "MACRO": "XAU_DXY_USTEC"
     }
 ]
