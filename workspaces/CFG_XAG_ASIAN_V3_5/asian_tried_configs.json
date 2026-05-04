@@ -205,7 +205,7 @@
         "SL": 25,
         "ZERO_NOISE": false,
         "D_MODEL": 32,
-        "WINDOW_SIZE": 10,
+        "WINDOW_SIZE": 30,
         "MACRO": "XAU_DXY_USTEC"
     }
 ]
