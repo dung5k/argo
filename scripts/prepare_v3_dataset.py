@@ -135,7 +135,6 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
     except Exception:
         start_min, end_min = 0, 1439
 
-    # Tính ngưỡng ngày split cho từng tháng (ngày đầu của 1/3 cuối)
     if monthly_split:
         import calendar
         month_val_start = {}  # (year, month) -> day threshold
@@ -158,6 +157,7 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
     n_skip_session = 0
     n_skip_clean   = 0
     n_skip_nan     = 0
+    n_skip_embargo = 0
 
     for i in tqdm(range(0, max_idx, step_size), desc="Ráp Tensor + Lọc"):
         target_idx  = i + window_size - 1
@@ -189,18 +189,40 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
         X_list.append(window)
         Y_list.append(target_label)
 
-        # Xác định split: 0=train, 1=val
+        # Xác định split: 0=train, 1=val, -1=drop (embargo)
         if monthly_split:
             ym = (target_time.year, target_time.month)
-            is_val = (target_time.day >= month_val_start.get(ym, 999))
-            split_list.append(1 if is_val else 0)
+            is_val_target = (target_time.day >= month_val_start.get(ym, 999))
+            
+            # Tính thời gian xa nhất mà nhãn cần nhìn tới (dựa vào window size lúc lấy nhãn hoặc giả định MAX_HOLD_BARS)
+            # Vì build_tensor không nhận MAX_HOLD_BARS, ta giả định một số lượng đủ lớn (ví dụ 30 nến) để cẩn thận,
+            # Hoặc tốt nhất truyền max_hold_bars vào build_tensor.
+            # Tạm thời ta lấy 15 nến theo chuẩn.
+            max_hold_idx = min(target_idx + 15, len(timestamps) - 1)
+            max_hold_time = timestamps[max_hold_idx]
+            ym_max = (max_hold_time.year, max_hold_time.month)
+            is_val_max = (max_hold_time.day >= month_val_start.get(ym_max, 999))
+            
+            if not is_val_target and is_val_max:
+                split_class = -1 # Embargo (chạm ranh giới tương lai)
+            elif is_val_target:
+                split_class = 1  # Val
+            else:
+                split_class = 0  # Train
         else:
-            split_list.append(0)  # tất cả về train, train_v3 tự chia 80/20
+            split_class = 0  # tất cả về train, train_v3 tự chia 80/20
+            
+        if split_class == -1:
+            n_skip_embargo += 1
+            continue
+            
+        split_list.append(split_class)
 
     print(f"  Bỏ qua (ngoài session): {n_skip_session:,}", flush=True)
     print(f"  Bỏ qua (clean mask):    {n_skip_clean:,}", flush=True)
-    print(f"  Bỏ qua (NaN):          {n_skip_nan:,}", flush=True)
-    print(f"  Giữ lại:               {len(X_list):,}", flush=True)
+    print(f"  Bỏ qua (NaN):           {n_skip_nan:,}", flush=True)
+    print(f"  Bỏ qua (Embargo):       {n_skip_embargo:,}", flush=True)
+    print(f"  Giữ lại:                {len(X_list):,}", flush=True)
 
     X = np.array(X_list, dtype=np.float32)
     Y = np.array(Y_list, dtype=np.int64)
@@ -416,9 +438,29 @@ def main():
 
     print(f"  ✅ Features: {df_features.shape} ({df_features.columns.tolist()[:5]}...)", flush=True)
 
-    # ── 5. SCALE ───────────────────────────────────────────────────────────
-    print(f"\n[3] Robust Scaler...", flush=True)
-    df_scaled = fe.fit_transform_scaler(df_features)
+    # ── 4.5 LẤY MASK TẬP TRAIN ĐỂ FIT SCALER CHUẨN XÁC ─────────────────────
+    use_monthly_split = args.monthly_split
+    if use_monthly_split:
+        import calendar
+        month_val_start = {}
+        train_mask_scaler = np.zeros(len(df_features), dtype=bool)
+        for i, ts in enumerate(df_features.index):
+            ym = (ts.year, ts.month)
+            if ym not in month_val_start:
+                days_in_month = calendar.monthrange(ts.year, ts.month)[1]
+                month_val_start[ym] = int(days_in_month * 2 / 3) + 1
+            if ts.day < month_val_start[ym]:
+                train_mask_scaler[i] = True
+    else:
+        # Nếu không dùng monthly split, tạm fit trên 80% dữ liệu đầu tiên
+        train_mask_scaler = np.zeros(len(df_features), dtype=bool)
+        train_idx = int(len(df_features) * 0.8)
+        train_mask_scaler[:train_idx] = True
+
+    # ── 5. SCALE (FIT TRÊN TRAIN, TRANSFORM TẤT CẢ) ─────────────────────────
+    print(f"\n[3] Robust Scaler (Fit trên {train_mask_scaler.sum():,} nến Train)...", flush=True)
+    fe.fit_transform_scaler(df_features[train_mask_scaler]) # Chỉ FIT trên tập Train
+    df_scaled = fe.transform_scaler(df_features)            # TRANSFORM trên toàn bộ
 
     # Đồng bộ index
     idx_common = df_scaled.index.intersection(targets.index).intersection(clean_mask.index)
@@ -428,7 +470,6 @@ def main():
     clean_mask = clean_mask.loc[idx_common]
 
     # ── 6. BUILD TENSOR ─────────────────────────────────────────────────────
-    use_monthly_split = args.monthly_split
     split_label = "Monthly 2/3-1/3" if use_monthly_split else "Chronological 80/20"
     print(f"\n[4] Ráp Tensor (Window={fe_cfg['WINDOW_SIZE']}, Session={session_start}-{session_end}, Split={split_label})...",
           flush=True)
