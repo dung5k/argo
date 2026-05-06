@@ -1,4 +1,4 @@
-﻿{
+{
   "tasks": [
     {
       "id": "xag_london_auto_tuning_local",
@@ -45,6 +45,20 @@
       "triggerOn": "xag_ny_v3_training_done",
       "nextRunTime": 1777680061363,
       "intervalMinutes": 20
+    },
+    {
+      "id": "ltc_asian_v5_auto_tuning",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_ltc_asian_v5_local.md",
+      "triggerOn": "ltc_asian_v5_training_done",
+      "intervalMinutes": 60
+    },
+    {
+      "id": "xag_asian_v5_auto_tuning",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_xag_asian_v5_local.md",
+      "triggerOn": "xag_asian_v5_training_done",
+      "intervalMinutes": 60
     }
   ]
 }
