@@ -21,12 +21,12 @@ class BinanceTradeManagerV3:
         self.last_close_time = 0
         
         load_dotenv()
-        self.api_key = os.getenv("BINANCE_DEMO_API_KEY")
-        self.secret_key = os.getenv("BINANCE_DEMO_SECRET_KEY")
+        self.api_key = os.getenv("BINANCE_API_KEY")
+        self.secret_key = os.getenv("BINANCE_SECRET_KEY")
 
     def init_client(self) -> bool:
         if not self.api_key or not self.secret_key:
-            self.log_callback("[BinanceTradeManagerV3] ❌ Thiếu BINANCE_DEMO_API_KEY hoặc SECRET_KEY trong .env")
+            self.log_callback("[BinanceTradeManagerV3] ❌ Thiếu BINANCE_API_KEY hoặc SECRET_KEY trong .env")
             return False
             
         try:
@@ -40,23 +40,12 @@ class BinanceTradeManagerV3:
                 }
             })
             
-            # Kích hoạt chế độ Demo bằng cách đè URL API
-            if os.getenv("BINANCE_FUTURES_DEMO", "True").lower() == "true":
-                self.exchange.set_sandbox_mode(True) # Set first to populate the structure
-                
-                # Iterate and replace domain
-                for k, v in self.exchange.urls['api'].items():
-                    if isinstance(v, str) and 'testnet.binancefuture.com' in v:
-                        self.exchange.urls['api'][k] = v.replace('testnet.binancefuture.com', 'demo-fapi.binance.com')
-                    elif isinstance(v, str) and 'testnet.binance.vision' in v:
-                        self.exchange.urls['api'][k] = v.replace('testnet.binance.vision', 'demo-fapi.binance.com')
-                        
             self.exchange.load_markets()
             try:
                 self.exchange.load_time_difference()
             except Exception as e:
                 self.log_callback(f"[BinanceTradeManagerV3] ⚠️ Không thể đồng bộ time offset: {e}")
-            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đã kết nối Binance Futures (Demo).")
+            self.log_callback("[BinanceTradeManagerV3] ✅ Module CCXT đã kết nối Binance Futures.")
             
             # Setup đòn bẩy
             exec_cfg = self.config.get("LIVE_BOT", {}).get("BINANCE_EXECUTION", {})

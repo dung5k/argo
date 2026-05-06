@@ -42,7 +42,7 @@ class V3InferenceEngine:
 
             from src.training_v3.model_v3 import AAMT_Model
 
-            state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
+            state_dict = torch.load(model_path, map_location=self.device)
             
             # Khắc phục triệt để lỗi Toán Học đầu vào: tự động suy luận input_dim từ bộ lưu trọng số
             try:

@@ -54,8 +54,21 @@ class BinanceAdapter(BaseDataAdapter):
         if fetch_limit < 100: fetch_limit = 100 # Tối thiểu 100 nến để tính Indicators
             
         # Chuẩn hoá mã "BTCUSDm" (của config) thành format của Binance "BTC/USDT"
-        base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
-        binance_sym = base_sym + "/USDT"
+        # Cải tiến: Hỗ trợ các cặp chéo như LTC/BTC
+        if symbol.endswith("BTC") and symbol != "BTC":
+            base_sym = symbol.replace("BTC", "").upper()
+            binance_sym = base_sym + "/BTC"
+        elif symbol.endswith("ETH") and symbol != "ETH":
+            base_sym = symbol.replace("ETH", "").upper()
+            binance_sym = base_sym + "/ETH"
+        else:
+            base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
+            binance_sym = base_sym + "/USDT"
+        
+        # Đặc biệt cho BTCUSDT nếu base_sym rỗng
+        if not base_sym and "BTC" in symbol: base_sym = "BTC"
+        if binance_sym == "/USDT": binance_sym = "BTC/USDT"
+        if binance_sym == "/BTC": binance_sym = "LTC/BTC" # Fallback an toàn cho LTCBTC nếu cần
         
         # Xử lý timeframe (MT5 gọi M1, CCXT gọi 1m)
         if timeframe == 'M1': 
@@ -110,8 +123,12 @@ class BinanceAdapter(BaseDataAdapter):
         if not self.exchange:
             if not self.connect(): return pd.DataFrame()
             
-        base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
-        binance_sym = base_sym + "/USDT"
+        if symbol.endswith("BTC") and symbol != "BTC":
+            base_sym = symbol.replace("BTC", "").upper()
+            binance_sym = base_sym + "/BTC"
+        else:
+            base_sym = symbol.replace("USDm", "").replace("USDT", "").replace("USD", "").upper()
+            binance_sym = base_sym + "/USDT"
         
         # Format time
         from dateutil import parser

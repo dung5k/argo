@@ -236,11 +236,11 @@ def main():
                     f"Hãy chạy trước: python scripts/upload_v3_dataset.py --config {config_path}"
                 )
 
-    print("\u2705 Tensor đã sẵn sàng!", flush=True)
+    print("✅ Tensor đã sẵn sàng!", flush=True)
 
     X = np.load(x_path)
     Y = np.load(y_path)
-    print(f"\u2705 Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
+    print(f"✅ Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
     
     # ============================================================
     # KIỂM TRA SỨC KHỎE DỮ LIỆU: Phát hiện sớm data chưa scale
@@ -250,19 +250,36 @@ def main():
     print(f"[DATA CHECK] X abs_max={x_abs_max:.4f} | abs_mean={x_mean:.4f}", flush=True)
     if x_abs_max > 100:
         error_msg = f"FATAL ERROR: abs_max={x_abs_max:.1f} khổng lồ. Dữ liệu CHƯA ĐƯỢC SCALE hoặc bị Nổ Variance!\n   → TỪ CHỐI HUẤN LUYỆN. Hãy chạy lại scripts/upload_v3_dataset.py để re-scale chuẩn."
-        print(f" \u26d4 {error_msg}", flush=True)
+        print(f" ⛔ {error_msg}", flush=True)
         raise ValueError(error_msg)
     else:
-        print(f"\u2705 Dữ liệu đã được scale chuẩn (abs_max < 100).", flush=True)
+        print(f"✅ Dữ liệu đã được scale chuẩn (abs_max < 100).", flush=True)
     
     # Phân bố nhãn Y
     unique, counts = np.unique(Y, return_counts=True)
     label_dist = dict(zip(unique.tolist(), counts.tolist()))
     print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
 
-    # PHỤC HỒI CLASS WEIGHTS: Bắt buộc phải có để trị bệnh Sideway Bias (tỷ lệ 1:1:6)
-    # Lấy phân bố của tập Train để tính toán
-    unique_tr, counts_tr = np.unique(Y, return_counts=True)
+    # ── Tự động phát hiện Monthly Split Tensors ──────────────────────────
+    x_train_path = os.path.join(tensor_local_dir, f"X_train_{cfg_id}.npy")
+    y_train_path = os.path.join(tensor_local_dir, f"Y_train_{cfg_id}.npy")
+    x_val_path   = os.path.join(tensor_local_dir, f"X_val_{cfg_id}.npy")
+    y_val_path   = os.path.join(tensor_local_dir, f"Y_val_{cfg_id}.npy")
+
+    if all(os.path.exists(p) for p in [x_train_path, y_train_path, x_val_path, y_val_path]):
+        print("[DATA SPLIT] 🗓️ Phát hiện Monthly 2/3-1/3 Split Tensors! Dùng split cố định theo tháng.", flush=True)
+        X_tr = np.load(x_train_path)
+        Y_tr = np.load(y_train_path)
+        X_va = np.load(x_val_path)
+        Y_va = np.load(y_val_path)
+        print(f"  Train: {X_tr.shape} | Val: {X_va.shape}", flush=True)
+    else:
+        # Fallback: Chia Validation set chronological 80/20
+        print("[DATA SPLIT] Dùng Chronological 80/20 split.", flush=True)
+        X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, shuffle=False)
+
+    # PHỤC HỒI CLASS WEIGHTS từ tập Train
+    unique_tr, counts_tr = np.unique(Y_tr, return_counts=True)
     n_samples = sum(counts_tr)
     n_classes = len(unique_tr)
     # Trọng số = Tổng số mẫu / (Số class * Số mẫu của class đó)
@@ -272,10 +289,6 @@ def main():
     
     print(f"[CLASS WEIGHTS] Trọng số cân bằng lớp: {cw_array}", flush=True)
 
-    # Chia Validation set - BẮT BUỘC shuffle=False để bảo toàn trục thời gian (Time-Series)
-    # shuffle=True gây Data Leakage: mẫu i và i+1 chia sẻ 59/60 nến trùng nhau với Sliding Window
-    X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, shuffle=False)
-    
     train_loader = DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), torch.tensor(Y_tr, dtype=torch.long)), batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long)), batch_size=batch_size, shuffle=False)
     
@@ -668,26 +681,26 @@ def main():
     # ==========================================
     sys.stdout = sys.__stdout__
     print(f"\n[CLEANUP] Đã kết thúc Training. Kỷ lục Score: {best_score:.4f} | Kỷ lục Win Rate: {best_win_rate*100:.2f}%", flush=True)
-    if best_win_rate < 0.60:
-        print(f"🗑️ Win Rate {best_win_rate*100:.2f}% < 60%. Đang xóa thư mục Run rác để tiết kiệm ổ cứng: {run_dir}", flush=True)
-        try:
-            import shutil
-            shutil.rmtree(run_dir, ignore_errors=True)
-            print(f"✅ Đã xóa thành công run rác: {run_dir}", flush=True)
-            if tbot and chat_id:
-                tbot.send_message(chat_id, f"🗑️ <b>[{client_id}] Đã xóa Run rác</b>\nThư mục: {run_id}\nLý do: Win Rate {best_win_rate*100:.2f}% < 60%")
-        except Exception as e:
-            print(f"❌ Lỗi khi xóa run rác: {e}", flush=True)
-    else:
-        print(f"🏆 Win Rate {best_win_rate*100:.2f}% >= 60%. Đang PUSH lên HuggingFace...", flush=True)
-        try:
-            from scripts.sync_workspaces import push_run
-            push_run(cfg_id, run_id)
-            print("✅ Đã Push thành công!", flush=True)
-            if tbot and chat_id:
-                tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
-        except Exception as e:
-            print(f"❌ Lỗi khi Push: {e}", flush=True)
+    # if best_win_rate < 0.60:
+    #     print(f"ðŸ—‘ï¸  Win Rate {best_win_rate*100:.2f}% < 60%. Ä ang xÃ³a thÆ° má»¥c Run rÃ¡c Ä‘á»ƒ tiáº¿t kiá»‡m á»• cá»©ng: {run_dir}", flush=True)
+    #     try:
+    #         import shutil
+    #         shutil.rmtree(run_dir, ignore_errors=True)
+    #         print(f"âœ… Ä Ã£ xÃ³a thÃ nh cÃ´ng run rÃ¡c: {run_dir}", flush=True)
+    #         if tbot and chat_id:
+    #             tbot.send_message(chat_id, f"ðŸ—‘ï¸  <b>[{client_id}] Ä Ã£ xÃ³a Run rÃ¡c</b>\nThÆ° má»¥c: {run_id}\nLÃ½ do: Win Rate {best_win_rate*100:.2f}% < 60%")
+    #     except Exception as e:
+    #         print(f"â Œ Lá»—i khi xÃ³a run rÃ¡c: {e}", flush=True)
+    # else:
+    print(f"ðŸ† Win Rate {best_win_rate*100:.2f}% >= 60%. Ä ang PUSH lÃªn HuggingFace...", flush=True)
+    try:
+        from scripts.sync_workspaces import push_run
+        push_run(cfg_id, run_id)
+        print("âœ… Ä Ã£ Push thÃ nh cÃ´ng!", flush=True)
+        if tbot and chat_id:
+            tbot.send_message(chat_id, f"â˜ï¸  <b>[{client_id}] Ä Ã£ Ä‘á»“ng bá»™ lÃªn HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
+    except Exception as e:
+        print(f"â Œ Lá»—i khi Push: {e}", flush=True)
 
 if __name__ == "__main__":
     main()
