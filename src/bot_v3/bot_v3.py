@@ -92,7 +92,7 @@ def custom_print(*args, **kwargs):
         return
 
     # 1. Force log cho các sự kiện CỰC QUAN TRỌNG (Lỗi, Mở/Đóng lệnh)
-    force_print_kws = ["❌", "⚠️", "✅", "FATAL", "Exception", "Lỗi", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "Bắt đầu Pipeline", "Kêt quả | Hành động", "Binance", "TradeManager", "🟢", "🔴"]
+    force_print_kws = ["❌", "⚠️", "✅", "FATAL", "Exception", "Lỗi", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "Bắt đầu Pipeline", "Kêt quả | Hành động", "Binance", "TradeManager", "🟢", "🔴", "📂"]
     if any(k in msg for k in force_print_kws):
         logging.info(msg)
         return
@@ -201,13 +201,16 @@ def tg_notify(msg):
     pass
 
 config_file = os.path.join(safe_script_dir, "workspaces", "CFG_XAU_NY_V3_5", "base_config.json")
+schedule_file = None
 if len(sys.argv) > 1:
     args_json = [arg for arg in sys.argv if arg.endswith('.json')]
     if len(args_json) >= 1:
         config_file = args_json[0]
+    if len(args_json) >= 2:
+        schedule_file = args_json[1]
 
 # Khởi tạo Config Loader
-config_loader = V3ConfigLoader(config_file, log_callback=print)
+config_loader = V3ConfigLoader(config_file, schedule_config_path=schedule_file, log_callback=print)
 CONFIG = config_loader.load_base_config()
 
 TARGET_SYMBOL = CONFIG.get("TARGET_SYMBOL", "XAUUSD")
@@ -423,9 +426,9 @@ def bot_background_loop():
                 # Đồng bộ feature list với model weights
                 dp_feats = i_feats  # Mặc định dùng feature list từ scaler
                 if actual_input_dim != n_feat:
-                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Đồng bộ...")
-                    dp_feats = list(range(actual_input_dim))
-                processor = V3DataProcessor(s_path, dp_feats, window_size, config=CONFIG, log_callback=print)
+                    print(f"[BOT V3] ⚠️ Model input_dim={actual_input_dim} khác scaler n_feat={n_feat}. Bỏ qua override do fe_v3 tự lo time embeddings...")
+
+                processor = V3DataProcessor(s_path, dp_feats, window_size, config=CONFIG, log_callback=print, model_input_dim=actual_input_dim)
                 # MT5 manager chỉ cần feature names (strings) để cào data, dùng i_feats gốc
                 mt5_manager.force_reload_dynamic_features(i_feats)
                 
@@ -457,6 +460,10 @@ def bot_background_loop():
         mt5_manager.scan_terminals_and_map()
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        if not os.path.exists(trading_path):
+            backup_path = trading_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
+            if os.path.exists(backup_path): trading_path = backup_path
+            
         if mt5_manager.current_connected_path != trading_path:
             mt5.shutdown()
             mt5.initialize(path=trading_path)
@@ -583,6 +590,10 @@ def bot_background_loop():
         tg_notify(msg_pred)
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
+        if not os.path.exists(trading_path):
+            backup_path = trading_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
+            if os.path.exists(backup_path): trading_path = backup_path
+
         if mt5_manager.current_connected_path != trading_path:
             mt5.shutdown()
             mt5.initialize(path=trading_path)

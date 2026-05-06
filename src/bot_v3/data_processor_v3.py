@@ -13,17 +13,18 @@ from src.core_v3.feature_engineering_v3 import FeatureEngineeringV3
 class V3DataProcessor:
     """Xử lý dữ liệu đầu vào cho mô hình AI V3: Feature Engineering V3 → Scale → Tensor.
     """
-    def __init__(self, scaler_path: str, inference_feats: list, window_size: int = 60, config: dict = None, log_callback=None):
+    def __init__(self, scaler_path: str, inference_feats: list, window_size: int = 60, config: dict = None, log_callback=None, model_input_dim: int = None):
         self.scaler_path = scaler_path
         self.inference_feats = inference_feats
         self.window_size = window_size
         self.config = config or {}
         self.log_callback = log_callback or print
+        self.model_input_dim = model_input_dim
         self.fe = None
         self.saved_column_order = None  # Thứ tự cột lúc Training (nếu có)
         self.log_callback(
             f"[DataProcessorV3] Khởi tạo | scaler={os.path.basename(scaler_path)} "
-            f"| window={window_size} | n_feats={len(inference_feats)}"
+            f"| window={window_size} | n_feats={len(inference_feats)} | model_input_dim={model_input_dim}"
         )
 
     def _init_fe(self) -> bool:
@@ -97,6 +98,17 @@ class V3DataProcessor:
             self.log_callback(f"[DataProcessorV3] ❌ {msg}")
             return None, msg
 
+        # [VÁ LỖI #0] Fix động các tính năng bị thiếu TRƯỚC khi đưa vào Scaler để tránh lỗi scikit-learn
+        if "volume" not in fe_df.columns:
+            vol_cols = [col for col in fe_df.columns if 'volume' in col.lower()]
+            if vol_cols:
+                fe_df["volume"] = fe_df[vol_cols[0]]
+            else:
+                fe_df["volume"] = 0.0
+                
+        if "spread" not in fe_df.columns:
+            fe_df["spread"] = 0.0
+
         # 2. Scale — transform_scaler tự xử lý: scale features nó biết, passthrough phần còn lại
         try:
             n_model = len(self.inference_feats)
@@ -124,6 +136,17 @@ class V3DataProcessor:
         elif self.saved_column_order:
             available = set(scaled_df.columns)
             missing = [c for c in self.saved_column_order if c not in available]
+            
+            if missing:
+                for c in missing:
+                    if c == "volume" and f"{self.config.get('TARGET_PREFIX', '')}_volume" in scaled_df.columns:
+                        scaled_df["volume"] = scaled_df[f"{self.config.get('TARGET_PREFIX', '')}_volume"]
+                        available.add("volume")
+                    elif c == "spread":
+                        scaled_df["spread"] = 0.0
+                        available.add("spread")
+            
+            missing = [c for c in self.saved_column_order if c not in available]
             if missing:
                 # [VÁ LỖI #1] Fail-fast ngay lập tức - không tự ý cắt gọt tensor
                 msg = f"Thiếu {len(missing)} cột so với Training: {missing[:5]}... TỪ CHỐI SUY LUẬN!"
@@ -134,8 +157,13 @@ class V3DataProcessor:
             # Fallback: format scaler cũ
             final_cols = list(scaled_df.columns)
             
+            # Nếu có model_input_dim và scaler cũ không lưu column_order, tự động cắt các tính năng thừa ở đuôi (thường là tính năng mới thêm vào fe_v3 sau này)
+            if self.model_input_dim and len(final_cols) > self.model_input_dim:
+                self.log_callback(f"[DataProcessorV3] ⚠️ Tự động tỉa cột từ {len(final_cols)} xuống {self.model_input_dim} cho khớp model weights cũ.")
+                final_cols = final_cols[:self.model_input_dim]
+
             # [HACK] Khả năng tương thích ngược cho LTC Asian (run_20260422_143008_v3) expect 36 features
-            if len(self.inference_feats) == 25 and len(final_cols) == 45:
+            elif len(self.inference_feats) == 25 and len(final_cols) == 45:
                 static_context_feats = ['hour_sin', 'hour_cos', 'minute_sin', 'minute_cos', 'is_asian', 'is_london', 'is_ny', 'rsi_14_scaled', 'rsi_5_scaled', 'body_pct', 'adx_normalized']
                 allowed_features = set(self.inference_feats).union(set(static_context_feats))
                 final_cols = [c for c in scaled_df.columns if c in allowed_features]

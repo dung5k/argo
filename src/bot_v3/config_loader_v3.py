@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 class V3ConfigLoader:
     """Quản lý nạp và merge Hot-reload cấu hình cho V3 Master Bot."""
     
-    def __init__(self, main_config_path: str, log_callback=print):
+    def __init__(self, main_config_path: str, schedule_config_path: str = None, log_callback=print):
         self.main_config_path = main_config_path
+        self.schedule_config_path = schedule_config_path
         self.log_callback = log_callback
         self.last_logged_session = None
         
@@ -25,7 +26,18 @@ class V3ConfigLoader:
             if not base_config:
                 return None, None, None
                 
-            sched = base_config.get("SCHEDULE", {})
+            sched = {}
+            if self.schedule_config_path and os.path.exists(self.schedule_config_path):
+                try:
+                    with open(self.schedule_config_path, "r", encoding="utf-8-sig") as f:
+                        sched_data = json.load(f)
+                        sched = sched_data.get("schedule", sched_data.get("SCHEDULE", {}))
+                except Exception as e:
+                    self.log_callback(f"[V3ConfigLoader] Lỗi đọc schedule file: {e}")
+            
+            if not sched:
+                sched = base_config.get("SCHEDULE", {})
+                
             global_mt5_path = base_config.get("MT5_PATH")
             
             now_utc = datetime.now(timezone.utc)

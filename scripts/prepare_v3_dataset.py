@@ -115,11 +115,17 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
 def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
                  clean_mask: pd.Series,
                  session_start: str, session_end: str,
-                 window_size: int = 20, step_size: int = 1):
+                 window_size: int = 20, step_size: int = 1,
+                 monthly_split: bool = False):
     """
     Tạo tensor X/Y với 2 lớp lọc:
     1. Session filter: chỉ lấy window mà nến mục tiêu trong session
     2. Clean mask: chỉ lấy window có nhãn "Chân Sóng Vĩ Đại" (Giải pháp C)
+
+    Nếu monthly_split=True, áp dụng chiến thuật Monthly 2/3-1/3:
+      - 2/3 đầu của mỗi tháng → Train
+      - 1/3 cuối của mỗi tháng → Validation
+    Trả về thêm split_mask (0=train, 1=val).
     """
     try:
         sh, sm = map(int, session_start.split(":"))
@@ -129,12 +135,24 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
     except Exception:
         start_min, end_min = 0, 1439
 
+    # Tính ngưỡng ngày split cho từng tháng (ngày đầu của 1/3 cuối)
+    if monthly_split:
+        import calendar
+        month_val_start = {}  # (year, month) -> day threshold
+        for ts in df_features.index:
+            ym = (ts.year, ts.month)
+            if ym not in month_val_start:
+                days_in_month = calendar.monthrange(ts.year, ts.month)[1]
+                # 2/3 đầu = train, 1/3 cuối = val
+                val_start_day = int(days_in_month * 2 / 3) + 1
+                month_val_start[ym] = val_start_day
+
     feature_vals = df_features.values
     label_vals   = labels_series.values
-    clean_vals   = clean_mask.values         # boolean array aligned to df_features
+    clean_vals   = clean_mask.values
     timestamps   = df_features.index
 
-    X_list, Y_list = [], []
+    X_list, Y_list, split_list = [], [], []
     max_idx = len(feature_vals) - window_size
 
     n_skip_session = 0
@@ -171,12 +189,29 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
         X_list.append(window)
         Y_list.append(target_label)
 
+        # Xác định split: 0=train, 1=val
+        if monthly_split:
+            ym = (target_time.year, target_time.month)
+            is_val = (target_time.day >= month_val_start.get(ym, 999))
+            split_list.append(1 if is_val else 0)
+        else:
+            split_list.append(0)  # tất cả về train, train_v3 tự chia 80/20
+
     print(f"  Bỏ qua (ngoài session): {n_skip_session:,}", flush=True)
     print(f"  Bỏ qua (clean mask):    {n_skip_clean:,}", flush=True)
     print(f"  Bỏ qua (NaN):          {n_skip_nan:,}", flush=True)
     print(f"  Giữ lại:               {len(X_list):,}", flush=True)
 
-    return np.array(X_list, dtype=np.float32), np.array(Y_list, dtype=np.int64)
+    X = np.array(X_list, dtype=np.float32)
+    Y = np.array(Y_list, dtype=np.int64)
+    S = np.array(split_list, dtype=np.int8)  # split mask
+
+    if monthly_split:
+        n_train = (S == 0).sum()
+        n_val   = (S == 1).sum()
+        print(f"  [Monthly Split] Train: {n_train:,} | Val: {n_val:,} ({n_val/(n_train+n_val)*100:.1f}% val)", flush=True)
+
+    return X, Y, S
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -264,6 +299,8 @@ def main():
     parser.add_argument("--fast-hit-bars", type=int, default=3,
                         help="[Giải pháp C] Số nến tối đa để TP được coi là 'Chân Sóng Vĩ Đại'.")
     parser.add_argument("--no-upload", action="store_true", help="Bỏ qua upload HF (chỉ build local)")
+    parser.add_argument("--monthly-split", action="store_true",
+                        help="Chia Train/Val theo tháng: 2/3 đầu tháng=Train, 1/3 cuối=Val.")
     args = parser.parse_args()
 
     # ── 1. ĐỌC CONFIG ──────────────────────────────────────────────────────
@@ -391,12 +428,15 @@ def main():
     clean_mask = clean_mask.loc[idx_common]
 
     # ── 6. BUILD TENSOR ─────────────────────────────────────────────────────
-    print(f"\n[4] Ráp Tensor (Window={fe_cfg['WINDOW_SIZE']}, Session={session_start}-{session_end})...",
+    use_monthly_split = args.monthly_split
+    split_label = "Monthly 2/3-1/3" if use_monthly_split else "Chronological 80/20"
+    print(f"\n[4] Ráp Tensor (Window={fe_cfg['WINDOW_SIZE']}, Session={session_start}-{session_end}, Split={split_label})...",
           flush=True)
-    X, Y = build_tensor(
+    X, Y, S = build_tensor(
         df_scaled, targets, clean_mask,
         session_start=session_start, session_end=session_end,
-        window_size=fe_cfg["WINDOW_SIZE"], step_size=fe_cfg.get("STEP_SIZE", 1)
+        window_size=fe_cfg["WINDOW_SIZE"], step_size=fe_cfg.get("STEP_SIZE", 1),
+        monthly_split=use_monthly_split
     )
     print(f"\n👉 KẾT QUẢ: X={X.shape}, Y={Y.shape}", flush=True)
 
@@ -408,13 +448,32 @@ def main():
     y_path      = os.path.join(out_dir, f"Y_tensor_{cfg_id}.npy")
     scaler_path = os.path.join(out_dir, f"scaler_{cfg_id}.pkl")
 
-    np.save(x_path, X)
-    np.save(y_path, Y)
+    if use_monthly_split:
+        # Lưu riêng Train và Val theo monthly split
+        train_mask = (S == 0)
+        val_mask   = (S == 1)
+        x_tr_path = os.path.join(out_dir, f"X_train_{cfg_id}.npy")
+        y_tr_path = os.path.join(out_dir, f"Y_train_{cfg_id}.npy")
+        x_va_path = os.path.join(out_dir, f"X_val_{cfg_id}.npy")
+        y_va_path = os.path.join(out_dir, f"Y_val_{cfg_id}.npy")
+        np.save(x_tr_path, X[train_mask])
+        np.save(y_tr_path, Y[train_mask])
+        np.save(x_va_path, X[val_mask])
+        np.save(y_va_path, Y[val_mask])
+        print(f"  💾 Train: X_train={X[train_mask].shape}, Y_train={Y[train_mask].shape}", flush=True)
+        print(f"  💾 Val:   X_val={X[val_mask].shape}, Y_val={Y[val_mask].shape}", flush=True)
+        # Vẫn lưu tensor full để tương thích cũ
+        np.save(x_path, X)
+        np.save(y_path, Y)
+    else:
+        np.save(x_path, X)
+        np.save(y_path, Y)
     
     # Lưu scaler + column_order để đảm bảo thứ tự cột khớp hoàn hảo khi live inference
     scaler_bundle = {
         "scaler": fe.scaler,
         "column_order": list(df_scaled.columns),
+        "monthly_split": use_monthly_split,
     }
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler_bundle, f)

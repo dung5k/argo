@@ -1,7 +1,8 @@
 import time
 import traceback
 import ccxt
-from datetime import datetime, time as dtime
+import json
+import os
 from datetime import datetime, time as dtime
 
 class V3VirtualTradeManager:
@@ -28,6 +29,59 @@ class V3VirtualTradeManager:
         
         # Để lưu lại lịch sử
         self.history_deals = []
+
+        # Tên file lưu trạng thái
+        safe_name = self.target_symbol.replace("/", "_").replace("\\", "_")
+        self.state_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", f"virtual_state_{safe_name}.json")
+        
+        self._load_state()
+
+    def _save_state(self):
+        try:
+            state = {
+                "virtual_balance": self.virtual_balance,
+                "virtual_ticket_counter": self.virtual_ticket_counter,
+                "active_trade_loggers": self.active_trade_loggers,
+                "history_deals": []
+            }
+            
+            # Serialize history_deals (handle datetimes)
+            for deal in self.history_deals:
+                d_copy = deal.copy()
+                if isinstance(d_copy.get("close_time"), datetime):
+                    d_copy["close_time"] = d_copy["close_time"].isoformat()
+                state["history_deals"].append(d_copy)
+                
+            os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
+            with open(self.state_file, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=4)
+        except Exception as e:
+            self.log_callback(f"[VirtualTradeManager] ❌ Lỗi lưu trạng thái: {e}")
+
+    def _load_state(self):
+        try:
+            if not os.path.exists(self.state_file):
+                return
+                
+            with open(self.state_file, "r", encoding="utf-8") as f:
+                state = json.load(f)
+                
+            self.virtual_balance = state.get("virtual_balance", 10000.0)
+            self.virtual_ticket_counter = state.get("virtual_ticket_counter", 1000)
+            self.active_trade_loggers = state.get("active_trade_loggers", {})
+            
+            # Deserialize history_deals
+            self.history_deals = []
+            for deal in state.get("history_deals", []):
+                if isinstance(deal.get("close_time"), str):
+                    try:
+                        deal["close_time"] = datetime.fromisoformat(deal["close_time"])
+                    except: pass
+                self.history_deals.append(deal)
+                
+            self.log_callback(f"[VirtualTradeManager] 📂 Đã tải trạng thái ảo từ file. Balance: {self.virtual_balance:.2f}$ | Lệnh đang mở: {len(self.active_trade_loggers)}")
+        except Exception as e:
+            self.log_callback(f"[VirtualTradeManager] ❌ Lỗi tải trạng thái: {e}")
 
     def init_mt5(self) -> bool:
         self.log_callback("[VirtualTradeManager] ✅ Đã kích hoạt chế độ PAPER TRADING (Giả lập giao dịch MT5).")
@@ -105,6 +159,9 @@ class V3VirtualTradeManager:
             
         for t in closed_tickets:
             self.active_trade_loggers.pop(t, None)
+            
+        if closed_tickets:
+            self._save_state()
 
     def _close_position_internal(self, ticket: int, close_price: float, reason: str):
         pos = self.active_trade_loggers.get(ticket)
@@ -173,6 +230,8 @@ class V3VirtualTradeManager:
             
             self.log_callback(f"[VirtualTradeManager] ✅ ĐÃ BẮN LỆNH ẢO {o_type_vn}! Ticket: #{ticket} | Giá: {price:.3f} | SL: {sl:.3f} | TP: {tp:.3f}")
             self.tg_notify(f"🟢 AI V3 Open ẢO {o_type_vn}\nSymbol: {symbol} | #{ticket} | {preds_info}")
+            
+            self._save_state()
             return ticket
         except Exception as e:
             self.log_callback(f"[VirtualTradeManager] ❌ Lỗi mở lệnh ảo: {e}")
@@ -210,6 +269,7 @@ class V3VirtualTradeManager:
                     
         if updated:
             self.log_callback(f"[VirtualTradeManager] 🔵 Đã dời SL ảo cho lệnh #{ticket} -> {pos['sl']:.3f}")
+            self._save_state()
 
     def _format_symbol(self, sym: str) -> str:
         if "USDT" in sym and "/" not in sym:

@@ -26,9 +26,10 @@
         "WINDOW_SIZE": 10,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
-            "XAUUSDm": ["log_ret", "volume", "bb_width"],
+            "XAUUSDm": ["log_ret", "volume", "bb_width", "corr_60", "spread_ret"],
             "USDJPYm": ["log_ret", "volume", "bb_width"],
-            "DXYm": ["log_ret"]
+            "DXYm": ["log_ret", "bb_width", "volume", "spread_ret"],
+            "USTECm": ["log_ret", "volume", "corr_60", "relative_strength"]
         }
     },
     "TRAINING": {
@@ -60,7 +61,8 @@
             "XAGUSDm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "USDJPYm": "EXNESS",
-            "DXYm": "EXNESS"
+            "DXYm": "EXNESS",
+            "USTECm": "EXNESS"
         }
     },
     "LIVE_BOT": {

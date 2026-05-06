@@ -1,0 +1,51 @@
+{
+  "tasks": [
+    {
+      "id": "ltc_asian_v5_auto_tuning",
+      "enabled": true,
+      "promptFile": ".agent/periodic_prompt_ltc_asian_v5_local.md",
+      "nextRunTime": 1778062228092,
+      "intervalMinutes": 30,
+      "triggerOn": "ltc_asian_v5_training_done"
+    },
+    {
+      "id": "ltc_asian_auto_tuning_local",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_ltc_asian_local.md",
+      "nextRunTime": 1777906693186,
+      "intervalMinutes": 30,
+      "triggerOn": "ltc_asian_training_done"
+    },
+    {
+      "id": "ltc_london_auto_tuning_local",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_ltc_london_local.md",
+      "nextRunTime": 1777643766938,
+      "intervalMinutes": 30,
+      "triggerOn": "ltc_london_training_done"
+    },
+    {
+      "id": "ltc_ny_auto_tuning_local",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_ltc_ny_local.md",
+      "nextRunTime": 1777399904735,
+      "intervalMinutes": 30,
+      "triggerOn": "ltc_ny_training_done"
+    },
+    {
+      "id": "ltc_weekend_auto_tuning_local",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_ltc_weekend_local.md",
+      "nextRunTime": 1777767909684,
+      "intervalMinutes": 30,
+      "triggerOn": "ltc_weekend_training_done"
+    },
+    {
+      "id": "cleanup_storage",
+      "enabled": true,
+      "command": "python scripts/cleanup_host_storage.py",
+      "nextRunTime": 1778065168369,
+      "intervalMinutes": 60
+    }
+  ]
+}
