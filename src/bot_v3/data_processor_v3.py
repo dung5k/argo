@@ -41,7 +41,11 @@ class V3DataProcessor:
             filtered_macro = {}
             for m_sym, m_cols in macro_features.items():
                 m_sym_lower = m_sym.lower()
-                if any(isinstance(feat, str) and m_sym_lower in feat.lower() for feat in self.inference_feats):
+                # Nếu inference_feats là list strings (từ scaler), ta lọc.
+                # Nếu là integers (auto-detect từ weights), ta giữ hết để đảm bảo không bị thiếu.
+                if not self.inference_feats or not isinstance(self.inference_feats[0], str):
+                    filtered_macro[m_sym] = m_cols
+                elif any(m_sym_lower in feat.lower() for feat in self.inference_feats if isinstance(feat, str)):
                     filtered_macro[m_sym] = m_cols
                 else:
                     self.log_callback(f"[DataProcessorV3] ⚠️ Bỏ qua mã Vĩ Mô '{m_sym}' vì không có trong bộ Não (Scaler).")
@@ -84,6 +88,8 @@ class V3DataProcessor:
         if not self._init_fe():
             return None, "Lỗi khởi tạo FeatureEngineeringV3"
 
+        self.log_callback(f"[DataProcessorV3] Raw columns: {list(raw_df.columns)}")
+
         if len(raw_df) < self.window_size:
             msg = f"Không đủ nến raw: có {len(raw_df)}, cần ít nhất {self.window_size}."
             self.log_callback(f"[DataProcessorV3] ⚠️ {msg}")
@@ -93,6 +99,7 @@ class V3DataProcessor:
         try:
             fe_df = self.fe.process_features(raw_df)
             self.log_callback(f"[DataProcessorV3] ✅ Phân tách tĩnh xong | col={fe_df.shape[1]}")
+            self.log_callback(f"[DataProcessorV3] FE columns (first 20): {list(fe_df.columns)[:20]}")
         except Exception as e:
             msg = f"Lỗi Feature Engineering: {e}"
             self.log_callback(f"[DataProcessorV3] ❌ {msg}")

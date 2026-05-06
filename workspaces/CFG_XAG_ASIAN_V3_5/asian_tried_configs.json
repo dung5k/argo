@@ -199,13 +199,5 @@
         "D_MODEL": 32,
         "WINDOW_SIZE": 15,
         "MACRO": "USTECm_only"
-    },
-    {
-        "TP": 20,
-        "SL": 25,
-        "ZERO_NOISE": false,
-        "D_MODEL": 32,
-        "WINDOW_SIZE": 30,
-        "MACRO": "XAU_DXY_USTEC"
     }
 ]

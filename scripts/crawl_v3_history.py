@@ -14,7 +14,9 @@ def print_log(msg):
 def fetch_historical_rates(symbol, tf_str, start_dt, end_dt):
     """
     Kéo lịch sử MT5 dựa theo khoảng thời gian thực với Múi giờ chuẩn (UTC).
+    Hỗ trợ kéo theo CHUNK để tránh lỗi (-2, 'Terminal: Invalid params') khi dải quá rộng.
     """
+    import numpy as np
     mt5_tf = mt5.TIMEFRAME_M1
     if tf_str == "M5": mt5_tf = mt5.TIMEFRAME_M5
     elif tf_str == "M15": mt5_tf = mt5.TIMEFRAME_M15
@@ -23,14 +25,38 @@ def fetch_historical_rates(symbol, tf_str, start_dt, end_dt):
     start_utc = int(start_dt.timestamp())
     end_utc = int(end_dt.timestamp())
     
-    rates = mt5.copy_rates_range(symbol, mt5_tf, start_utc, end_utc)
-    if rates is None or len(rates) == 0:
-        # Nhượng bộ, thử tìm bằng symbol cắm cờ
+    # Kéo theo từng đợt 30 ngày (2592000 giây)
+    chunk_size = 30 * 24 * 3600
+    chunk_list = []
+    
+    current_start = start_utc
+    while current_start < end_utc:
+        current_end = min(current_start + chunk_size, end_utc)
+        rates = mt5.copy_rates_range(symbol, mt5_tf, current_start, current_end)
+        
+        if rates is not None and len(rates) > 0:
+            chunk_list.append(rates)
+        else:
+            # Nếu một chunk thất bại, in debug nhưng vẫn tiếp tục (có thể là cuối tuần hoặc gap)
+            print(f"DEBUG: copy_rates_range failed for {symbol} at {datetime.fromtimestamp(current_start)} to {datetime.fromtimestamp(current_end)}. Error: {mt5.last_error()}")
+            
+        current_start = current_end + 1
+        
+    if not chunk_list:
         return None
         
-    df = pd.DataFrame(rates)
+    # Hợp nhất các mảng numpy có cấu trúc
+    all_rates = np.concatenate(chunk_list)
+    df = pd.DataFrame(all_rates)
+    
+    if 'time' not in df.columns:
+        print(f"❌ LỖI NGHIÊM TRỌNG: DataFrame không có cột 'time'! Columns: {df.columns.tolist()}")
+        return None
+        
+    df.drop_duplicates(subset=['time'], inplace=True)
     df['time'] = pd.to_datetime(df['time'], unit='s', utc=True)
     df.set_index('time', inplace=True)
+    df.sort_index(inplace=True)
     return df
 
 def get_actual_mt5_symbol(symbol, cont_contracts):

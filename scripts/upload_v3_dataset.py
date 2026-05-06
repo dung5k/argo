@@ -104,6 +104,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='data/bot_config_xau_ny_v3.json')
     parser.add_argument('--no-push', action='store_true', help='Do not upload to HuggingFace')
+    parser.add_argument('--run-id', type=str, default=None, help='Explicit Run ID')
     args = parser.parse_args()
 
     # 1. Đọc config
@@ -122,17 +123,22 @@ if __name__ == "__main__":
     import shutil
     import re
     
-    # Kiểm tra xem args.config có nằm trong thư mục runs/run_xxx_v3/ không
-    run_match = re.search(r'(workspaces[/\\][^/\\]+[/\\]runs[/\\](run_[^/\\]+))[/\\]', args.config)
-    if run_match:
-        run_dir = run_match.group(1)
-        run_id = run_match.group(2)
-        print(f"📁 Dùng lại thư mục Lượt chạy đã tạo: {run_id}")
-    else:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_id = f"run_{timestamp}_v3"
+    if args.run_id:
+        run_id = args.run_id
         run_dir = os.path.join("workspaces", cfg_id, "runs", run_id)
-        print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
+        print(f"📁 Dùng Run ID chỉ định: {run_id}")
+    else:
+        # Kiểm tra xem args.config có nằm trong thư mục runs/run_xxx_v3/ không
+        run_match = re.search(r'(workspaces[/\\][^/\\]+[/\\]runs[/\\](run_[^/\\]+))[/\\]', args.config)
+        if run_match:
+            run_dir = run_match.group(1)
+            run_id = run_match.group(2)
+            print(f"📁 Dùng lại thư mục Lượt chạy đã tạo: {run_id}")
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            run_id = f"run_{timestamp}_v3"
+            run_dir = os.path.join("workspaces", cfg_id, "runs", run_id)
+            print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
     
     out_dir = os.path.join(run_dir, "data", "tensors")
     
@@ -144,7 +150,7 @@ if __name__ == "__main__":
     run_config_path = os.path.join(run_dir, "config.json")
     if os.path.abspath(args.config) != os.path.abspath(run_config_path):
         shutil.copy(args.config, run_config_path)
-    print(f"📁 Đã tạo Lượt chạy mới: {run_id}")
+    print(f"📁 Lượt chạy mục tiêu: {run_id}")
 
     print(f"🔥 BẮT ĐẦU CÀO VÀ BỐ TRÍ DỮ LIỆU RIÊNG CHO CẤU HÌNH: {cfg_id}")
 

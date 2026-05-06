@@ -42,7 +42,13 @@ class V3InferenceEngine:
 
             from src.training_v3.model_v3 import AAMT_Model
 
-            state_dict = torch.load(model_path, map_location=self.device)
+            # Khắc phục lỗi weights_only trên các bản torch cũ (< 1.13)
+            load_kwargs = {"map_location": self.device}
+            from packaging import version
+            if version.parse(torch.__version__) >= version.parse("1.13.0"):
+                load_kwargs["weights_only"] = True
+                
+            state_dict = torch.load(model_path, **load_kwargs)
             
             # Khắc phục triệt để lỗi Toán Học đầu vào: tự động suy luận input_dim từ bộ lưu trọng số
             try:
