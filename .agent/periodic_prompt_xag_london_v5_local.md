@@ -15,7 +15,7 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_London_v5
 - **Tensor base:** `workspaces/CFG_XAG_LONDON_V5/data/tensors/`
 - **Diary:** `workspaces/CFG_XAG_LONDON_V5/London_V5_DIARY.md`
 
-### Sự Thay Đổi Cốt Lõi Của V5 (XAG London)
+### Sự Thay Đổi Cốt Lõi Của V5 (Hiểu rõ để tránh làm sai)
 
 | Khái niệm | V3/V4 (Cũ) | V5 (Hiện tại) | Tác động |
 |---|---|---|---|
@@ -40,28 +40,53 @@ Copy-Item workspaces/CFG_XAG_LONDON_V5/data/tensors/* "$run_dir/data/tensors/"
 ```powershell
 Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_xag_london_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py xag_london_v5_training_done`""" -WorkingDirectory "D:\DungLA\Argo"
 ```
+> ⚠️ Lưu ý: `train_v3.py` sẽ tự động phát hiện `X_train_*.npy` / `X_val_*.npy` và dùng Monthly Split thay vì 80/20.
 
 ---
 
 ## BƯỚC 1: Thu thập Ngữ cảnh & Phân tích Chuyên Sâu
 
 1. **Đọc kết quả run mới nhất:**
-   - Tìm run mới nhất trong `workspaces/CFG_XAG_LONDON_V5/runs/`.
-   - Đọc: `Composite Score`, `Win Rate`, số Epoch kết thúc.
+   - Tìm run mới nhất trong `workspaces/CFG_XAG_LONDON_V5/runs/` có file `results/training_metrics_v3.json`.
+   - Đọc: `Composite Score`, `Win Rate kỷ lục`, số Epoch kết thúc.
+   - Đọc 30 dòng cuối log: `results/train_v3.log` để xem xu hướng Score ở các epoch cuối.
 
 2. **Đọc Diary V5:**
-   - Đọc `workspaces/CFG_XAG_LONDON_V5/London_V5_DIARY.md`.
-   - Nắm bắt mục tiêu tần suất 2 lệnh/ngày.
+   - Đọc `workspaces/CFG_XAG_LONDON_V5/London_V5_DIARY.md` (tạo mới nếu chưa có).
+   - Nắm bắt: Những gì đã thử, Giả thuyết nào đã được kiểm chứng, những điểm yếu còn tồn tại.
 
 3. **Phân tích chuyên sâu — Suy nghĩ như chuyên gia Phiên London:**
-   Phiên London (07:00-13:00 UTC) đối với Bạc (XAG):
+   Phiên London (07:00-13:00 UTC) có đặc điểm:
    - **Volatility cao:** Biến động mạnh hơn phiên Á, thường có xu hướng rõ rệt.
-   - **Mục tiêu tần suất:** Cần điều chỉnh `FAST_HIT_BARS` và `Threshold` để đạt ~2 lệnh/ngày.
+   - **Phá vỡ (Breakouts):** Giá thường chạy mạnh sau khi phá vỡ các vùng tích lũy phiên Á.
+   
+   Câu hỏi phải trả lời:
+   - Model đang nhận ra **loại setup nào** chủ yếu? (BUY hay SELL, ngưỡng xác suất bao nhiêu?)
+   - Có bị **Buy Bias** không? (Kiểm tra tỷ lệ Buy/Sell trong Val set)
+   - Ngưỡng **Threshold tối ưu** là bao nhiêu? (Nơi WR cao nhất với số lệnh ≥ 80 lệnh)
+   - **FAST_HIT_BARS** hiện tại (10 nến) có phù hợp với tốc độ của London không?
 
-4. **Đề xuất ý tưởng tối ưu hóa:**
-   - *FAST_HIT_BARS:* Thử 8, 10, 12 để calibrate tần suất vào lệnh.
-   - *TP/SL:* Thử 0.0035/0.0035 hoặc 0.004/0.0035.
+4. **Đề xuất ý tưởng tối ưu hóa (ÍT NHẤT 1 ý tưởng mới):**
+   
+   **KHO VŨ KHÍ V5:**
+   - *FAST_HIT_BARS:* Thử 8, 10, 12 — calibrate tần suất vào lệnh.
+   - *TP/SL:* Thử 0.0035/0.0035, 0.004/0.0035, 0.005/0.004.
+   - *MACRO_FEATURES:* Thử bỏ các cặp coin phụ, chỉ giữ XAU+DXY để giảm nhiễu.
    - *WINDOW_SIZE:* Thử 60 hoặc 45.
+   - *Architecture:* Thử `POOLING=attention` thay vì `mean` để focus vào nến quan trọng.
+   - *LAYER_DROP:* Thử 0.15, 0.2 để tăng tính tổng quát hóa.
+   
+   **NGUYÊN TẮC VÀNG V5:** Thay đổi TỐI ĐA 2 tham số mỗi lần. Ưu tiên thay đổi `TP/SL` và `FAST_HIT_BARS` trước vì chúng ảnh hưởng trực tiếp đến **chất lượng nhãn**.
+
+5. **Cập nhật Diary V5:**
+   ```markdown
+   ### [Thời gian] - Đánh giá Run: <RUN_ID>
+   - **Kết quả:** Composite Score = X | WR = Y% | Early Stop Epoch = Z
+   - **Vấn đề phát hiện:** <Phân tích bias, threshold, volatility>
+   - **Ý tưởng mới:** <Tham số thay đổi + Lý do cụ thể>
+   - **Giả thuyết:** <Kỳ vọng thay đổi này sẽ cải thiện điều gì?>
+   ```
+   Sau khi cập nhật, push lên HF: `python scripts/sync_workspaces.py push CFG_XAG_LONDON_V5`
 
 ---
 
@@ -73,12 +98,11 @@ Kiểm tra thư mục `workspaces/CFG_XAG_LONDON_V5/runs/`:
 **Xử lý:**
 - **ĐÃ CÓ HÀNG ĐỢI:** Không chuẩn bị thêm, chuyển sang Bước 3.
 - **HÀNG ĐỢI RỖNG:** Tạo run mới:
-  1. Sinh RUN_ID: `run_YYYYMMDD_HHMMSS_v5_london_<tên_ý_tưởng>` (VD: `run_20260507_120000_v5_tp35_fast10`)
+  1. Sinh RUN_ID: `run_YYYYMMDD_HHMMSS_v5_london_<ý_tưởng>`
   2. Tạo thư mục: `workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/`
   3. **Sao chép và chỉnh sửa config:**
      ```powershell
      Copy-Item data/bot_config_xag_london_v5.json workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/config.json
-     # Chỉnh sửa config.json với các tham số tối ưu hóa đã đề xuất ở Bước 1
      ```
   4. **Build dataset và copy tensors:**
      ```powershell
@@ -94,12 +118,12 @@ Kiểm tra thư mục `workspaces/CFG_XAG_LONDON_V5/runs/`:
    ```powershell
    Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'"
    ```
-   - Nếu có tiến trình đang chạy: Kiểm tra `train_v3.log` trong run đó, xác nhận Score vẫn đang được cập nhật → thông báo Telegram và gọi `--done`.
-   - Nếu tiến trình bị treo hoặc kết thúc lỗi: Kill tiến trình, xóa thư mục run lỗi và chuẩn bị lại.
+   - Nếu có tiến trình đang chạy: Kiểm tra `train_v3.log`, xác nhận vẫn đang update → thông báo Telegram và gọi `--done`.
+   - Nếu bị treo (> 15p không update): Kill và dọn dẹp.
 
 2. **Điều phối:**
-   - **HỆ THỐNG BUSY:** Thông báo tiến độ run hiện tại, gọi `--done`.
-   - **HỆ THỐNG IDLE:** Lấy run tiếp theo từ Hàng Đợi và phát lệnh:
+   - **BUSY:** Thông báo tiến độ, gọi `--done`.
+   - **IDLE:** Lấy run từ Hàng Đợi và phát lệnh:
      ```powershell
      Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_xag_london_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py xag_london_v5_training_done`""" -WorkingDirectory "D:\DungLA\Argo"
      ```
@@ -110,11 +134,17 @@ Kiểm tra thư mục `workspaces/CFG_XAG_LONDON_V5/runs/`:
 
 | Chỉ số | Tối thiểu | Mục tiêu | Xuất sắc |
 |---|---|---|---|
-| Composite Score | > 0.55 | > 0.60 | > 0.70 |
-| WR ở ngưỡng 55% | > 60% | > 65% | > 75% |
-| Tần suất lệnh | ~1 lệnh/ngày | ~2 lệnh/ngày | > 2.5 lệnh/ngày |
+| Composite Score | > 0.55 | > 0.65 | > 0.75 |
+| WR ở ngưỡng 55% | > 60% | > 70% | > 80% |
+| Số lệnh/tháng | ≥ 80 | ≥ 150 | ≥ 300 |
+| Buy/Sell ratio | 30:70 ~ 70:30 | 40:60 ~ 60:40 | 45:55 ~ 55:45 |
+| Early Stop | > Epoch 30 | > Epoch 50 | > Epoch 80 |
 
 ---
 
 > **THÔNG BÁO TELEGRAM:**
-> - Kết thúc: `python .agent/send_to_tele.py "💂‍♂️ [XAG London V5] <tóm tắt>. Run <RUN_ID> đã khởi động." --done`
+> - Báo cáo thường xuyên: `python .agent/send_to_tele.py "<Nội_dung>"`
+> - **LƯU Ý:** Trong mỗi báo cáo Telegram (đặc biệt là báo cáo kết thúc), **BẮT BUỘC** đính kèm thông tin về **Thành tích tốt nhất (Best Score/WR)** đạt được từ trước đến nay để tiện so sánh.
+> - Kết thúc: `python .agent/send_to_tele.py "💂‍♂️ [London V5] <tóm tắt ý tưởng>. Run <RUN_ID> đã khởi động. (Best so far: Score X, WR Y%)" --done`
+
+__(Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi hoàn tất BẮT BUỘC chạy với cờ --done!)__
