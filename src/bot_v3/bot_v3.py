@@ -70,8 +70,22 @@ def kill_old_instances():
                 # Verify it's the same bot and config
                 if any('bot_v3.py' in arg for arg in cmdline) and any(target_config in arg for arg in cmdline):
                     print(f"[PROCESS] ⚠️ Đang KILL tiến trình cũ PID {old_pid} ({target_config})")
-                    proc.kill()
-                    print(f"[PROCESS] ✅ Đã KILL {old_pid}")
+                    
+                    # Kill parent cmd.exe to prevent hanging console window from 'pause'
+                    try:
+                        parent = proc.parent()
+                        if parent and parent.name().lower() in ['cmd.exe', 'powershell.exe', 'conhost.exe']:
+                            print(f"[PROCESS] ⚠️ Đang KILL Parent Console {parent.name()} (PID: {parent.pid})")
+                            parent.kill()
+                    except Exception as pe:
+                        print(f"[PROCESS] ⚠️ Lỗi kill parent: {pe}")
+                        
+                    try:
+                        proc.kill()
+                    except psutil.NoSuchProcess:
+                        pass
+                        
+                    print(f"[PROCESS] ✅ Đã dọn dẹp tiến trình cũ xong.")
         except Exception as e:
             print(f"[PROCESS] ⚠️ Lỗi khi xử lý PID cũ: {e}")
 
