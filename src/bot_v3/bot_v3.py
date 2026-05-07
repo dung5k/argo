@@ -160,7 +160,9 @@ def _send_raw_tg(msg):
             if pnl_report:
                 report += f"\n📊 {pnl_report}"
         
-        full_msg = msg + report
+        prefix = f"[{TARGET_SYMBOL}] "
+        clean_msg = msg.replace(prefix, "").replace(f"[{TARGET_SYMBOL}]", "").strip()
+        full_msg = prefix + clean_msg + report
         try: tg_bot.send_message(tg_chat_id, full_msg)
         except: pass
 
@@ -569,7 +571,8 @@ def bot_background_loop():
                     break
 
         msg_pred = (
-            f"🎯 [{TARGET_SYMBOL}] Nến {gui_time}\n"
+            f"🎯 KẾT QUẢ PIPELINE V3:\n"
+            f"Nến: {gui_time}\n"
             f"Loss: {mse:.4f} (Ngưỡng: {engine.mse_threshold:.4f})\n"
             f"B/S: {probs['buy']:.1%} | {probs['sell']:.1%}\n"
             f"Action: {display_action}"
