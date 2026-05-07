@@ -569,9 +569,9 @@ def bot_background_loop():
                     break
 
         msg_pred = (
-            f"🎯 ĐÃ KẾT THÚC PIPELINE DỰ ĐOÁN:\n"
+            f"🎯 [{TARGET_SYMBOL}] KẾT QUẢ PIPELINE DỰ ĐOÁN V3:\n"
             f"Thời gian: Nến {gui_time}\n"
-            f"Giá trị Loss hiện tại: {mse:.4f} (Threshold: {engine.mse_threshold:.4f})\n"
+            f"Loss hiện tại: {mse:.4f} (Ngưỡng: {engine.mse_threshold:.4f})\n"
             f"Tỷ lệ Cược: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\n"
             f"Hành động: {display_action}"
         )
