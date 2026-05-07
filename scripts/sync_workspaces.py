@@ -3,7 +3,12 @@ import time
 from huggingface_hub import HfApi, snapshot_download
 
 def log(msg):
-    print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
+    try:
+        print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
+    except UnicodeEncodeError:
+        # Fallback for Windows console with limited encoding
+        clean_msg = str(msg).encode("ascii", errors="replace").decode("ascii")
+        print(f"[{time.strftime('%H:%M:%S')}] {clean_msg}", flush=True)
 
 REPO_ID = "dung5k/argo_workspaces"
 LOCAL_DIR = "workspaces"
@@ -24,7 +29,7 @@ def pull_workspace(config_id):
         log("❌ Lỗi: Không tìm thấy Token HF.")
         return
 
-    log(f"⬇️ ĐANG KÉO (PULL) DATA CHO CẤU HÌNH: {config_id} TỪ MÂY XUỐNG...")
+    log(f"PULL DATA FOR CONFIG: {config_id} FROM CLOUD...")
     try:
         ignore_pull = IGNORE_RULES + ["*.log"]
         snapshot_download(
@@ -48,7 +53,7 @@ def push_workspace(config_id):
         log("❌ Lỗi: Không tìm thấy Token HF.")
         return
 
-    log(f"⬆️ ĐANG TẢI (PUSH) TOÀN BỘ CẤU HÌNH: {config_id} LÊN MÂY...")
+    log(f"PUSH ALL CONFIG: {config_id} TO CLOUD...")
     try:
         api = HfApi(token=token)
         api.upload_folder(
@@ -92,7 +97,7 @@ def push_run(config_id, run_id):
         log(f"❌ Không tìm thấy thư mục local: {local_path}")
         return
 
-    log(f"⬆️ PUSH RUN: {run_id} → HF (chỉ file mới/thay đổi)...")
+    log(f"PUSH RUN: {run_id} -> HF (new/changed files only)...")
     try:
         api = HfApi(token=token)
         api.upload_folder(
@@ -115,7 +120,7 @@ def main():
     args = parser.parse_args()
 
     log("="*50)
-    log("🚀 KHỞI ĐỘNG CÔNG CỤ ĐỒNG BỘ THÔNG MINH (SMART SYNC)")
+    log("[START] KHOI DONG CONG CU DONG BO THONG MINH (SMART SYNC)")
     log("="*50)
 
     if args.action == "pull":
@@ -124,7 +129,7 @@ def main():
         push_workspace(args.config_id)
 
     log("="*50)
-    log("🎉 HOÀN TẤT ĐỒNG BỘ.")
+    log("[DONE] HOAN TAT DONG BO.")
     log("="*50)
 
 if __name__ == "__main__":
