@@ -12,9 +12,6 @@ Danh sách chi tiết được cấu hình tại file `network_config.json`. Dư
 
 - **sep_agent2 (Sếp ↔ Agent 2):**
   - **Mô tả:** Kênh giao tiếp trực tiếp giữa Sếp và Agent 2 (chạy trên Máy nhánh/Auto-Tuning).
-  
-- **agent1_agent2 (Agent 1 ↔ Agent 2):**
-  - **Mô tả:** Kênh nội bộ để Agent 1 và Agent 2 tự động trao đổi với nhau (ví dụ: yêu cầu đồng bộ model mới, cập nhật tham số).
 
 ## 2. Giao Thức Liên Lạc (Communication Protocol)
 

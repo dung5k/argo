@@ -76,8 +76,8 @@ if __name__ == '__main__':
             import subprocess
             send_tele_py = os.path.join(agent_dir, "send_to_tele.py")
             if os.path.exists(send_tele_py):
-                # Hardcode channel group ARGO1-ARGO2 (-5144257068) for narration
-                subprocess.Popen([sys.executable, send_tele_py, narration, "--channel", "-5144257068"])
+                # Narrate to the default broadcast group
+                subprocess.Popen([sys.executable, send_tele_py, narration])
         except Exception as e:
             pass
             
