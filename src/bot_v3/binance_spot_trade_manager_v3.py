@@ -183,7 +183,11 @@ class BinanceSpotTradeManagerV3:
                 pnl = (current_price - entry_price) * total_balance
                 pnl_pct = ((current_price / entry_price) - 1) * 100
                 pnl_icon = "🟢" if pnl >= 0 else "🔴"
-                return f"Vị thế Spot hiện tại:\n{pnl_icon} LONG {base_coin}: {total_balance:.4f} @ {entry_price:.2f} → {current_price:.2f} ({pnl_pct:+.2f}%) = {pnl:+.2f}$"
+                ticket = f"spot_{target_binance_sym}_LONG"
+                logger_pos = self.active_trade_loggers.get(ticket, {})
+                entry_time = logger_pos.get("entry_time", time.time())
+                elapsed_mins = int((time.time() - entry_time) / 60)
+                return f"Vị thế Spot hiện tại:\n{pnl_icon} LONG {base_coin} ({elapsed_mins}p): {total_balance:.4f} @ {entry_price:.2f} → {current_price:.2f} ({pnl_pct:+.2f}%) = {pnl:+.2f}$"
             else:
                 return f"Vị thế Spot hiện tại:\n📌 LONG {base_coin}: {total_balance:.4f} @ Giá: {current_price:.2f}"
 

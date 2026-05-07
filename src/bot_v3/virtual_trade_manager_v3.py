@@ -113,7 +113,8 @@ class V3VirtualTradeManager:
         for ticket, pos in self.active_trade_loggers.items():
             pnl = pos.get("current_profit", 0.0)
             pnl_icon = "🟢" if pnl >= 0 else "🔴"
-            reports.append(f"{pnl_icon} {pos['order_type']} #{ticket}: {pnl:+.2f}$")
+            elapsed_mins = int((time.time() - pos.get("entry_time", time.time())) / 60)
+            reports.append(f"{pnl_icon} {pos['order_type']} #{ticket} ({elapsed_mins}p): {pnl:+.2f}$")
         
         return "Vị thế ẢO hiện tại:\n" + "\n".join(reports) + f"\nSố dư ẢO: {self.virtual_balance:.2f}$"
 

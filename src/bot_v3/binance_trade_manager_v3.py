@@ -126,7 +126,11 @@ class BinanceTradeManagerV3:
                 pnl = float(pos.get("unrealizedProfit", 0))
                 pnl_icon = "🟢" if pnl >= 0 else "🔴"
                 side = pos.get('side', '').upper()
-                reports.append(f"{pnl_icon} {side} {target_binance_sym}: {pnl:+.2f}$")
+                ticket = f"pos_{target_binance_sym}_{side}"
+                logger_pos = self.active_trade_loggers.get(ticket, {})
+                entry_time = logger_pos.get("entry_time", time.time())
+                elapsed_mins = int((time.time() - entry_time) / 60)
+                reports.append(f"{pnl_icon} {side} {target_binance_sym} ({elapsed_mins}p): {pnl:+.2f}$")
             
             return "Vị thế Binance hiện tại:\n" + "\n".join(reports)
         except Exception as e:

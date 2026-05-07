@@ -73,7 +73,8 @@ class V3TradeManager:
                 pnl = pos.profit
                 pnl_icon = "🟢" if pnl >= 0 else "🔴"
                 o_type = "BUY" if pos.type == self.mt5.ORDER_TYPE_BUY else "SELL"
-                reports.append(f"{pnl_icon} {o_type} #{pos.ticket}: {pnl:+.2f}$")
+                elapsed_mins = int((time.time() - pos.time) / 60)
+                reports.append(f"{pnl_icon} {o_type} #{pos.ticket} ({elapsed_mins}p): {pnl:+.2f}$")
             
             return "Vị thế hiện tại:\n" + "\n".join(reports)
         except Exception as e:
