@@ -95,11 +95,17 @@ class BinanceTradeManagerV3:
                     ticket = f"pos_{target_binance_sym}_{side}"
                     
                     if ticket not in self.active_trade_loggers:
+                        raw_ts = pos.get('timestamp')
+                        if not raw_ts and 'info' in pos:
+                            raw_ts = pos['info'].get('updateTime')
+                        
+                        entry_time_sec = float(raw_ts) / 1000.0 if raw_ts else time.time()
+                        
                         self.active_trade_loggers[ticket] = {
                             "status": "OPEN",
                             "entry_price": float(pos.get("entryPrice", 0)),
                             "order_type": o_type,
-                            "entry_time": time.time(),
+                            "entry_time": entry_time_sec,
                             "contracts": contracts,
                             "side": side
                         }
@@ -269,12 +275,25 @@ class BinanceTradeManagerV3:
         has_open = len(active_positions) > 0
         just_closed = False
 
+        max_hold_bars = fe_cfg.get("MAX_HOLD_BARS", 20)
+        max_hold_seconds = max_hold_bars * 60
+
         for pos in active_positions:
             side = pos.get('side', '').upper()
             contracts = float(pos.get("contracts", 0))
             pos_dict = {"side": side, "contracts": contracts}
             
-            if side == "LONG" and action == "SELL":
+            # Kiểm tra thời gian giữ lệnh quá hạn
+            target_binance_sym = self._format_symbol(self.target_symbol)
+            ticket = f"pos_{target_binance_sym}_{side}"
+            logger_pos = self.active_trade_loggers.get(ticket)
+            
+            if logger_pos and (time.time() - logger_pos.get("entry_time", time.time())) > max_hold_seconds:
+                self.gui_action = f"CHỐT: QUÁ GIỜ (>{max_hold_bars} nến)"
+                if self.close_binance_position(pos_dict, f"Giữ lệnh quá {max_hold_bars} phút"):
+                    has_open = False
+                    just_closed = True
+            elif side == "LONG" and action == "SELL":
                 self.gui_action = f"ĐẢO CHIỀU: CHỐT BUY"
                 if self.close_binance_position(pos_dict, "Đảo chiều sang SELL"):
                     has_open = False

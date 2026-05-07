@@ -18,11 +18,11 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "CHI\u1ebeN L\u01af\u1ee2C V4: T\u1eacP TRUNG T\u00ccM S\u1ef0 PH\u1ee4 THU\u1ed8C V\u00c0O LEADER (DXY, NASDAQ, XAU). KH\u00d4NG D\u00d9NG WINDOW SIZE L\u1edaN!",
-        "TP_PIPS": 50,
+        "TP_PIPS": 40,
         "SL_PIPS": 50,
         "MAX_HOLD_BARS": 12,
         "PIP_SIZE": 0.001,
-        "WINDOW_SIZE": 10,
+        "WINDOW_SIZE": 12,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
             "XAUUSDm": [
@@ -47,25 +47,31 @@
                 "spread_ret"
             ]
         },
-        "ORDER_FLOW": false,
-        "VOL_REGIME": false,
-        "ZERO_NOISE_TARGET": false
+        "ORDER_FLOW": true,
+        "VOL_REGIME": true,
+        "ZERO_NOISE_TARGET": true
     },
     "TRAINING": {
-        "D_MODEL": 32,
-        "N_HEAD": 2,
-        "NUM_LAYERS": 1,
-        "BATCH_SIZE": 512,
+        "D_MODEL": 64,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 4096,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 1e-05,
+        "LEARNING_RATE": 5e-06,
         "TRAIN_START": "2024-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-20",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 30,
         "FREQ_MAX_N": 250,
-        "DROPOUT": 0.25
+        "DROPOUT": 0.25,
+        "WEIGHT_DECAY": 0.001,
+        "FOCAL_GAMMA": 2.5,
+        "RECON_LOSS_WEIGHT": 1.0,
+        "MSE_GATE_PERCENTILE": 0.0,
+        "PATIENCE": 20,
+        "ES_PATIENCE": 40
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_XAG_NY_V3_5/data/raw",

@@ -132,11 +132,22 @@ class BinanceSpotTradeManagerV3:
                     except Exception:
                         est_price = 0
 
+                    try:
+                        trades = self._safe_api_call(self.exchange.fetch_my_trades, target_binance_sym, limit=5)
+                        # Find last buy
+                        buy_trades = [t for t in trades if t.get('side') == 'buy']
+                        if buy_trades:
+                            entry_time_sec = buy_trades[-1].get('timestamp', time.time() * 1000) / 1000.0
+                        else:
+                            entry_time_sec = time.time()
+                    except Exception:
+                        entry_time_sec = time.time()
+
                     self.active_trade_loggers[ticket] = {
                         "status": "OPEN",
                         "entry_price": est_price,
                         "order_type": "MUA",
-                        "entry_time": time.time(),
+                        "entry_time": entry_time_sec,
                         "contracts": total_balance,
                         "side": "LONG"
                     }
@@ -372,7 +383,17 @@ class BinanceSpotTradeManagerV3:
         total_balance = self._get_total_coin_balance()
         has_coin = total_balance > 0.001
 
-        if action == "SELL":
+        max_hold_bars = fe_cfg.get("MAX_HOLD_BARS", 20)
+        max_hold_seconds = max_hold_bars * 60
+        
+        target_binance_sym = self._format_symbol(self.target_symbol)
+        ticket = f"spot_{target_binance_sym}_LONG"
+        logger_pos = self.active_trade_loggers.get(ticket)
+
+        if has_coin and logger_pos and (time.time() - logger_pos.get("entry_time", time.time())) > max_hold_seconds:
+            self.gui_action = f"CHỐT: QUÁ GIỜ (>{max_hold_bars} nến)"
+            self.close_spot_position(f"Giữ lệnh quá {max_hold_bars} phút")
+        elif action == "SELL":
             if has_coin:
                 # Đang giữ coin → Bán hết (Đóng vị thế)
                 self.gui_action = "🔴 CHỐT LỜI/CẮT LỖ: BÁN COIN"

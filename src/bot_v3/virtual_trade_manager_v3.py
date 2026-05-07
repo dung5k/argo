@@ -290,9 +290,18 @@ class V3VirtualTradeManager:
         just_closed = False
         closed_tickets = []
 
+        max_hold_bars = live_cfg.get("MAX_HOLD_BARS", 20)
+        max_hold_seconds = max_hold_bars * 60
+
         # Convert dict to list to safely mutate during iteration? We actually pop later.
         for ticket, pos in self.active_trade_loggers.items():
-            if pos["order_type"] == "MUA" and action == "SELL":
+            if (time.time() - pos["entry_time"]) > max_hold_seconds:
+                self.gui_action = f"CHỐT ẢO: QUÁ GIỜ (>{max_hold_bars} nến)"
+                if self.close_mt5_position(ticket, f"Giữ lệnh quá {max_hold_bars} phút"):
+                    has_open = False
+                    just_closed = True
+                    closed_tickets.append(ticket)
+            elif pos["order_type"] == "MUA" and action == "SELL":
                 self.gui_action = f"ĐẢO CHIỀU: CHỐT BUY ẢO (#{ticket})"
                 if self.close_mt5_position(ticket, "Đảo chiều sang SELL"):
                     has_open = False

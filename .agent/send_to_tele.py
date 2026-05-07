@@ -39,11 +39,11 @@ def get_telegram_config():
         
     return token, chat_id
 
-def send_via_bridge(content, is_done=False):
+def send_via_bridge(content, is_done=False, token="", chat_id=""):
     port = get_bridge_port()
     if port is None: return False
     url = f'http://127.0.0.1:{port}/send-telegram'
-    data = json.dumps({'text': content, 'done': is_done}).encode('utf-8')
+    data = json.dumps({'text': content, 'done': is_done, 'token': token, 'chat_id': chat_id}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
@@ -89,7 +89,8 @@ def send_via_telegram_api(content, is_done=False):
 
 def send_to_telegram(content, is_done=False):
     if not content: return
-    if send_via_bridge(content, is_done): return
+    token, chat_ids = get_telegram_config()
+    if send_via_bridge(content, is_done, token, chat_ids): return
     send_via_telegram_api(content, is_done)
 
 if __name__ == '__main__':

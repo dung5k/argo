@@ -32,7 +32,7 @@ function setAgentBusy() {
     busyTimeout = setTimeout(() => { isAgentBusy = false; }, 15 * 60 * 1000);
 }
 
-function queueMessage(chatId, queryToAgent) {
+function queueMessage(chatId, queryToAgent, chatName = "Unknown") {
     const config = getConfig();
     if (!config.workingDir) return;
     const pendingPath = path.join(config.workingDir, 'pending_messages.json');
@@ -42,7 +42,7 @@ function queueMessage(chatId, queryToAgent) {
             pending = JSON.parse(fs.readFileSync(pendingPath, 'utf8'));
         } catch(e) { pending = []; }
     }
-    pending.push({ chatId, queryToAgent });
+    pending.push({ chatId, queryToAgent, chatName });
     fs.writeFileSync(pendingPath, JSON.stringify(pending, null, 2));
 }
 
@@ -56,12 +56,13 @@ function checkPendingMessages() {
             if (pendingParams && pendingParams.length > 0) {
                 fs.unlinkSync(pendingPath);
 
-                let combinedQuery = "Trong lúc bạn đang bận, người dùng đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng:\n\n";
+                let combinedQuery = "[BỐI CẢNH: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. Hãy phản hồi lại Telegram bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung>\"`. Khi hoàn tất công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --done` để báo hệ thống rảnh!]\n\n";
                 pendingParams.forEach((item, index) => {
-                    combinedQuery += `--- Tin nhắn ${index + 1} ---\n${item.queryToAgent}\n\n`;
+                    let cName = item.chatName || "Unknown";
+                    combinedQuery += `--- Tin nhắn ${index + 1} từ "${cName}" (ID: ${item.chatId}) ---\n${item.queryToAgent}\n\n`;
                 });
                 
-                const fullQuery = `${combinedQuery}__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__`;
+                const fullQuery = combinedQuery;
 
                 setAgentBusy();
 
@@ -223,8 +224,9 @@ async function handleMessage(message) {
     }
 
     const chatId = message.chat.id;
+    const chatName = message.chat.title || message.chat.first_name || "Telegram User";
     let text = message.text || '';
-    logDebug(`[NEW MSG] From ChatId: ${chatId} | Text: ${text}`);
+    logDebug(`[NEW MSG] From ChatId: ${chatId} (${chatName}) | Text: ${text}`);
     
     // Loại bỏ @bot_username trong lệnh khi ở group chat
     text = text.replace(/@[a-zA-Z0-9_]+/g, '').trim();
@@ -267,7 +269,8 @@ async function handleMessage(message) {
          queryToAgent = `Hãy chạy phân tích thị trường (${parts.length > 1 ? text.substring(text.indexOf(' ')+1) : 'ALL'}).`;
     }
     
-    const fullQuery = `${queryToAgent}\n\n__(HỆ THỐNG: Trong quá trình làm, cứ lúc nào cần báo tiến độ/nhắn người dùng thì gọi: python .agent/send_to_tele.py "<Nội_dung>". Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done để báo hệ thống rảnh!)__`;
+    const prefix = `[BỐI CẢNH: Đây là tin nhắn từ nhóm chat/người dùng Telegram "${chatName}" (ID: ${chatId}). Hãy xử lý và trả lời lại bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi lệnh: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+    const fullQuery = `${prefix}${queryToAgent}`;
 
     // Luôn forward thẳng tới Agent, không cần đợi rảnh
     sendTelegramMessage(chatId, "✅ Đã nhận, đang chuyển tới Anti...");
@@ -351,12 +354,13 @@ function triggerTaskBySignal(triggerId) {
                     if (!path.isAbsolute(promptPath)) promptPath = path.join(getWorkspaceRoot(), promptPath);
                     if (fs.existsSync(promptPath)) {
                         let query = fs.readFileSync(promptPath, 'utf8');
-                        let fullQuery = `${query}\n\n__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+                        let prefix = `[BỐI CẢNH: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: Trong lúc làm có thể gọi nhiều lần lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+                        let fullQuery = `${prefix}${query}`;
                         if (!isAgentBusy) {
                             setAgentBusy();
                             vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery).catch(() => freeAgent());
                         } else {
-                            queueMessage(getActiveChatIds()[0] || '', fullQuery);
+                            queueMessage(getActiveChatIds()[0] || '', fullQuery, "Scheduled Task");
                         }
                     }
                 }
@@ -413,7 +417,8 @@ function setupPeriodicExecution() {
                                 if (fs.existsSync(promptPath)) {
                                     console.log(`Triggering scheduled task: ${task.id}`);
                                     let query = fs.readFileSync(promptPath, 'utf8');
-                                    let fullQuery = `${query}\n\n__(Lệnh định kỳ: Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: python .agent/send_to_tele.py "<Kết_quả_cuối>" --done )__`;
+                                    let prefix = `[BỐI CẢNH: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: Trong lúc làm có thể gọi nhiều lần lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+                                    let fullQuery = `${prefix}${query}`;
                                     
                                     task.nextRunTime = now + (task.intervalMinutes * 60 * 1000);
                                     modified = true;

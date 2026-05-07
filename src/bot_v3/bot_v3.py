@@ -257,7 +257,7 @@ gui_brain_tooltip = "Chưa tải não..."  # Tooltip thành tích đào tạo
 def _load_brain_metrics(run_id: str, config_id: str) -> str:
     """Đọc training metrics từ local cache hoặc HF để tạo tooltip."""
     import glob as _glob
-    base = os.path.join(safe_script_dir, 'workspaces', 'workspaces', config_id, 'runs', run_id, 'results')
+    base = os.path.join(safe_script_dir, 'workspaces', config_id, 'runs', run_id, 'results')
     metric_file = os.path.join(base, 'training_metrics_v3.json')
     
     if not os.path.isfile(metric_file):
@@ -437,7 +437,7 @@ def bot_background_loop():
                 
                 # Sửa lỗi hiển thị "Unknown" - Fallback về SESSION trong config chính
                 display_sess = sess_name if sess_name else CONFIG.get("SESSION", "Unknown")
-                gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)[:10]})"
+                gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)})"
                 
                 # Tải training metrics cho tooltip
                 gui_brain_tooltip = _load_brain_metrics(target_run_id, cfg_id)

@@ -1,16 +1,38 @@
 {
-    "description": "Lịch trình não bộ chạy 24/7 cho LTC Crypto V3.5",
+    "description": "L\u1ecbch tr\u00ecnh thay th\u1ebf b\u1ed9 n\u00e3o si\u00eau vi\u1ec7t theo phi\u00ean LTC V5 (UTC Time)",
     "timezone": "UTC",
     "mt5_path": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "schedule": {
-        "all_day": {
+        "asian": {
             "start": "00:00",
-            "end": "23:59",
-            "run_id": "run_20260421_110340_v3_CFG_LTC_CRYPTO_V3_5",
-            "config_id": "CFG_LTC_CRYPTO_V3_5",
-            "dataset_repo": "dung5k/ltc_v3_tensor_crypto",
+            "end": "06:59",
+            "run_id": "run_20260506_171000_v5_fh10_lr5e5",
+            "config_id": "CFG_LTC_ASIAN_V5",
+            "dataset_repo": "dung5k/ltc_v5_tensor_asian",
             "trading_config": {
-                "min_prob_thresh": 0.66,
+                "min_prob_thresh": 0.62,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "london": {
+            "start": "07:00",
+            "end": "12:59",
+            "run_id": "run_20260506_230900_v5_london_macro_btc_eth",
+            "config_id": "CFG_LTC_LONDON_V5",
+            "dataset_repo": "dung5k/ltc_v5_tensor_london",
+            "trading_config": {
+                "min_prob_thresh": 0.72,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "ny": {
+            "start": "13:00",
+            "end": "23:59",
+            "run_id": "run_20260507_044100_v5_ny_run2_fh8",
+            "config_id": "CFG_LTC_NY_V5",
+            "dataset_repo": "dung5k/ltc_v5_tensor_ny",
+            "trading_config": {
+                "min_prob_thresh": 0.68,
                 "mse_thresh_perc": 70.0
             }
         }

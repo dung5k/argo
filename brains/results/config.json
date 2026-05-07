@@ -1,19 +1,20 @@
 {
-    "HF_RUN_ID": "run_20260421_082810_v3_CFG_LTC_CRYPTO_V3_5",
+    "HF_RUN_ID": "run_20260424_040000_v3_asian_18",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
     "TARGET_SYMBOL": "LTCUSDT",
     "EXECUTION_SYMBOL": "LTCUSDm",
     "TARGET_PREFIX": "LTCUSDT",
     "CONFIG_ID": "CFG_LTC_LONDON_V3_5",
     "VERSION": "3.5",
-    "SESSION": "london",
+    "SESSION": "asian",
     "SESSION_UTC": {
-        "START": "07:00",
-        "END": "13:00",
-        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
+        "START": "23:00",
+        "END": "07:00",
+        "DESCRIPTION": "Asian session - LTC (23:00-07:00 UTC)"
     },
     "HF_CLOUD": {
-        "DATASET_REPO": "dung5k/ltc_v3_tensor_london",
-        "MODEL_REPO": "dung5k/argo_data",
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
@@ -23,7 +24,10 @@
         "MAX_HOLD_BARS": 10,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 20,
+        "lot_size": 0.1,
+        "SL_PIPS": 30,
+        "TP_PIPS": 60,
+        "WINDOW_SIZE": 30,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "MACRO_FEATURES": {
@@ -35,7 +39,9 @@
             ],
             "ETHUSDT": [
                 "log_ret",
-                "volume"
+                "bb_width",
+                "volume",
+                "corr_60"
             ],
             "BCHUSDT": [
                 "log_ret"
@@ -53,8 +59,14 @@
             "XAUUSDm": [
                 "log_ret"
             ],
-            "DE30m": [
-                "log_ret"
+            "XRPUSDT": [
+                "log_ret",
+                "volume",
+                "corr_60"
+            ],
+            "LTCBTC": [
+                "log_ret",
+                "corr_60"
             ]
         },
         "_ENHANCED_FEATURES_V2": {
@@ -64,24 +76,24 @@
             "vwap_distance": "Khoảng cách Close vs VWAP xấp xỉ — Mean Reversion signal",
             "adx_normalized": "Sức mạnh xu hướng ADX(10)/100 trong [0,1]",
             "ltc_btc_corr_60": "Rolling Pearson Corr LTC-BTC 60 nến [-1,1] — Decoupling signal"
-        }
+        },
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true
     },
     "TRAINING": {
-        "D_MODEL": 64,
-        "N_HEAD": 4,
-        "NUM_LAYERS": 3,
-        "BATCH_SIZE": 512,
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 4,
+        "BATCH_SIZE": 256,
         "WARMUP_EPOCHS": 20,
         "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 1e-05,
+        "LEARNING_RATE": 2e-05,
         "TRAIN_START": "2025-01-01",
         "TRAIN_END": "2026-03-31",
         "VAL_END": "2026-04-20",
         "EPOCHS_PHASE_1": 1,
         "FREQ_MIN_N": 100,
-        "FREQ_MAX_N": 600,
-        "DROPOUT": 0.35,
-        "LR_SCHEDULER": "cosine_warm"
+        "FREQ_MAX_N": 600
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "data/history",
@@ -94,7 +106,6 @@
         },
         "ROUTING": {
             "USTECm": "EXNESS",
-            "DE30m": "EXNESS",
             "DXYm": "EXNESS",
             "XAUUSDm": "EXNESS",
             "LTCUSDm": "EXNESS",
@@ -102,7 +113,9 @@
             "BTCUSDT": "BINANCE",
             "ETHUSDT": "BINANCE",
             "BCHUSDT": "BINANCE",
-            "DOGEUSDT": "BINANCE"
+            "DOGEUSDT": "BINANCE",
+            "XRPUSDT": "BINANCE",
+            "LTCBTC": "BINANCE"
         },
         "CRYPTO_BINANCE": {
             "SYMBOLS": [
@@ -110,19 +123,57 @@
                 "BTC/USDT",
                 "ETH/USDT",
                 "BCH/USDT",
-                "DOGE/USDT"
+                "DOGE/USDT",
+                "XRP/USDT",
+                "LTC/BTC"
             ],
             "TIMEFRAME": "1m",
             "SINCE": "2025-01-01T00:00:00Z"
         }
     },
     "LIVE_BOT": {
+        "PAPER_TRADE": true,
+        "TRADE_PLATFORM": "BINANCE",
         "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.57,
+        "MIN_PROBABILITY_THRESH": 0.56,
         "BINANCE_EXECUTION": {
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
         }
     },
-    "RUN_ID": "run_20260427_074338_v3_ldn_35"
+    "SCHEDULE": {
+        "asian": {
+            "start": "23:00",
+            "end": "07:00",
+            "run_id": "run_20260424_040000_v3_asian_18",
+            "config_id": "CFG_LTC_ASIAN_V3_5",
+            "dataset_repo": "dung5k/argo_workspaces",
+            "trading_config": {
+                "min_prob_thresh": 0.56,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "london": {
+            "start": "07:00",
+            "end": "13:00",
+            "run_id": "run_20260501_074253_v4_ldn_auto_43",
+            "config_id": "CFG_LTC_LONDON_V3_5",
+            "dataset_repo": "dung5k/argo_workspaces",
+            "trading_config": {
+                "min_prob_thresh": 0.59,
+                "mse_thresh_perc": 70.0
+            }
+        },
+        "ny": {
+            "start": "13:00",
+            "end": "22:59",
+            "run_id": "run_20260423_095000_v3_n",
+            "config_id": "CFG_LTC_NY_V3_5",
+            "dataset_repo": "dung5k/argo_workspaces",
+            "trading_config": {
+                "min_prob_thresh": 0.87,
+                "mse_thresh_perc": 70.0
+            }
+        }
+    }
 }

@@ -1,0 +1,107 @@
+{
+    "CONFIG_ID": "CFG_LTC_LONDON_V5",
+    "VERSION": "5.0",
+    "SESSION": "london",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "EXECUTION_SYMBOL": "LTCUSDm",
+    "TARGET_PREFIX": "LTCUSDT",
+    "SESSION_UTC": {
+        "START": "07:00",
+        "END": "12:59",
+        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC) | V5 Regime-Aware"
+    },
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/ltc_v5_tensor_london",
+        "MODEL_REPO": "dung5k/argo_data",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PCT": 0.005,
+        "SL_PCT": 0.004,
+        "MAX_HOLD_BARS": 20,
+        "LABEL_MODE": "pct",
+        "PIP_SIZE": 0.01,
+        "WINDOW_SIZE": 60,
+        "STEP_SIZE": 1,
+        "CRYPTO_MODE": true,
+        "ZERO_NOISE_TARGET": false,
+        "CLEAN_DATA_DIET": true,
+        "FAST_HIT_BARS": 10,
+        "MTF_WINDOWS": [],
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true,
+        "MACRO_FEATURES": {
+            "BTCUSDT": [
+                "log_ret",
+                "bb_width",
+                "volume",
+                "corr_60"
+            ],
+            "ETHUSDT": [
+                "log_ret",
+                "volume",
+                "corr_60"
+            ]
+        }
+    },
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 128,
+        "LEARNING_RATE": 5e-05,
+        "WEIGHT_DECAY": 0.0001,
+        "DROPOUT": 0.2,
+        "LAYER_DROP": 0.1,
+        "POOLING": "mean",
+        "CLS_HEAD": "residual",
+        "FOCAL_GAMMA": 2.0,
+        "LABEL_SMOOTHING": 0.1,
+        "RECON_LOSS_WEIGHT": 0.05,
+        "EPOCHS_PHASE_1": 10,
+        "FREQ_MIN_N": 80,
+        "FREQ_MAX_N": 600,
+        "ES_PATIENCE": 25,
+        "LR_SCHEDULER": "cosine_warm",
+        "PATIENCE": 15,
+        "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
+        "MSE_GATE_PERCENTILE": 0.0
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "workspaces/CFG_LTC_LONDON_V5/data/raw",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "DEFAULT": "D:\\mt5\\MetaTrader 5\\terminal64.exe",
+            "BINANCE": "BINANCE"
+        },
+        "ROUTING": {
+            "LTCUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "XRPUSDT": "BINANCE",
+            "BCHUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE"
+        },
+        "CRYPTO_BINANCE": {
+            "SYMBOLS": [
+                "LTC/USDT",
+                "BTC/USDT",
+                "ETH/USDT",
+                "XRP/USDT",
+                "BCH/USDT",
+                "DOGE/USDT"
+            ],
+            "TIMEFRAME": "1m",
+            "SINCE": "2025-01-01T00:00:00Z"
+        }
+    },
+    "LIVE_BOT": {
+        "MAX_ABSOLUTE_MSE": 0.8,
+        "MIN_PROBABILITY_THRESH": 0.57,
+        "BINANCE_EXECUTION": {
+            "LOT_SIZE": 0.5,
+            "LEVERAGE": 10
+        }
+    }
+}

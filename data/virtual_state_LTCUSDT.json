@@ -1,0 +1,18 @@
+{
+    "virtual_balance": 10000.0,
+    "virtual_ticket_counter": 1001,
+    "active_trade_loggers": {
+        "1001": {
+            "ticket": 1001,
+            "status": "OPEN",
+            "entry_price": 56.51,
+            "order_type": "MUA",
+            "volume": 0.1,
+            "sl": 53.51,
+            "tp": 62.51,
+            "entry_time": 1778030285.6951673,
+            "current_profit": 0.0
+        }
+    },
+    "history_deals": []
+}
