@@ -56,7 +56,7 @@ function checkPendingMessages() {
             if (pendingParams && pendingParams.length > 0) {
                 fs.unlinkSync(pendingPath);
 
-                let combinedQuery = "[BỐI CẢNH: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. Hãy phản hồi lại Telegram bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung>\"`. Khi hoàn tất công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --done` để báo hệ thống rảnh!]\n\n";
+                let combinedQuery = "[BỐI CẢNH BẮT BUỘC: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. MỌI PHẢN HỒI DÀNH CHO SẾP PHẢI ĐƯỢC GỬI TOÀN BỘ QUA TELEGRAM bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung_đầy_đủ>\"`. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi hoàn tất công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --done` để báo hệ thống rảnh!]\n\n";
                 pendingParams.forEach((item, index) => {
                     let cName = item.chatName || "Unknown";
                     combinedQuery += `--- Tin nhắn ${index + 1} từ "${cName}" (ID: ${item.chatId}) ---\n${item.queryToAgent}\n\n`;
@@ -269,7 +269,7 @@ async function handleMessage(message) {
          queryToAgent = `Hãy chạy phân tích thị trường (${parts.length > 1 ? text.substring(text.indexOf(' ')+1) : 'ALL'}).`;
     }
     
-    const prefix = `[BỐI CẢNH: Đây là tin nhắn từ nhóm chat/người dùng Telegram "${chatName}" (ID: ${chatId}). Hãy xử lý và trả lời lại bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi lệnh: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+    const prefix = `[BỐI CẢNH BẮT BUỘC: Đây là tin nhắn từ nhóm chat/người dùng Telegram "${chatName}" (ID: ${chatId}). MỌI CÂU TRẢ LỜI, PHÂN TÍCH HOẶC BÁO CÁO DÀNH CHO SẾP PHẢI ĐƯỢC GỬI TOÀN BỘ QUA TELEGRAM bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung_đầy_đủ>"\`. TUYỆT ĐỐI KHÔNG trả lời hay giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi chuẩn bị kết thúc toàn bộ công việc, BẮT BUỘC gọi lệnh: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
     const fullQuery = `${prefix}${queryToAgent}`;
 
     // Luôn forward thẳng tới Agent, không cần đợi rảnh
@@ -354,7 +354,7 @@ function triggerTaskBySignal(triggerId) {
                     if (!path.isAbsolute(promptPath)) promptPath = path.join(getWorkspaceRoot(), promptPath);
                     if (fs.existsSync(promptPath)) {
                         let query = fs.readFileSync(promptPath, 'utf8');
-                        let prefix = `[BỐI CẢNH: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: Trong lúc làm có thể gọi nhiều lần lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+                        let prefix = `[BỐI CẢNH BẮT BUỘC: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: MỌI PHÂN TÍCH, BÁO CÁO PHẢI ĐƯỢC GỬI ĐẦY ĐỦ QUA TELEGRAM bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung_đầy_đủ>"\`. TUYỆT ĐỐI KHÔNG trả lời trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
                         let fullQuery = `${prefix}${query}`;
                         if (!isAgentBusy) {
                             setAgentBusy();
@@ -417,7 +417,7 @@ function setupPeriodicExecution() {
                                 if (fs.existsSync(promptPath)) {
                                     console.log(`Triggering scheduled task: ${task.id}`);
                                     let query = fs.readFileSync(promptPath, 'utf8');
-                                    let prefix = `[BỐI CẢNH: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: Trong lúc làm có thể gọi nhiều lần lệnh \`python .agent/send_to_tele.py "<Nội_dung>"\`. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
+                                    let prefix = `[BỐI CẢNH BẮT BUỘC: Tác vụ định kỳ (Scheduled Task) vừa được kích hoạt.\nLưu ý: MỌI PHÂN TÍCH, BÁO CÁO PHẢI ĐƯỢC GỬI ĐẦY ĐỦ QUA TELEGRAM bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung_đầy_đủ>"\`. TUYỆT ĐỐI KHÔNG trả lời trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi đã hoàn tất toàn bộ tiến trình, BẮT BUỘC chạy lệnh cuối: \`python .agent/send_to_tele.py "<Kết_quả_cuối>" --done\` để báo hệ thống rảnh!]\n\n`;
                                     let fullQuery = `${prefix}${query}`;
                                     
                                     task.nextRunTime = now + (task.intervalMinutes * 60 * 1000);
