@@ -16,7 +16,7 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "TP_PCT": 0.004,
+        "TP_PCT": 0.005,
         "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 20,
         "LABEL_MODE": "pct",
@@ -61,9 +61,9 @@
         "NUM_LAYERS": 3,
         "BATCH_SIZE": 128,
         "LEARNING_RATE": 5e-05,
-        "WEIGHT_DECAY": 1e-4,
+        "WEIGHT_DECAY": 0.0001,
         "DROPOUT": 0.2,
-        "LAYER_DROP": 0.1,
+        "LAYER_DROP": 0.25,
         "POOLING": "mean",
         "CLS_HEAD": "residual",
         "FOCAL_GAMMA": 2.0,
@@ -114,5 +114,8 @@
             "LOT_SIZE": 0.5,
             "LEVERAGE": 10
         }
+    },
+    "DATASET": {
+        "FAST_HIT_BARS": 10
     }
 }

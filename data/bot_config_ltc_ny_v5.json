@@ -49,14 +49,14 @@
         "N_HEAD": 8,
         "NUM_LAYERS": 3,
         "BATCH_SIZE": 128,
-        "LEARNING_RATE": 5e-05,
+        "LEARNING_RATE": 3e-05,
         "WEIGHT_DECAY": 0.0001,
         "DROPOUT": 0.2,
         "LAYER_DROP": 0.1,
         "POOLING": "mean",
         "CLS_HEAD": "residual",
         "FOCAL_GAMMA": 2.0,
-        "LABEL_SMOOTHING": 0.1,
+        "LABEL_SMOOTHING": 0.0,
         "RECON_LOSS_WEIGHT": 0.05,
         "EPOCHS_PHASE_1": 10,
         "FREQ_MIN_N": 80,
@@ -65,7 +65,10 @@
         "LR_SCHEDULER": "cosine_warm",
         "PATIENCE": 15,
         "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
-        "MSE_GATE_PERCENTILE": 0.0
+        "MSE_GATE_PERCENTILE": 0.0,
+        "TP_PCT": 0.006,
+        "SL_PCT": 0.004,
+        "WINDOW_SIZE": 60
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_LTC_LONDON_V5/data/raw",

@@ -1,260 +1,5 @@
 -- No entries --
 --- STDERR ---
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[CacheManager] Lỗi: Cần cung cấp clientConfig có PAGE_ID để rebuild cache.
-[ToolExecutor] Error executing DATA_INSERT: Cannot read properties of undefined (reading 'slice')
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Parasail',
-      is_byok: false
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_CORE] Model google/gemma-4-31b-it failed: HTTP 429: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Chutes","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Together',
-      is_byok: false,
-      retry_after_seconds: 1
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Venice","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Parasail',
-      is_byok: false
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[BigLeadPlatformAPI] Lỗi gửi webhook. type=typing request_id=935cd2aa-4d3f-4dbe-a4fe-42b16fd7fd5d conversation_id=188720010999497_26787574900883185 shop_id=123971 duration_ms=3008 status=NO_RESPONSE response_body=undefined error_message=timeout of 3000ms exceeded payload={"shop_id":"123971","type":"typing","request_id":"935cd2aa-4d3f-4dbe-a4fe-42b16fd7fd5d","conversation_id":"188720010999497_26787574900883185"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[CacheManager] Lỗi: Cần cung cấp clientConfig có PAGE_ID để rebuild cache.
-[CacheManager] Lỗi: Cần cung cấp clientConfig có PAGE_ID để rebuild cache.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
-[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
-[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
-[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
-[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[DATABASE_QUERY_ERROR] {
-  text: '\n' +
-    '                SELECT config_data \n' +
-    '                FROM agent_configs \n' +
-    '                WHERE bot_id = $1 AND agent_name = $2\n' +
-    '            '
-}
-[DBEx] Lỗi lấy config cho agent FAQAgent: Error: timeout exceeded when trying to connect
-    at /opt/aibot/node_modules/pg-pool/index.js:45:11
-    at async Database.query (file:///opt/aibot/modules/database.js:68:25)
-    at async DatabaseEx.getAgentConfig (file:///opt/aibot/bot/modules/databaseex.js:214:30)
-    at async getFAQScopes (file:///opt/aibot/bot/faq/faq_db.js:118:24)
-    at async Promise.all (index 1)
-    at async CacheContext._buildKnowledgeBaseText (file:///opt/aibot/bot/modules/intent/cache/CacheContext.js:180:13)
-    at async Promise.all (index 0)
-    at async CacheContext._buildSharedBotCacheContent (file:///opt/aibot/bot/modules/intent/cache/CacheContext.js:377:123)
-    at async CacheContext._createOrUpdateCache (file:///opt/aibot/bot/modules/intent/cache/CacheContext.js:419:40)
-    at async CacheContext.getContextCache (file:///opt/aibot/bot/modules/intent/cache/CacheContext.js:486:21)
-    at async UnifiedRAGClassifier.classify (file:///opt/aibot/bot/modules/intent/UnifiedRAGClassifier.js:387:15)
-    at async runClassificationPipeline (file:///opt/aibot/bot/modules/intent/intent_dispatcher.js:85:24)
-    at async analyzeIntentAndState (file:///opt/aibot/bot/modules/pipeline.js:426:28)
-    at async processMessagePipeline (file:///opt/aibot/bot/modules/pipeline.js:224:32)
-    at async file:///opt/aibot/controllers/bigLeadController.js:730:25
-    at async BigLeadController._processChat (file:///opt/aibot/controllers/bigLeadController.js:711:13)
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Parasail',
-      is_byok: false
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_EMBEDDING] Lỗi khi tạo embedding: Invalid response format from OpenRouter
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AUTH_FAIL] Yêu cầu tới "/api/.env" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/?phpinfo=-1" BỊ CHẶN do không có session user.
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AUTH_FAIL] Yêu cầu tới "/api/test" BỊ CHẶN do không có session user.
-[AUTH_FAIL] Yêu cầu tới "/API/.env" BỊ CHẶN do không có session user.
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Parasail',
-      is_byok: false
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
-  error: {
-    message: 'Provider returned error',
-    code: 429,
-    metadata: {
-      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
-      provider_name: 'Together',
-      is_byok: false,
-      retry_after_seconds: 1
-    }
-  },
-  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
-}
-[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Novita","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
-[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
 [AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
 [AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
 [BigLeadPlatformAPI] Lỗi gửi webhook. type=typing request_id=4acd9169-eecc-43e5-a9a5-cdb3f8a49efd conversation_id=104678060945558_25798771289798949 shop_id=123971 duration_ms=3007 status=NO_RESPONSE response_body=undefined error_message=timeout of 3000ms exceeded payload={"shop_id":"123971","type":"typing","request_id":"4acd9169-eecc-43e5-a9a5-cdb3f8a49efd","conversation_id":"104678060945558_25798771289798949"}
@@ -500,6 +245,261 @@
 [ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
 [AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
 [ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[BigLead /chat] Unexpected processing error. request_id=8932c7fe-839a-41d7-909f-a6a0e1a0b0f8 conversation_id=161029812718859_26615324444827959 shop_id=123971 bot_id=64 TypeError: Cannot read properties of undefined (reading 'message')
+    at BigLeadController._processChat (file:///opt/aibot/controllers/bigLeadController.js:663:40)
+[BigLead /chat] Lỗi xử lý async. request_id=8932c7fe-839a-41d7-909f-a6a0e1a0b0f8 conversation_id=161029812718859_26615324444827959 shop_id=123971 bot_id=64 TypeError: Cannot read properties of undefined (reading 'message')
+    at BigLeadController._processChat (file:///opt/aibot/controllers/bigLeadController.js:663:40)
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
+[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
+[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
+[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
+[AI_OR_VISION] Model google/gemma-4-31b-it failed: {
+  error: {
+    message: 'Provider returned error',
+    code: 429,
+    metadata: {
+      raw: 'google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations',
+      provider_name: 'Together',
+      is_byok: false,
+      retry_after_seconds: 1
+    }
+  },
+  user_id: 'user_302gJNDDsn0IDrJSxC81RTKaRxT'
+}
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_FC] Model google/gemma-4-31b-it failed: OpenRouter Multimodal Error: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemma-4-31b-it is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"DeepInfra","is_byok":false}},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[TestPlatformAPI] No active SSE connection found for conversation 64-test-chat-64. Message not sent to client. res=null, writable=undefined
+ Chào bạn ạ. Tôi có thể giúp gì cho bạn?
+[TEST_FLOW][TEST_SENDAPI_NO_SSE] conversationId=64-test-chat-64
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[CacheManager] Lỗi: Cần cung cấp clientConfig có PAGE_ID để rebuild cache.
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[CacheManager] Lỗi: Cần cung cấp clientConfig có PAGE_ID để rebuild cache.
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[ERROR] Lỗi khi lấy danh sách nhân viên: Missing required parameters: spreadsheetId
+[BigLead /chat] Unexpected processing error. request_id=0cf402a3-e738-42f8-b382-f0fd7abfdcfb conversation_id=527729990726311_28048523644735801 shop_id=123971 bot_id=64 TypeError: Cannot read properties of undefined (reading 'message')
+    at BigLeadController._processChat (file:///opt/aibot/controllers/bigLeadController.js:663:40)
+[BigLead /chat] Lỗi xử lý async. request_id=0cf402a3-e738-42f8-b382-f0fd7abfdcfb conversation_id=527729990726311_28048523644735801 shop_id=123971 bot_id=64 TypeError: Cannot read properties of undefined (reading 'message')
+    at BigLeadController._processChat (file:///opt/aibot/controllers/bigLeadController.js:663:40)
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[AI_CORE] Model google/gemma-4-31b-it failed: OpenRouter timeout after 30000ms
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AI_CORE] Model google/gemma-4-26b-a4b-it failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.5-flash-02-23 failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model qwen/qwen3.6-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Model deepseek/deepseek-v4-flash failed: OpenRouter timeout after 30000ms
+[AI_CORE] Tất cả OR models đều lỗi: OpenRouter timeout after 30000ms
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[Assistant] Primary model failed: OpenRouter API error 404: {"error":{"message":"The free model has been deprecated. Transition to qwen/qwen3.6-plus for continued paid access.","code":404},"user_id":"user_302gJNDDsn0IDrJSxC81RTKaRxT"}. Trying fallback...
+[AUTH_FAIL] Yêu cầu tới "/" BỊ CHẶN do không có session user.
 
 
 --- STDERR OUTPUT ---

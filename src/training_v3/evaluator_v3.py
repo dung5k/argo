@@ -135,6 +135,13 @@ class WinRateEvaluatorV3:
 
     def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float) -> EpochEvalResultV3:
         # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Buy, 2=Sideway
+        
+        # Đảm bảo trung bình 2 lệnh/ngày. Giả định trung bình 1 phiên có 400 nến (phút).
+        val_size = logits.shape[0]
+        val_days = max(1.0, val_size / 400.0)
+        dynamic_min_N = int(val_days * 2.0)
+        self.freq_min_N = dynamic_min_N
+        
         probs = torch.softmax(logits, dim=1)
         prob_sell = probs[:, 0]
         prob_buy = probs[:, 1]

@@ -21,7 +21,7 @@
         "MAX_HOLD_BARS": 20,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 30,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "ZERO_NOISE_TARGET": false,
@@ -65,7 +65,10 @@
         "LR_SCHEDULER": "cosine_warm",
         "PATIENCE": 15,
         "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
-        "MSE_GATE_PERCENTILE": 0.0
+        "MSE_GATE_PERCENTILE": 0.0,
+        "TP_PCT": 0.004,
+        "SL_PCT": 0.003,
+        "WINDOW_SIZE": 30
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_LTC_LONDON_V5/data/raw",

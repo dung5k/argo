@@ -14,9 +14,9 @@ def get_bridge_port():
         pass
     return None
 
-def get_telegram_config():
+def get_telegram_config(target_channels=None):
     token = ""
-    chat_id = ""
+    default_chat_id = ""
     try:
         agent_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(agent_dir)
@@ -25,25 +25,63 @@ def get_telegram_config():
             import re
             with open(settings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.teleBotToken"\\s*:\\s*"([^"]+)"', content)
             if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
-            if m: chat_id = m.group(1)
+            m = re.search(r'"antigravityBridge\\.whitelistChatIds"\\s*:\\s*"([^"]+)"', content)
+            if m: default_chat_id = m.group(1)
     except Exception:
         pass
         
     if not token:
         token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    if not chat_id:
-        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not default_chat_id:
+        default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
         
-    return token, chat_id
+    chat_ids = []
+    try:
+        agent_dir = os.path.dirname(os.path.abspath(__file__))
+        network_config_path = os.path.join(agent_dir, "network_config.json")
+        network_data = {}
+        if os.path.exists(network_config_path):
+            with open(network_config_path, "r", encoding="utf-8") as f:
+                network_data = json.load(f)
+                
+        agent_identity = network_data.get("agent_identity", "Antigravity")
+        channels_dict = network_data.get("channels", {})
+        
+        if target_channels is None:
+            target_channels = network_data.get("default_broadcast", [])
+            if isinstance(target_channels, list):
+                target_channels = ",".join(target_channels)
+                
+        if target_channels and target_channels.lower() == "all":
+            for ch_key, ch_info in channels_dict.items():
+                if "chat_id" in ch_info:
+                    chat_ids.append(ch_info["chat_id"])
+        elif target_channels:
+            for ch in target_channels.split(","):
+                ch = ch.strip()
+                if not ch: continue
+                if ch in channels_dict and "chat_id" in channels_dict[ch]:
+                    chat_ids.append(channels_dict[ch]["chat_id"])
+                else:
+                    if ch.startswith("-") or ch.isdigit():
+                        chat_ids.append(ch)
+    except Exception as e:
+        pass
+        
+    if not chat_ids and default_chat_id:
+        chat_ids = [c.strip() for c in default_chat_id.split(",") if c.strip()]
+        
+    chat_ids = list(set(chat_ids))
+        
+    return token, ",".join(chat_ids), agent_identity
 
-def send_via_bridge(content, is_done=False, token="", chat_id=""):
+def send_via_bridge(content, is_done=False, token="", chat_id="", agent_identity="Antigravity"):
     port = get_bridge_port()
     if port is None: return False
     url = f'http://127.0.0.1:{port}/send-telegram'
-    data = json.dumps({'text': content, 'done': is_done, 'token': token, 'chat_id': chat_id}).encode('utf-8')
+    data = json.dumps({'text': content, 'done': is_done, 'token': token, 'chat_id': chat_id, 'agent_identity': agent_identity}).encode('utf-8')
     headers = {'Content-Type': 'application/json'}
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
@@ -61,13 +99,13 @@ def signal_done_to_extension():
     except:
         pass
 
-def send_via_telegram_api(content, is_done=False):
-    token, chat_ids = get_telegram_config()
+def send_via_telegram_api(content, is_done=False, target_channels=None):
+    token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if not token or not chat_ids:
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
         return False
     
-    text = f"🤖 Antigravity:\n\n{content}"
+    text = f"🤖 {agent_identity}:\n\n{content}"
     success = False
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
@@ -87,14 +125,33 @@ def send_via_telegram_api(content, is_done=False):
     
     return success
 
-def send_to_telegram(content, is_done=False):
+def send_to_telegram(content, is_done=False, target_channels=None):
     if not content: return
-    token, chat_ids = get_telegram_config()
-    if send_via_bridge(content, is_done, token, chat_ids): return
-    send_via_telegram_api(content, is_done)
+    token, chat_ids, agent_identity = get_telegram_config(target_channels)
+    if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
+    send_via_telegram_api(content, is_done, target_channels)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
+    
     is_done = '--done' in sys.argv
-    content = sys.argv[1]
-    send_to_telegram(content, is_done)
+    if is_done:
+        sys.argv.remove('--done')
+        
+    target_channels = None
+    if '--channel' in sys.argv:
+        idx = sys.argv.index('--channel')
+        if idx + 1 < len(sys.argv):
+            target_channels = sys.argv[idx + 1]
+            sys.argv.pop(idx + 1)
+        sys.argv.pop(idx)
+        
+    if '--target' in sys.argv:
+        idx = sys.argv.index('--target')
+        if idx + 1 < len(sys.argv):
+            target_channels = sys.argv[idx + 1]
+            sys.argv.pop(idx + 1)
+        sys.argv.pop(idx)
+        
+    content = sys.argv[1] if len(sys.argv) > 1 else ""
+    send_to_telegram(content, is_done, target_channels)

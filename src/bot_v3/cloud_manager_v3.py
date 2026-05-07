@@ -101,15 +101,32 @@ class V3CloudManager:
                             scaler_cloud_path = self._download_file(self.dataset_repo, f"workspaces/data/{config_id}/scaler_{cfg_id_pure}.pkl")
             local_scaler_path = self._save_to_data_dir(scaler_cloud_path, f"scaler_{cfg_id_pure}.pkl")
             
-            # Extract features logic
-            scaler_obj = joblib.load(local_scaler_path)
-            if hasattr(scaler_obj, "feature_names_in_"):
-                scaler_feats = list(scaler_obj.feature_names_in_)
-            elif isinstance(scaler_obj, dict):
-                if "feature_names" in scaler_obj:
-                    scaler_feats = list(scaler_obj["feature_names"])
-                elif "column_order" in scaler_obj:
-                    scaler_feats = list(scaler_obj["column_order"])
+            # Auto-convert numpy 2.x pickled scaler to JSON using global Python
+            import subprocess
+            import json
+            py39_path = r"C:\Users\GiggaMan\AppData\Local\Programs\Python\Python39\python.exe"
+            script_path = os.path.join(self.safe_script_dir, "fix_scalers.py")
+            if os.path.exists(py39_path) and os.path.exists(script_path):
+                subprocess.run([py39_path, script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            json_path = local_scaler_path.replace(".pkl", ".json")
+            if os.path.exists(json_path):
+                with open(json_path, "r") as f:
+                    scaler_data = json.load(f)
+                scaler_obj = scaler_data.get("scaler", {})
+                if "feature_names_in_" in scaler_obj:
+                    scaler_feats = list(scaler_obj["feature_names_in_"])
+                elif "column_order" in scaler_data and scaler_data["column_order"]:
+                    scaler_feats = list(scaler_data["column_order"])
+            else:
+                scaler_obj = joblib.load(local_scaler_path)
+                if hasattr(scaler_obj, "feature_names_in_"):
+                    scaler_feats = list(scaler_obj.feature_names_in_)
+                elif isinstance(scaler_obj, dict):
+                    if "feature_names" in scaler_obj:
+                        scaler_feats = list(scaler_obj["feature_names"])
+                    elif "column_order" in scaler_obj:
+                        scaler_feats = list(scaler_obj["column_order"])
                 
         except Exception as e:
             self.log_callback(f"[CloudManagerV3] ❌ Lỗi tải Scaler: {e}")

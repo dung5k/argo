@@ -60,18 +60,36 @@ class V3DataProcessor:
                 zero_noise_target=fe_cfg.get('ZERO_NOISE_TARGET', False)
             )
             
-            # Load scaler (hỗ trợ cả format cũ và mới)
-            raw_pickle = joblib.load(self.scaler_path)
-            if isinstance(raw_pickle, dict) and "scaler" in raw_pickle:
-                # Format mới: dict {scaler, column_order}
-                self.fe.scaler = raw_pickle["scaler"]
+            # Load scaler (hỗ trợ cả json format mới)
+            json_path = self.scaler_path.replace(".pkl", ".json")
+            if os.path.exists(json_path):
+                import json
+                import numpy as np
+                from sklearn.preprocessing import RobustScaler
+                with open(json_path, "r") as f:
+                    raw_pickle = json.load(f)
+                
+                scaler_dict = raw_pickle.get("scaler", {})
+                self.fe.scaler = RobustScaler()
+                if "center_" in scaler_dict:
+                    self.fe.scaler.center_ = np.array(scaler_dict["center_"])
+                if "scale_" in scaler_dict:
+                    self.fe.scaler.scale_ = np.array(scaler_dict["scale_"])
+                if "feature_names_in_" in scaler_dict:
+                    self.fe.scaler.feature_names_in_ = np.array(scaler_dict["feature_names_in_"])
+                
                 self.saved_column_order = raw_pickle.get("column_order", None)
-                self.log_callback(f"[DataProcessorV3] 📐 Column order loaded: {len(self.saved_column_order)} cột")
+                self.log_callback(f"[DataProcessorV3] 📐 JSON Column order loaded: {len(self.saved_column_order) if self.saved_column_order else 0} cột")
             else:
-                # Format cũ: chỉ có scaler object
-                self.fe.scaler = raw_pickle
-                self.saved_column_order = None
-                self.log_callback("[DataProcessorV3] ⚠️ Scaler format cũ (không có column_order). Dùng thứ tự mặc định.")
+                raw_pickle = joblib.load(self.scaler_path)
+                if isinstance(raw_pickle, dict) and "scaler" in raw_pickle:
+                    self.fe.scaler = raw_pickle["scaler"]
+                    self.saved_column_order = raw_pickle.get("column_order", None)
+                    self.log_callback(f"[DataProcessorV3] 📐 Column order loaded: {len(self.saved_column_order) if self.saved_column_order else 0} cột")
+                else:
+                    self.fe.scaler = raw_pickle
+                    self.saved_column_order = None
+                    self.log_callback("[DataProcessorV3] ⚠️ Scaler format cũ (không có column_order). Dùng thứ tự mặc định.")
             self.fe.is_fitted = True
             
             self.log_callback("[DataProcessorV3] ✅ FeatureEngineeringV3 sẵn sàng.")
