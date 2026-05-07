@@ -186,9 +186,6 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
             n_skip_nan += 1
             continue
 
-        X_list.append(window)
-        Y_list.append(target_label)
-
         # Xác định split: 0=train, 1=val, -1=drop (embargo)
         if monthly_split:
             ym = (target_time.year, target_time.month)
@@ -216,6 +213,8 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
             n_skip_embargo += 1
             continue
             
+        X_list.append(window)
+        Y_list.append(target_label)
         split_list.append(split_class)
 
     print(f"  Bỏ qua (ngoài session): {n_skip_session:,}", flush=True)
