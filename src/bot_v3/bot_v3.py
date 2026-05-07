@@ -154,12 +154,7 @@ def _send_raw_tg(msg):
         report = ""
         if G_CURRENT_PRICE > 0:
             report += f"\n💰 Giá hiện tại: {G_CURRENT_PRICE:,.2f}"
-        
-        if tm and hasattr(tm, 'get_active_positions_report'):
-            pnl_report = tm.get_active_positions_report()
-            if pnl_report:
-                report += f"\n📊 {pnl_report}"
-        
+            
         prefix = f"[{TARGET_SYMBOL}] "
         clean_msg = msg.replace(prefix, "").replace(f"[{TARGET_SYMBOL}]", "").strip()
         full_msg = prefix + clean_msg + report
