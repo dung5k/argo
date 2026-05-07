@@ -578,8 +578,9 @@ def bot_background_loop():
             pos_rpt = trade_manager.get_active_positions_report()
             if pos_rpt:
                 msg_pred += f"\n{pos_rpt}"
-        if hasattr(trade_manager, 'get_daily_pnl_summary'):
-            msg_pred += f"\n{trade_manager.get_daily_pnl_summary()}"
+        if hasattr(trade_manager, '_get_daily_pnl'):
+            daily_pnl = trade_manager._get_daily_pnl()
+            msg_pred += f"\nLãi/Lỗ trong ngày: {daily_pnl:+.2f}$"
 
         print(f"[BOT V3] {msg_pred}")
         # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
