@@ -66,12 +66,43 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
 ---
 
 ## BƯỚC 2: Quản lý Hàng Đợi & Chuẩn bị Dữ Liệu
-(Tương tự quy trình chuẩn V5)
+
+Kiểm tra thư mục `workspaces/CFG_XAG_LONDON_V5/runs/`:
+- Tìm run có `data/tensors/X_train_*.npy` nhưng CHƯA có `results/training_metrics_v3.json` → đây là **Hàng Đợi**.
+
+**Xử lý:**
+- **ĐÃ CÓ HÀNG ĐỢI:** Không chuẩn bị thêm, chuyển sang Bước 3.
+- **HÀNG ĐỢI RỖNG:** Tạo run mới:
+  1. Sinh RUN_ID: `run_YYYYMMDD_HHMMSS_v5_london_<tên_ý_tưởng>` (VD: `run_20260507_120000_v5_tp35_fast10`)
+  2. Tạo thư mục: `workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/`
+  3. **Sao chép và chỉnh sửa config:**
+     ```powershell
+     Copy-Item data/bot_config_xag_london_v5.json workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/config.json
+     # Chỉnh sửa config.json với các tham số tối ưu hóa đã đề xuất ở Bước 1
+     ```
+  4. **Build dataset và copy tensors:**
+     ```powershell
+     python scripts/prepare_v3_dataset.py --config workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/config.json --fast-hit-bars <N> --no-upload --monthly-split
+     Copy-Item workspaces/CFG_XAG_LONDON_V5/data/tensors/* workspaces/CFG_XAG_LONDON_V5/runs/<RUN_ID>/data/tensors/
+     ```
 
 ---
 
 ## BƯỚC 3: Giám sát & Điều phối Huấn luyện
-(Tương tự quy trình chuẩn V5)
+
+1. **Giám sát tiến trình:**
+   ```powershell
+   Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%train_v3.py%'"
+   ```
+   - Nếu có tiến trình đang chạy: Kiểm tra `train_v3.log` trong run đó, xác nhận Score vẫn đang được cập nhật → thông báo Telegram và gọi `--done`.
+   - Nếu tiến trình bị treo hoặc kết thúc lỗi: Kill tiến trình, xóa thư mục run lỗi và chuẩn bị lại.
+
+2. **Điều phối:**
+   - **HỆ THỐNG BUSY:** Thông báo tiến độ run hiện tại, gọi `--done`.
+   - **HỆ THỐNG IDLE:** Lấy run tiếp theo từ Hàng Đợi và phát lệnh:
+     ```powershell
+     Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_xag_london_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py xag_london_v5_training_done`""" -WorkingDirectory "D:\DungLA\Argo"
+     ```
 
 ---
 
