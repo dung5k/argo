@@ -3,6 +3,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const mqtt = require('mqtt');
 
 function logDebug(msg) {
     try {
@@ -24,6 +25,8 @@ let activationTime = Math.floor(Date.now() / 1000);
 
 let isAgentBusy = false;
 let busyTimeout = null;
+
+let mqttClient = null;
 
 function setAgentBusy() {
     isAgentBusy = true;
@@ -98,7 +101,7 @@ function getWorkspaceRoot() {
 }
 
 // Custom Config Fetcher
-function getAgentIdentity() {
+function getNetworkConfig() {
     try {
         const config = vscode.workspace.getConfiguration('antigravityBridge');
         const root = getWorkspaceRoot();
@@ -108,11 +111,75 @@ function getAgentIdentity() {
         }
         const netPath = path.join(workingDir, 'network_config.json');
         if (fs.existsSync(netPath)) {
-            const data = JSON.parse(fs.readFileSync(netPath, 'utf8'));
-            if (data.agent_identity) return data.agent_identity;
+            return JSON.parse(fs.readFileSync(netPath, 'utf8'));
         }
     } catch(e) {}
+    return null;
+}
+
+function getAgentIdentity() {
+    const data = getNetworkConfig();
+    if (data && data.agent_identity) return data.agent_identity;
     return "Antigravity";
+}
+
+function setupMQTT() {
+    if (mqttClient) {
+        mqttClient.end();
+        mqttClient = null;
+    }
+    const netConfig = getNetworkConfig();
+    if (!netConfig || !netConfig.mqtt_broker) return;
+    
+    const brokerUrl = netConfig.mqtt_broker;
+    const baseTopic = netConfig.mqtt_base_topic || "argo/network/v1/agents";
+    const identity = netConfig.agent_identity || "Antigravity";
+    const inboxTopic = `${baseTopic}/${identity}/inbox`;
+
+    logDebug(`[MQTT] Connecting to ${brokerUrl}...`);
+    try {
+        mqttClient = mqtt.connect(brokerUrl, {
+            clientId: `bridge_${identity}_${Math.random().toString(16).substr(2, 8)}`,
+            keepalive: 60,
+            reconnectPeriod: 5000
+        });
+
+        mqttClient.on('connect', () => {
+            logDebug(`[MQTT] Connected. Subscribing to ${inboxTopic}`);
+            mqttClient.subscribe(inboxTopic);
+            vscode.window.showInformationMessage(`MQTT Connected. Listening as ${identity}`);
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            const text = message.toString();
+            logDebug(`[MQTT INBOX] Topic: ${topic} | Msg: ${text}`);
+            let cmd = text;
+            let sender = "MQTT Agent";
+            try {
+                let payload = JSON.parse(text);
+                if (payload.from) sender = payload.from;
+                if (payload.command) cmd = payload.command;
+            } catch(e) {}
+            
+            const prefix = `[BỐI CẢNH BẮT BUỘC: Đây là lệnh được truyền ngầm qua mạng nội bộ (MQTT) từ Agent "${sender}". MỌI BÁO CÁO KẾT QUẢ DÀNH CHO SẾP (người giám sát) PHẢI ĐƯỢC GỬI QUA TELEGRAM bằng lệnh \`python .agent/send_to_tele.py "<Nội_dung_đầy_đủ>"\`. Khác với lệnh từ Sếp, nếu đây là một yêu cầu im lặng (vd: sync file), bạn có thể chỉ làm và không cần gửi Tele nếu không thực sự cần. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE. Khi xong việc, BẮT BUỘC gọi lệnh: \`python .agent/send_to_tele.py "<Kết_quả_báo_cáo_nếu_có>" --done\` để báo hệ thống rảnh!]\n\n`;
+            const fullQuery = `${prefix}${cmd}`;
+            
+            if (!isAgentBusy) {
+                setAgentBusy();
+                vscode.commands.executeCommand('antigravity.sendPromptToAgentPanel', fullQuery).then(() => {
+                    try { vscode.commands.executeCommand('antigravity.agentSidePanel.focus'); } catch(e){}
+                }).catch(() => freeAgent());
+            } else {
+                queueMessage(getActiveChatIds()[0] || '', fullQuery, "MQTT Sender: " + sender);
+            }
+        });
+
+        mqttClient.on('error', (err) => {
+            logDebug(`[MQTT ERROR] ${err}`);
+        });
+    } catch(e) {
+        logDebug(`[MQTT SETUP ERROR] ${e}`);
+    }
 }
 
 function getConfig() {
@@ -572,6 +639,32 @@ function startBridgeServer() {
                     res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
                 }
             });
+        } else if (req.method === 'POST' && req.url === '/send-mqtt') {
+            let body = '';
+            req.on('data', chunk => body += chunk.toString());
+            req.on('end', () => {
+                try {
+                    let task = JSON.parse(body);
+                    let targetAgent = task.target;
+                    let cmd = task.command;
+                    let config = getNetworkConfig();
+                    if (!config || !config.mqtt_broker || !mqttClient) {
+                        res.writeHead(500); res.end(JSON.stringify({ error: 'MQTT not configured or connected' }));
+                        return;
+                    }
+                    let baseTopic = config.mqtt_base_topic || "argo/network/v1/agents";
+                    let topic = `${baseTopic}/${targetAgent}/inbox`;
+                    let payload = JSON.stringify({
+                        from: config.agent_identity || "Antigravity",
+                        command: cmd
+                    });
+                    mqttClient.publish(topic, payload);
+                    logDebug(`[MQTT OUT] Sent to ${targetAgent}: ${cmd}`);
+                    res.writeHead(200); res.end(JSON.stringify({ status: 'success' }));
+                } catch(e) {
+                    res.writeHead(500); res.end(JSON.stringify({ error: e.toString() }));
+                }
+            });
         } else {
             res.writeHead(404);
             res.end('Not found');
@@ -812,6 +905,7 @@ function activate(context) {
     setupPeriodicExecution();
     setupTypingIndicator();
     setupDoneFileWatcher();
+    setupMQTT();
 
     let cmdRestart = vscode.commands.registerCommand('auto-click-bridge.restart', function () {
         isAgentBusy = false;
@@ -824,6 +918,7 @@ function activate(context) {
         pollTelegram();
         setupPeriodicExecution();
         setupTypingIndicator();
+        setupMQTT();
         vscode.window.showInformationMessage('Bridge Bot restarted & Agent state freed successfully.');
     });
     
@@ -841,6 +936,7 @@ function activate(context) {
         if (e.affectsConfiguration('antigravityBridge')) {
             setupPeriodicExecution();
             setupTypingIndicator();
+            setupMQTT();
             vscode.window.showInformationMessage('Antigravity Bridge configuration updated. No reload needed.');
         }
     });
@@ -852,6 +948,7 @@ function deactivate() {
     if (periodicIntervalId) clearInterval(periodicIntervalId);
     if (typingIntervalId) clearInterval(typingIntervalId);
     if (doneFileWatcher) clearInterval(doneFileWatcher);
+    if (mqttClient) mqttClient.end();
 }
 
 module.exports = {
