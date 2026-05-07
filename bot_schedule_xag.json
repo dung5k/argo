@@ -6,22 +6,22 @@
         "asian": {
             "start": "00:00",
             "end": "07:00",
-            "run_id": "run_20260424_040300_v3_k",
-            "config_id": "CFG_XAG_ASIAN_V3_5",
+            "run_id": "run_20260507_040000_v5_asian_ld02_pure",
+            "config_id": "CFG_XAG_ASIAN_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
-                "min_prob_thresh": 0.70,
+                "min_prob_thresh": 0.62,
                 "mse_thresh_perc": 70.0
             }
         },
         "london": {
             "start": "07:00",
             "end": "13:00",
-            "run_id": "run_20260424_040300_v3_k",
-            "config_id": "CFG_XAG_ASIAN_V3_5",
+            "run_id": "run_20260507_093000_v5_london_attn_tp05_pure",
+            "config_id": "CFG_XAG_LONDON_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
-                "min_prob_thresh": 0.70,
+                "min_prob_thresh": 0.65,
                 "mse_thresh_perc": 70.0
             }
         },
