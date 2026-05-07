@@ -11,9 +11,21 @@ Danh sách chi tiết được cấu hình tại file `network_config.json`. Dư
   - **Mặc định:** Đây là kênh mặc định (`default_broadcast`) nhận các báo cáo nếu không có đích đến cụ thể.
 
 - **sep_agent2 (Sếp ↔ Agent 2):**
-  - **Mô tả:** Kênh giao tiếp trực tiếp giữa Sếp và Agent 2 (chạy trên Máy nhánh/Auto-Tuning).
+  - **Mô tả:** Kênh giao tiếp trực tiếp giữa Sếp và Agent 2.
 
-## 2. Giao Thức Liên Lạc (Communication Protocol)
+## 2. Phân Công Vai Trò (Agent Roles)
+
+Để tối ưu hóa luồng công việc đa máy trạm, hệ thống phân chia rõ nhiệm vụ cốt lõi của từng Agent như sau:
+
+- **Argo1 (Máy Chính):**
+  - Đảm nhiệm giám sát, giao dịch và tối ưu hóa hệ thống Bot cho cặp tiền **LTC (Litecoin)**.
+  - Xử lý các tác vụ quản trị cốt lõi và làm tổng trạm cho các tác vụ toàn cục.
+
+- **Argo2 (Máy Nhánh / Auto-Tuning):**
+  - **Nhiệm vụ ĐỘC QUYỀN:** Chịu trách nhiệm hoàn toàn về việc huấn luyện (training), backtest và tối ưu hóa siêu tham số (Hyperparameter tuning) cho các mô hình AI dự đoán cặp tiền **XAG (Bạc)**.
+  - Không can thiệp vào tiến trình của LTC. Khi có kết quả huấn luyện XAG tốt, Argo2 sẽ báo cáo cho Sếp hoặc bắn lệnh qua mạng ngầm MQTT cho Argo1.
+
+## 3. Giao Thức Liên Lạc (Communication Protocol)
 
 Mỗi khi một Agent muốn báo cáo công việc hoặc ra lệnh cho thực thể khác, nó sẽ sử dụng hệ thống Telegram Router (thông qua `send_to_tele.py`).
 
@@ -32,5 +44,5 @@ python .agent/send_to_tele.py "🚨 CẢNH BÁO TỪ MÁY CHÍNH: Dừng mọi t
 python .agent/send_to_tele.py "Thông báo chung cho cả 2 Agent" --channel sep_agent1,sep_agent2
 ```
 
-## 3. Quản Trị Cấu Hình
+## 4. Quản Trị Cấu Hình
 Khi có nhóm chat mới (kênh mới) được tạo ra trong Telegram, người dùng chỉ cần thêm ID của nhóm chat tương ứng vào phần `channels` của `network_config.json`. Các Agent sẽ tự động cập nhật danh bạ này để giao tiếp chuẩn xác.
