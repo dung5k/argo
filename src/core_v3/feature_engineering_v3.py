@@ -491,6 +491,19 @@ class FeatureEngineeringV3:
                                 f_macro[f"{sym}_bb_zscore"] = vol_macro['bb_zscore']
                             if "chop_14" in req_features:
                                 f_macro[f"{sym}_chop_14"] = vol_macro['chop_14']
+
+                        # [MỚI V5] Thêm Momentum cho Macro
+                        if any(f in req_features for f in ["rsi_14", "rsi_5", "macd_hist", "momentum_10"]) and m_close:
+                            mom_macro = self.calculate_momentum(df, m_close)
+                            if "rsi_14" in req_features:
+                                f_macro[f"{sym}_rsi_14"] = mom_macro['rsi_14_scaled']
+                            if "rsi_5" in req_features:
+                                f_macro[f"{sym}_rsi_5"] = mom_macro['rsi_5_scaled']
+                            if "macd_hist" in req_features:
+                                f_macro[f"{sym}_macd_hist"] = mom_macro['macd_hist']
+                            if "momentum_10" in req_features:
+                                # Tính momentum đơn giản: log ret 10 nến
+                                f_macro[f"{sym}_momentum_10"] = np.log((df[m_close] / df[m_close].shift(10).bfill()) + 1e-6)
                             
                         if "volume" in req_features:
                             m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower()) or cols.get(f"{sym_clean}_volume".lower()) or cols.get(f"{sym_clean}_tick_volume".lower())
