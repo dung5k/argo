@@ -23,12 +23,12 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_ny_v5_aut
 | Features | 24 (ZERO_NOISE=True) | **43 (ZERO_NOISE=False)** | Có đầy đủ RSI/MACD/Momentum |
 | Model size | D_MODEL=64, 1 layer | **D_MODEL=128, 3 layers** | Học được pattern phức tạp hơn |
 | Loss function | CE loss | **Focal Loss (gamma=2.0) + Label Smoothing** | Tập trung vào mẫu khó |
-| TP/SL | 0.3%/0.3% | **0.35%/0.35%** | Phù hợp hơn với volatility của XAG phiên New York |
+| TP/SL | 0.3%/0.3% | **0.6%/0.4%** | Phù hợp hơn với chiến thuật lướt sóng nhanh (bắt chước LTC) |
 
 ### Cách Build Dataset V5 (BẮT BUỘC dùng flag --monthly-split)
 ```powershell
 # Build dataset với Monthly 2/3-1/3 split
-python scripts/prepare_v3_dataset.py --config data/bot_config_xag_ny_v5.json --fast-hit-bars 10 --no-upload --monthly-split
+python scripts/prepare_v3_dataset.py --config data/bot_config_xag_ny_v5.json --fast-hit-bars 8 --no-upload --monthly-split
 
 # Sau đó copy tensors vào run directory:
 $run_dir = "workspaces/CFG_XAG_NY_V5/runs/<RUN_ID>"
@@ -68,13 +68,13 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
 
 4. **Đề xuất ý tưởng tối ưu hóa (ÍT NHẤT 1 ý tưởng mới):**
    
-   **KHO VŨ KHÍ V5:**
-   - *FAST_HIT_BARS:* Thử 8, 10, 12 — calibrate tần suất vào lệnh.
-   - *TP/SL:* Thử 0.0035/0.0035, 0.004/0.0035, 0.005/0.004.
-   - *MACRO_FEATURES:* Thử bỏ các cặp coin phụ, chỉ giữ XAU+DXY để giảm nhiễu.
-   - *WINDOW_SIZE:* Thử 60 hoặc 45.
-   - *Architecture:* Thử `POOLING=attention` thay vì `mean` để focus vào nến quan trọng.
-   - *LAYER_DROP:* Thử 0.15, 0.2 để tăng tính tổng quát hóa.
+   **KHO VŨ KHÍ V5 (PHONG CÁCH ĐÁNH NHANH NHƯ LTC):**
+   - *FAST_HIT_BARS:* Thử 3, 5, 8 — New York nhanh nên cần bộ lọc thời gian ngắn để bắt sóng gắt.
+   - *TP/SL:* Thử 0.005/0.004, 0.006/0.004, 0.007/0.005.
+   - *MACRO_FEATURES:* Thử bỏ các cặp phụ, chỉ giữ XAU+DXY để giảm nhiễu.
+   - *WINDOW_SIZE:* Thử 60, 45, 90.
+   - *Architecture:* Thử `POOLING=mean`, NUM_LAYERS=2 hoặc 3.
+   - *LAYER_DROP:* Thử 0.1, 0.15 (Giảm kháng nhiễu để học nhanh hơn).
    
    **NGUYÊN TẮC VÀNG V5:** Thay đổi TỐI ĐA 2 tham số mỗi lần. Ưu tiên thay đổi `TP/SL` và `FAST_HIT_BARS` trước vì chúng ảnh hưởng trực tiếp đến **chất lượng nhãn**.
 
