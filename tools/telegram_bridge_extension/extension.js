@@ -118,8 +118,13 @@ function getNetworkConfig() {
 }
 
 function getAgentIdentity() {
-    const data = getNetworkConfig();
-    if (data && data.agent_identity) return data.agent_identity;
+    try {
+        const config = vscode.workspace.getConfiguration('antigravityBridge');
+        let identity = config.get('agentIdentity');
+        if (identity && identity.trim() !== '') {
+            return identity.trim();
+        }
+    } catch(e) {}
     return "Antigravity";
 }
 
@@ -133,7 +138,7 @@ function setupMQTT() {
     
     const brokerUrl = netConfig.mqtt_broker;
     const baseTopic = netConfig.mqtt_base_topic || "argo/network/v1/agents";
-    const identity = netConfig.agent_identity || "Antigravity";
+    const identity = getAgentIdentity();
     const inboxTopic = `${baseTopic}/${identity}/inbox`;
 
     logDebug(`[MQTT] Connecting to ${brokerUrl}...`);
@@ -655,7 +660,7 @@ function startBridgeServer() {
                     let baseTopic = config.mqtt_base_topic || "argo/network/v1/agents";
                     let topic = `${baseTopic}/${targetAgent}/inbox`;
                     let payload = JSON.stringify({
-                        from: config.agent_identity || "Antigravity",
+                        from: getAgentIdentity(),
                         command: cmd
                     });
                     mqttClient.publish(topic, payload);

@@ -59,14 +59,17 @@ if __name__ == '__main__':
     # 2. Tự động tường thuật hành động lên Telegram Group ARGO1-ARGO2 (-5144257068)
     if success:
         try:
-            # Lấy tên mình từ network_config
+            # Lấy tên mình từ settings.json
+            import re
             agent_dir = os.path.dirname(os.path.abspath(__file__))
-            net_cfg = os.path.join(agent_dir, "network_config.json")
+            project_root = os.path.dirname(agent_dir)
+            settings_file = os.path.join(project_root, ".vscode", "settings.json")
             my_identity = "Antigravity"
-            if os.path.exists(net_cfg):
-                with open(net_cfg, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    my_identity = data.get("agent_identity", "Antigravity")
+            if os.path.exists(settings_file):
+                with open(settings_file, "r", encoding="utf-8") as f:
+                    content = f.read()
+                m = re.search(r'"antigravityBridge\\\\.agentIdentity"\\\\s*:\\\\s*"([^"]+)"', content)
+                if m: my_identity = m.group(1)
             
             narration = f"Đã gửi yêu cầu MQTT ngầm tới **{target_agent}**: '{command_text}'"
             
