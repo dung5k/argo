@@ -68,7 +68,15 @@ class V3VirtualTradeManager:
                 
             self.virtual_balance = state.get("virtual_balance", 10000.0)
             self.virtual_ticket_counter = state.get("virtual_ticket_counter", 1000)
-            self.active_trade_loggers = state.get("active_trade_loggers", {})
+            
+            # Khôi phục keys thành int (vì JSON luôn lưu key dưới dạng string)
+            loaded_loggers = state.get("active_trade_loggers", {})
+            self.active_trade_loggers = {}
+            for k, v in loaded_loggers.items():
+                try:
+                    self.active_trade_loggers[int(k)] = v
+                except Exception:
+                    self.active_trade_loggers[k] = v
             
             # Deserialize history_deals
             self.history_deals = []
@@ -190,10 +198,15 @@ class V3VirtualTradeManager:
 
     def close_mt5_position(self, pos_or_ticket, close_reason: str = "AAMT V3 Signal") -> bool:
         # Nếu truyền vào ticket (do ta mô phỏng)
-        ticket = pos_or_ticket if isinstance(pos_or_ticket, int) else pos_or_ticket.get("ticket")
+        ticket = pos_or_ticket if isinstance(pos_or_ticket, (int, str)) else pos_or_ticket.get("ticket")
         if not ticket: return False
         
         pos = self.active_trade_loggers.get(ticket)
+        if not pos:
+            pos = self.active_trade_loggers.get(str(ticket))
+        if not pos:
+            pos = self.active_trade_loggers.get(int(ticket))
+            
         if not pos: return False
         
         # Vì đây là lệnh do AI đóng (Đảo chiều), ta coi giá đóng = Entry Price để đơn giản, 
@@ -319,6 +332,9 @@ class V3VirtualTradeManager:
 
         for t in closed_tickets:
             self.active_trade_loggers.pop(t, None)
+            
+        if closed_tickets:
+            self._save_state()
 
         if not has_open and not just_closed:
             now = time.time()
