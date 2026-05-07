@@ -25,7 +25,7 @@ class TelegramBot:
     def _call(self, method: str, payload: dict = None, timeout: int = 10) -> Optional[dict]:
         url = self.BASE.format(token=self.token, method=method)
         try:
-            data = json.dumps(payload or {}).encode("utf-8")
+            data = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
             req = urllib.request.Request(
                 url, data=data,
                 headers={"Content-Type": "application/json"},
