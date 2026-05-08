@@ -28,11 +28,11 @@
         "ny": {
             "start": "13:00",
             "end": "23:59",
-            "run_id": "run_20260507_145500_v5_ny_freq_init",
+            "run_id": "run_20260507_264500_v5_ny_impulse_nitro",
             "config_id": "CFG_XAG_NY_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
-                "min_prob_thresh": 0.63,
+                "min_prob_thresh": 0.73,
                 "mse_thresh_perc": 70.0
             }
         }

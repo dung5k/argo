@@ -180,31 +180,22 @@ def tg_notify(msg):
     Hệ thống thông báo Telegram thông minh - Đã siết chặt theo yêu cầu người dùng.
     Chỉ gửi khi: Khởi động, Chạm ngưỡng (Action != HOLD), hoặc Đang giữ lệnh.
     """
-    # 1. Luôn cho phép các thông báo hệ thống quan trọng (Khởi động, Lỗi, Khớp lệnh)
-    force_tg_kws = ["KHỞI ĐỘNG", "Khởi động", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "❌", "⚠️", "✅"]
+    # 1. Luôn cho phép các thông báo hệ thống quan trọng (Khởi động, Lỗi, Khớp lệnh, Vị thế ẢO)
+    force_tg_kws = ["KHỞI ĐỘNG", "Khởi động", "ĐÃ BẮN LỆNH", "CHỐT", "ĐẢO CHIỀU", "❌", "⚠️", "✅", "Open ẢO", "Close VIRTUAL", "Đóng ẢO"]
     if any(k in msg for k in force_tg_kws):
         _send_raw_tg(msg)
         return
 
-    tm = globals().get('trade_manager')
-    cfg = globals().get('CONFIG', {})
-    
-    # 2. Kiểm tra trạng thái vị thế (Đang giữ lệnh)
-    has_position = False
-    if tm and hasattr(tm, 'active_trade_loggers') and len(tm.active_trade_loggers) > 0:
-        has_position = True
-
-    # 3. Kiểm tra xem AI có ra quyết định thực thi không (Chạm ngưỡng)
-    # Tín hiệu dự đoán thường có dạng "Hành động: BUY/SELL/HOLD"
+    # 2. Kiểm tra xem AI có ra quyết định thực thi không (Chạm ngưỡng và có hành động mới)
+    # Tín hiệu dự đoán thường có dạng "Action: BUY" hoặc "Action: SELL"
     is_signal = False
-    if "Hành động: BUY" in msg or "Hành động: SELL" in msg:
+    if "Action: BUY" in msg or "Action: SELL" in msg:
         is_signal = True
 
     # QUY TẮC LỌC:
-    # Nếu là tín hiệu thực thi (BUY/SELL) -> Gửi.
-    # Nếu đang giữ lệnh -> Gửi (để cập nhật tình hình).
-    # Mọi trường hợp khác (HOLD, Idle) -> Bỏ qua.
-    if is_signal or has_position:
+    # Nếu là tín hiệu thực thi MỚI (BUY/SELL) -> Gửi.
+    # KHÔNG gửi spam mỗi phút chỉ vì đang giữ lệnh nữa!
+    if is_signal:
         _send_raw_tg(msg)
         return
         
@@ -747,9 +738,11 @@ def start_overlay_dashboard():
         if frame_data.winfo_ismapped():
             frame_data.pack_forget()
             btn_toggle.config(text="⬇ Mở Rộng Bảng Giá")
+            root.geometry(f"360x220+{root.winfo_x()}+{root.winfo_y()}")
         else:
             frame_data.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             btn_toggle.config(text="⬆ Thu Gọn Bảng Giá")
+            root.geometry(f"360x450+{root.winfo_x()}+{root.winfo_y()}")
             
     btn_toggle = tk.Button(root, text="⬆ Thu Gọn Bảng Giá", command=toggle_board, bg="#1a2235", fg="#00ffff", relief=tk.FLAT, font=("Consolas", 8, "bold"))
     btn_toggle.pack(pady=2)

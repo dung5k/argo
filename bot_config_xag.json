@@ -26,9 +26,9 @@
         "WINDOW_SIZE": 10,
         "STEP_SIZE": 1,
         "MACRO_FEATURES": {
-            "XAUUSDm": ["log_ret", "volume", "bb_width", "corr_60"],
-            "DXYm": ["log_ret", "volume", "bb_width"],
-            "USDJPYm": ["log_ret", "volume", "bb_width"],
+            "XAUUSDm": ["log_ret", "volume", "bb_width", "corr_60", "rsi_14", "momentum_10"],
+            "DXYm": ["log_ret", "volume", "bb_width", "rsi_14", "momentum_10"],
+            "USDJPYm": ["log_ret", "volume", "bb_width", "rsi_14", "momentum_10"],
             "AUDUSDm": ["log_ret", "volume", "bb_width"],
             "NZDUSDm": ["log_ret", "volume"]
         }

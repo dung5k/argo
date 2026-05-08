@@ -509,6 +509,17 @@ class FeatureEngineeringV3:
                             m_vol = cols.get(f"{sym_lower}_volume".lower()) or cols.get(f"{sym_lower}_tick_volume".lower()) or cols.get(f"{sym_clean}_volume".lower()) or cols.get(f"{sym_clean}_tick_volume".lower())
                             if m_vol:
                                 f_macro[f"{sym}_volume"] = df[m_vol]
+                                
+                        if "rsi_14" in req_features:
+                            delta = df[m_close].diff()
+                            gain = (delta.where(delta > 0, 0)).rolling(window=14, min_periods=1).mean()
+                            loss = (-delta.where(delta < 0, 0)).rolling(window=14, min_periods=1).mean()
+                            rs = gain / (loss + 1e-6)
+                            rsi = 100 - (100 / (1 + rs))
+                            f_macro[f"{sym}_rsi_14"] = (rsi / 50.0) - 1.0
+                            
+                        if "momentum_10" in req_features:
+                            f_macro[f"{sym}_momentum_10"] = df[m_close].diff(10).fillna(0.0)
                             
                         feature_blocks.append(f_macro)
                     else:
