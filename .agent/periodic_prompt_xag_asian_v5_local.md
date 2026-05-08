@@ -14,6 +14,17 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_asian_v5_
 - **Raw data:** `workspaces/CFG_XAG_ASIAN_V5/data/raw/`
 - **Tensor base:** `workspaces/CFG_XAG_ASIAN_V5/data/tensors/`
 - **Diary:** `workspaces/CFG_XAG_ASIAN_V5/ASIAN_V5_DIARY.md`
+---
+
+## 🏆 BẢNG VÀNG THÀNH TÍCH V5 (QUY TẮC: TOP 3 HOẶC WR >= 80%)
+
+| Run ID | Win Rate | Score | Đặc điểm |
+|---|---|---|---|
+| `run_20260508_asian_argo2_reinit` | 74.3% | **0.642** | Regime-Aware Reinit |
+| `run_20260507_040000` | 73.8% | 0.626 | Layer Drop 0.2, Mean |
+| `run_20260507_030000` | 61.7% | 0.562 | Baseline Asian V5 |
+
+> *Ghi chú: Hiện chưa có thành tích >= 80%, duy trì Top 3 tốt nhất.*
 
 ### Sự Thay Đổi Cốt Lõi Của V5 (Hiểu rõ để tránh làm sai)
 
@@ -79,6 +90,10 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
    - *LEARNING_RATE:* Thử 1e-4 (nhanh hơn) hoặc 2e-5 (ổn định hơn).
    
    **NGUYÊN TẮC VÀNG V5:** Thay đổi TỐI ĐA 2 tham số mỗi lần. Ưu tiên thay đổi `TP/SL` và `FAST_HIT_BARS` trước vì chúng ảnh hưởng trực tiếp đến **chất lượng nhãn** — cái gốc rễ của mọi vấn đề.
+
+   **QUY TẮC LƯU TRỮ THÀNH TÍCH (DIARY):**
+   - Luôn duy trì **Top 3 thành tích tốt nhất** (Best Score/WR) trong Diary để so sánh.
+   - **ĐẶC BIỆT:** Nếu đạt được các thành tích có **Win Rate >= 80%**, BẮT BUỘC phải lưu lại TOÀN BỘ các thành tích này (không bị giới hạn bởi con số 3) để phục vụ phân tích Sniper.
 
 5. **Cập nhật Diary V5:**
    ```markdown

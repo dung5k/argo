@@ -15,6 +15,25 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_ny_v5_aut
 - **Tensor base:** `workspaces/CFG_XAG_NY_V5/data/tensors/`
 - **Diary:** `workspaces/CFG_XAG_NY_V5/NY_V5_DIARY.md`
 
+---
+
+## 🏆 BẢNG VÀNG THÀNH TÍCH V5 (QUY TẮC: TOP 3 HOẶC WR >= 80%)
+
+| Run ID | Win Rate | Score | Đặc điểm |
+|---|---|---|---|
+| `run_20260508_133000` | **91.9%** | 0.734 | D=128, NH=8, FHB=5 |
+| `run_20260508_200000` | **88.0%** | 0.750 | Anti-Overfit (Gamma 3, LS 0.2), 29 feat |
+| `run_20260507_253000` | **86.7%** | 0.725 | Macro RSI/Mom, JPY anchor |
+| `run_20260508_083000` | **84.8%** | 0.735 | Nitro Overdrive, WD 0.05 |
+| `run_20260507_264500` | **82.5%** | **0.760** | Nitro Impulse FHB=5 |
+| `run_20260508_073000` | **81.2%** | 0.734 | Nitro Overdrive (LR 2e-5) |
+| `run_20260507_243000` | **80.0%** | 0.712 | Macro Plus (JPY anchor) |
+| `run_20260508_210000` | 75.0% | 0.750 | Sniper TP6/SL3 |
+| `run_20260508_203000` | 77.4% | 0.692 | Stability Anti-Overfit |
+| `run_20260508_223000` | 65.1% | 0.632 | Sniper Stable FHB=8 |
+
+> *Ghi chú: Đã đạt ngưỡng Sniper >= 80%, ưu tiên lưu trữ toàn bộ thành tích trên 80%.*
+
 ### Sự Thay Đổi Cốt Lõi Của V5 (Hiểu rõ để tránh làm sai)
 
 | Khái niệm | V3/V4 (Cũ) | V5 (Hiện tại) | Tác động |
@@ -75,10 +94,12 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
    - *REGULARIZATION:* BẮT BUỘC dùng LABEL_SMOOTHING >= 0.15 và FOCAL_GAMMA >= 2.5. Tuyệt đối không dùng Hard Label (0.0).
    - *D_MODEL:* Thử giảm dung lượng não xuống 64 hoặc 96.
    
-   **NGUYÊN TẮC VÀNG V5 (CHỐNG OVERFITTING):** 
-   Vừa qua hệ thống bị Học Vẹt (Overfitting) nặng nề tạo ra các kỷ lục giả (WR > 80%, Score 0.760). Do đó, RISK MANAGER yêu cầu **XÓA BỎ TOÀN BỘ KỶ LỤC CŨ LÀM BASELINE**. 
    - **Baseline mới:** Chỉ cần Score > 0.60 và WR > 65% (trong điều kiện có Label Smoothing) là được coi là thành công và được phép ghi nhận kỷ lục mới để Deploy!
    - Không được ép AI chạy theo WR > 80% nữa, điều đó chỉ tạo ra những mô hình tự tin mù quáng vào bẫy giá!
+
+   **QUY TẮC LƯU TRỮ THÀNH TÍCH (DIARY):**
+   - Luôn duy trì **Top 3 thành tích tốt nhất** (Best Score/WR) trong Diary để so sánh.
+   - **ĐẶC BIỆT:** Nếu đạt được các thành tích có **Win Rate >= 80%**, BẮT BUỘC phải lưu lại TOÀN BỘ các thành tích này (không bị giới hạn bởi con số 3) để phục vụ phân tích Sniper.
 
 5. **Cập nhật Diary V5:**
    ```markdown

@@ -14,6 +14,15 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_London_v5
 - **Raw data:** `workspaces/CFG_XAG_LONDON_V5/data/raw/`
 - **Tensor base:** `workspaces/CFG_XAG_LONDON_V5/data/tensors/`
 - **Diary:** `workspaces/CFG_XAG_LONDON_V5/London_V5_DIARY.md`
+---
+
+## 🏆 BẢNG VÀNG THÀNH TÍCH V5 (QUY TẮC: TOP 3 HOẶC WR >= 80%)
+
+| Run ID | Win Rate | Score | Đặc điểm |
+|---|---|---|---|
+| `run_20260508_london_v5_init_argo2` | **93.9%** | **0.894** | Anti-Overfit Sniper V5 |
+
+> *Ghi chú: Đã đạt ngưỡng Sniper >= 80%, ưu tiên lưu trữ toàn bộ thành tích trên 80%.*
 
 ### Sự Thay Đổi Cốt Lõi Của V5 (Hiểu rõ để tránh làm sai)
 
@@ -77,6 +86,10 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
    - *LAYER_DROP:* Thử 0.15, 0.2 để tăng tính tổng quát hóa.
    
    **NGUYÊN TẮC VÀNG V5:** Thay đổi TỐI ĐA 2 tham số mỗi lần. Ưu tiên thay đổi `TP/SL` và `FAST_HIT_BARS` trước vì chúng ảnh hưởng trực tiếp đến **chất lượng nhãn**.
+
+   **QUY TẮC LƯU TRỮ THÀNH TÍCH (DIARY):**
+   - Luôn duy trì **Top 3 thành tích tốt nhất** (Best Score/WR) trong Diary để so sánh.
+   - **ĐẶC BIỆT:** Nếu đạt được các thành tích có **Win Rate >= 80%**, BẮT BUỘC phải lưu lại TOÀN BỘ các thành tích này (không bị giới hạn bởi con số 3) để phục vụ phân tích Sniper.
 
 5. **Cập nhật Diary V5:**
    ```markdown
