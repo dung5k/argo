@@ -71,12 +71,14 @@ Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 6500
    **KHO VŨ KHÍ V5 (PHONG CÁCH ĐÁNH NHANH NHƯ LTC):**
    - *FAST_HIT_BARS:* Thử 3, 5, 8 — New York nhanh nên cần bộ lọc thời gian ngắn để bắt sóng gắt.
    - *TP/SL:* Thử 0.005/0.004, 0.006/0.004, 0.007/0.005.
-   - *MACRO_FEATURES:* Thử bỏ các cặp phụ, chỉ giữ XAU+DXY để giảm nhiễu.
-   - *WINDOW_SIZE:* Thử 60, 45, 90.
-   - *Architecture:* Thử `POOLING=mean`, NUM_LAYERS=2 hoặc 3.
-   - *LAYER_DROP:* Thử 0.1, 0.15 (Giảm kháng nhiễu để học nhanh hơn).
+   - *MACRO_FEATURES:* BẮT BUỘC chỉ dùng XAUUSDm làm mỏ neo, LOẠI BỎ hoàn toàn USDJPYm và DXYm để giảm nhiễu (Spikes).
+   - *REGULARIZATION:* BẮT BUỘC dùng LABEL_SMOOTHING >= 0.15 và FOCAL_GAMMA >= 2.5. Tuyệt đối không dùng Hard Label (0.0).
+   - *D_MODEL:* Thử giảm dung lượng não xuống 64 hoặc 96.
    
-   **NGUYÊN TẮC VÀNG V5:** Thay đổi TỐI ĐA 2 tham số mỗi lần. Ưu tiên thay đổi `TP/SL` và `FAST_HIT_BARS` trước vì chúng ảnh hưởng trực tiếp đến **chất lượng nhãn**.
+   **NGUYÊN TẮC VÀNG V5 (CHỐNG OVERFITTING):** 
+   Vừa qua hệ thống bị Học Vẹt (Overfitting) nặng nề tạo ra các kỷ lục giả (WR > 80%, Score 0.760). Do đó, RISK MANAGER yêu cầu **XÓA BỎ TOÀN BỘ KỶ LỤC CŨ LÀM BASELINE**. 
+   - **Baseline mới:** Chỉ cần Score > 0.60 và WR > 65% (trong điều kiện có Label Smoothing) là được coi là thành công và được phép ghi nhận kỷ lục mới để Deploy!
+   - Không được ép AI chạy theo WR > 80% nữa, điều đó chỉ tạo ra những mô hình tự tin mù quáng vào bẫy giá!
 
 5. **Cập nhật Diary V5:**
    ```markdown
