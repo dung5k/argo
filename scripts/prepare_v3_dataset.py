@@ -400,7 +400,21 @@ def main():
           flush=True)
 
     label_df = labeler.apply_triple_barrier_fast_hit(df_raw, actual_open, actual_high, actual_low)
-    clean_mask = labeler.get_clean_mask(label_df, fast_hit_bars=FAST_HIT_BARS)
+    clean_mask = labeler.get_clean_mask(label_df, fast_hit_bars=FAST_HIT_BARS, include_sideway=True)
+
+    # [FIX CẬP NHẬT] Downsample Class 2 để cân bằng với Class 0 và 1
+    if 2 in label_df["target_class"].values:
+        idx_c0 = label_df.index[(label_df["target_class"] == 0) & clean_mask]
+        idx_c1 = label_df.index[(label_df["target_class"] == 1) & clean_mask]
+        idx_c2 = label_df.index[(label_df["target_class"] == 2) & clean_mask]
+        
+        max_decisive = max(len(idx_c0), len(idx_c1))
+        keep_n = min(len(idx_c2), max_decisive)
+        
+        if keep_n < len(idx_c2):
+            drop_indices = np.random.choice(idx_c2, size=len(idx_c2) - keep_n, replace=False)
+            clean_mask.loc[drop_indices] = False
+
 
     total  = len(label_df)
     n_clean = int(clean_mask.sum())
