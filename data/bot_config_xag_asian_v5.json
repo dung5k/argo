@@ -7,7 +7,7 @@
     "SESSION_UTC": {
         "START": "00:00",
         "END": "07:00",
-        "DESCRIPTION": "Asian session - XAG (00:00-07:00 UTC) | V5 Regime-Aware"
+        "DESCRIPTION": "Asian session - Crypto Macro Regime"
     },
     "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
     "HF_RUN_ID": "",
@@ -27,30 +27,18 @@
         "VOL_REGIME": true,
         "ZERO_NOISE_TARGET": false,
         "CLEAN_DATA_DIET": true,
-        "FAST_HIT_BARS": 10,
+        "FAST_HIT_BARS": 8,
         "MACRO_FEATURES": {
             "XAUUSDm": [
                 "log_ret",
                 "volume",
-                "bb_width",
-                "corr_60"
-            ],
-            "DXYm": [
-                "log_ret",
-                "volume",
                 "bb_width"
             ],
-            "USDJPYm": [
+            "BTCUSDm": [
                 "log_ret",
-                "volume",
-                "bb_width"
+                "volume"
             ],
-            "AUDUSDm": [
-                "log_ret",
-                "volume",
-                "bb_width"
-            ],
-            "NZDUSDm": [
+            "ETHUSDm": [
                 "log_ret",
                 "volume"
             ]
@@ -67,10 +55,10 @@
         "LEARNING_RATE": 1e-05,
         "WEIGHT_DECAY": 0.0001,
         "DROPOUT": 0.2,
-        "LAYER_DROP": 0.1,
+        "LAYER_DROP": 0.25,
         "POOLING": "mean",
         "CLS_HEAD": "residual",
-        "FOCAL_GAMMA": 2.0,
+        "FOCAL_GAMMA": 3.0,
         "LABEL_SMOOTHING": 0.1,
         "RECON_LOSS_WEIGHT": 0.05,
         "WARMUP_EPOCHS": 20,
@@ -94,10 +82,8 @@
         "ROUTING": {
             "XAGUSDm": "EXNESS",
             "XAUUSDm": "EXNESS",
-            "DXYm": "EXNESS",
-            "USDJPYm": "EXNESS",
-            "AUDUSDm": "EXNESS",
-            "NZDUSDm": "EXNESS"
+            "BTCUSDm": "EXNESS",
+            "ETHUSDm": "EXNESS"
         }
     },
     "LIVE_BOT": {

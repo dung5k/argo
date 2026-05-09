@@ -589,7 +589,7 @@ def main():
             best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
             _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
             _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
-            print(f"  🌟 KỶ LỤC MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
+            print(f"  🏆 [ARGO2] ĐỈNH MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
             
             # Save local
             model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")

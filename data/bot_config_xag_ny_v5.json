@@ -7,7 +7,7 @@
     "SESSION_UTC": {
         "START": "13:00",
         "END": "22:00",
-        "DESCRIPTION": "New York session"
+        "DESCRIPTION": "New York session - Nitro Precision Stochastic Sniper"
     },
     "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
     "HF_RUN_ID": "",
@@ -32,42 +32,26 @@
             "XAUUSDm": [
                 "log_ret",
                 "volume",
-                "bb_width",
-                "rsi_14",
-                "momentum_10"
-            ],
-            "DXYm": [
-                "log_ret",
-                "volume",
-                "bb_width",
-                "rsi_14",
-                "momentum_10"
-            ],
-            "USDJPYm": [
-                "log_ret",
-                "volume",
-                "bb_width",
-                "rsi_14",
-                "momentum_10"
+                "bb_width"
             ]
         },
         "LABEL_MODE": "pct",
-        "TP_PCT": 0.006,
+        "TP_PCT": 0.005,
         "SL_PCT": 0.004
     },
     "TRAINING": {
         "D_MODEL": 64,
-        "N_HEAD": 8,
-        "NUM_LAYERS": 3,
-        "BATCH_SIZE": 128,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 4,
+        "BATCH_SIZE": 64,
         "LEARNING_RATE": 1e-05,
         "WEIGHT_DECAY": 0.0001,
         "DROPOUT": 0.2,
-        "LAYER_DROP": 0.2,
+        "LAYER_DROP": 0.25,
         "POOLING": "mean",
         "CLS_HEAD": "residual",
-        "FOCAL_GAMMA": 2.0,
-        "LABEL_SMOOTHING": 0.0,
+        "FOCAL_GAMMA": 4.0,
+        "LABEL_SMOOTHING": 0.25,
         "RECON_LOSS_WEIGHT": 0.05,
         "WARMUP_EPOCHS": 20,
         "EPOCHS_PHASE_1": 10,
@@ -78,11 +62,10 @@
         "PATIENCE": 15,
         "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
         "MSE_GATE_PERCENTILE": 0.0,
-        "TRAIN_START": "2026-01-01",
-        "NUM_HEADS": 4
+        "TRAIN_START": "2026-01-01"
     },
     "DATA_SOURCE": {
-        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_LONDON_V5/data/raw",
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_NY_V5/data/raw",
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M1",
         "BROKERS": {
@@ -90,15 +73,11 @@
         },
         "ROUTING": {
             "XAGUSDm": "EXNESS",
-            "XAUUSDm": "EXNESS",
-            "DXYm": "EXNESS",
-            "USDJPYm": "EXNESS",
-            "AUDUSDm": "EXNESS",
-            "NZDUSDm": "EXNESS"
+            "XAUUSDm": "EXNESS"
         }
     },
     "LIVE_BOT": {
         "MAX_ABSOLUTE_MSE": 1.0,
-        "MIN_PROBABILITY_THRESH": 0.57
+        "MIN_PROBABILITY_THRESH": 0.58
     }
 }

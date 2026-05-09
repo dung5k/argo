@@ -146,9 +146,9 @@ def plot_and_notify_v3(
                     client_id = socket.gethostname()[:8]
             
             if is_periodic:
-                pfx = f"⏳ <b>AAMT_V3 [{cfg_name}]</b> Báo cáo tiến độ trên <b>{client_id}</b> (Chưa có đỉnh mới)"
+                pfx = f"⏳ <b>[Argo2] AAMT_V3 [{cfg_name}]</b> Báo cáo tiến độ (Chưa có đỉnh mới)"
             else:
-                pfx = f"🚀 <b>AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục trên <b>{client_id}</b>!"
+                pfx = f"🚀 <b>[Argo2] AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục!"
             caption = (
                 f"{pfx}\n"
                 f"\U0001f539 <b>Epoch:</b> {epoch}\n"
