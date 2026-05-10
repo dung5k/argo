@@ -462,12 +462,30 @@ def main():
         fe_cfg     = config.get("FEATURE_ENGINEERING", {})
         macro_keys = list(fe_cfg.get("MACRO_FEATURES", {}).keys())
         label_dist_str = " | ".join([f"C{int(k)}: {v:,}" for k, v in label_dist.items()])
+        label_desc = "C0: HOLD | C1: LONG | C2: SHORT"
         inherit_icon = "🔁" if not args.scratch else "🆕"
         inherit_text = msg if msg else "Kế thừa trọng số cũ thành công"
         gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
         mtf_inputs = fe_cfg.get("MTF_INPUTS", [])
         
+        # Tính toán xấp xỉ số ngày dữ liệu
+        try:
+            base_tf = mtf_inputs[0].get("TIMEFRAME", "5min") if mtf_inputs else "5min"
+            session_utc = config.get("SESSION_UTC", {})
+            st, en = session_utc.get("START", "00:00"), session_utc.get("END", "23:59")
+            sh, sm = map(int, st.split(":"))
+            eh, em = map(int, en.split(":"))
+            s_min, e_min = sh * 60 + sm, eh * 60 + em
+            session_mins = e_min - s_min if e_min >= s_min else (1440 - s_min) + e_min
+            
+            tf_num = int(''.join(filter(str.isdigit, base_tf)) or 5)
+            samples_per_day = session_mins / tf_num
+            total_samples = len(Xs[0])
+            approx_days = total_samples / max(1, samples_per_day)
+        except:
+            approx_days = 0
+
         symbols_list = []
         for inp in mtf_inputs:
             sym = inp.get("SYMBOL", "?")
@@ -486,13 +504,15 @@ def main():
             f"📦 <b>Dữ liệu (MTF: {len(Xs)} frames):</b>\n"
             f"{symbols_str}\n"
             f"  • -----------------------\n"
+            f"  • Thời gian: <b>~{approx_days:.1f} ngày giao dịch</b> ({config.get('SESSION_UTC', {}).get('START')} - {config.get('SESSION_UTC', {}).get('END')})\n"
             f"  • Features mỗi TF: <code>{Xs[0].shape[2]}</code>\n"
             f"  • Tổng Samples: <code>{Xs[0].shape[0]:,}</code>\n"
             f"  • Train/Val: <code>{len(Xs_tr[0]):,} / {len(Xs_va[0]):,}</code>\n"
-            f"  • Phân bố Nhãn: <code>{label_dist_str}</code>\n"
+            f"  • Nhãn ({label_desc}):\n"
+            f"    <code>{label_dist_str}</code>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"⚙️ <b>Siêu tham số:</b>\n"
-            f"  • TP={fe_cfg.get('TP_PIPS')} | SL={fe_cfg.get('SL_PIPS')} | MaxHold={fe_cfg.get('MAX_HOLD_BARS')}\n"
+            f"  • TP={fe_cfg.get('TP_PCT')} | SL={fe_cfg.get('SL_PCT')} | MaxHold={fe_cfg.get('MAX_HOLD_BARS')}\n"
             f"  • LR=<code>{lr}</code> | Batch=<code>{batch_size}</code> | WarmUp=<code>{epochs_warmup}</code> ep\n"
             f"  • Device: <code>{device}</code> ({gpu_name})\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
