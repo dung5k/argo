@@ -621,11 +621,28 @@ def bot_background_loop():
             mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
             
-        if isinstance(trade_manager, V3VirtualTradeManager):
-            trade_manager.execute_trade(display_action, probs, mse, current_bid, current_ask, current_point, actual_target_sym=actual_sym)
+        if not hasattr(bot_background_loop, 'trade_execution_lock'):
+            bot_background_loop.trade_execution_lock = threading.Lock()
+
+        if bot_background_loop.trade_execution_lock.locked():
+            print("[BOT V6] ⚠️ API đang xử lý lệnh trước đó, bỏ qua tín hiệu hiện tại để tránh Double Entry!")
+            gui_status = "Đang xử lý API..."
         else:
-            trade_manager.execute_trade(display_action, probs, mse, actual_target_sym=actual_sym)
-        gui_status = f"Khóa Mốc. Hành động: {display_action}"
+            def _do_trade(t_action, t_probs, t_mse, t_bid, t_ask, t_point, t_sym):
+                with bot_background_loop.trade_execution_lock:
+                    try:
+                        if isinstance(trade_manager, V3VirtualTradeManager):
+                            trade_manager.execute_trade(t_action, t_probs, t_mse, t_bid, t_ask, t_point, actual_target_sym=t_sym)
+                        else:
+                            trade_manager.execute_trade(t_action, t_probs, t_mse, actual_target_sym=t_sym)
+                    except Exception as e:
+                        print(f"[BOT V6] ❌ Lỗi execute_trade: {e}")
+            
+            t_exec = threading.Thread(target=_do_trade, args=(display_action, probs, mse, current_bid, current_ask, current_point, actual_sym))
+            t_exec.daemon = True
+            t_exec.start()
+            gui_status = f"Đã gửi tín hiệu: {display_action}"
+            
         time.sleep(1)
 
 def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):

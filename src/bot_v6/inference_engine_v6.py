@@ -70,7 +70,8 @@ class V6InferenceEngine:
             return {"action": 1, "prob": 0.0, "mse": 0.0, "raw": None}
             
         try:
-            tensor_list = [torch.FloatTensor(x).to(self.device) for x in X_list]
+            # Áp dụng Clipping để tránh ảo giác Outlier từ Static Scaler
+            tensor_list = [torch.FloatTensor(np.clip(x, -3.0, 3.0)).to(self.device) for x in X_list]
             
             with torch.no_grad():
                 reconstructed_list, logits, _ = self.model(tensor_list)

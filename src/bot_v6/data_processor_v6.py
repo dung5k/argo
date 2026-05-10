@@ -20,17 +20,17 @@ def resample_dataframe(df_raw, freq):
     resampled = pd.DataFrame()
     for col in df_raw.columns:
         if 'open' in col.lower():
-            resampled[col] = df_raw[col].resample(pd_rule).first()
+            resampled[col] = df_raw[col].resample(pd_rule).first().ffill()
         elif 'high' in col.lower():
-            resampled[col] = df_raw[col].resample(pd_rule).max()
+            resampled[col] = df_raw[col].resample(pd_rule).max().ffill()
         elif 'low' in col.lower():
-            resampled[col] = df_raw[col].resample(pd_rule).min()
+            resampled[col] = df_raw[col].resample(pd_rule).min().ffill()
         elif 'close' in col.lower() or 'price' in col.lower():
-            resampled[col] = df_raw[col].resample(pd_rule).last()
+            resampled[col] = df_raw[col].resample(pd_rule).last().ffill()
         elif 'volume' in col.lower() or 'tick_volume' in col.lower():
-            resampled[col] = df_raw[col].resample(pd_rule).sum()
+            resampled[col] = df_raw[col].resample(pd_rule).sum().fillna(0)
         else:
-            resampled[col] = df_raw[col].resample(pd_rule).last()
+            resampled[col] = df_raw[col].resample(pd_rule).last().ffill()
             
     return resampled.dropna()
 
