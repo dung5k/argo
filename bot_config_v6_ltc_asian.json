@@ -1,0 +1,112 @@
+{
+    "HF_RUN_ID": "run_v6_asian_pending",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "EXECUTION_SYMBOL": "LTCUSDT",
+    "TARGET_PREFIX": "LTCUSDT",
+    "CONFIG_ID": "CFG_LTC_ASIAN_V6",
+    "VERSION": "6.1",
+    "SESSION": "asian",
+    "SESSION_UTC": {
+        "START": "23:00",
+        "END": "07:00",
+        "DAYS": [
+            5,
+            6
+        ],
+        "DESCRIPTION": "Asian session - LTC (23:00-07:00 UTC)"
+    },
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
+        "SYNC_CHUNKS": true
+    },
+    "LIVE_BOT": {
+        "TRADE_PLATFORM": "BINANCE",
+        "PAPER_TRADE": true,
+        "MIN_PROBABILITY_THRESH": 0.7,
+        "MSE_THRESHOLD_PERCENTILE": 70.0
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PCT": 0.0025,
+        "SL_PCT": 0.002,
+        "MAX_HOLD_BARS": 60,
+        "LABEL_MODE": "pct",
+        "PIP_SIZE": 0.01,
+        "lot_size": 0.1,
+        "CRYPTO_MODE": true,
+        "MTF_INPUTS": [
+            {
+                "SYMBOL": "LTCUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 18,
+                "FEATURES": [
+                    "log_return_close",
+                    "body_pct",
+                    "delta_volume",
+                    "cum_delta_session",
+                    "vol_surge_ratio",
+                    "rsi_5_scaled",
+                    "hour_sin",
+                    "hour_cos"
+                ]
+            },
+            {
+                "SYMBOL": "LTCUSDT",
+                "TIMEFRAME": "30min",
+                "WINDOW_SIZE": 16,
+                "FEATURES": [
+                    "log_return_close",
+                    "delta_volume",
+                    "vol_surge_ratio",
+                    "bb_width"
+                ]
+            },
+            {
+                "SYMBOL": "BTCUSDT",
+                "TIMEFRAME": "1H",
+                "WINDOW_SIZE": 12,
+                "FEATURES": [
+                    "log_return_close",
+                    "corr_60_LTCUSDT",
+                    "bb_width"
+                ]
+            }
+        ],
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true
+    },
+    "TRAINING": {
+        "D_MODEL": 32,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 64,
+        "WARMUP_EPOCHS": 5,
+        "FINETUNE_EPOCHS": 50,
+        "LEARNING_RATE": 5e-05,
+        "WEIGHT_DECAY": 0.0005,
+        "FREQ_MIN_N": 10,
+        "FREQ_MAX_N": 500,
+        "DROPOUT_RATE": 0.1,
+        "FOCAL_GAMMA": 0.0,
+        "POOLING": "mean"
+    },
+    "DATA_SOURCE": {
+        "BROKERS": {
+            "DEFAULT": "BINANCE",
+            "BINANCE": "BINANCE"
+        },
+        "ROUTING": {
+            "LTCUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE"
+        },
+        "RAW_LOCAL_DIR": "data/history",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1"
+    },
+    "INFERENCE": {
+        "MODEL_PATH": "d:\\DungLA\\client1\\workspaces\\CFG_LTC_WEEKEND_V6\\runs\\run_20260510_090600_v6_weekend_continuous_58\\brains\\aamt_v3_CFG_LTC_WEEKEND_V6_final.pth",
+        "SCALER_PATH": "d:\\DungLA\\client1\\workspaces\\CFG_LTC_WEEKEND_V6\\runs\\run_20260510_090600_v6_weekend_continuous_58\\brains\\scaler_CFG_LTC_WEEKEND_V6.pkl",
+        "PROB_THRESHOLD": 0.7
+    }
+}
