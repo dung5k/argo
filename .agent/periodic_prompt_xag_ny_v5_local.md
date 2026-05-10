@@ -21,6 +21,7 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_ny_v5_aut
 
 | Run ID | Win Rate | Score | Đặc điểm |
 |---|---|---|---|
+| `run_20260510_140500` | **88.6%** | **0.8595** | Stable Sniper (NEW WORLD RECORD) |
 | `run_20260508_133000` | **91.9%** | 0.734 | D=128, NH=8, FHB=5 |
 | `run_20260508_200000` | **88.0%** | 0.750 | Anti-Overfit (Gamma 3, LS 0.2), 29 feat |
 | `run_20260507_253000` | **86.7%** | 0.725 | Macro RSI/Mom, JPY anchor |
