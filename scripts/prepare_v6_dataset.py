@@ -128,16 +128,13 @@ def align_mtf_windows(target_time, i, target_idx, tf_times, tf_vals, window_size
     
     for tf_i in range(len(window_sizes)):
         win_size = window_sizes[tf_i]
-        if tf_i == 0:
-            # Base TF (khung thấp nhất), lấy window theo index
-            win = tf_vals[0][i : target_idx + 1]
-        else:
-            # HTF: tìm nến gần nhất tính đến target_time
-            loc = tf_times[tf_i].get_indexer([target_time], method='pad')[0]
-            if loc < win_size - 1:
-                has_nan = True
-                break
-            win = tf_vals[tf_i][loc - win_size + 1 : loc + 1]
+        
+        # TÌm nến gần nhất tính đến target_time cho mọi TF
+        loc = tf_times[tf_i].get_indexer([target_time], method='pad')[0]
+        if loc < win_size - 1:
+            has_nan = True
+            break
+        win = tf_vals[tf_i][loc - win_size + 1 : loc + 1]
             
         if len(win) != win_size or np.isnan(win).any():
             has_nan = True
@@ -232,6 +229,9 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
         # 4. Weekly Split / Embargo
         split_class = get_split_class(target_time, target_idx, base_timestamps, split_time, embargo_time, weekly_split)
             
+        if target_idx == max_idx - 1:
+            print(f"[DEBUG LAST SAMPLE] target_time={target_time}, in_session={in_session}, clean_mask={clean_mask.iloc[target_idx]}, has_nan={has_nan}, target_label_nan={np.isnan(target_label)}")
+            
         if split_class == -1:
             n_skip['embargo'] += 1; continue
             
@@ -239,6 +239,7 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
             X_lists[tf_i].append(windows[tf_i])
         Y_list.append(target_label)
         split_list.append(split_class)
+
 
     print(f"  Bỏ qua (ngoài session): {n_skip['session']:,}", flush=True)
     print(f"  Bỏ qua (clean mask):    {n_skip['clean']:,}", flush=True)

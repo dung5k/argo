@@ -367,6 +367,7 @@ class FeatureEngineeringV3:
         
         # Lấy tên chính xác từ DF cho XAU
         cols = {c.lower(): c for c in df.columns}
+        print(f"[DEBUG FE] target_prefix={self.target_prefix}, cols={list(cols.keys())}")
         try:
             open_col = cols[f"{prefix}_open".lower()]
             high_col = cols[f"{prefix}_high".lower()]
