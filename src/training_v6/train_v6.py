@@ -283,27 +283,34 @@ def main():
     else:
         print(f"✅ Dữ liệu đã được scale chuẩn (abs_max < 100).", flush=True)
     
+    # Load S_tensor
+    s_path = os.path.join(tensor_local_dir, f"S_tensor_{cfg_id}.npy")
+    if os.path.exists(s_path):
+        S = np.load(s_path)
+    else:
+        # Fallback if old dataset
+        S = np.zeros(len(Y), dtype=np.int8)
+        S[int(len(Y)*0.8):] = 1
+
     # Phân bố nhãn Y
     unique, counts = np.unique(Y, return_counts=True)
     label_dist = dict(zip(unique.tolist(), counts.tolist()))
-    print(f"[DATA CHECK] Phân bố nhãn Y: {label_dist}", flush=True)
+    print(f"[DATA CHECK] Phân bố nhãn Y (Tổng): {label_dist}", flush=True)
 
     if False: # Tạm tắt Monthly Split tự động trong đoạn này để đơn giản hóa
         pass
     else:
-        # [BẢO MẬT DỮ LIỆU] Chia Validation set chronological với Embargo Gap (khoảng 2 ngày ~ 2880 nến)
-        # Sếp chỉ đạo: "Cắt bỏ đi dữ liệu cuối tuần để dữ liệu học và test cách nhau 2 ngày cho chắc"
-        print("[DATA SPLIT] Dùng Chronological 80/20 split với Embargo Gap = 2880 nến.", flush=True)
-        split_idx = int(len(Y) * 0.8)
-        gap = 2880
+        print("[DATA SPLIT] Dùng S_tensor (Chronological Split trước khi Downsample) để chia Train/Val.", flush=True)
+        train_mask = (S == 0)
+        val_mask = (S == 1)
         
-        Xs_tr = [X[:split_idx] for X in Xs]
-        Y_tr = Y[:split_idx]
+        Xs_tr = [X[train_mask] for X in Xs]
+        Y_tr = Y[train_mask]
         
-        # Kiểm tra để tránh lỗi out-of-bounds nếu data quá ít
-        val_start = min(split_idx + gap, len(Y) - 1)
-        Xs_va = [X[val_start:] for X in Xs]
-        Y_va = Y[val_start:]
+        Xs_va = [X[val_mask] for X in Xs]
+        Y_va = Y[val_mask]
+        
+        print(f"[DATA CHECK] Train: {len(Y_tr)} mẫu | Val: {len(Y_va)} mẫu (Giữ nguyên thực tế, không downsample)", flush=True)
 
     # PHỤC HỒI CLASS WEIGHTS từ tập Train
     unique_tr, counts_tr = np.unique(Y_tr, return_counts=True)
@@ -681,8 +688,9 @@ def main():
                         "avg_loss_return": 0.001,
                         "ev_score": float(m.balanced_score),
                         "sharpe_score": 0.0,
-                        "total_buy": int(m.total_signals // 2),  # Giả lập tạm
-                        "total_sell": int(m.total_signals - (m.total_signals // 2))
+                        "tus_score": float(m.tus_score),
+                        "total_buy": int(m.n_buy),
+                        "total_sell": int(m.n_sell)
                     })
                     
                 metrics_data = {
@@ -773,6 +781,19 @@ def main():
             tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
     except Exception as e:
         print(f"❌ Lỗi khi Push: {e}", flush=True)
+
+    # GỌI TRIGGER EVENT CHO HỆ THỐNG AUTO-TUNING
+    session = config.get("SESSION", "").lower()
+    target_symbol = config.get("TARGET_SYMBOL", "LTCUSDT").lower()
+    asset = "ltc" if "ltc" in target_symbol else "xag" if "xag" in target_symbol else "unknown"
+    if session and asset != "unknown":
+        trigger_id = f"{asset}_{session}_v6_training_done"
+        try:
+            import subprocess
+            subprocess.run([sys.executable, ".agent/notify_done.py", trigger_id], check=False)
+            print(f"[TRIGGER] Đã gọi event: {trigger_id} thành công!", flush=True)
+        except Exception as e:
+            print(f"[TRIGGER] Lỗi gọi event {trigger_id}: {e}", flush=True)
 
 if __name__ == "__main__":
     main()
