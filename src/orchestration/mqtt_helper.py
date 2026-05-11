@@ -3,7 +3,7 @@ import threading
 import paho.mqtt.client as mqtt
 
 BROKER = "broker.emqx.io"
-PORT = 1883
+PORT = 8883
 PREFIX = "argo_dungla_9213"
 
 class MqttHelper:
@@ -46,6 +46,9 @@ class MqttHelper:
         })
         self.client.will_set(self.log_topic, payload=lwt_payload, qos=1, retain=True)
         
+        if PORT == 8883:
+            self.client.tls_set() # Kích hoạt SSL/TLS
+            
         self.client.connect(BROKER, PORT, 60)
         self._thread = threading.Thread(target=self.client.loop_forever, daemon=True)
         self._thread.start()
