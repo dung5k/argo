@@ -20,9 +20,9 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_asian_v5_
 
 | Run ID | Win Rate | Score | Đặc điểm |
 |---|---|---|---|
-| `run_20260508_asian_argo2_reinit` | 74.3% | **0.642** | Regime-Aware Reinit |
+| `run_20260511_102100_v5_asian_ultimate_sniper` | **86.7%** | **0.784** | Ultimate Sniper (MSE 0.05, Warmup 30) |
+| `run_20260508_asian_argo2_reinit` | 74.3% | 0.642 | Regime-Aware Reinit |
 | `run_20260507_040000` | 73.8% | 0.626 | Layer Drop 0.2, Mean |
-| `run_20260507_030000` | 61.7% | 0.562 | Baseline Asian V5 |
 
 > *Ghi chú: Hiện chưa có thành tích >= 80%, duy trì Top 3 tốt nhất.*
 
