@@ -29,8 +29,11 @@ def get_telegram_config(target_channels=None):
             if m: token = m.group(1)
             m = re.search(r'"antigravityBridge\\.whitelistChatIds"\\s*:\\s*"([^"]+)"', content)
             if m: default_chat_id = m.group(1)
+            m = re.search(r'"antigravityBridge\\.agentIdentity"\\s*:\\s*"([^"]+)"', content)
+            if m: agent_identity_from_settings = m.group(1)
+            else: agent_identity_from_settings = ""
     except Exception:
-        pass
+        agent_identity_from_settings = ""
         
     if not token:
         token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
@@ -46,7 +49,7 @@ def get_telegram_config(target_channels=None):
             with open(network_config_path, "r", encoding="utf-8") as f:
                 network_data = json.load(f)
                 
-        agent_identity = network_data.get("agent_identity", "Antigravity")
+        agent_identity = agent_identity_from_settings or network_data.get("agent_identity", "Argo2")
         channels_dict = network_data.get("channels", {})
         
         if target_channels is None:
@@ -77,7 +80,7 @@ def get_telegram_config(target_channels=None):
         
     return token, ",".join(chat_ids), agent_identity
 
-def send_via_bridge(content, is_done=False, token="", chat_id="", agent_identity="Antigravity"):
+def send_via_bridge(content, is_done=False, token="", chat_id="", agent_identity="Argo2"):
     port = get_bridge_port()
     if port is None: return False
     url = f'http://127.0.0.1:{port}/send-telegram'

@@ -1,4 +1,4 @@
-# Bản Đồ Mạng Lưới Antigravity (Multi-Agent Topology)
+# Bản Đồ Mạng Lưới ARGO (Multi-Agent Topology)
 
 File này mô tả mạng lưới giao tiếp (Channels) giữa các Agents và Người Dùng (Sếp) đang chạy hệ thống Antigravity để phối hợp công việc. Bằng cách đọc cấu hình mạng lưới, mỗi AI Quant Engineer trên mỗi máy có thể biết được cách liên lạc với các thực thể khác trong mạng.
 

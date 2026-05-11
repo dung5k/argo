@@ -64,7 +64,7 @@ if __name__ == '__main__':
             agent_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(agent_dir)
             settings_file = os.path.join(project_root, ".vscode", "settings.json")
-            my_identity = "Antigravity"
+            my_identity = "Argo2"
             if os.path.exists(settings_file):
                 with open(settings_file, "r", encoding="utf-8") as f:
                     content = f.read()
