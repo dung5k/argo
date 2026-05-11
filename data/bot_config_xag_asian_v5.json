@@ -33,6 +33,14 @@
                 "log_ret",
                 "volume",
                 "bb_width"
+            ],
+            "BTCUSDm": [
+                "log_ret",
+                "volume"
+            ],
+            "ETHUSDm": [
+                "log_ret",
+                "volume"
             ]
         },
         "LABEL_MODE": "pct",
@@ -51,7 +59,7 @@
         "POOLING": "mean",
         "CLS_HEAD": "residual",
         "FOCAL_GAMMA": 2.0,
-        "LABEL_SMOOTHING": 0.08,
+        "LABEL_SMOOTHING": 0.1,
         "RECON_LOSS_WEIGHT": 0.05,
         "WARMUP_EPOCHS": 20,
         "EPOCHS_PHASE_1": 10,
