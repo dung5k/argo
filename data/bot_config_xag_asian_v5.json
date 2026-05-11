@@ -61,7 +61,7 @@
         "FOCAL_GAMMA": 2.0,
         "LABEL_SMOOTHING": 0.1,
         "RECON_LOSS_WEIGHT": 0.05,
-        "WARMUP_EPOCHS": 20,
+        "WARMUP_EPOCHS": 30,
         "EPOCHS_PHASE_1": 10,
         "FREQ_MIN_N": 40,
         "FREQ_MAX_N": 400,
@@ -69,7 +69,7 @@
         "LR_SCHEDULER": "cosine_warm",
         "PATIENCE": 15,
         "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
-        "MSE_GATE_PERCENTILE": 0.0,
+        "MSE_GATE_PERCENTILE": 0.05,
         "TRAIN_START": "2026-01-01"
     },
     "DATA_SOURCE": {
