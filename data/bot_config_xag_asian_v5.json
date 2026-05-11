@@ -21,26 +21,18 @@
         "SL_PIPS": 30,
         "MAX_HOLD_BARS": 20,
         "PIP_SIZE": 0.001,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 45,
         "STEP_SIZE": 1,
         "ORDER_FLOW": true,
         "VOL_REGIME": true,
         "ZERO_NOISE_TARGET": false,
         "CLEAN_DATA_DIET": true,
-        "FAST_HIT_BARS": 8,
+        "FAST_HIT_BARS": 7,
         "MACRO_FEATURES": {
             "XAUUSDm": [
                 "log_ret",
                 "volume",
                 "bb_width"
-            ],
-            "BTCUSDm": [
-                "log_ret",
-                "volume"
-            ],
-            "ETHUSDm": [
-                "log_ret",
-                "volume"
             ]
         },
         "LABEL_MODE": "pct",
@@ -48,7 +40,7 @@
         "SL_PCT": 0.0035
     },
     "TRAINING": {
-        "D_MODEL": 128,
+        "D_MODEL": 160,
         "N_HEAD": 8,
         "NUM_LAYERS": 3,
         "BATCH_SIZE": 256,
@@ -58,8 +50,8 @@
         "LAYER_DROP": 0.25,
         "POOLING": "mean",
         "CLS_HEAD": "residual",
-        "FOCAL_GAMMA": 3.0,
-        "LABEL_SMOOTHING": 0.1,
+        "FOCAL_GAMMA": 2.0,
+        "LABEL_SMOOTHING": 0.08,
         "RECON_LOSS_WEIGHT": 0.05,
         "WARMUP_EPOCHS": 20,
         "EPOCHS_PHASE_1": 10,
