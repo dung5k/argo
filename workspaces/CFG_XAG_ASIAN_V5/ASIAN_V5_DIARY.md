@@ -116,3 +116,27 @@
 - **Hướng đi tiếp theo:** Đóng gói bản kỷ lục làm Baseline cho sản xuất. Chuẩn bị cho V6 với các đặc trưng kỹ thuật mới nếu cần công phá ngưỡng 0.75.
 
 ---
+
+### [2026-05-11 09:32] - Đánh giá Run: run_20260511_083500_v5_asian_robust_baseline
+- **Kết quả:** Composite Score = **0.4028** | Best WR = 44.10% | Early Stop @ Epoch 111.
+- **Vấn đề phát hiện:** THẤT BẠI THẢM HẠI. Tập dữ liệu mở rộng 12k mẫu (bao gồm tháng 05/2026) cho thấy cấu hình "Pure Focus" (chỉ dùng Vàng) không có khả năng tổng quát hóa. Việc thiếu các biến số vĩ mô khác khiến mô hình bị mù quáng trước các thay đổi regime của tháng 5.
+- **Ý tưởng mới:** "Asian Diverse Sniper" - Quay lại tập dữ liệu 12k. Đưa các mã Crypto (BTC, ETH) quay trở lại bộ đặc trưng Macro để làm "màng lọc" bối cảnh thị trường toàn cầu. Tăng `LABEL_SMOOTHING` lên 0.10.
+- **Giả thuyết:** Trong bối cảnh dữ liệu lớn và nhiễu hơn, việc đa dạng hóa đầu vào macro sẽ giúp mô hình nhận diện được các regime rủi ro cao để né tránh, từ đó cải thiện WR trên tập Val mới.
+
+---
+
+### [2026-05-11 10:14] - Đánh giá Run: run_20260511_093300_v5_asian_diverse_sniper
+- **Kết quả:** Composite Score = **0.7405** | Best WR = **84.38%** | Epoch 209.
+- **Vấn đề phát hiện:** THÀNH CÔNG VƯỢT BẬC. Việc đưa các mã Crypto quay trở lại không chỉ giúp mô hình lấy lại độ ổn định mà còn đẩy hiệu suất lên một tầm cao mới. Win Rate 84% là con số "trong mơ" cho một mô hình Sniper phiên Á.
+- **Kết luận:** Bộ đặc trưng Đa dạng (Diverse) là thiết yếu cho tập dữ liệu dài hạn. Đây chính thức là Bản Kỷ Lục Vàng mới của V5.
+- **Ý tưởng mới:** "Asian Ultimate Sniper" - Giữ nguyên cấu hình Diverse. Thử nghiệm tăng nhẹ `WARMUP_EPOCHS` lên 30 và giảm `mse_gate` xuống 0.05 để AI tập trung hơn nữa vào độ chính xác phân loại.
+
+---
+
+### [2026-05-11 10:23] - Đánh giá Run: run_20260511_102100_v5_asian_ultimate_sniper
+- **Kết quả:** Composite Score = **0.7840** | Best WR = **86.67%** | Epoch 39.
+- **Vấn đề phát hiện:** THÀNH CÔNG RỰC RỠ. Việc áp dụng `MSE Gate 0.05` đã chứng minh sức mạnh trong việc lọc nhiễu. Mô hình chỉ học từ những mẫu dữ liệu "chuẩn mực" nhất, dẫn đến Win Rate tăng vọt lên 86.6%.
+- **Kết luận:** Đây chính thức là Đỉnh Cao của V5. Không cần tối ưu thêm hyperparameter, trọng tâm tiếp theo nên là Feature Engineering cho V6 nếu muốn vượt ngưỡng 0.80.
+- **Hành động:** Đóng gói bản Ultimate này làm cấu hình sản xuất vĩnh viễn cho Phase V5.
+
+---

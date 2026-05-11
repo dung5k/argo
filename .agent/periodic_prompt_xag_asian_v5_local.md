@@ -49,7 +49,7 @@ Copy-Item workspaces/CFG_XAG_ASIAN_V5/data/tensors/* "$run_dir/data/tensors/"
 
 ### Cách Chạy Training V5 (BẮT BUỘC --scratch)
 ```powershell
-Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_XAG_asian_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py XAG_asian_v5_training_done`""" -WorkingDirectory "D:\DungLA\client1"
+Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_XAG_asian_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py xag_asian_v5_training_done`""" -WorkingDirectory "D:\DungLA\client1"
 ```
 > ⚠️ Lưu ý: `train_v3.py` sẽ tự động phát hiện `X_train_*.npy` / `X_val_*.npy` và dùng Monthly Split thay vì 80/20.
 
@@ -143,7 +143,7 @@ Kiểm tra thư mục `workspaces/CFG_XAG_ASIAN_V5/runs/`:
    - **BUSY:** Thông báo Telegram tóm tắt ý tưởng mới, gọi `--done`.
    - **IDLE:** Lấy run từ Hàng Đợi và phát lệnh:
      ```powershell
-     Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_XAG_asian_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py XAG_asian_v5_training_done`""" -WorkingDirectory "D:\DungLA\client1"
+     Start-Process cmd.exe -ArgumentList "/c `"set PYTHONIOENCODING=utf8 && chcp 65001 && C:\argo\venv\Scripts\python.exe src/training_v3/train_v3.py data/bot_config_XAG_asian_v5.json --scratch --run-id <RUN_ID> && python .agent/notify_done.py xag_asian_v5_training_done`""" -WorkingDirectory "D:\DungLA\client1"
      ```
 
 ---
