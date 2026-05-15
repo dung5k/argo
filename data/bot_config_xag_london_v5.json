@@ -27,7 +27,7 @@
         "VOL_REGIME": true,
         "ZERO_NOISE_TARGET": false,
         "CLEAN_DATA_DIET": true,
-        "FAST_HIT_BARS": 5,
+        "FAST_HIT_BARS": 8,
         "MACRO_FEATURES": {
             "XAUUSDm": [
                 "log_ret",
@@ -44,7 +44,7 @@
             ]
         },
         "LABEL_MODE": "pct",
-        "TP_PCT": 0.003,
+        "TP_PCT": 0.0035,
         "SL_PCT": 0.0035
     },
     "TRAINING": {
