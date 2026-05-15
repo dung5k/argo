@@ -10,8 +10,7 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_asian_aut
 ### 1. Thu thập Ngữ cảnh (Context Gathering):
 - Đọc kết quả của lượt chạy mới nhất `workspaces/CFG_XAG_ASIAN_V3_5/runs/<LATEST_RUN>/results/training_metrics_v3.json`.
 - **KỶ LỤC CẦN PHÁ (Baseline - CẬP NHẬT):** 
-  - **Run 23 (NEW CHAMPION):** Win Rate **60.00%**, N = **105**. (Cấu hình: XAU_DXY_USDJPY_AUDUSD, TP30/SL30, W20, D64, VolRegime: ON, MAX_HOLD 20).
-  - **Run 41:** Win Rate **67.44%**, N = 43. (Cấu hình: TP20/SL25, W20, D64, MAX_HOLD 12).
+  - **Run Real Price V3 (run_20260515_113510_v3):** Win Rate **58.96%**, Score = **0.5774**. (Sử dụng Evaluator P_tensor Giá Thực, TP30/SL30).
 - **MỤC TIÊU TIẾP THEO:** Duy trì Win Rate > 60% và đẩy N lên cao hơn nữa (> 150) hoặc nâng Win Rate lên > 65% với N > 50.
 
 ### 2. Phân tích Hiệu suất & Dọn dẹp (Cleanup/Push):
