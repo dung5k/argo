@@ -25,13 +25,12 @@ Hệ thống bao gồm 3 không gian làm việc chính cho 3 phiên:
 2. **Bộ não AI có nhiệm vụ tìm ra quy luật** của sự biến động giữa các mã dẫn dắt và LTC.
 3. Bạn được toàn quyền quyết định thêm/bớt bất kỳ SYMBOL nào vào `MTF_INPUTS` làm chỉ báo dẫn dắt trong mỗi vòng đào tạo của phiên được chọn. Đảm bảo SYMBOL mới có trong `DATA_SOURCE.ROUTING`.
 
-### Giới Hạn Tìm Kiếm (SEARCH SPACE GUARDRAILS)
-Để ngăn chặn "ảo giác", bạn CHỈ ĐƯỢC đề xuất các tham số trong phạm vi sau:
-- **Learning Rate (LR):** `[1e-5, 5e-4]`. KHÔNG ĐƯỢC vượt quá 5e-4.
-- **Dropout:** `[0.0, 0.3]`. KHÔNG ĐƯỢC vượt quá 0.3.
-- **TP/SL:** Bắt buộc tuân thủ tỷ lệ R:R > 1.2. Phiên Á ưu tiên TP/SL nhỏ, Phiên NY/London có thể nới lỏng theo biến động.
+### Quyền Hạn Tìm Kiếm & Tinh Chỉnh
+Bạn được trao **TOÀN QUYỀN MẠNH MẼ** để thay đổi bất kỳ thành phần nào trong cấu hình nhằm tìm ra "chén thánh":
+- **Siêu tham số Học Sâu (Deep Learning):** Tự do tinh chỉnh LR, Dropout, Batch Size, Optimizer, Weight Decay, v.v. Không giới hạn phạm vi, hãy mạnh dạn đề xuất nếu bạn có giả thuyết.
+- **Quy tắc Giao dịch:** Linh hoạt điều chỉnh TP/SL, R:R (thậm chí < 1.0 nếu phiên giao dịch đi ngang).
 - **Base Timeframe (TF):** Bạn được cấp quyền ĐỔI LINH HOẠT Base Timeframe (`TIMEFRAME` của phần tử đầu tiên trong `MTF_INPUTS`) sang `1min`, `5min`, `15min` tùy chiến lược.
-- **Feature Engineering:** Toàn quyền thêm/bớt FEATURES đầu vào.
+- **Feature Engineering:** Toàn quyền thêm/bớt FEATURES đầu vào. Đừng ngại thử nghiệm các tính năng mới lạ.
 
 ---
 
