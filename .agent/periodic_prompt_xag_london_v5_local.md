@@ -156,9 +156,34 @@ Kiểm tra thư mục `workspaces/CFG_XAG_LONDON_V5/runs/`:
 
 ---
 
-> **THÔNG BÁO TELEGRAM:**
-> - Báo cáo thường xuyên: `python .agent/send_to_tele.py "<Nội_dung>"`
-> - **LƯU Ý:** Trong mỗi báo cáo Telegram (đặc biệt là báo cáo kết thúc), **BẮT BUỘC** đính kèm thông tin về **Thành tích tốt nhất (Best Score/WR)** đạt được từ trước đến nay để tiện so sánh.
-> - Kết thúc: `python .agent/send_to_tele.py "💂‍♂️ [London V5] <tóm tắt ý tưởng>. Run <RUN_ID> đã khởi động. (Best so far: Score X, WR Y%)" --done`
-
-__(Trong lúc làm có thể gọi nhiều lần lệnh: python .agent/send_to_tele.py "<Nội_dung>". Khi hoàn tất BẮT BUỘC chạy với cờ --done!)__
+> **THÔNG BÁO TELEGRAM (BẮT BUỘC THEO MẪU):**
+> 
+> Mỗi vòng thực hiện, báo cáo phải tuân thủ nghiêm ngặt mẫu sau:
+> 
+> ```
+> 🤖 Argo2:
+> 
+> 💂‍♂️ [LONDON V5] <Trạng thái: Đang Chờ / Đang Chạy / Hoàn Tất> (<Tên Run hiện tại>).
+> 
+> 📊 Kết quả <Tên Run vừa xong>:
+> - Best Val Loss tại Epoch <X>. Composite Score: <Y>
+> - Win Rate: <A>% (Threshold 0.77) | <B>% (Threshold 0.90)
+> 
+> 📈 Bảng tổng kết 6 vòng gần nhất (Hành trình 80%):
+> | Vòng | Score | WR.77 | WR.90 | Hòa Vốn |
+> |------|-------|-------|-------|---------|
+> | <n-5>| <S1>  | <W1>  | <W2>  | 45.5%   |
+> | <n-4>| <S2>  | <W3>  | <W4>  | 45.5%   |
+> | <n-3>| <S3>  | <W5>  | <W6>  | 45.5%   |
+> | <n-2>| <S4>  | <W7>  | <W8>  | 45.5%   |
+> | <n-1>| <S5>  | <W9>  | <W10> | 45.5%   |
+> | <n>  | <S6>  | <W11> | <W12> | 45.5%   |
+> 
+> <Phân tích chuyên sâu về vòng hiện tại, lý do thay đổi tham số và kỳ vọng hội tụ. Dùng ngôn ngữ mạnh mẽ, quyết tâm như "Khoan thủng 80% Win Rate!", "Hoạt động hết công suất!", "Ép mô hình học sâu!".>
+> ```
+> 
+> **LƯU Ý:** 
+> - Lấy dữ liệu từ Diary và các file `training_metrics_v3.json` để điền vào bảng.
+> - Nếu chưa có đủ 6 vòng, điền các vòng trước đó là "---".
+> - Luôn gọi lệnh: `python .agent/send_to_tele.py "<Nội_dung_theo_mẫu>" --channel 1816854047`
+> - Khi kết thúc toàn bộ task, thêm cờ `--done`.
