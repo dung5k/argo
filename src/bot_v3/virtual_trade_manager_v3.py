@@ -22,6 +22,10 @@ class V3VirtualTradeManager:
 
         self._positions_synced = True
         self.last_close_time = 0
+
+        # Simulator clock: khi chạy backtest, inject timestamp Unix của nến hiện tại
+        # để cooldown/MAX_HOLD_BARS hoạt động đúng. Mặc định None = dùng time.time() thật (live mode)
+        self.sim_clock: float = None
         
         self.virtual_balance = 10000.0  # Mặc định $10,000
         self.virtual_ticket_counter = 1000
@@ -176,20 +180,33 @@ class V3VirtualTradeManager:
         pos = self.active_trade_loggers.get(ticket)
         if not pos: return False
         
+        # Nếu close_price = 0.0 (chưa biết), dùng entry_price để tính profit = 0 (conservative)
+        if close_price == 0.0:
+            close_price = pos.get("entry_price", 0.0)
+        
         profit = pos.get("current_profit", 0.0)
+        # Nếu profit chưa được tính (=0.0) và có close_price hợp lệ, tính lại
+        if profit == 0.0 and close_price > 0:
+            entry = pos.get("entry_price", close_price)
+            vol   = pos.get("volume", 0.01)
+            if pos.get("order_type") == "MUA":
+                profit = (close_price - entry) * vol * 1000  # Simplified pip value
+            else:
+                profit = (entry - close_price) * vol * 1000
+        
         self.virtual_balance += profit
         
         deal = {
-            "ticket": ticket,
-            "order_type": pos["order_type"],
+            "ticket":      ticket,
+            "order_type":  pos["order_type"],
             "entry_price": pos["entry_price"],
             "close_price": close_price,
-            "profit": profit,
-            "close_time": datetime.now(),
-            "reason": reason
+            "profit":      profit,
+            "close_time":  datetime.now(),
+            "reason":      reason
         }
         self.history_deals.append(deal)
-        self.last_close_time = time.time()
+        self.last_close_time = self.sim_clock if self.sim_clock is not None else time.time()
         
         msg = f"[VirtualTradeManager] ✅ Đóng ẢO lệnh #{ticket} ({reason}). PnL: {profit:+.2f}$ | Balance: {self.virtual_balance:.2f}$"
         self.log_callback(msg)
@@ -238,7 +255,7 @@ class V3VirtualTradeManager:
                 "volume": float(lot_size),
                 "sl": float(sl),
                 "tp": float(tp),
-                "entry_time": time.time(),
+                "entry_time": self.sim_clock if self.sim_clock is not None else time.time(),
                 "current_profit": 0.0
             }
             
@@ -308,27 +325,29 @@ class V3VirtualTradeManager:
         max_hold_seconds = max_hold_bars * 60
 
         # Convert dict to list to safely mutate during iteration? We actually pop later.
+        _now = self.sim_clock if self.sim_clock is not None else time.time()
         for ticket, pos in self.active_trade_loggers.items():
-            if (time.time() - pos["entry_time"]) > max_hold_seconds:
-                self.gui_action = f"CHỐT ẢO: QUÁ GIỜ (>{max_hold_bars} nến)"
-                if self.close_mt5_position(ticket, f"Giữ lệnh quá {max_hold_bars} phút"):
+            if (_now - pos["entry_time"]) > max_hold_seconds:
+                self.gui_action = f"CHOT AO: QUA GIO (>{max_hold_bars} nen)"
+                close_px = current_bid if pos.get("order_type") == "MUA" else current_ask
+                if self._close_position_internal(ticket, close_px, f"Giu lenh qua {max_hold_bars} phut"):
                     has_open = False
                     just_closed = True
                     closed_tickets.append(ticket)
             elif pos["order_type"] == "MUA" and action == "SELL":
-                self.gui_action = f"ĐẢO CHIỀU: CHỐT BUY ẢO (#{ticket})"
-                if self.close_mt5_position(ticket, "Đảo chiều sang SELL"):
+                self.gui_action = f"DAO CHIEU: CHOT BUY AO (#{ticket})"
+                if self._close_position_internal(ticket, current_bid, "Dao chieu sang SELL"):
                     has_open = False
                     just_closed = True
                     closed_tickets.append(ticket)
-            elif pos["order_type"] == "BÁN" and action == "BUY":
-                self.gui_action = f"ĐẢO CHIỀU: CHỐT SELL ẢO (#{ticket})"
-                if self.close_mt5_position(ticket, "Đảo chiều sang BUY"):
+            elif pos["order_type"] == "BAN" and action == "BUY":
+                self.gui_action = f"DAO CHIEU: CHOT SELL AO (#{ticket})"
+                if self._close_position_internal(ticket, current_ask, "Dao chieu sang BUY"):
                     has_open = False
                     just_closed = True
                     closed_tickets.append(ticket)
-            elif action == "TÍN_HIỆU_RÁC" or action == "HOLD":
-                self.gui_action = f"GIỮ LỆNH ẢO (#{ticket}) [{action}]"
+            elif action == "TIN_HIEU_RAC" or action == "HOLD":
+                self.gui_action = f"GIU LENH AO (#{ticket}) [{action}]"
 
         for t in closed_tickets:
             self.active_trade_loggers.pop(t, None)
@@ -337,7 +356,7 @@ class V3VirtualTradeManager:
             self._save_state()
 
         if not has_open and not just_closed:
-            now = time.time()
+            now = self.sim_clock if self.sim_clock is not None else time.time()
             if (now - self.last_close_time) < 60:
                 self.gui_action = "Chờ Cooldown 60s..."
             else:
