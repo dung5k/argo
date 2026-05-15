@@ -113,10 +113,10 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
 # BUILD TENSOR WITH SESSION FILTER
 # ─────────────────────────────────────────────────────────────────────────────
 def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
-                 clean_mask: pd.Series,
+                 clean_mask: pd.Series, price_series: pd.Series,
                  session_start: str, session_end: str,
                  window_size: int = 20, step_size: int = 1,
-                 monthly_split: bool = False):
+                 monthly_split: bool = False, max_hold_bars: int = 20):
     """
     Tạo tensor X/Y với 2 lớp lọc:
     1. Session filter: chỉ lấy window mà nến mục tiêu trong session
@@ -149,9 +149,10 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
     feature_vals = df_features.values
     label_vals   = labels_series.values
     clean_vals   = clean_mask.values
+    price_vals   = price_series.values
     timestamps   = df_features.index
 
-    X_list, Y_list, split_list = [], [], []
+    X_list, Y_list, P_list, split_list = [], [], [], []
     max_idx = len(feature_vals) - window_size
 
     n_skip_session = 0
@@ -213,8 +214,15 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
             n_skip_embargo += 1
             continue
             
+        future_idx_end = min(target_idx + max_hold_bars + 1, len(price_vals))
+        p_window = price_vals[target_idx : future_idx_end]
+        if len(p_window) < max_hold_bars + 1:
+            pad = np.full(max_hold_bars + 1 - len(p_window), p_window[-1] if len(p_window)>0 else 0)
+            p_window = np.concatenate([p_window, pad])
+            
         X_list.append(window)
         Y_list.append(target_label)
+        P_list.append(p_window)
         split_list.append(split_class)
 
     print(f"  Bỏ qua (ngoài session): {n_skip_session:,}", flush=True)
@@ -225,6 +233,7 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
 
     X = np.array(X_list, dtype=np.float32)
     Y = np.array(Y_list, dtype=np.int64)
+    P = np.array(P_list, dtype=np.float32)
     S = np.array(split_list, dtype=np.int8)  # split mask
 
     if monthly_split:
@@ -232,7 +241,7 @@ def build_tensor(df_features: pd.DataFrame, labels_series: pd.Series,
         n_val   = (S == 1).sum()
         print(f"  [Monthly Split] Train: {n_train:,} | Val: {n_val:,} ({n_val/(n_train+n_val)*100:.1f}% val)", flush=True)
 
-    return X, Y, S
+    return X, Y, P, S
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -286,6 +295,7 @@ def upload_to_hf(out_dir: str, cfg_id: str, repo_id: str, hf_token: str):
     files_to_upload = [
         f"X_tensor_{cfg_id}.npy",
         f"Y_tensor_{cfg_id}.npy",
+        f"P_tensor_{cfg_id}.npy",
         f"scaler_{cfg_id}.pkl",
     ]
 
@@ -378,7 +388,8 @@ def main():
     actual_open = f"{sym_up}_open"
     actual_high = f"{sym_up}_high"
     actual_low  = f"{sym_up}_low"
-    for col in [actual_open, actual_high, actual_low]:
+    actual_close = f"{sym_up}_close"
+    for col in [actual_open, actual_high, actual_low, actual_close]:
         assert_ok(col in df_raw.columns,
                   f"Thiếu cột {col} trong df_raw! Columns có: {list(df_raw.columns[:10])}")
 
@@ -476,23 +487,24 @@ def main():
     df_scaled = fe.transform_scaler(df_features)            # TRANSFORM trên toàn bộ
 
     # Đồng bộ index
-    idx_common = df_scaled.index.intersection(targets.index).intersection(clean_mask.index)
+    idx_common = df_scaled.index.intersection(targets.index).intersection(clean_mask.index).intersection(df_raw.index)
     assert_ok(len(idx_common) > 0, "Index giao nhau rỗng sau khi đồng bộ!")
     df_scaled  = df_scaled.loc[idx_common]
     targets    = targets.loc[idx_common]
     clean_mask = clean_mask.loc[idx_common]
+    price_series = df_raw.loc[idx_common, actual_close]
 
     # ── 6. BUILD TENSOR ─────────────────────────────────────────────────────
     split_label = "Monthly 2/3-1/3" if use_monthly_split else "Chronological 80/20"
     print(f"\n[4] Ráp Tensor (Window={fe_cfg['WINDOW_SIZE']}, Session={session_start}-{session_end}, Split={split_label})...",
           flush=True)
-    X, Y, S = build_tensor(
-        df_scaled, targets, clean_mask,
+    X, Y, P, S = build_tensor(
+        df_scaled, targets, clean_mask, price_series,
         session_start=session_start, session_end=session_end,
         window_size=fe_cfg["WINDOW_SIZE"], step_size=fe_cfg.get("STEP_SIZE", 1),
-        monthly_split=use_monthly_split
+        monthly_split=use_monthly_split, max_hold_bars=fe_cfg["MAX_HOLD_BARS"]
     )
-    print(f"\n👉 KẾT QUẢ: X={X.shape}, Y={Y.shape}", flush=True)
+    print(f"\n👉 KẾT QUẢ: X={X.shape}, Y={Y.shape}, P={P.shape}", flush=True)
 
     # ── 7. VALIDATE ─────────────────────────────────────────────────────────
     validate_tensors(X, Y, cfg_id)
@@ -500,6 +512,7 @@ def main():
     # ── 8. LƯU CỤC BỘ ──────────────────────────────────────────────────────
     x_path      = os.path.join(out_dir, f"X_tensor_{cfg_id}.npy")
     y_path      = os.path.join(out_dir, f"Y_tensor_{cfg_id}.npy")
+    p_path      = os.path.join(out_dir, f"P_tensor_{cfg_id}.npy")
     scaler_path = os.path.join(out_dir, f"scaler_{cfg_id}.pkl")
 
     if use_monthly_split:
@@ -508,20 +521,28 @@ def main():
         val_mask   = (S == 1)
         x_tr_path = os.path.join(out_dir, f"X_train_{cfg_id}.npy")
         y_tr_path = os.path.join(out_dir, f"Y_train_{cfg_id}.npy")
+        p_tr_path = os.path.join(out_dir, f"P_train_{cfg_id}.npy")
         x_va_path = os.path.join(out_dir, f"X_val_{cfg_id}.npy")
         y_va_path = os.path.join(out_dir, f"Y_val_{cfg_id}.npy")
+        p_va_path = os.path.join(out_dir, f"P_val_{cfg_id}.npy")
+        
         np.save(x_tr_path, X[train_mask])
         np.save(y_tr_path, Y[train_mask])
+        np.save(p_tr_path, P[train_mask])
         np.save(x_va_path, X[val_mask])
         np.save(y_va_path, Y[val_mask])
-        print(f"  💾 Train: X_train={X[train_mask].shape}, Y_train={Y[train_mask].shape}", flush=True)
-        print(f"  💾 Val:   X_val={X[val_mask].shape}, Y_val={Y[val_mask].shape}", flush=True)
+        np.save(p_va_path, P[val_mask])
+        
+        print(f"  💾 Train: X_train={X[train_mask].shape}, Y_train={Y[train_mask].shape}, P={P[train_mask].shape}", flush=True)
+        print(f"  💾 Val:   X_val={X[val_mask].shape}, Y_val={Y[val_mask].shape}, P={P[val_mask].shape}", flush=True)
         # Vẫn lưu tensor full để tương thích cũ
         np.save(x_path, X)
         np.save(y_path, Y)
+        np.save(p_path, P)
     else:
         np.save(x_path, X)
         np.save(y_path, Y)
+        np.save(p_path, P)
     
     # Lưu scaler + column_order để đảm bảo thứ tự cột khớp hoàn hảo khi live inference
     scaler_bundle = {

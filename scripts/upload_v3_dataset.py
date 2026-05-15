@@ -47,7 +47,7 @@ def filter_by_session(df, start_utc_str, end_utc_str):
     return filtered
 
 
-def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str, end_utc_str, window_size=60, step_size=1):
+def build_tensor_dataset_with_session(df_features, labels_series, price_series, start_utc_str, end_utc_str, window_size=60, step_size=1, max_hold_bars=20):
     """
     Trượt Tensor trên Data liên tục 24/24.
     Sau đó chỉ giữ lại các Window mà Nến mục tiêu (Target Candle - nến CUỐI cửa sổ)
@@ -64,9 +64,10 @@ def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str,
 
     feature_vals = df_features.values
     label_vals   = labels_series.values
+    price_vals   = price_series.values
     timestamps   = df_features.index  # Lấy trục thời gian thực
 
-    X_list, Y_list = [], []
+    X_list, Y_list, P_list = [], [], []
     max_idx = len(feature_vals) - window_size
     for i in tqdm(range(0, max_idx, step_size), desc="Đang ráp khối Tensor V3"):
         target_idx  = i + window_size - 1
@@ -94,10 +95,17 @@ def build_tensor_dataset_with_session(df_features, labels_series, start_utc_str,
         target_label = label_vals[target_idx]
 
         if not np.isnan(window).any() and not np.isnan(target_label) and target_label != -1:
+            future_idx_end = min(target_idx + max_hold_bars + 1, len(price_vals))
+            p_window = price_vals[target_idx : future_idx_end]
+            if len(p_window) < max_hold_bars + 1:
+                pad = np.full(max_hold_bars + 1 - len(p_window), p_window[-1] if len(p_window)>0 else 0)
+                p_window = np.concatenate([p_window, pad])
+            
             X_list.append(window)
             Y_list.append(target_label)
+            P_list.append(p_window)
 
-    return np.array(X_list, dtype=np.float32), np.array(Y_list, dtype=np.int64)
+    return np.array(X_list, dtype=np.float32), np.array(Y_list, dtype=np.int64), np.array(P_list, dtype=np.float32)
 
 
 if __name__ == "__main__":
@@ -235,6 +243,7 @@ if __name__ == "__main__":
     actual_open = cols_map.get(f"{real_prefix}_open", f"{target_prefix}_open")
     actual_high = cols_map.get(f"{real_prefix}_high", f"{target_prefix}_high")
     actual_low  = cols_map.get(f"{real_prefix}_low",  f"{target_prefix}_low")
+    actual_close = cols_map.get(f"{real_prefix}_close", f"{target_prefix}_close")
 
     # Cập nhật TARGET_PREFIX để FeatureEngineeringV3 tìm đúng cột
     target_prefix_mapped = real_prefix.upper()
@@ -295,23 +304,26 @@ if __name__ == "__main__":
     targets = targets.loc[targets.index.isin(df_scaled.index)]
     df_scaled_aligned = df_scaled.loc[df_scaled.index.isin(targets.index)]
     targets = targets.loc[df_scaled_aligned.index]
+    price_series = df_raw.loc[df_scaled_aligned.index, actual_close]
 
     # Ráp Tensor VÀ Lọc Session CÙNG LÚC (không còn thủng lỗ hổng thời gian)
     print(f"[4] Xẻ Tensor và Lọc Session ({session_start} - {session_end})...")
-    X, Y = build_tensor_dataset_with_session(
-        df_scaled_aligned, targets,
+    X, Y, P = build_tensor_dataset_with_session(
+        df_scaled_aligned, targets, price_series,
         start_utc_str=session_start, end_utc_str=session_end,
-        window_size=fe_cfg['WINDOW_SIZE'], step_size=fe_cfg['STEP_SIZE']
+        window_size=fe_cfg['WINDOW_SIZE'], step_size=fe_cfg['STEP_SIZE'], max_hold_bars=fe_cfg.get('MAX_HOLD_BARS', 20)
     )
-    print(f"👉 KẾT QUẢ TENSOR ({cfg_id}): X={X.shape}, Y={Y.shape}")
+    print(f"👉 KẾT QUẢ TENSOR ({cfg_id}): X={X.shape}, Y={Y.shape}, P={P.shape}")
     
     # Lưu xuống Data Hub cục bộ theo tên Cấu Hình
     x_path = os.path.join(out_dir, f"X_tensor_{cfg_id}.npy")
     y_path = os.path.join(out_dir, f"Y_tensor_{cfg_id}.npy")
+    p_path = os.path.join(out_dir, f"P_tensor_{cfg_id}.npy")
     scaler_path = os.path.join(out_dir, f"scaler_{cfg_id}.pkl")
     
     np.save(x_path, X)
     np.save(y_path, Y)
+    np.save(p_path, P)
     with open(scaler_path, "wb") as f:
         pickle.dump({
             "scaler": fe.scaler,
@@ -344,6 +356,7 @@ if __name__ == "__main__":
     files_to_upload = [
         (os.path.join(out_dir, f"X_tensor_{cfg_id}.npy"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/X_tensor_{cfg_id}.npy"),
         (os.path.join(out_dir, f"Y_tensor_{cfg_id}.npy"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/Y_tensor_{cfg_id}.npy"),
+        (os.path.join(out_dir, f"P_tensor_{cfg_id}.npy"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/P_tensor_{cfg_id}.npy"),
         (os.path.join(out_dir, f"scaler_{cfg_id}.pkl"), f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/scaler_{cfg_id}.pkl"),
         (run_config_path, f"workspaces/{cfg_id}/runs/{run_id}/config.json"),
         (args.config, f"workspaces/{cfg_id}/base_config.json")

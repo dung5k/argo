@@ -49,7 +49,7 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
     print(f"--- \U0001f680 BẮT ĐẦU WARM-UP AUTOENCODER ({epochs} Epochs) ---", flush=True)
     for epoch in range(epochs):
         total_recon_loss = 0.0
-        for batch_idx, (inputs, targets) in enumerate(train_loader):
+        for batch_idx, (inputs, targets, prices) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             reconstructed, logits, _ = model(inputs)
@@ -83,7 +83,7 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     total_recon = 0.0
     total_class = 0.0
 
-    for inputs, targets in train_loader:
+    for inputs, targets, prices in train_loader:
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
         reconstructed, logits, _ = model(inputs)
@@ -100,16 +100,18 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     l = len(train_loader)
     return total_loss_val/l, total_recon/l, total_class/l
 
-def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000):
+def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000, 
+                     tp_pips=10.0, sl_pips=10.0, pip_size=0.01):
     model.eval()
     total_loss_val = 0.0
     total_recon = 0.0
     
     all_logits = []
     all_labels = []
+    all_prices = []
     
     with torch.no_grad():
-        for inputs, targets in val_loader:
+        for inputs, targets, prices in val_loader:
             inputs, targets = inputs.to(device), targets.to(device)
             reconstructed, logits, _ = model(inputs)
             loss, l_recon, l_class = criterion(reconstructed, inputs, logits, targets)
@@ -119,6 +121,7 @@ def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_m
             
             all_logits.append(logits.cpu())
             all_labels.append(targets.cpu())
+            all_prices.append(prices.cpu())
             
     l = len(val_loader)
     avg_loss = total_loss_val / max(1, l)
@@ -126,9 +129,11 @@ def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_m
     
     cat_logits = torch.cat(all_logits, dim=0)
     cat_labels = torch.cat(all_labels, dim=0)
+    cat_prices = torch.cat(all_prices, dim=0)
     
     evaluator = WinRateEvaluatorV3(freq_min_N=freq_min_N, freq_max_N=freq_max_N)
-    res = evaluator.evaluate(cat_logits, cat_labels, avg_loss, avg_recon)
+    res = evaluator.evaluate(cat_logits, cat_labels, avg_loss, avg_recon, 
+                             prices=cat_prices, tp_pips=tp_pips, sl_pips=sl_pips, pip_size=pip_size)
     return res
 
 def main():
@@ -188,6 +193,7 @@ def main():
     
     x_path = os.path.join(tensor_local_dir, f"X_tensor_{cfg_id}.npy")
     y_path = os.path.join(tensor_local_dir, f"Y_tensor_{cfg_id}.npy")
+    p_path = os.path.join(tensor_local_dir, f"P_tensor_{cfg_id}.npy")
     scaler_src = os.path.join(tensor_local_dir, f"scaler_{cfg_id}.pkl")
 
     import shutil
@@ -210,7 +216,7 @@ def main():
             print(f"☁️ Đang tải trực tiếp Tensor từ Dataset Repo: {target_repo}...", flush=True)
             try:
                 from huggingface_hub import hf_hub_download
-                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
+                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"P_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
                     remote_path = f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/{filename}"
                     local_dl_path = hf_hub_download(
                         repo_id=target_repo,
@@ -229,6 +235,8 @@ def main():
                 print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
+                if os.path.exists(os.path.join(legacy_tensor_dir, f"P_tensor_{cfg_id}.npy")):
+                    shutil.copy(os.path.join(legacy_tensor_dir, f"P_tensor_{cfg_id}.npy"), p_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
             else:
                 raise FileNotFoundError(
@@ -240,7 +248,15 @@ def main():
 
     X = np.load(x_path)
     Y = np.load(y_path)
-    print(f"✅ Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}", flush=True)
+    
+    if os.path.exists(p_path):
+        P = np.load(p_path)
+        print(f"✅ Đã nạp thành công P_tensor (Giá gốc) với kích thước {P.shape}", flush=True)
+    else:
+        print(f"⚠️ Không tìm thấy {p_path}. Fallback: Tạo P_tensor giả lập bằng 0 để tương thích ngược.", flush=True)
+        P = np.zeros((X.shape[0], 21), dtype=np.float32)
+
+    print(f"✅ Tải thành công! Kích thước X: {X.shape}, Y: {Y.shape}, P: {P.shape}", flush=True)
     
     # ============================================================
     # KIỂM TRA SỨC KHỎE DỮ LIỆU: Phát hiện sớm data chưa scale
@@ -263,8 +279,10 @@ def main():
     # ── Tự động phát hiện Monthly Split Tensors ──────────────────────────
     x_train_path = os.path.join(tensor_local_dir, f"X_train_{cfg_id}.npy")
     y_train_path = os.path.join(tensor_local_dir, f"Y_train_{cfg_id}.npy")
+    p_train_path = os.path.join(tensor_local_dir, f"P_train_{cfg_id}.npy")
     x_val_path   = os.path.join(tensor_local_dir, f"X_val_{cfg_id}.npy")
     y_val_path   = os.path.join(tensor_local_dir, f"Y_val_{cfg_id}.npy")
+    p_val_path   = os.path.join(tensor_local_dir, f"P_val_{cfg_id}.npy")
 
     if all(os.path.exists(p) for p in [x_train_path, y_train_path, x_val_path, y_val_path]):
         print("[DATA SPLIT] 🗓️ Phát hiện Monthly 2/3-1/3 Split Tensors! Dùng split cố định theo tháng.", flush=True)
@@ -272,11 +290,19 @@ def main():
         Y_tr = np.load(y_train_path)
         X_va = np.load(x_val_path)
         Y_va = np.load(y_val_path)
+        
+        if os.path.exists(p_train_path) and os.path.exists(p_val_path):
+            P_tr = np.load(p_train_path)
+            P_va = np.load(p_val_path)
+        else:
+            P_tr = np.zeros((X_tr.shape[0], 21), dtype=np.float32)
+            P_va = np.zeros((X_va.shape[0], 21), dtype=np.float32)
+            
         print(f"  Train: {X_tr.shape} | Val: {X_va.shape}", flush=True)
     else:
         # Fallback: Chia Validation set chronological 80/20
         print("[DATA SPLIT] Dùng Chronological 80/20 split.", flush=True)
-        X_tr, X_va, Y_tr, Y_va = train_test_split(X, Y, test_size=0.2, shuffle=False)
+        X_tr, X_va, Y_tr, Y_va, P_tr, P_va = train_test_split(X, Y, P, test_size=0.2, shuffle=False)
 
     # PHỤC HỒI CLASS WEIGHTS từ tập Train
     unique_tr, counts_tr = np.unique(Y_tr, return_counts=True)
@@ -289,8 +315,8 @@ def main():
     
     print(f"[CLASS WEIGHTS] Trọng số cân bằng lớp: {cw_array}", flush=True)
 
-    train_loader = DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), torch.tensor(Y_tr, dtype=torch.long)), batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long)), batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(TensorDataset(torch.tensor(X_tr, dtype=torch.float32), torch.tensor(Y_tr, dtype=torch.long), torch.tensor(P_tr, dtype=torch.float32)), batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(TensorDataset(torch.tensor(X_va, dtype=torch.float32), torch.tensor(Y_va, dtype=torch.long), torch.tensor(P_va, dtype=torch.float32)), batch_size=batch_size, shuffle=False)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
@@ -552,7 +578,8 @@ def main():
         epoch += 1
         current_optimizer = optimizer
         tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max)
+        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max,
+                                    tp_pips=fe_cfg.get('TP_PIPS', 10), sl_pips=fe_cfg.get('SL_PIPS', 10), pip_size=fe_cfg.get('PIP_SIZE', 0.01))
 
         comp_score  = eval_res.composite_score()
         val_ce_loss = eval_res.val_loss   # CE-dominated val loss

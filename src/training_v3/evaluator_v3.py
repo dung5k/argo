@@ -89,12 +89,12 @@ class WinRateEvaluatorV3:
         buy_arr = prob_buy.cpu().numpy()
         sell_arr = prob_sell.cpu().numpy()
         seq_len = prob_buy.shape[0]
-        hold_bars = 20
+        hold_bars = 12 # Dùng 12 nến (trung bình) vì không có nhãn để biết chính xác
         
         for t_int in range(99, 53, -1):
             t = t_int / 100.0
             
-            # Cần đếm số tín hiệu hợp lệ qua Fast Filter thay vì count tổng tĩnh
+            # Cần đếm số tín hiệu hợp lệ qua Fast Filter
             n_sig = 0
             next_free = 0
             for i in range(seq_len):
@@ -110,7 +110,7 @@ class WinRateEvaluatorV3:
                 break
         return max_thresh
 
-    def _compute_metrics(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor, hard_labels: torch.Tensor, threshold: float) -> ThresholdMetricsV3:
+    def _compute_metrics(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor, hard_labels: torch.Tensor, threshold: float, prices: torch.Tensor = None, tp_pips: float = 10.0, sl_pips: float = 10.0, pip_size: float = 0.01) -> ThresholdMetricsV3:
         buy_mask  = prob_buy > threshold
         sell_mask = prob_sell > threshold
         
@@ -118,16 +118,20 @@ class WinRateEvaluatorV3:
         n_sell = 0
         n_correct = 0
         
-        # Mô phỏng Fast Simulator (chống Overlap)
-        # Giả định giữ lệnh tối đa 20 nến (MAX_HOLD_BARS = 20)
-        hold_bars = 20
+        # Mô phỏng Fast Simulator
+        max_hold_bars = 20
+        fast_hit_bars = 6
+        loss_bars = 12
         next_free_bar = 0
         seq_len = prob_buy.shape[0]
         
-        # Đưa tensor về CPU numpy/list để lặp cho nhanh thay vì truy cập .item() liên tục
+        # Đưa tensor về CPU numpy/list để lặp cho nhanh
         buy_arr = buy_mask.cpu().numpy()
         sell_arr = sell_mask.cpu().numpy()
         lbl_arr = hard_labels.cpu().numpy()
+        p_arr = prices.cpu().numpy() if prices is not None else None
+        
+        has_prices = p_arr is not None and np.any(p_arr > 0)
         
         for i in range(seq_len):
             if i < next_free_bar:
@@ -138,14 +142,69 @@ class WinRateEvaluatorV3:
             
             if is_buy and not is_sell:
                 n_buy += 1
-                if lbl_arr[i] == 1:
-                    n_correct += 1
-                next_free_bar = i + hold_bars
+                if has_prices:
+                    entry_price = p_arr[i, 0]
+                    if entry_price <= 0:
+                        hit_bars = max_hold_bars
+                    else:
+                        tp_price = entry_price + (tp_pips * pip_size)
+                        sl_price = entry_price - (sl_pips * pip_size)
+                        hit_win = False
+                        hit_bars = max_hold_bars
+                        for j in range(1, p_arr.shape[1]):
+                            future_price = p_arr[i, j]
+                            if future_price <= 0: break
+                            if future_price >= tp_price:
+                                hit_win = True
+                                hit_bars = j
+                                break
+                            elif future_price <= sl_price:
+                                hit_win = False
+                                hit_bars = j
+                                break
+                        if hit_win: n_correct += 1
+                    next_free_bar = i + hit_bars
+                else:
+                    if lbl_arr[i] == 1:
+                        n_correct += 1
+                        next_free_bar = i + fast_hit_bars
+                    elif lbl_arr[i] == 0:
+                        next_free_bar = i + loss_bars
+                    else:
+                        next_free_bar = i + max_hold_bars
+                        
             elif is_sell and not is_buy:
                 n_sell += 1
-                if lbl_arr[i] == 0:
-                    n_correct += 1
-                next_free_bar = i + hold_bars
+                if has_prices:
+                    entry_price = p_arr[i, 0]
+                    if entry_price <= 0:
+                        hit_bars = max_hold_bars
+                    else:
+                        tp_price = entry_price - (tp_pips * pip_size)
+                        sl_price = entry_price + (sl_pips * pip_size)
+                        hit_win = False
+                        hit_bars = max_hold_bars
+                        for j in range(1, p_arr.shape[1]):
+                            future_price = p_arr[i, j]
+                            if future_price <= 0: break
+                            if future_price <= tp_price:
+                                hit_win = True
+                                hit_bars = j
+                                break
+                            elif future_price >= sl_price:
+                                hit_win = False
+                                hit_bars = j
+                                break
+                        if hit_win: n_correct += 1
+                    next_free_bar = i + hit_bars
+                else:
+                    if lbl_arr[i] == 0:
+                        n_correct += 1
+                        next_free_bar = i + fast_hit_bars
+                    elif lbl_arr[i] == 1:
+                        next_free_bar = i + loss_bars
+                    else:
+                        next_free_bar = i + max_hold_bars
 
         n_signals = n_buy + n_sell
         win_rate = n_correct / n_signals if n_signals > 0 else 0.0
@@ -179,7 +238,7 @@ class WinRateEvaluatorV3:
             tus_score=tus_score
         )
 
-    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf")) -> EpochEvalResultV3:
+    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf"), prices: torch.Tensor = None, tp_pips: float = 10.0, sl_pips: float = 10.0, pip_size: float = 0.01) -> EpochEvalResultV3:
         # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Buy, 2=Sideway
         
         # Đảm bảo trung bình 2 lệnh/ngày. Giả định trung bình 1 phiên có 400 nến (phút).
@@ -202,7 +261,7 @@ class WinRateEvaluatorV3:
             max_thresh = 0.99
         metrics_list = []
         for t in thresholds:
-            m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t)
+            m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t, prices=prices, tp_pips=tp_pips, sl_pips=sl_pips, pip_size=pip_size)
             metrics_list.append(m)
 
         best_score = max((m.balanced_score for m in metrics_list), default=0.0)
