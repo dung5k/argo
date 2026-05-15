@@ -1,91 +1,93 @@
 {
-    "HF_RUN_ID": "run_20260511_150440_v6_LONDON_5m_TP8_SL3_Drop20_W15",
-    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
-    "TARGET_SYMBOL": "LTCUSDT",
-    "EXECUTION_SYMBOL": "LTCUSDm",
-    "TARGET_PREFIX": "LTCUSDT",
-    "CONFIG_ID": "CFG_LTC_LONDON_V6",
-    "VERSION": "6.0",
-    "SESSION": "london",
+    "CONFIG_ID": "CFG_XAG_ASIAN_V5",
+    "VERSION": "5.0",
+    "SESSION": "asian",
+    "TARGET_SYMBOL": "XAGUSDm",
+    "TARGET_PREFIX": "XAGUSD",
     "SESSION_UTC": {
-        "START": "07:00",
-        "END": "13:00",
-        "DESCRIPTION": "London session - LTC (07:00-13:00 UTC)"
+        "START": "00:00",
+        "END": "07:00",
+        "DESCRIPTION": "Asian session - Crypto Macro Regime"
     },
+    "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "HF_RUN_ID": "",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_workspaces",
         "MODEL_REPO": "dung5k/argo_workspaces",
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
-        "TP_PCT": 0.008,
-        "SL_PCT": 0.003,
-        "MAX_HOLD_BARS": 15,
-        "LABEL_MODE": "pct",
-        "PIP_SIZE": 0.01,
-        "lot_size": 0.1,
-        "CRYPTO_MODE": true,
-        "MTF_INPUTS": [
-            {
-                "SYMBOL": "LTCUSDT",
-                "TIMEFRAME": "5min",
-                "WINDOW_SIZE": 15,
-                "FEATURES": [
-                    "log_return_close",
-                    "body_pct",
-                    "delta_volume",
-                    "cum_delta_session",
-                    "vol_surge_ratio",
-                    "rsi_5_scaled",
-                    "hour_sin",
-                    "hour_cos"
-                ]
-            },
-            {
-                "SYMBOL": "LTCUSDT",
-                "TIMEFRAME": "15min",
-                "WINDOW_SIZE": 16,
-                "FEATURES": [
-                    "log_return_close",
-                    "delta_volume",
-                    "vol_surge_ratio",
-                    "bb_width"
-                ]
-            },
-            {
-                "SYMBOL": "BTCUSDT",
-                "TIMEFRAME": "1H",
-                "WINDOW_SIZE": 12,
-                "FEATURES": [
-                    "log_return_close",
-                    "corr_60_LTCUSDT",
-                    "bb_width"
-                ]
-            }
-        ],
+        "TP_PIPS": 30,
+        "SL_PIPS": 30,
+        "MAX_HOLD_BARS": 20,
+        "PIP_SIZE": 0.001,
+        "WINDOW_SIZE": 45,
+        "STEP_SIZE": 1,
+        "ORDER_FLOW": true,
         "VOL_REGIME": true,
-        "ORDER_FLOW": true
+        "ZERO_NOISE_TARGET": false,
+        "CLEAN_DATA_DIET": true,
+        "FAST_HIT_BARS": 7,
+        "MACRO_FEATURES": {
+            "XAUUSDm": [
+                "log_ret",
+                "volume",
+                "bb_width"
+            ],
+            "BTCUSDm": [
+                "log_ret",
+                "volume"
+            ],
+            "ETHUSDm": [
+                "log_ret",
+                "volume"
+            ]
+        },
+        "LABEL_MODE": "pct",
+        "TP_PCT": 0.0035,
+        "SL_PCT": 0.0035
     },
     "TRAINING": {
-        "D_MODEL": 128,
+        "D_MODEL": 160,
         "N_HEAD": 8,
-        "NUM_LAYERS": 4,
+        "NUM_LAYERS": 3,
         "BATCH_SIZE": 256,
-        "WARMUP_EPOCHS": 15,
-        "FINETUNE_EPOCHS": 50,
-        "LEARNING_RATE": 1.5e-05,
-        "DROPOUT_RATE": 0.2
+        "LEARNING_RATE": 1e-05,
+        "WEIGHT_DECAY": 0.0001,
+        "DROPOUT": 0.2,
+        "LAYER_DROP": 0.25,
+        "POOLING": "mean",
+        "CLS_HEAD": "residual",
+        "FOCAL_GAMMA": 2.0,
+        "LABEL_SMOOTHING": 0.1,
+        "RECON_LOSS_WEIGHT": 0.05,
+        "WARMUP_EPOCHS": 30,
+        "EPOCHS_PHASE_1": 10,
+        "FREQ_MIN_N": 40,
+        "FREQ_MAX_N": 400,
+        "ES_PATIENCE": 25,
+        "LR_SCHEDULER": "cosine_warm",
+        "PATIENCE": 15,
+        "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
+        "MSE_GATE_PERCENTILE": 0.05,
+        "TRAIN_START": "2026-01-01"
     },
     "DATA_SOURCE": {
-        "RAW_LOCAL_DIR": "data/history",
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_ASIAN_V5/data/raw",
         "DATASET_SUFFIX": "2026",
-        "TIMEFRAME": "M1"
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "EXNESS": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAGUSDm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "BTCUSDm": "EXNESS",
+            "ETHUSDm": "EXNESS"
+        }
     },
     "LIVE_BOT": {
-        "PAPER_TRADE": true,
-        "TRADE_PLATFORM": "BINANCE",
-        "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.59
+        "MAX_ABSOLUTE_MSE": 1.0,
+        "MIN_PROBABILITY_THRESH": 0.53
     }
 }

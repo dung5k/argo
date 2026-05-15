@@ -1,84 +1,80 @@
 {
-    "target": "ltcusdt",
+    "target": "xagusd",
     "version": "Transformer_V3",
     "dimensions": {
         "num_features_target": 0,
         "num_features_macro": 38
     },
     "sessions": {
-        "london": {
+        "asian": {
             "BEST_VLOSS": {
-                "epoch": 31,
-                "max_threshold": 0.86,
-                "composite_score": 0.047902123327516,
-                "val_loss": 0.547098262291966,
+                "epoch": 10,
+                "max_threshold": 0.61,
+                "composite_score": 0.5774175995024876,
+                "val_loss": 0.3070654459297657,
                 "threshold_metrics": [
                     {
                         "threshold": 0.53,
-                        "total_signals": 1227,
-                        "win_rate": 0.017114914425427872,
+                        "total_signals": 229,
+                        "win_rate": 0.5065502183406113,
                         "avg_win_return": 0.001,
                         "avg_loss_return": 0.001,
-                        "ev_score": 0.006974292756898073,
+                        "ev_score": 0.5065502183406113,
                         "sharpe_score": 0.0,
-                        "tus_score": 0.8052159739201303,
-                        "total_buy": 494,
-                        "total_sell": 733
+                        "total_buy": 114,
+                        "total_sell": 115
                     },
                     {
-                        "threshold": 0.64,
-                        "total_signals": 520,
-                        "win_rate": 0.025,
+                        "threshold": 0.5567,
+                        "total_signals": 192,
+                        "win_rate": 0.5208333333333334,
                         "avg_win_return": 0.001,
                         "avg_loss_return": 0.001,
-                        "ev_score": 0.02403846153846154,
+                        "ev_score": 0.5208333333333334,
                         "sharpe_score": 0.0,
-                        "tus_score": 0.9115384615384615,
-                        "total_buy": 283,
-                        "total_sell": 237
+                        "total_buy": 96,
+                        "total_sell": 96
                     },
                     {
-                        "threshold": 0.75,
-                        "total_signals": 191,
-                        "win_rate": 0.05235602094240838,
+                        "threshold": 0.5833,
+                        "total_signals": 160,
+                        "win_rate": 0.56875,
                         "avg_win_return": 0.001,
                         "avg_loss_return": 0.001,
-                        "ev_score": 0.05235602094240838,
+                        "ev_score": 0.56875,
                         "sharpe_score": 0.0,
-                        "tus_score": 0.4397905759162304,
-                        "total_buy": 149,
-                        "total_sell": 42
+                        "total_buy": 80,
+                        "total_sell": 80
                     },
                     {
-                        "threshold": 0.86,
-                        "total_signals": 31,
-                        "win_rate": 0.22580645161290322,
+                        "threshold": 0.61,
+                        "total_signals": 134,
+                        "win_rate": 0.5895522388059702,
                         "avg_win_return": 0.001,
                         "avg_loss_return": 0.001,
-                        "ev_score": 0.04166666666666667,
+                        "ev_score": 0.5895522388059702,
                         "sharpe_score": 0.0,
-                        "tus_score": 0.0,
-                        "total_buy": 31,
-                        "total_sell": 0
+                        "total_buy": 67,
+                        "total_sell": 67
                     }
                 ],
                 "win_rates": [
-                    0.017114914425427872,
-                    0.025,
-                    0.05235602094240838,
-                    0.22580645161290322
+                    0.5065502183406113,
+                    0.5208333333333334,
+                    0.56875,
+                    0.5895522388059702
                 ],
                 "thresholds": [
                     0.53,
-                    0.64,
-                    0.75,
-                    0.86
+                    0.5567,
+                    0.5833,
+                    0.61
                 ],
                 "totals": [
-                    1227,
-                    520,
-                    191,
-                    31
+                    229,
+                    192,
+                    160,
+                    134
                 ]
             }
         }

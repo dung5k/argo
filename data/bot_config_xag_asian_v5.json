@@ -10,7 +10,7 @@
         "DESCRIPTION": "Asian session - Crypto Macro Regime"
     },
     "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
-    "HF_RUN_ID": "run_20260515_113510_v3",
+    "HF_RUN_ID": "",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_workspaces",
         "MODEL_REPO": "dung5k/argo_workspaces",
@@ -18,16 +18,16 @@
     },
     "FEATURE_ENGINEERING": {
         "TP_PIPS": 30,
-        "SL_PIPS": 30,
+        "SL_PIPS": 35,
         "MAX_HOLD_BARS": 20,
         "PIP_SIZE": 0.001,
-        "WINDOW_SIZE": 45,
+        "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "ORDER_FLOW": true,
         "VOL_REGIME": true,
         "ZERO_NOISE_TARGET": false,
         "CLEAN_DATA_DIET": true,
-        "FAST_HIT_BARS": 7,
+        "FAST_HIT_BARS": 5,
         "MACRO_FEATURES": {
             "XAUUSDm": [
                 "log_ret",
@@ -44,7 +44,7 @@
             ]
         },
         "LABEL_MODE": "pct",
-        "TP_PCT": 0.0035,
+        "TP_PCT": 0.003,
         "SL_PCT": 0.0035
     },
     "TRAINING": {
@@ -56,7 +56,7 @@
         "WEIGHT_DECAY": 0.0001,
         "DROPOUT": 0.2,
         "LAYER_DROP": 0.25,
-        "POOLING": "mean",
+        "POOLING": "attention",
         "CLS_HEAD": "residual",
         "FOCAL_GAMMA": 2.0,
         "LABEL_SMOOTHING": 0.1,

@@ -1,0 +1,124 @@
+{
+    "virtual_balance": 9995.069999999985,
+    "virtual_ticket_counter": 1233,
+    "active_trade_loggers": {},
+    "history_deals": [
+        {
+            "ticket": 1221,
+            "order_type": "MUA",
+            "entry_price": 73.627,
+            "close_price": 73.716,
+            "profit": 0.8899999999999864,
+            "close_time": "2026-05-15T11:23:43.239314",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1222,
+            "order_type": "MUA",
+            "entry_price": 73.637,
+            "close_price": 73.327,
+            "profit": -3.1000000000000227,
+            "close_time": "2026-05-15T11:23:44.415204",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1223,
+            "order_type": "MUA",
+            "entry_price": 73.331,
+            "close_price": 73.756,
+            "profit": 4.249999999999972,
+            "close_time": "2026-05-15T11:23:44.862020",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1224,
+            "order_type": "MUA",
+            "entry_price": 73.725,
+            "close_price": 73.764,
+            "profit": 0.3900000000000148,
+            "close_time": "2026-05-15T11:23:45.759745",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1225,
+            "order_type": "MUA",
+            "entry_price": 73.758,
+            "close_price": 73.829,
+            "profit": 0.7099999999999795,
+            "close_time": "2026-05-15T11:23:47.003671",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1226,
+            "order_type": "MUA",
+            "entry_price": 73.823,
+            "close_price": 74.128,
+            "profit": 3.050000000000068,
+            "close_time": "2026-05-15T11:23:47.893686",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1227,
+            "order_type": "MUA",
+            "entry_price": 73.992,
+            "close_price": 73.523,
+            "profit": -4.690000000000083,
+            "close_time": "2026-05-15T11:23:52.662996",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1228,
+            "order_type": "MUA",
+            "entry_price": 73.457,
+            "close_price": 72.695,
+            "profit": -7.6200000000000045,
+            "close_time": "2026-05-15T11:23:52.807560",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1229,
+            "order_type": "MUA",
+            "entry_price": 73.004,
+            "close_price": 73.315,
+            "profit": 3.1099999999999284,
+            "close_time": "2026-05-15T11:23:53.390216",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1230,
+            "order_type": "MUA",
+            "entry_price": 73.33,
+            "close_price": 73.007,
+            "profit": -3.229999999999933,
+            "close_time": "2026-05-15T11:23:54.873148",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1231,
+            "order_type": "MUA",
+            "entry_price": 72.938,
+            "close_price": 72.825,
+            "profit": -1.1299999999999955,
+            "close_time": "2026-05-15T11:23:56.548116",
+            "reason": "Giu lenh qua 20 phut"
+        },
+        {
+            "ticket": 1232,
+            "order_type": "MUA",
+            "entry_price": 72.88,
+            "close_price": 73.194,
+            "profit": 3.1400000000000716,
+            "close_time": "2026-05-15T11:23:57.577480",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1233,
+            "order_type": "MUA",
+            "entry_price": 72.928,
+            "close_price": 72.895,
+            "profit": -0.3300000000000125,
+            "close_time": "2026-05-15T11:24:03.625852",
+            "reason": "Giu lenh qua 20 phut"
+        }
+    ]
+}

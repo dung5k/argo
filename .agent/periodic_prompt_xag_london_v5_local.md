@@ -20,7 +20,8 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `XAG_London_v5
 
 | Run ID | Win Rate | Score | Đặc điểm |
 |---|---|---|---|
-| `run_20260508_london_v5_init_argo2` | **93.9%** | **0.894** | Anti-Overfit Sniper V5 |
+| `run_20260511_130800_v5_london_balanced_upgrade` | **90.9%** | **0.802** | Elite Sniper (Gamma 4.0, Balanced) |
+| `run_20260508_london_v5_init_argo2` | 93.9% | 0.894 | Anti-Overfit Sniper V5 |
 
 > *Ghi chú: Đã đạt ngưỡng Sniper >= 80%, ưu tiên lưu trữ toàn bộ thành tích trên 80%.*
 
