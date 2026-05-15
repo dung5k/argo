@@ -9,10 +9,10 @@
     },
     {
       "id": "xag_all_sessions_v5_auto_tuning",
-      "enabled": false,
+      "enabled": true,
       "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
       "triggerOn": "xag_v5_training_done",
-      "nextRunTime": 1778830993955,
+      "nextRunTime": 0,
       "intervalMinutes": 60
     },
     {
