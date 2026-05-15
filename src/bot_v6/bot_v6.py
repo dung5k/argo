@@ -224,11 +224,11 @@ elif TRADE_PLATFORM == "SIMULATED":
         def update_gui_threshold(self): pass
         def get_active_positions_report(self): return "Mô phỏng (SIMULATED): Đang theo dõi, không trade thật."
     trade_manager = _SimulatedTM()
-    print(f"[BOT V3] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
+    print(f"[BOT V6] 🎭 Trade Platform: SIMULATED (chỉ giám sát, không giao dịch)")
 else:
     trade_manager = V3TradeManager(TARGET_SYMBOL, CONFIG, tg_notify_callback=tg_notify, log_callback=print)
 
-gui_status = "Đang Sưởi Ấm Radar V3..."
+gui_status = "Đang Sưởi Ấm Radar V6..."
 gui_prediction = "Chờ Tín Hiệu..."
 gui_probs = {'buy': 0.0, 'sell': 0.0, 'loss': 0.0}
 gui_time = "00:00:00"
@@ -236,64 +236,103 @@ gui_session = "Phiên: Đang khởi chạy..."
 gui_market_data = []
 gui_brain_tooltip = "Chưa tải não..."  # Tooltip thành tích đào tạo
 
-def _load_brain_metrics(run_id: str, config_id: str) -> str:
+def _load_brain_metrics(run_id: str, config_id: str, is_active: bool = False) -> tuple:
     """Đọc training metrics từ local cache hoặc HF để tạo tooltip."""
     import glob as _glob
+    import os, json
     base = os.path.join(safe_script_dir, 'workspaces', config_id, 'runs', run_id, 'results')
     metric_file = os.path.join(base, 'training_metrics_v3.json')
     
+    status_icon = "🟢 ACTIVE" if is_active else "⚪ QUEUE"
+    header = f"{status_icon} | 🧠 {run_id}"
+    
     if not os.path.isfile(metric_file):
-        # Thử tải từ HF cache
         cache_base = os.path.expanduser('~/.cache/huggingface/hub/datasets--dung5k--argo_workspaces')
         pattern = os.path.join(cache_base, '**', 'workspaces', config_id, 'runs', run_id, 'results', 'training_metrics_v3.json')
         found = _glob.glob(pattern, recursive=True)
         if found:
             metric_file = found[0]
         else:
-            return f"🧠 Não: {run_id}\n📊 Không tìm thấy metrics", 0.7
-    
+            return f"{header}\n📊 Không tìm thấy metrics", 0.7
+            
     try:
         with open(metric_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         sessions = data.get('sessions', {})
-        lines = [f"🧠 Não: {run_id}"]
+        lines = [header]
         
-        # Thông tin trading platform
         platform = CONFIG.get("LIVE_BOT", {}).get("TRADE_PLATFORM", "?")
         exec_sym = CONFIG.get("EXECUTION_SYMBOL", CONFIG.get("TARGET_SYMBOL", "?"))
-        if platform == "BINANCE":
-            is_demo = os.getenv("BINANCE_FUTURES_DEMO", "True").lower() == "true"
-            lines.append(f"💹 Trade: Binance {'DEMO' if is_demo else 'REAL'} | {exec_sym}")
-        elif platform == "BINANCE_SPOT":
-            lines.append(f"💹 Trade: Binance Spot | {exec_sym}")
+        lines.append(f"💹 {platform} | {exec_sym}")
+        lines.append("─" * 32)
+        
+        fe_cfg = CONFIG.get("FEATURE_ENGINEERING", {})
+        tp_pct = fe_cfg.get("TP_PCT", 0)
+        sl_pct = fe_cfg.get("SL_PCT", 0)
+        be_pct = 0.0
+        if tp_pct > 0 and sl_pct > 0:
+            be_pct = sl_pct / (tp_pct + sl_pct) * 100
         else:
-            mt5_path = CONFIG.get("MT5_PATH", "")
-            mt5_name = os.path.basename(os.path.dirname(mt5_path)) if mt5_path else "?"
-            lines.append(f"💹 Trade: MT5 {mt5_name} | {exec_sym}")
-        lines.append("─" * 28)
+            bot_cfg = CONFIG.get("LIVE_BOT", {})
+            tp_pts = bot_cfg.get("TAKE_PROFIT_POINTS", 0)
+            sl_pts = bot_cfg.get("STOP_LOSS_POINTS", 0)
+            if tp_pts > 0 and sl_pts > 0:
+                be_pct = sl_pts / (tp_pts + sl_pts) * 100
+
+        best_thr_overall = 0.7
         for sess_name, sess_data in sessions.items():
             best = sess_data.get('BEST_VLOSS', {})
             score = best.get('composite_score', 0)
-            val_loss = best.get('val_loss', 0)
             epoch = best.get('epoch', 0)
+            lines.append(f"📅 PHIÊN: {sess_name.upper()}")
+            lines.append(f"⭐ Score: {score:.4f} | Epoch: {epoch}")
+            lines.append("─" * 15)
             
-            best_wr, best_thr, best_sigs = 0, 0, 0
+            best_wr, best_sigs = 0, 0
             for tm in best.get('threshold_metrics', []):
+                thr = tm.get('threshold', 0)
                 wr = tm.get('win_rate', 0)
                 sigs = tm.get('total_signals', 0)
+                tus = tm.get('tus_score', 0)
+                b = tm.get('total_buy', sigs // 2)
+                s = tm.get('total_sell', sigs - b)
+                avg = sigs / 30.0 if sigs > 0 else 0
+                lines.append(f"🎯 Thr: {thr:.3f} | WR: {wr*100:.1f}% (Hòa Vốn {be_pct:.1f}%) | ({b}B/{s}S)")
+                lines.append(f"   Avg: {avg:.1f}/ngày | TUS: {tus:.2f}")
+                
                 if wr >= best_wr and sigs >= 1:
                     best_wr = wr
-                    best_thr = tm.get('threshold', 0)
-                    best_sigs = sigs
-            
-            lines.append(f"📊 Phiên: {sess_name.upper()}")
-            lines.append(f"⭐ Score: {score:.4f}")
-            lines.append(f"🎯 WR: {best_wr:.1%} @thr={best_thr:.3f}")
-            lines.append(f"📈 Signals: {best_sigs} | Epoch: {epoch}")
-            lines.append(f"📉 Val Loss: {val_loss:.4f}")
-        return '\n'.join(lines), best_thr
+                    best_thr_overall = thr
+            lines.append("─" * 15)
+        
+        report = "\n".join(lines)
+        return report, best_thr_overall
     except Exception as e:
-        return f"🧠 Não: {run_id}\n❌ Lỗi đọc metrics: {e}", 0.7
+        return f"{header}\n❌ Lỗi đọc metrics: {e}", 0.7
+
+def _get_all_brains_report() -> str:
+    """Tổng hợp báo cáo toàn bộ các bộ não trong lịch trình."""
+    global CONFIG
+    schedule = []
+    if config_loader.schedule_config_path and os.path.exists(config_loader.schedule_config_path):
+        try:
+            with open(config_loader.schedule_config_path, "r", encoding="utf-8-sig") as f:
+                sched_data = json.load(f)
+                sched = sched_data.get("schedule", sched_data.get("SCHEDULE", {}))
+                for s_name, sinfo in sched.items():
+                    schedule.append((s_name, sinfo.get("run_id"), sinfo.get("config_id")))
+        except: pass
+    if not schedule:
+        schedule = [("Default", CONFIG.get("HF_RUN_ID"), CONFIG.get("CONFIG_ID"))]
+
+    active_run = CONFIG.get("HF_RUN_ID", "")
+    reports = []
+    for s_name, r_id, c_id in schedule:
+        is_active = (r_id == active_run)
+        report_text, _ = _load_brain_metrics(r_id, c_id, is_active)
+        reports.append(report_text)
+        reports.append("\n" + "="*20 + "\n")
+    return "\n".join(reports)
 
 def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs, gui_brain_tooltip
@@ -325,7 +364,7 @@ def bot_background_loop():
     import MetaTrader5 as mt5
     if not mt5.initialize(path=mt5_init_path, timeout=5000):
         gui_status = "❌ Lỗi kết nối MT5 Terminal!"
-        print("[BOT V3] ⚠️ Cảnh báo: Không thể khởi tạo kết nối MT5 Terminal. Sẽ chạy dựa trên Binance/Local.")
+        print("[BOT V6] ⚠️ Cảnh báo: Không thể khởi tạo kết nối MT5 Terminal. Sẽ chạy dựa trên Binance/Local.")
         
     last_tick_err_time = 0
     brain_loaded = False
@@ -358,7 +397,7 @@ def bot_background_loop():
     while True:
         cycle_count += 1
         gui_time = datetime.now().strftime('%H:%M:%S')
-        print(f"\n[BOT V3] ────── Chu kỳ #{cycle_count} | {gui_time} ──────")
+        print(f"\n[BOT V6] ────── Chu kỳ #{cycle_count} | {gui_time} ──────")
         
         # 1. Hot-reload Config & Schedule
         base_cfg = config_loader.load_base_config()
@@ -382,14 +421,14 @@ def bot_background_loop():
 
         if target_run_id and target_run_id != active_run_id:
             msg = f"🔄 Chuyển đổi Khung Giờ (Phiên {sess_name})!\nĐang tiến hành Hủy Não [{active_run_id}] để tải Não mới [{target_run_id}]..."
-            print(f"[BOT V3] {msg}")
+            print(f"[BOT V6] {msg}")
             tg_notify(msg)
             brain_loaded = False
             # Re-init cloud to fetch new config specs like DATASET_REPO
             cloud = V3CloudManager(TARGET_SYMBOL, TARGET_PREFIX, "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", CONFIG, log_callback=print)
             
         if not brain_loaded and cloud is not None:
-            print(f"[BOT V3] Bắt đầu tải não AAMT...")
+            print(f"[BOT V6] Bắt đầu tải não AAMT...")
             gui_status = "Đang Tải NÃO từ Cloud..."
             try:
                 m_path, s_path, i_feats, n_feat = cloud.sync_session_model(cfg_id)
@@ -423,33 +462,34 @@ def bot_background_loop():
                 mt5_manager.force_reload_dynamic_features(list(set(all_feats)))
                 
                 brain_loaded = True
-                gui_status = "✅ Lắp Ráp NÃO V3 Thành Công!"
+                gui_status = "✅ Lắp Ráp NÃO V6 Thành Công!"
                 
                 # Sửa lỗi hiển thị "Unknown" - Fallback về SESSION trong config chính
                 display_sess = sess_name if sess_name else CONFIG.get("SESSION", "Unknown")
                 gui_session = f"PHIÊN {display_sess.upper()} (Não: {os.path.basename(m_path)})"
                 
-                # Tải training metrics cho tooltip
-                gui_brain_tooltip, best_thr = _load_brain_metrics(target_run_id, cfg_id)
+                # Tải training metrics cho tooltip toàn diện
+                gui_brain_tooltip = _get_all_brains_report()
+                _, best_thr = _load_brain_metrics(target_run_id, cfg_id, True)
                 if best_thr > 0:
                     engine.prob_threshold = best_thr
                 print(f"[BOT V6] Đã cài đặt prob_threshold = {engine.prob_threshold}")
                 
-                msg_done = f"✅ Lắp ráp NÃO V3 Xong!\n{gui_brain_tooltip}\n\nNgưỡng Loss an toàn: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)}%\nBot đang nghe ngóng thị trường..."
-                print(f"[BOT V3] {msg_done}")
+                msg_done = f"✅ Lắp ráp NÃO V6 Xong!\n{gui_brain_tooltip}\n\nNgưỡng Loss an toàn: {bot_cfg.get('MSE_THRESHOLD_PERCENTILE', 70)}%\nBot đang nghe ngóng thị trường..."
+                print(f"[BOT V6] {msg_done}")
                 tg_notify(msg_done)
             except Exception as ce:
                 gui_status = f"❌ Lỗi Thay Não: {str(ce)[:30]}"
-                print(f"[BOT V3] ❌ Lỗi tải não: {ce}")
+                print(f"[BOT V6] ❌ Lỗi tải não: {ce}")
                 time.sleep(60)  # Tăng lên 60s để tránh spam log liên tục khi não chưa sẵn sàng
                 continue
                 
         if not brain_loaded:
-            print("[BOT V3] Chưa có Bộ Não nào được cấu hình hợ lệ. Đợi 5s...")
+            print("[BOT V6] Chưa có Bộ Não nào được cấu hình hợ lệ. Đợi 5s...")
             time.sleep(5)
             continue
             
-        print("[BOT V3] Quét các cổng MT5...")
+        print("[BOT V6] Quét các cổng MT5...")
         mt5_manager.scan_terminals_and_map()
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
@@ -486,7 +526,7 @@ def bot_background_loop():
                 staleness_secs = 0
             except Exception as e:
                 if time.time() - last_tick_err_time > 10:
-                    print(f"[BOT V3] ⚠️ LỖI TICK BINANCE: {e}")
+                    print(f"[BOT V6] ⚠️ LỖI TICK BINANCE: {e}")
                     last_tick_err_time = time.time()
                 time.sleep(1)
                 continue
@@ -495,7 +535,7 @@ def bot_background_loop():
             tick = mt5.symbol_info_tick(actual_sym)
             if tick is None:
                 if time.time() - last_tick_err_time > 10:
-                    print(f"[BOT V3] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
+                    print(f"[BOT V6] ⚠️ LỖI TICK: {actual_sym} = None! Reconnect...")
                     last_tick_err_time = time.time()
                 mt5_manager.current_connected_path = None
                 time.sleep(1)
@@ -606,7 +646,7 @@ def bot_background_loop():
             daily_pnl = trade_manager._get_daily_pnl()
             msg_pred += f"\nLãi/Lỗ trong ngày: {daily_pnl:+.2f}$"
 
-        print(f"[BOT V3] {msg_pred}")
+        print(f"[BOT V6] {msg_pred}")
         # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
         # Để tránh spam, tg_notify đã được cấu hình chỉ gửi tin quan trọng
         tg_notify(msg_pred)

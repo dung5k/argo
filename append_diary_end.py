@@ -1,8 +1,14 @@
-import os
+import codecs
 
-with open('workspaces/CFG_LTC_NY_V3_5/NY_TRAINING_DIARY.md', 'a', encoding='utf-8') as f:
-    f.write("\n### [2026-04-29 01:04] - KẾT LUẬN VÀ DỪNG SỚM (EARLY STOPPING)\n")
-    f.write("- **Kết quả Run trước:** Run al (Residual Head + Layer Drop 0.2) tiếp tục không vượt qua mốc 0.60 và đã bị dọn dẹp.\n")
-    f.write("- **Phân tích tổng thể:** Sau hơn 8 lượt thử nghiệm liên tục quét qua mọi ngóc ngách của không gian Hyperparameter (từ Scalping 15m đến Macro 90m, từ Order Flow đến Volatility Regime, từ Attention Pooling đến Residual Head), điểm số Score vẫn không thể phá vỡ mốc 0.60. Điều này chứng tỏ giới hạn không nằm ở cấu hình (Config) mà nằm ở bản chất dữ liệu hoặc kiến trúc cốt lõi hiện tại.\n")
-    f.write("- **Quyết định:** Cạn kiệt ý tưởng Tuning hợp lý dựa trên Kho Vũ Khí hiện tại. Kích hoạt Early Stopping để tránh lãng phí tài nguyên máy tính.\n")
-    f.write("- **Đề xuất Next Steps:** Cần nghiên cứu tích hợp một bộ Feature Engineering hoàn toàn mới hoặc nâng cấp lõi mô hình lên kiến trúc Transformer thay vì cấu trúc hiện tại.\n\n")
+diary_text = """
+### Tóm tắt Vòng 4 (Max Hold Bars 60):
+- **Kết quả:** Phát hiện lỗi cấu hình nghiêm trọng (Timeframe bị set thành 5min thay vì 1min do lỗi đường dẫn JSON trong script setup).
+- **Phân tích Sâu:** Lệnh của Sếp Lê "Hãy khởi động với time frame = 1" đã giúp phát hiện lỗ hổng trong script setup_asian_v4.py. Script cũ cố gắng ghi đè MTF_INPUTS ở root thay vì nằm trong block FEATURE_ENGINEERING.
+
+### Ý tưởng tiếp theo (Vòng 5):
+- **Hành động:** Kill tiến trình lỗi. Sửa setup script để chỉ định chính xác config['FEATURE_ENGINEERING']['MTF_INPUTS']. Tạo Run mới với đúng Timeframe = 1min và các thông số mạng chuẩn (MaxHold=60).
+- **Mục tiêu:** Kiểm chứng lại sức mạnh của STF V6 trên khung thời gian 1min chuẩn xác của phiên Á.
+"""
+
+with codecs.open('workspaces/CFG_LTC_ASIAN_V6/ASIAN_V6_DIARY.md', 'a', encoding='utf-8') as f:
+    f.write(diary_text)

@@ -17,12 +17,20 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `ltc_asian_v6_
 - Thanh khoản mỏng, giá di chuyển theo momentum yếu, thường đi ngang (ranging).
 - Giao dịch Micro-Scalping kết hợp OrderFlow là chìa khóa để bắt các sóng ngắn.
 
+### 🎯 ĐỊNH HƯỚNG CHIẾN LƯỢC: CHỈ BÁO DẪN DẮT (LEADING INDICATOR STRATEGY)
+**Triết lý cốt lõi:** Mỗi khi thị trường biến động, thường là do một tin tức từ một nguồn nào đó. Khi biến động xảy ra, luôn có **mã biến động TRƯỚC** và **mã biến động SAU**. Nhiệm vụ của chúng ta là:
+1. **Tìm kiếm các mã/chỉ số có xu hướng biến động TRƯỚC LTC** để dùng làm chỉ báo dẫn dắt (Leading Indicators).
+2. **Bộ não AI có nhiệm vụ tìm ra quy luật** của sự biến động giữa các mã dẫn dắt và LTC.
+3. Bạn được toàn quyền quyết định thêm/bớt bất kỳ SYMBOL nào vào `MTF_INPUTS` làm chỉ báo dẫn dắt trong mỗi vòng đào tạo. Hãy liên tục đưa ra các ý tưởng đầu vào mới và thay đổi để tìm tổ hợp tối ưu nhất. Đảm bảo SYMBOL mới có trong `DATA_SOURCE.ROUTING`.
+
 ### Giới Hạn Tìm Kiếm (SEARCH SPACE GUARDRAILS)
 Để ngăn chặn "ảo giác", bạn CHỈ ĐƯỢC đề xuất các tham số trong phạm vi sau:
 - **Learning Rate (LR):** `[1e-5, 5e-4]`. KHÔNG ĐƯỢC vượt quá 5e-4.
 - **Dropout:** `[0.0, 0.3]`. KHÔNG ĐƯỢC vượt quá 0.3.
 - **TP/SL:** Bắt buộc tuân thủ tỷ lệ R:R > 1.2 (Ví dụ: TP=0.005, SL=0.003 là hợp lệ). Phiên Á ưu tiên TP/SL nhỏ.
 - **Base Timeframe (TF):** Bạn được cấp quyền ĐỔI LINH HOẠT Base Timeframe (`TIMEFRAME` của phần tử đầu tiên trong `MTF_INPUTS`) sang `1min`, `5min`, `15min` tùy chiến lược, và hãy nhớ chỉnh `WINDOW_SIZE` tương ứng.
+
+- **Feature Engineering:** Bạn được toàn quyền thêm/bớt các FEATURES đầu vào (cắt bỏ các indicator nhiễu, thử nghiệm các tính năng mới) hoặc thay đổi cấu trúc mảng MTF_INPUTS (chuyển đổi Single-Timeframe hoặc Multi-Timeframe) để A/B testing tìm ra tổ hợp input có tỷ lệ nhiễu thấp nhất.
 
 ---
 
@@ -46,6 +54,34 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 
 ---
 
+## 📋 MẪU BÁO CÁO TELEGRAM BẮT BUỘC
+
+Mỗi lần kết thúc State Machine, BẮT BUỘC gửi báo cáo theo đúng mẫu sau (KHÔNG được rút gọn hay thay đổi cấu trúc):
+
+```
+🏯 [ASIAN V6 MTF] <Trạng thái: Tạo Run Mới / Đang Chờ / Lỗi> (HolyGrail_<N>).
+
+📊 Kết quả HolyGrail_<N-1>:
+- Best Val Loss tại Epoch <X>. Composite Score: <score>
+- Win Rate: <WR@0.80>% (Threshold 0.80) | <WR@0.86>% (Threshold 0.86)
+
+📈 Bảng tổng kết 6 vòng gần nhất (<cấu hình hiện tại>):
+| Vòng | Score  | WR@0.80 | WR@0.86 | Hòa Vốn |
+|------|--------|---------|---------|---------|
+| <N-6>| <score>| <WR80>% | <WR86>% | <BE>%   |
+| <N-5>| <score>| <WR80>% | <WR86>% | <BE>%   |
+| <N-4>| <score>| <WR80>% | <WR86>% | <BE>%   |
+| <N-3>| <score>| <WR80>% | <WR86>% | <BE>%   |
+| <N-2>| <score>| <WR80>% | <WR86>% | <BE>%   |
+| <N-1>| <score>| <WR80>% | <WR86>% | <BE>%   |
+
+<Nhận định ngắn về xu hướng Score/WR>. 🚀 HolyGrail_<N> (PID <pid>) đã kích hoạt! Mục tiêu: <mục tiêu cụ thể>!
+```
+
+> **Lưu ý:** Bảng tổng kết phải đọc từ Diary để điền đúng số liệu thực tế của 6 vòng gần nhất. KHÔNG được bịa số liệu.
+
+---
+
 > **THÔNG BÁO TELEGRAM BẮT BUỘC:**
-> Khi kết thúc luồng State Machine, bắt buộc thực thi:
-> `python .agent/send_to_tele.py "🏯 [ASIAN V6 MTF] <Báo cáo tình hình State hiện tại: Lỗi/Ổn định/Tạo Run Mới>." --done`
+> Khi kết thúc luồng State Machine, bắt buộc thực thi lệnh gửi báo cáo theo mẫu ở trên, kèm flag `--done`:
+> `python .agent/send_to_tele.py "<Báo cáo theo mẫu>" --done`

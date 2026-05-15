@@ -1,0 +1,14 @@
+🏯 [ASIAN V6 MTF] Tạo Run Mới - LEADING INDICATOR (LeadBTC_180).
+
+🎯 CHIẾN LƯỢC MỚI: CHỈ BÁO DẪN DẮT
+Lần đầu tiên áp dụng định hướng của Sếp Lê: Tìm mã biến động TRƯỚC LTC.
+
+📐 Cấu hình LeadBTC_180:
+- Input 1: LTCUSDT 1min (W20) - Tín hiệu gốc
+- Input 2: BTCUSDT 15min (W30) - CHỈ BÁO DẪN DẮT MỚI
+- TP: 0.25% | SL: 0.20% (Micro-Scalping)
+- D_MODEL: 32 | LR: 2e-5
+
+Giả thuyết: BTC biến động trước LTC. Khung 15 phút BTC cho tầm nhìn xa, bộ não sẽ học quy luật trễ pha giữa BTC và LTC.
+
+🚀 LeadBTC_180 (PID 16992) đã kích hoạt! Mục tiêu: Phá vỡ kỷ lục 77.27% bằng sức mạnh của Leading Indicator!

@@ -50,7 +50,7 @@ class BinanceAdapter(BaseDataAdapter):
             if not self.connect(): return pd.DataFrame()
             
         # Tối ưu: Nếu AI chỉ cần window nhỏ (ví dụ 30, 60), không nên kéo 1000 nến
-        fetch_limit = min(limit, 200) # Giới hạn tối đa 200 nến cho live để tăng tốc
+        fetch_limit = min(limit, 1000) # Tăng lên 1000 để hỗ trợ MTF 1H
         if fetch_limit < 100: fetch_limit = 100 # Tối thiểu 100 nến để tính Indicators
             
         # Chuẩn hoá mã "BTCUSDm" (của config) thành format của Binance "BTC/USDT"

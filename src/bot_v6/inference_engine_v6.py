@@ -56,7 +56,7 @@ class V6InferenceEngine:
                 cls_head=arch.get('CLS_HEAD', 'simple')
             ).to(self.device)
 
-            self.model.load_state_dict(state_dict)
+            self.model.load_state_dict(state_dict, strict=False)
             self.model.eval()
             self.log_callback("[InferenceEngineV6] ✅ Nạp weights thành công.")
             return True
@@ -73,6 +73,7 @@ class V6InferenceEngine:
             # Áp dụng Clipping để tránh ảo giác Outlier từ Static Scaler
             tensor_list = [torch.FloatTensor(np.clip(x, -3.0, 3.0)).to(self.device) for x in X_list]
             
+            self.model.eval()
             with torch.no_grad():
                 reconstructed_list, logits, _ = self.model(tensor_list)
                 probs = F.softmax(logits, dim=-1)[0].cpu().numpy()

@@ -395,8 +395,8 @@ def main():
                             new_param[slices] = param[slices]
                             state_dict[name] = new_param
                 model.load_state_dict(state_dict, strict=False)
-                run_dir = os.path.basename(os.path.dirname(latest_file))
-                msg = f"\U0001f449 Kế thừa Model: {run_dir}/{os.path.basename(latest_file)}"
+                inherit_dir = os.path.basename(os.path.dirname(latest_file))
+                msg = f"👉 Kế thừa Model: {inherit_dir}/{os.path.basename(latest_file)}"
                 print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:
                 msg = f"\u274c Lỗi kế thừa Model: {e}"
@@ -772,15 +772,18 @@ def main():
                 }
             }, fm)
             
-    print(f"🏆 Win Rate {best_win_rate*100:.2f}% >= 60%. Đang PUSH lên HuggingFace...", flush=True)
-    try:
-        from scripts.sync_workspaces import push_run
-        push_run(cfg_id, run_id)
-        print("✅ Đã Push thành công!", flush=True)
-        if tbot and chat_id:
-            tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
-    except Exception as e:
-        print(f"❌ Lỗi khi Push: {e}", flush=True)
+    if best_win_rate >= 0.60:
+        print(f"🏆 Win Rate {best_win_rate*100:.2f}% >= 60%. Đang PUSH lên HuggingFace...", flush=True)
+        try:
+            from scripts.sync_workspaces import push_run
+            push_run(cfg_id, run_id)
+            print("✅ Đã Push thành công!", flush=True)
+            if tbot and chat_id:
+                tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
+        except Exception as e:
+            print(f"❌ Lỗi khi Push: {e}", flush=True)
+    else:
+        print(f"⚠️ Win Rate {best_win_rate*100:.2f}% < 60%. Bỏ qua PUSH lên HuggingFace để giữ sạch repo.", flush=True)
 
     # GỌI TRIGGER EVENT CHO HỆ THỐNG AUTO-TUNING
     session = config.get("SESSION", "").lower()

@@ -319,10 +319,11 @@ def pull_runs(logger=None, target_prefix=None, config_id=None, custom_repo_id=No
                 f"**/*{target_prefix}*.pth",
                 f"**/*{target_prefix}*.json",
                 f"**/*{target_prefix}*.pkl",
-                f"**/*{target_prefix}*.onnx"
-            ] if target_prefix else ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx"]
+                f"**/*{target_prefix}*.onnx",
+                f"**/training_metrics_v3.json"
+            ] if target_prefix else ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx", "**/training_metrics_v3.json"]
         else:
-            patterns = ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx"]
+            patterns = ["**/*.pth", "**/*.json", "**/*.pkl", "**/*.onnx", "**/training_metrics_v3.json"]
 
         log(f"[HF] Mẫu tải xuống (bỏ qua PNG): {patterns}")
         from huggingface_hub import snapshot_download

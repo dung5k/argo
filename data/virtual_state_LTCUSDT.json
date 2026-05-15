@@ -1,6 +1,6 @@
 {
-    "virtual_balance": 10001.3,
-    "virtual_ticket_counter": 1011,
+    "virtual_balance": 10000.4,
+    "virtual_ticket_counter": 1012,
     "active_trade_loggers": {},
     "history_deals": [
         {
@@ -101,6 +101,15 @@
             "profit": 0.0,
             "close_time": "2026-05-08T07:30:04.539383",
             "reason": "Gi\u1eef l\u1ec7nh qu\u00e1 10 ph\u00fat"
+        },
+        {
+            "ticket": 1012,
+            "order_type": "B\u00c1N",
+            "entry_price": 57.18,
+            "close_price": 0.0,
+            "profit": -0.9000000000000341,
+            "close_time": "2026-05-13T21:12:01.953226",
+            "reason": "Gi\u1eef l\u1ec7nh qu\u00e1 20 ph\u00fat"
         }
     ]
 }

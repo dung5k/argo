@@ -59,7 +59,7 @@ function checkPendingMessages() {
             if (pendingParams && pendingParams.length > 0) {
                 fs.unlinkSync(pendingPath);
 
-                let combinedQuery = "[BỐI CẢNH BẮT BUỘC: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. MỌI PHẢN HỒI DÀNH CHO SẾP PHẢI ĐƯỢC GỬI TOÀN BỘ QUA TELEGRAM bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung_đầy_đủ>\"`. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi hoàn tất công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --done` để báo hệ thống rảnh!]\n\n";
+                let combinedQuery = "[BỐI CẢNH BẮT BUỘC: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. MỌI PHẢN HỒI DÀNH CHO NGƯỜI DÙNG NÀO PHẢI ĐƯỢC GỬI QUA TELEGRAM VỀ ĐÚNG NHÓM CHAT ĐÓ bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung_đầy_đủ>\" --channel <ID_Của_Họ>`. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi hoàn tất toàn bộ công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --channel <ID_Cuối> --done` để báo hệ thống rảnh!]\n\n";
                 pendingParams.forEach((item, index) => {
                     let cName = item.chatName || "Unknown";
                     combinedQuery += `--- Tin nhắn ${index + 1} từ "${cName}" (ID: ${item.chatId}) ---\n${item.queryToAgent}\n\n`;
@@ -837,8 +837,9 @@ def signal_done_to_extension():
     except:
         pass
 
-def send_via_telegram_api(content, is_done=False, target_channels=None):
-    token, chat_ids, agent_identity = get_telegram_config(target_channels)
+def send_via_telegram_api(content, is_done=False, override_chat_ids=None):
+    token, default_chat_ids, agent_identity = get_telegram_config(target_channels=None)
+    chat_ids = override_chat_ids if override_chat_ids else default_chat_ids
     if not token or not chat_ids:
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
         return False
@@ -863,11 +864,12 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
     
     return success
 
-def send_to_telegram(content, is_done=False, target_channels=None):
+def send_to_telegram(content, is_done=False, override_chat_ids=None):
     if not content: return
-    token, chat_ids, agent_identity = get_telegram_config(target_channels)
+    token, default_chat_ids, agent_identity = get_telegram_config(target_channels=None)
+    chat_ids = override_chat_ids if override_chat_ids else default_chat_ids
     if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
-    send_via_telegram_api(content, is_done, target_channels)
+    send_via_telegram_api(content, is_done, override_chat_ids)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
@@ -881,17 +883,15 @@ if __name__ == '__main__':
         idx = sys.argv.index('--channel')
         if idx + 1 < len(sys.argv):
             target_channels = sys.argv[idx + 1]
-            sys.argv.pop(idx + 1)
-        sys.argv.pop(idx)
+            
+    content = ""
+    for i in range(1, len(sys.argv)):
+        if sys.argv[i] == '--done': continue
+        if sys.argv[i] == '--channel': continue
+        if sys.argv[i-1] == '--channel': continue
+        content = sys.argv[i]
+        break
         
-    if '--target' in sys.argv:
-        idx = sys.argv.index('--target')
-        if idx + 1 < len(sys.argv):
-            target_channels = sys.argv[idx + 1]
-            sys.argv.pop(idx + 1)
-        sys.argv.pop(idx)
-        
-    content = sys.argv[1] if len(sys.argv) > 1 else ""
     send_to_telegram(content, is_done, target_channels)
 `;
     fs.writeFileSync(scriptPath, pyContent);

@@ -120,6 +120,20 @@ class FeatureEngineeringV3:
             features['asian_high_dist'] = ((asian_highs - df[close_col]) / (df[close_col] + 1e-6)).fillna(0.0)
             features['asian_low_dist'] = ((df[close_col] - asian_lows) / (asian_lows + 1e-6)).fillna(0.0)
             
+            # -- [MỚI - NY Session] London Session Liquidity Magnets (07:00 - 13:00)
+            london_mask = (df.index.hour >= 7) & (df.index.hour < 13)
+            london_highs = df[high_col].where(london_mask).groupby(day_key).cummax().groupby(day_key).ffill()
+            london_lows = df[low_col].where(london_mask).groupby(day_key).cummin().groupby(day_key).ffill()
+            features['london_high_dist'] = ((london_highs - df[close_col]) / (df[close_col] + 1e-6)).fillna(0.0)
+            features['london_low_dist'] = ((df[close_col] - london_lows) / (london_lows + 1e-6)).fillna(0.0)
+
+            # -- [MỚI - Close Session] NY Session Liquidity Magnets (13:00 - 22:00)
+            ny_mask = (df.index.hour >= 13) & (df.index.hour < 22)
+            ny_highs = df[high_col].where(ny_mask).groupby(day_key).cummax().groupby(day_key).ffill()
+            ny_lows = df[low_col].where(ny_mask).groupby(day_key).cummin().groupby(day_key).ffill()
+            features['ny_high_dist'] = ((ny_highs - df[close_col]) / (df[close_col] + 1e-6)).fillna(0.0)
+            features['ny_low_dist'] = ((df[close_col] - ny_lows) / (ny_lows + 1e-6)).fillna(0.0)
+            
             # -- [MỚI - London Session] Volume Surge Ratio
             sma_vol_60 = vol.rolling(window=60, min_periods=1).mean()
             features['vol_surge_ratio'] = vol / (sma_vol_60 + 1e-6)

@@ -17,6 +17,7 @@ class ThresholdMetricsV3:
     n_buy: int = 0
     n_sell: int = 0
     balanced_score: float = 0.0  # Điểm đánh giá (phạt nếu tỷ lệ Buy/Sell lệch quá lớn)
+    tus_score: float = 0.0  # Time Under Stress / Total Units Scaled
 
     def __str__(self) -> str:
         b_ratio = min(self.n_buy, self.n_sell) / max(1, max(self.n_buy, self.n_sell))
@@ -34,6 +35,7 @@ class EpochEvalResultV3:
     best_score: float = 0.0
     val_loss: float = float("inf")
     val_mse: float = float("inf")
+    val_ce: float = float("inf")
 
     def composite_score(self) -> float:
         """Score tổng hợp dựa trên độ tự tin của 2 ngưỡng cao nhất (nếu có đủ 4 ngưỡng)"""
@@ -124,16 +126,19 @@ class WinRateEvaluatorV3:
             )
             score = score * freq_factor
 
+        tus_score = 1.0 - abs(n_buy - n_sell) / n_signals if n_signals > 0 else 0.0
+
         return ThresholdMetricsV3(
             threshold=threshold,
             total_signals=n_signals,
             n_buy=n_buy,
             n_sell=n_sell,
             win_rate=win_rate,
-            balanced_score=score
+            balanced_score=score,
+            tus_score=tus_score
         )
 
-    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float) -> EpochEvalResultV3:
+    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf")) -> EpochEvalResultV3:
         # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Buy, 2=Sideway
         
         # Đảm bảo trung bình 2 lệnh/ngày. Giả định trung bình 1 phiên có 400 nến (phút).
@@ -166,7 +171,8 @@ class WinRateEvaluatorV3:
             max_threshold=max_thresh,
             best_score=best_score,
             val_loss=val_loss,
-            val_mse=val_mse
+            val_mse=val_mse,
+            val_ce=val_ce
         )
 
 

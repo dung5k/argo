@@ -1,0 +1,136 @@
+{
+    "virtual_balance": 9988.010000000002,
+    "virtual_ticket_counter": 1014,
+    "active_trade_loggers": {},
+    "history_deals": [
+        {
+            "ticket": 1001,
+            "run_id": "Unknown",
+            "order_type": "B\u00c1N",
+            "entry_price": 84.878,
+            "close_price": 84.575,
+            "profit": 3.0299999999999727,
+            "close_time": "2026-05-11T21:06:37.094316",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1002,
+            "run_id": "Unknown",
+            "order_type": "B\u00c1N",
+            "entry_price": 84.418,
+            "close_price": 84.728,
+            "profit": -3.0999999999998806,
+            "close_time": "2026-05-11T21:08:50.352025",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1003,
+            "run_id": "Unknown",
+            "order_type": "B\u00c1N",
+            "entry_price": 84.755,
+            "close_price": 85.056,
+            "profit": -3.0100000000000193,
+            "close_time": "2026-05-11T21:14:12.727923",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1004,
+            "order_type": "B\u00c1N",
+            "entry_price": 84.846,
+            "close_price": 84.749,
+            "profit": 0.9700000000000841,
+            "close_time": "2026-05-11T21:30:54.282659",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1005,
+            "order_type": "MUA",
+            "entry_price": 87.321,
+            "close_price": 87.472,
+            "profit": 1.5099999999999625,
+            "close_time": "2026-05-13T21:07:54.765685",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1006,
+            "order_type": "MUA",
+            "entry_price": 87.685,
+            "close_price": 87.836,
+            "profit": 1.5099999999999625,
+            "close_time": "2026-05-14T07:00:59.402898",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1007,
+            "order_type": "B\u00c1N",
+            "entry_price": 86.902,
+            "close_price": 87.209,
+            "profit": -3.0700000000000216,
+            "close_time": "2026-05-14T16:10:03.874921",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1008,
+            "order_type": "MUA",
+            "entry_price": 84.677,
+            "close_price": 84.364,
+            "profit": -3.130000000000024,
+            "close_time": "2026-05-14T20:56:41.945344",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1009,
+            "order_type": "MUA",
+            "entry_price": 84.27,
+            "close_price": 83.949,
+            "profit": -3.2099999999999795,
+            "close_time": "2026-05-14T20:59:40.369282",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1010,
+            "order_type": "MUA",
+            "entry_price": 84.119,
+            "close_price": 84.422,
+            "profit": 3.0299999999999727,
+            "close_time": "2026-05-14T21:11:17.315577",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1011,
+            "order_type": "MUA",
+            "entry_price": 84.64,
+            "close_price": 84.948,
+            "profit": 3.0799999999999272,
+            "close_time": "2026-05-14T21:20:18.535058",
+            "reason": "TP Hit"
+        },
+        {
+            "ticket": 1012,
+            "order_type": "MUA",
+            "entry_price": 84.181,
+            "close_price": 83.871,
+            "profit": -3.1000000000000227,
+            "close_time": "2026-05-15T02:37:58.717058",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1013,
+            "order_type": "MUA",
+            "entry_price": 83.626,
+            "close_price": 83.297,
+            "profit": -3.2900000000000773,
+            "close_time": "2026-05-15T06:34:46.599315",
+            "reason": "SL Hit"
+        },
+        {
+            "ticket": 1014,
+            "order_type": "MUA",
+            "entry_price": 83.256,
+            "close_price": 82.935,
+            "profit": -3.2099999999999795,
+            "close_time": "2026-05-15T06:37:02.903883",
+            "reason": "SL Hit"
+        }
+    ]
+}
