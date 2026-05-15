@@ -54,34 +54,34 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 
 ---
 
-## 📋 MẪU BÁO CÁO TELEGRAM BẮT BUỘC
+## 📋 MẪU BÁO CÁO TELEGRAM BẮT BUỘC (THEO MẪU MỚI)
+> 
+> Mỗi lần kết thúc State Machine, BẮT BUỘC gửi báo cáo theo đúng mẫu sau:
+> 
+> ```
+> 🤖 Argo2:
+> 
+> 🇺🇸 [NEW YORK V6 MTF] <Trạng thái: Đang Chờ / Đang Chạy / Hoàn Tat> (<Tên Run hiện tại>).
+> 
+> 📊 Kết quả <Tên Run vừa xong>:
+> - Best Val Loss tại Epoch <X>. Composite Score: <Y>
+> - Win Rate: <A>% (Threshold 0.77) | <B>% (Threshold 0.90)
+> 
+> 📈 Bảng tổng kết 6 vòng gần nhất (Hành trình 80%):
+> | Vòng | Score  | WR.77 | WR.90 | Hòa Vốn |
+> |------|--------|-------|-------|---------|
+> | <n-5>| <S1>   | <W1>  | <W2>  | 45.5%   |
+> | <n-4>| <S2>   | <W3>  | <W4>  | 45.5%   |
+> | <n-3>| <S3>   | <W5>  | <W6>  | 45.5%   |
+> | <n-2>| <S4>   | <W7>  | <W8>  | 45.5%   |
+> | <n-1>| <S5>   | <W9>  | <W10> | 45.5%   |
+> | <n>  | <S6>   | <W11> | <W12> | 45.5%   |
+> 
+> <Phân tích chuyên sâu về vòng hiện tại, lý do thay đổi tham số và kỳ vọng hội tụ. Dùng ngôn ngữ mạnh mẽ, quyết tâm như "Khoan thủng 80% Win Rate!", "Hoạt động hết công suất!", "Ép mô hình học sâu!".>
+> ```
+> 
+> **LƯU Ý:** 
+> - Lấy dữ liệu từ Diary và các file `training_metrics_v3.json` để điền vào bảng.
+> - Nếu chưa có đủ 6 vòng, điền các vòng trước đó là "---".
+> - Luôn gọi lệnh: `python .agent/send_to_tele.py "<Nội_dung_theo_mẫu>" --channel 1816854047 --done`
 
-Mỗi lần kết thúc State Machine, BẮT BUỘC gửi báo cáo theo đúng mẫu sau (KHÔNG được rút gọn hay thay đổi cấu trúc):
-
-```
-🏯 [NEW YORK V6 MTF] <Trạng thái: Tạo Run Mới / Đang Chờ / Lỗi> (FarmSeed <N>).
-
-📊 Kết quả FarmSeed <N-1>:
-- Best Val Loss tại Epoch <X>. Composite Score: <score>
-- Win Rate: <WR@0.80>% (Threshold 0.80) | <WR@0.94>% (Threshold 0.94)
-
-📈 Bảng tổng kết 6 vòng gần nhất (<cấu hình hiện tại>):
-| Seed | Score  | WR@0.80 | WR@0.94 |
-|------|--------|---------|---------|
-| <N-6>| <score>| <WR80>% | <WR94>% |
-| <N-5>| <score>| <WR80>% | <WR94>% |
-| <N-4>| <score>| <WR80>% | <WR94>% |
-| <N-3>| <score>| <WR80>% | <WR94>% |
-| <N-2>| <score>| <WR80>% | <WR94>% |
-| <N-1>| <score>| <WR80>% | <WR94>% |
-
-<Nhận định ngắn về xu hướng Score/WR>. 🚀 FarmSeed <N> (PID <pid>) đã bùng cháy! Mục tiêu: <mục tiêu cụ thể>!
-```
-
-> **Lưu ý:** Bảng tổng kết phải đọc từ Diary để điền đúng số liệu thực tế của 6 vòng gần nhất. KHÔNG được bịa số liệu.
-
----
-
-> **THÔNG BÁO TELEGRAM BẮT BUỘC:**
-> Khi kết thúc luồng State Machine, bắt buộc thực thi lệnh gửi báo cáo theo mẫu ở trên, kèm flag `--done`:
-> `python .agent/send_to_tele.py "<Báo cáo theo mẫu>" --done`
