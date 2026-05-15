@@ -85,11 +85,27 @@ class WinRateEvaluatorV3:
 
     def _find_max_threshold(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor) -> float:
         max_thresh = 0.53
+        
+        buy_arr = prob_buy.cpu().numpy()
+        sell_arr = prob_sell.cpu().numpy()
+        seq_len = prob_buy.shape[0]
+        hold_bars = 20
+        
         for t_int in range(99, 53, -1):
             t = t_int / 100.0
-            n_buy  = (prob_buy > t).sum().item()
-            n_sell = (prob_sell > t).sum().item()
-            if (n_buy + n_sell) >= self.min_signals:
+            
+            # Cần đếm số tín hiệu hợp lệ qua Fast Filter thay vì count tổng tĩnh
+            n_sig = 0
+            next_free = 0
+            for i in range(seq_len):
+                if i < next_free: continue
+                is_buy = buy_arr[i] > t
+                is_sell = sell_arr[i] > t
+                if (is_buy and not is_sell) or (is_sell and not is_buy):
+                    n_sig += 1
+                    next_free = i + hold_bars
+                    
+            if n_sig >= self.min_signals:
                 max_thresh = t
                 break
         return max_thresh
@@ -97,16 +113,41 @@ class WinRateEvaluatorV3:
     def _compute_metrics(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor, hard_labels: torch.Tensor, threshold: float) -> ThresholdMetricsV3:
         buy_mask  = prob_buy > threshold
         sell_mask = prob_sell > threshold
+        
+        n_buy = 0
+        n_sell = 0
+        n_correct = 0
+        
+        # Mô phỏng Fast Simulator (chống Overlap)
+        # Giả định giữ lệnh tối đa 20 nến (MAX_HOLD_BARS = 20)
+        hold_bars = 20
+        next_free_bar = 0
+        seq_len = prob_buy.shape[0]
+        
+        # Đưa tensor về CPU numpy/list để lặp cho nhanh thay vì truy cập .item() liên tục
+        buy_arr = buy_mask.cpu().numpy()
+        sell_arr = sell_mask.cpu().numpy()
+        lbl_arr = hard_labels.cpu().numpy()
+        
+        for i in range(seq_len):
+            if i < next_free_bar:
+                continue
+            
+            is_buy = buy_arr[i]
+            is_sell = sell_arr[i]
+            
+            if is_buy and not is_sell:
+                n_buy += 1
+                if lbl_arr[i] == 1:
+                    n_correct += 1
+                next_free_bar = i + hold_bars
+            elif is_sell and not is_buy:
+                n_sell += 1
+                if lbl_arr[i] == 0:
+                    n_correct += 1
+                next_free_bar = i + hold_bars
 
-        # Target classes: 0=Sell, 1=Buy, 2=Sideway
-        correct_buy  = buy_mask  & (hard_labels == 1)
-        correct_sell = sell_mask & (hard_labels == 0)
-
-        n_buy = buy_mask.sum().item()
-        n_sell = sell_mask.sum().item()
         n_signals = n_buy + n_sell
-        n_correct = correct_buy.sum().item() + correct_sell.sum().item()
-
         win_rate = n_correct / n_signals if n_signals > 0 else 0.0
 
         # Áp dụng phạt Mất Cân Bằng (Balance Penalty)
