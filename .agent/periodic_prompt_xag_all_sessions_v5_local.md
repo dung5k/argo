@@ -47,7 +47,7 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 1. **Quản lý Hàng Đợi:** Nếu có run đang chờ (chưa train xong) của phiên được chọn thì ưu tiên chạy run đó.
 2. **Tạo Run Mới cho Phiên Được Chọn:** Nếu hàng đợi RỖNG, bạn BẮT BUỘC tạo run mới cho phiên đã chọn:
    - Sinh RUN_ID: `run_YYYYMMDD_HHMMSS_v5_<TÊN_PHIÊN>_<tên_ý_tưởng>`
-   - Copy config gốc của phiên đó và cập nhật tham số (ưu tiên TP/SL, FAST_HIT_BARS, LAYER_DROP, POOLING...). Đặc biệt, bạn được **TOÀN QUYỀN thêm/bớt mã (Symbols) và các chỉ số đầu vào (Macro Features)** để tìm kiếm các Leading Indicators phù hợp cho từng phiên.
+   - Copy config gốc của phiên đó và **TOÀN QUYỀN cập nhật BẤT KỲ tham số nào** (từ kiến trúc model như D_MODEL, NUM_LAYERS, POOLING, đến các siêu tham số học như LR, LOSS, LABEL_SMOOTHING, và các quy tắc giao dịch như TP/SL, FAST_HIT_BARS...). Bạn không bị giới hạn trong việc tinh chỉnh. Đặc biệt, bạn được **TỰ DO thêm/bớt mã (Symbols) và các chỉ số đầu vào (Macro Features)** để tìm kiếm các Leading Indicators đột phá cho từng phiên. Hãy mạnh dạn thay đổi!
    - Chạy lệnh build dataset:
      ```powershell
      python scripts/prepare_v3_dataset.py --config workspaces/<WORKSPACE_PHIÊN_CHỌN>/runs/<RUN_ID>/config.json --fast-hit-bars <N> --no-upload --monthly-split
