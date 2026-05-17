@@ -738,5 +738,33 @@ def main():
     except Exception as e:
         print(f"â Œ Lá»—i khi Push: {e}", flush=True)
 
+    if cfg_id.startswith("CFG_XAG_"):
+        try:
+            import subprocess
+            subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v5_training_done"], capture_output=True)
+            print("[CLEANUP] Đã tự động gọi trigger xag_v5_training_done tới Extension.", flush=True)
+        except Exception as e:
+            print(f"[CLEANUP] Lỗi gọi trigger xag_v5_training_done: {e}", flush=True)
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        try:
+            import sys
+            import json
+            import subprocess
+            config_path = "workspaces/CFG_XAU_NY_V3_5/base_config.json"
+            for arg in sys.argv:
+                if arg.endswith("config.json"):
+                    config_path = arg
+                    break
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            cfg_id = config.get('CONFIG_ID', '')
+            if cfg_id.startswith("CFG_XAG_"):
+                subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v5_training_done"], capture_output=True)
+                print("[FATAL TRIGGER] Đã gửi tín hiệu phục hồi hệ thống khi gặp lỗi crash.", flush=True)
+        except:
+            pass
+        raise e

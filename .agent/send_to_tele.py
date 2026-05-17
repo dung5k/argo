@@ -25,9 +25,9 @@ def get_telegram_config(target_channels=None):
             import re
             with open(settings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.teleBotToken"\\s*:\\s*"([^"]+)"', content)
             if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.whitelistChatIds"\\s*:\\s*"([^"]+)"', content)
             if m: default_chat_id = m.group(1)
     except Exception:
         pass
