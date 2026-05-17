@@ -199,6 +199,7 @@ def main():
     import shutil
     import subprocess
     legacy_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", "legacy_run", "data", "tensors")
+    base_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors")
 
     if not os.path.exists(x_path):
         # THỬ ĐỒNG BỘ TỪ HUGGINGFACE TRƯỚC!
@@ -229,9 +230,17 @@ def main():
             except Exception as e:
                 print(f"❌ Lỗi tải Tensor từ HF Dataset: {e}", flush=True)
             
-        # Nếu vẫn không có, thử copy từ legacy_run
+        # Nếu vẫn không có, thử copy từ base_tensor_dir
         if not os.path.exists(x_path):
-            if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+            if os.path.exists(os.path.join(base_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+                print(f"Bản sao Tensor từ base_tensor_dir sang {run_id}...", flush=True)
+                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"P_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl",
+                                 f"X_train_{cfg_id}.npy", f"Y_train_{cfg_id}.npy", f"P_train_{cfg_id}.npy",
+                                 f"X_val_{cfg_id}.npy", f"Y_val_{cfg_id}.npy", f"P_val_{cfg_id}.npy"]:
+                    src_file = os.path.join(base_tensor_dir, filename)
+                    if os.path.exists(src_file):
+                        shutil.copy(src_file, os.path.join(tensor_local_dir, filename))
+            elif os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
                 print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)

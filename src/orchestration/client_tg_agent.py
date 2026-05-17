@@ -28,6 +28,13 @@ Ví dụ:
 import os
 import sys
 
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='backslashreplace')
+    except Exception:
+        pass
+
 def ensure_dependencies():
     pass
 ensure_dependencies()

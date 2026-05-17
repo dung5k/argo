@@ -34,34 +34,30 @@
                 "volume",
                 "bb_width"
             ],
-            "BTCUSDm": [
-                "log_ret",
-                "volume"
-            ],
-            "ETHUSDm": [
+            "DXYm": [
                 "log_ret",
                 "volume"
             ]
         },
         "LABEL_MODE": "pct",
-        "TP_PCT": 0.0035,
-        "SL_PCT": 0.0035
+        "TP_PCT": 0.004,
+        "SL_PCT": 0.004
     },
     "TRAINING": {
-        "D_MODEL": 160,
-        "N_HEAD": 8,
+        "D_MODEL": 64,
+        "N_HEAD": 16,
         "NUM_LAYERS": 3,
-        "BATCH_SIZE": 256,
-        "LEARNING_RATE": 1e-05,
+        "BATCH_SIZE": 128,
+        "LEARNING_RATE": 8e-06,
         "WEIGHT_DECAY": 0.0001,
-        "DROPOUT": 0.2,
-        "LAYER_DROP": 0.25,
+        "DROPOUT": 0.3,
+        "LAYER_DROP": 0.4,
         "POOLING": "attention",
         "CLS_HEAD": "residual",
-        "FOCAL_GAMMA": 2.0,
-        "LABEL_SMOOTHING": 0.1,
+        "FOCAL_GAMMA": 5.0,
+        "LABEL_SMOOTHING": 0.2,
         "RECON_LOSS_WEIGHT": 0.05,
-        "WARMUP_EPOCHS": 30,
+        "WARMUP_EPOCHS": 40,
         "EPOCHS_PHASE_1": 10,
         "FREQ_MIN_N": 40,
         "FREQ_MAX_N": 400,
@@ -82,8 +78,7 @@
         "ROUTING": {
             "XAGUSDm": "EXNESS",
             "XAUUSDm": "EXNESS",
-            "BTCUSDm": "EXNESS",
-            "ETHUSDm": "EXNESS"
+            "DXYm": "EXNESS"
         }
     },
     "LIVE_BOT": {
