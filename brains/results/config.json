@@ -1,13 +1,13 @@
 {
-    "CONFIG_ID": "CFG_XAG_ASIAN_V5",
+    "CONFIG_ID": "CFG_XAG_LONDON_V5",
     "VERSION": "5.0",
-    "SESSION": "asian",
+    "SESSION": "london",
     "TARGET_SYMBOL": "XAGUSDm",
     "TARGET_PREFIX": "XAGUSD",
     "SESSION_UTC": {
-        "START": "00:00",
-        "END": "07:00",
-        "DESCRIPTION": "Asian session - Crypto Macro Regime"
+        "START": "07:00",
+        "END": "15:00",
+        "DESCRIPTION": "London session - XAG (07:00-15:00 UTC) | V5 Regime-Aware Sniper"
     },
     "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
     "HF_RUN_ID": "",
@@ -18,27 +18,23 @@
     },
     "FEATURE_ENGINEERING": {
         "TP_PIPS": 30,
-        "SL_PIPS": 30,
+        "SL_PIPS": 35,
         "MAX_HOLD_BARS": 20,
         "PIP_SIZE": 0.001,
-        "WINDOW_SIZE": 45,
+        "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "ORDER_FLOW": true,
         "VOL_REGIME": true,
         "ZERO_NOISE_TARGET": false,
         "CLEAN_DATA_DIET": true,
-        "FAST_HIT_BARS": 7,
+        "FAST_HIT_BARS": 8,
         "MACRO_FEATURES": {
             "XAUUSDm": [
                 "log_ret",
                 "volume",
                 "bb_width"
             ],
-            "BTCUSDm": [
-                "log_ret",
-                "volume"
-            ],
-            "ETHUSDm": [
+            "DXYm": [
                 "log_ret",
                 "volume"
             ]
@@ -48,20 +44,20 @@
         "SL_PCT": 0.0035
     },
     "TRAINING": {
-        "D_MODEL": 160,
-        "N_HEAD": 8,
+        "D_MODEL": 64,
+        "N_HEAD": 16,
         "NUM_LAYERS": 3,
-        "BATCH_SIZE": 256,
-        "LEARNING_RATE": 1e-05,
-        "WEIGHT_DECAY": 0.0001,
-        "DROPOUT": 0.2,
-        "LAYER_DROP": 0.25,
-        "POOLING": "mean",
+        "BATCH_SIZE": 128,
+        "LEARNING_RATE": 8e-06,
+        "WEIGHT_DECAY": 0.005,
+        "DROPOUT": 0.35,
+        "LAYER_DROP": 0.45,
+        "POOLING": "attention",
         "CLS_HEAD": "residual",
-        "FOCAL_GAMMA": 2.0,
-        "LABEL_SMOOTHING": 0.1,
+        "FOCAL_GAMMA": 5.0,
+        "LABEL_SMOOTHING": 0.25,
         "RECON_LOSS_WEIGHT": 0.05,
-        "WARMUP_EPOCHS": 30,
+        "WARMUP_EPOCHS": 40,
         "EPOCHS_PHASE_1": 10,
         "FREQ_MIN_N": 40,
         "FREQ_MAX_N": 400,
@@ -73,7 +69,7 @@
         "TRAIN_START": "2026-01-01"
     },
     "DATA_SOURCE": {
-        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_ASIAN_V5/data/raw",
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_LONDON_V5/data/raw",
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M1",
         "BROKERS": {
@@ -82,8 +78,7 @@
         "ROUTING": {
             "XAGUSDm": "EXNESS",
             "XAUUSDm": "EXNESS",
-            "BTCUSDm": "EXNESS",
-            "ETHUSDm": "EXNESS"
+            "DXYm": "EXNESS"
         }
     },
     "LIVE_BOT": {
