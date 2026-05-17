@@ -7,6 +7,8 @@ Vẽ biểu đồ Win Rate và MSE Loss, gửi báo cáo qua Telegram.
 import os
 import io
 import json
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from typing import Optional
 
