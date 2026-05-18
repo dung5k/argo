@@ -150,7 +150,32 @@
 ---
 
 ### [2026-05-18 14:20:00] - TỐI ƯU HÓA ĐỘT PHÁ BALANCED SNIPER V2: run_20260518_142000_v5_asian_balanced_sniper_v2
-- **Đặc điểm ý tưởng & Cấu hình:**
+- **Kết quả:** Composite Score = **0.2522** | Win Rate = **29.41%** | Early Stopped ở Epoch **100**
+- **Phân tích chi tiết & Insight:**
   - **Giảm overfitting vĩ mô:** Kế thừa sự thành công của cấu hình đối xứng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`), chúng ta thực hiện phẫu thuật thu hẹp mạng xuống `D_MODEL: 96` và tăng gấp đôi regularization (`WEIGHT_DECAY: 0.0030`) để ngăn chặn hoàn toàn việc validation loss phân kỳ sớm.
   - **Thu hẹp cửa sổ:** Thu hẹp `WINDOW_SIZE` từ 25 về `20` nến và rút ngắn `FAST_HIT_BARS` về `5` nến nhằm giúp AI nhận diện nhạy bén hơn các momentum vi mô, hạn chế kẹt lệnh trong các đợt đảo chiều thanh khoản phiên Á.
-  - **Trạng thái:** Đã lọc sạch dữ liệu vĩ mô (giữ lại 12,559 nến cực sạch) và đang kích hoạt huấn luyện nền mượt mà.
+  - **Đánh giá kết quả:** Việc giảm mạng xuống 96 và sequence length xuống 20 thực tế làm giảm năng lực biểu diễn phi tuyến tính của mô hình, dẫn đến Score sụt giảm xuống **0.2522**. Cần quay lại sequence length 25 và d_model 128 nhưng làm mịn LR.
+
+---
+
+### [2026-05-18 15:30:00] - TỐI ƯU HÓA ĐỘT PHÁ ATTENTION SNIPER V3: run_20260518_153000_v5_asian_attention_sniper_v3
+- **Kết quả:** Composite Score = **0.4633** | Win Rate = **47.92%** | Early Stopped ở Epoch **53**
+- **Phân tích chi tiết & Insight:**
+  - **Cấu hình & Tối ưu:** Sử dụng lại `D_MODEL: 128`, `WINDOW_SIZE: 25` và `FAST_HIT_BARS: 6` để phục hồi dung lượng biểu diễn của mô hình. Tăng cường regularization bằng `WEIGHT_DECAY: 0.0025`, `DROPOUT: 0.35`, `LAYER_DROP: 0.40`, nới `LABEL_SMOOTHING: 0.15` và làm mịn `LEARNING_RATE: 1.5e-05`.
+  - **Đánh giá kết quả:** Mô hình hội tụ rất ổn định và đạt kết quả đột phá **0.4633** Score, Win Rate **47.92%**. Quá trình validation loss phân kỳ đã được kéo dài đáng kể (Early Stopped ở Epoch 53 thay vì Epoch 48). Tuy nhiên, kết quả này vẫn chưa vượt qua đỉnh cao lịch sử của Asian V5.
+
+
+---
+
+### [2026-05-18 15:45:00] - TỐI ƯU HÓA ĐỘT PHÁ QUANTUM SNIPER: run_20260518_154500_v5_asian_quantum_sniper
+- **Ý tưởng & Cấu hình:**
+  - **Tên ý tưởng:** "Quantum Sniper" (`run_20260518_154500_v5_asian_quantum_sniper`)
+  - **Đặc điểm ý tưởng & Cấu hình:**
+    - Cân bằng dung lượng biểu diễn: Giữ vững cấu trúc mạnh `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
+    - Chống quét SL sớm (Whipsaws): Nới nhẹ tỷ lệ đối xứng lên `TP_PCT: 0.0035 / SL_PCT: 0.0035` (35 pips) giúp lệnh có thêm biên dao động tự do trong phiên Á biến động hẹp.
+    - Cường hóa Regularization: Tăng Weight Decay lên `0.0035`, nới Label Smoothing lên `0.18` và Focal Gamma lên `3.0` để tối ưu hóa khả năng chống overfitting triệt để.
+    - Điều chỉnh learning rate mượt mà về `2.0e-05` giúp AI học sâu và chắc chắn qua từng epoch.
+  - **Kết quả:** Composite Score = **0.440** | Win Rate = **44.44%** | Early Stopped ở Epoch **31** (Best Epoch 6)
+  - **Phân tích chi tiết & Insight:**
+    - **Đánh giá kết quả:** Quantum Sniper đạt mức đối xứng lệnh cực đẹp (18 Buy, 18 Sell ở Best threshold 0.5567) nhờ cơ chế đối xứng 1:1 và nới nhẹ biên lên 35 pips. Tuy nhiên, việc tăng Weight Decay quá mạnh lên `0.0035` kết hợp với Label Smoothing `0.18` đã làm "mềm" các đặc trưng phân loại quá mức, khiến Win Rate thực tế bị kéo lùi về **44.44%** và Composite Score đạt **0.440**.
+    - **Bài học rút ra:** Mặc dù đối xứng 1:1 là đúng đắn để triệt tiêu bias, việc siết quá chặt các regularizer (WD > 0.003, LS > 0.15) có thể triệt tiêu cả các tín hiệu phân loại hữu ích trong phiên Á có thanh khoản mỏng. Bản chạy kỷ lục `run_20260518_115000_v5_asian_balanced_sniper` (Score **0.5480**) vẫn được giữ vững làm Champion tối cao dưới Monthly Split hôm nay!
