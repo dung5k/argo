@@ -773,6 +773,12 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
+        import traceback
+        try:
+            with open("crash_traceback.txt", "w", encoding="ascii", errors="replace") as tb_f:
+                traceback.print_exc(file=tb_f)
+        except:
+            pass
         try:
             import sys
             import json
@@ -787,7 +793,7 @@ if __name__ == "__main__":
             cfg_id = config.get('CONFIG_ID', '')
             if cfg_id.startswith("CFG_XAG_"):
                 subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v5_training_done"], capture_output=True)
-                print("[FATAL TRIGGER] Đã gửi tín hiệu phục hồi hệ thống khi gặp lỗi crash.", flush=True)
+                print("[FATAL TRIGGER] System recovery signal sent on crash.", flush=True)
         except:
             pass
-        raise e
+        sys.exit(1)
