@@ -1,0 +1,25 @@
+{
+    "agent_identity": "Argo2",
+    "mqtt_broker": "mqtt://broker.emqx.io:1883",
+    "mqtt_base_topic": "argo/network/v1/agents",
+    "channels": {
+        "sep_agent1": {
+            "name": "Sếp ↔ Agent 1",
+            "chat_id": "1816854047",
+            "description": "Kênh giao tiếp trực tiếp giữa Sếp và Agent 1 (Máy Chính)"
+        },
+        "sep_agent2": {
+            "name": "Sếp ↔ Agent 2",
+            "chat_id": "1816854047",
+            "description": "Kênh giao tiếp trực tiếp giữa Sếp và Agent 2"
+        },
+        "agent1_agent2": {
+            "name": "Agent 1 ↔ Agent 2 (ARGO1-ARGO2)",
+            "chat_id": "-5144257068",
+            "description": "Kênh nội bộ để Agent 1 và Agent 2 trao đổi (đồng bộ model, config)"
+        }
+    },
+    "default_broadcast": [
+        "sep_agent1"
+    ]
+}
