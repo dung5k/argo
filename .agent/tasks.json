@@ -4,7 +4,7 @@
       "id": "cleanup_storage",
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
-      "nextRunTime": 1779062484115,
+      "nextRunTime": 1779066084911,
       "intervalMinutes": 60
     },
     {
@@ -12,7 +12,7 @@
       "enabled": true,
       "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
       "triggerOn": "xag_v5_training_done",
-      "nextRunTime": 1779062514127,
+      "nextRunTime": 1779066114918,
       "intervalMinutes": 60
     },
     {
