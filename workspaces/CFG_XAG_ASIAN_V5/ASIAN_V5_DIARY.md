@@ -140,3 +140,26 @@
 - **Hành động:** Đóng gói bản Ultimate này làm cấu hình sản xuất vĩnh viễn cho Phase V5.
 
 ---
+
+### [2026-05-18 13:45:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION PULSE: run_20260518_134500_v5_asian_precision_pulse
+- **Kết quả:** Composite Score = **0.5010** | Win Rate = **51.43%** | Early Stopped ở Epoch **48**
+- **Phân tích chi tiết & Insight:**
+  - **Đánh giá kết quả:** Việc sử dụng cấu hình đối xứng 1:1 (`TP/SL: 30/30 pips`) kết hợp `WINDOW_SIZE: 25` đã giúp mô hình hội tụ vô cùng nhanh và đạt Score **0.5010** rất sớm ở Epoch 19. Tuy nhiên, do mạng `D_MODEL: 128` hơi phức tạp và sequence length 25 có chứa nhiễu, Validation loss (CE) bắt đầu phân kỳ liên tục sau đó dẫn đến kích hoạt Early Stopping tại Epoch 48.
+  - **Bài học rút ra:** Cần giảm bớt độ phức tạp mạng (`D_MODEL`) và thu hẹp bớt `WINDOW_SIZE` về mức champion cũ (20 nến) để giảm overfitting trên dữ liệu mỏng của phiên Á.
+
+---
+
+### [2026-05-18 14:20:00] - TỐI ƯU HÓA ĐỘT PHÁ BALANCED SNIPER V2: run_20260518_142000_v5_asian_balanced_sniper_v2
+- **Kết quả:** Composite Score = **0.2522** | Win Rate = **29.41%** | Early Stopped ở Epoch **100**
+- **Phân tích chi tiết & Insight:**
+  - **Giảm overfitting vĩ mô:** Kế thừa sự thành công của cấu hình đối xứng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`), chúng ta thực hiện phẫu thuật thu hẹp mạng xuống `D_MODEL: 96` và tăng gấp đôi regularization (`WEIGHT_DECAY: 0.0030`) để ngăn chặn hoàn toàn việc validation loss phân kỳ sớm.
+  - **Thu hẹp cửa sổ:** Thu hẹp `WINDOW_SIZE` từ 25 về `20` nến và rút ngắn `FAST_HIT_BARS` về `5` nến nhằm giúp AI nhận diện nhạy bén hơn các momentum vi mô, hạn chế kẹt lệnh trong các đợt đảo chiều thanh khoản phiên Á.
+  - **Đánh giá kết quả:** Việc giảm mạng xuống 96 và sequence length xuống 20 thực tế làm giảm năng lực biểu diễn phi tuyến tính của mô hình, dẫn đến Score sụt giảm xuống **0.2522**. Cần quay lại sequence length 25 và d_model 128 nhưng làm mịn LR.
+
+---
+
+### [2026-05-18 15:30:00] - TỐI ƯU HÓA ĐỘT PHÁ ATTENTION SNIPER V3: run_20260518_153000_v5_asian_attention_sniper_v3
+- **Kết quả:** Composite Score = **0.4633** | Win Rate = **47.92%** | Early Stopped ở Epoch **53**
+- **Phân tích chi tiết & Insight:**
+  - **Cấu hình & Tối ưu:** Sử dụng lại `D_MODEL: 128`, `WINDOW_SIZE: 25` và `FAST_HIT_BARS: 6` để phục hồi dung lượng biểu diễn của mô hình. Tăng cường regularization bằng `WEIGHT_DECAY: 0.0025`, `DROPOUT: 0.35`, `LAYER_DROP: 0.40`, nới `LABEL_SMOOTHING: 0.15` và làm mịn `LEARNING_RATE: 1.5e-05`.
+  - **Đánh giá kết quả:** Mô hình hội tụ rất ổn định và đạt kết quả đột phá **0.4633** Score, Win Rate **47.92%**. Quá trình validation loss phân kỳ đã được kéo dài đáng kể (Early Stopped ở Epoch 53 thay vì Epoch 48). Tuy nhiên, kết quả này vẫn chưa vượt qua đỉnh cao lịch sử của Asian V5.
