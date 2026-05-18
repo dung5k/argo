@@ -25,14 +25,88 @@ let activationTime = Math.floor(Date.now() / 1000);
 
 let isAgentBusy = false;
 let busyTimeout = null;
+let heartbeatInterval = null;
 
 let mqttClient = null;
+
+function getLatestLogFile() {
+    try {
+        const brainDir = path.join(process.env.USERPROFILE || process.env.HOME || '', '.gemini', 'antigravity', 'brain');
+        if (!fs.existsSync(brainDir)) return null;
+        
+        let latestTime = 0;
+        let latestFile = null;
+        
+        const convDirs = fs.readdirSync(brainDir);
+        for (const dir of convDirs) {
+            const logPath = path.join(brainDir, dir, '.system_generated', 'logs', 'overview.txt');
+            if (fs.existsSync(logPath)) {
+                const stat = fs.statSync(logPath);
+                if (stat.mtimeMs > latestTime) {
+                    latestTime = stat.mtimeMs;
+                    latestFile = logPath;
+                }
+            }
+        }
+        return latestFile;
+    } catch (e) {
+        return null;
+    }
+}
 
 function setAgentBusy() {
     isAgentBusy = true;
     if (busyTimeout) clearTimeout(busyTimeout);
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+
     // Timeout dự phòng 15 phút nếu Agent bị lỗi không tạo được file response
-    busyTimeout = setTimeout(() => { isAgentBusy = false; }, 15 * 60 * 1000);
+    busyTimeout = setTimeout(() => { 
+        isAgentBusy = false;
+        let chatIds = getActiveChatIds();
+        if (chatIds.length === 0 && latestChatId) chatIds = [latestChatId.toString()];
+        chatIds.forEach(c => {
+            sendTelegramMessage(c, "⚠️ CẢNH BÁO HỆ THỐNG: Đã quá 15 phút mà bộ não AI không phản hồi! Có khả năng cao Agent đã hết hạn mức API (Quota Exceeded) hoặc bị treo do lỗi kết nối. Hệ thống đã tự động gỡ trạng thái bận để Sếp có thể tiếp tục ra lệnh.");
+        });
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+    }, 15 * 60 * 1000);
+
+    let logFile = getLatestLogFile();
+    let lastMtime = logFile ? fs.statSync(logFile).mtimeMs : Date.now();
+    let unchangedCount = 0;
+    
+    heartbeatInterval = setInterval(() => {
+        if (!isAgentBusy) {
+            clearInterval(heartbeatInterval);
+            return;
+        }
+        try {
+            let currentLog = getLatestLogFile();
+            if (currentLog) {
+                let currentMtime = fs.statSync(currentLog).mtimeMs;
+                if (currentMtime === lastMtime) {
+                    unchangedCount++;
+                } else {
+                    lastMtime = currentMtime;
+                    unchangedCount = 0;
+                }
+            } else {
+                unchangedCount++;
+            }
+            
+            if (unchangedCount >= 12) { // 2 phút
+                isAgentBusy = false;
+                if (busyTimeout) clearTimeout(busyTimeout);
+                clearInterval(heartbeatInterval);
+                let chatIds = getActiveChatIds();
+                if (chatIds.length === 0 && latestChatId) chatIds = [latestChatId.toString()];
+                chatIds.forEach(c => {
+                    sendTelegramMessage(c, "🚨 [HEARTBEAT BÁO ĐỘNG] Phát hiện nhịp tim AI đã ngưng đập quá 2 phút! Khả năng 100% đã hết hạn mức API (Quota Exceeded) hoặc rớt mạng. Trạng thái đã được Reset.");
+                });
+            }
+        } catch (e) {
+            console.error("Heartbeat error", e);
+        }
+    }, 10000);
 }
 
 function queueMessage(chatId, queryToAgent, chatName = "Unknown") {
@@ -89,6 +163,7 @@ function freeAgent() {
     isAgentBusy = false;
     activeTypingChats.clear();
     if (busyTimeout) clearTimeout(busyTimeout);
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
     checkPendingMessages();
 }
 
