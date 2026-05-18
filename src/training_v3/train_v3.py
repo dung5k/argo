@@ -412,8 +412,8 @@ def main():
                             new_param[slices] = param[slices]
                             state_dict[name] = new_param
                 model.load_state_dict(state_dict, strict=False)
-                run_dir = os.path.basename(os.path.dirname(latest_file))
-                msg = f"\U0001f449 Kế thừa Model: {run_dir}/{os.path.basename(latest_file)}"
+                inherit_dir = os.path.basename(os.path.dirname(latest_file))
+                msg = f"\U0001f449 Kế thừa Model: {inherit_dir}/{os.path.basename(latest_file)}"
                 print(f"  {msg} từ \n  {latest_file}", flush=True)
             except Exception as e:
                 msg = f"\u274c Lỗi kế thừa Model: {e}"
