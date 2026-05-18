@@ -24,6 +24,11 @@ config['TRAINING']['ES_PATIENCE'] = 25  # Tăng khả năng chịu đựng cho E
 config['TRAINING']['POOLING'] = 'attention'
 config['TRAINING']['CLS_HEAD'] = 'residual'
 
+# Thay thế 1H bằng 1h để tương thích với phiên bản Pandas mới
+for inp in config['FEATURE_ENGINEERING']['MTF_INPUTS']:
+    if inp['TIMEFRAME'] == '1H':
+        inp['TIMEFRAME'] = '1h'
+
 config['RUN_ID'] = run_id
 config['HF_RUN_ID'] = run_id
 
