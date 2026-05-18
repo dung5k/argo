@@ -1,6 +1,6 @@
 {
-    "virtual_balance": 9973.490000000002,
-    "virtual_ticket_counter": 1035,
+    "virtual_balance": 9969.990000000002,
+    "virtual_ticket_counter": 1036,
     "active_trade_loggers": {},
     "history_deals": [
         {
@@ -320,6 +320,15 @@
             "profit": -0.9300000000000352,
             "close_time": "2026-05-16T02:50:01.022483",
             "reason": "Gi\u1eef l\u1ec7nh qu\u00e1 20 ph\u00fat"
+        },
+        {
+            "ticket": 1036,
+            "order_type": "MUA",
+            "entry_price": 75.649,
+            "close_price": 75.299,
+            "profit": -3.499999999999943,
+            "close_time": "2026-05-18T11:25:21.128778",
+            "reason": "SL Hit"
         }
     ]
 }

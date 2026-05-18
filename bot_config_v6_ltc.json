@@ -35,8 +35,8 @@
                 ]
             }
         ],
-        "VOL_REGIME": true,
-        "ORDER_FLOW": true
+        "VOL_REGIME": false,
+        "ORDER_FLOW": false
     },
     "TRAINING": {
         "D_MODEL": 64,

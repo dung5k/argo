@@ -1,5 +1,5 @@
 ﻿import sys
-with open('temp_report.txt', 'r', encoding='utf-8') as f:
+with open('temp_report5.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
 sys.argv = ['send_to_tele.py', text, '--channel', '1816854047', '--done']

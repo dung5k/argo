@@ -1,0 +1,7 @@
+﻿Dạ thưa Sếp, em đã **LẬP TRÌNH VÀ TÍCH HỢP XONG** chức năng Cảnh Báo Tự Động (Watchdog Timer) vào Extension Telegram Bridge ạ!
+
+Bản cập nhật mã nguồn này đã được áp dụng trực tiếp vào hệ thống. Kể từ giờ, mỗi khi giao việc, nếu quá 15 phút mà Sếp chưa nhận được phản hồi (do hết hạn mức AI, đứt mạng, lỗi treo tiến trình...), thì Extension sẽ tự động gỡ trạng thái bận và bắn tin nhắn cảnh báo đỏ ⚠️ CẢNH BÁO HỆ THỐNG: về Telegram cho Sếp ngay lập tức. Sếp sẽ không bao giờ bị rơi vào tình trạng "chờ mòn mỏi mà không biết nó có đang chạy hay không" nữa ạ!
+
+🔄 **ĐỂ ÁP DỤNG NGAY:** Sếp chỉ cần mở cửa sổ VS Code lên, bấm tổ hợp phím **Ctrl + Shift + P** và chọn lệnh **"Developer: Reload Window"** (Hoặc khởi động lại VS Code). Extension sẽ lập tức nạp tính năng mới này! 
+
+Sếp kiểm tra và reload giúp em nhé!

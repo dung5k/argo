@@ -1,31 +1,39 @@
-import json
+﻿import json
 import os
 
-schedule_file = 'bot_schedule_xag.json'
-with open(schedule_file, 'r', encoding='utf-8') as f:
+schedule_path = 'bot_schedule_xag.json'
+with open(schedule_path, 'r', encoding='utf-8') as f:
     sched = json.load(f)
 
-# Asian
-asian_run = sched['schedule']['asian']['run_id']
-with open(os.path.join('workspaces', 'CFG_XAG_ASIAN_V5', 'runs', asian_run, 'config.json'), 'r', encoding='utf-8') as f:
-    asian_cfg = json.load(f)
-sched['schedule']['asian']['feature_engineering'] = asian_cfg['FEATURE_ENGINEERING']
-sched['schedule']['asian']['data_source'] = {'ROUTING': asian_cfg['DATA_SOURCE']['ROUTING']}
+runs = {
+    'asian': {
+        'run_id': 'run_20260515_125021_v5_asian_w20_fh5_attn',
+        'config_id': 'CFG_XAG_ASIAN_V5'
+    },
+    'london': {
+        'run_id': 'run_20260516_060355_v5_london_balanced_refiner',
+        'config_id': 'CFG_XAG_LONDON_V5'
+    },
+    'ny': {
+        'run_id': 'run_20260510_140500_v5_ny_stable_sniper',
+        'config_id': 'CFG_XAG_NY_V5'
+    }
+}
 
-# London
-london_run = sched['schedule']['london']['run_id']
-with open(os.path.join('workspaces', 'CFG_XAG_LONDON_V5', 'runs', london_run, 'config.json'), 'r', encoding='utf-8') as f:
-    london_cfg = json.load(f)
-sched['schedule']['london']['feature_engineering'] = london_cfg['FEATURE_ENGINEERING']
-sched['schedule']['london']['data_source'] = {'ROUTING': london_cfg['DATA_SOURCE']['ROUTING']}
+for session, info in runs.items():
+    if session in sched['schedule']:
+        sched['schedule'][session]['run_id'] = info['run_id']
+        sched['schedule'][session]['config_id'] = info['config_id']
+        
+        # Read the run's config to sync feature_engineering
+        run_config_path = os.path.join('workspaces', info['config_id'], 'runs', info['run_id'], 'config.json')
+        if os.path.exists(run_config_path):
+            with open(run_config_path, 'r', encoding='utf-8') as rf:
+                run_cfg = json.load(rf)
+                if 'FEATURE_ENGINEERING' in run_cfg:
+                    sched['schedule'][session]['feature_engineering'] = run_cfg['FEATURE_ENGINEERING']
 
-# NY
-ny_run = sched['schedule']['ny']['run_id']
-with open(os.path.join('workspaces', 'CFG_XAG_NY_V5', 'runs', ny_run, 'config.json'), 'r', encoding='utf-8') as f:
-    ny_cfg = json.load(f)
-sched['schedule']['ny']['feature_engineering'] = ny_cfg['FEATURE_ENGINEERING']
-sched['schedule']['ny']['data_source'] = {'ROUTING': ny_cfg['DATA_SOURCE']['ROUTING']}
-
-with open(schedule_file, 'w', encoding='utf-8') as f:
+with open(schedule_path, 'w', encoding='utf-8') as f:
     json.dump(sched, f, indent=4)
-print("Updated bot_schedule_xag.json successfully!")
+
+print("Updated bot_schedule_xag.json")
