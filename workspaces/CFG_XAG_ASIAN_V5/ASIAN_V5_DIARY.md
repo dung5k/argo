@@ -142,10 +142,15 @@
 ---
 
 ### [2026-05-18 13:45:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION PULSE: run_20260518_134500_v5_asian_precision_pulse
+- **Kết quả:** Composite Score = **0.5010** | Win Rate = **51.43%** | Early Stopped ở Epoch **48**
+- **Phân tích chi tiết & Insight:**
+  - **Đánh giá kết quả:** Việc sử dụng cấu hình đối xứng 1:1 (`TP/SL: 30/30 pips`) kết hợp `WINDOW_SIZE: 25` đã giúp mô hình hội tụ vô cùng nhanh và đạt Score **0.5010** rất sớm ở Epoch 19. Tuy nhiên, do mạng `D_MODEL: 128` hơi phức tạp và sequence length 25 có chứa nhiễu, Validation loss (CE) bắt đầu phân kỳ liên tục sau đó dẫn đến kích hoạt Early Stopping tại Epoch 48.
+  - **Bài học rút ra:** Cần giảm bớt độ phức tạp mạng (`D_MODEL`) và thu hẹp bớt `WINDOW_SIZE` về mức champion cũ (20 nến) để giảm overfitting trên dữ liệu mỏng của phiên Á.
+
+---
+
+### [2026-05-18 14:20:00] - TỐI ƯU HÓA ĐỘT PHÁ BALANCED SNIPER V2: run_20260518_142000_v5_asian_balanced_sniper_v2
 - **Đặc điểm ý tưởng & Cấu hình:**
-  - Nhận diện bối cảnh: Asian V5 đang là phiên yếu nhất (Score 0.5480) dưới Monthly Split. Hệ thống quyết định khởi chạy tối ưu hóa đột phá.
-  - Cấu hình "Precision Pulse": 128 D_MODEL, 8 N_HEAD, 3 NUM_LAYERS, LR=2.5e-05, WD=0.0015.
-  - Nới nhẹ `FAST_HIT_BARS` lên 6 nến và mở rộng `WINDOW_SIZE` lên 25 nến để cung cấp thêm ngữ cảnh vi mô cho AI.
-  - Giữ nguyên tỷ lệ đối xứng vàng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`) nhằm bảo vệ sự cân bằng Buy/Sell, loại bỏ hoàn toàn hiện tượng bias gây méo CE Loss.
-  - Đưa bộ ba mỏ neo Macro: Vàng (XAUUSDm) cùng Crypto (BTCUSDm, ETHUSDm) làm động lực dẫn dắt.
-  - Trạng thái: Đã chuẩn bị dữ liệu cực sạch qua Clean Data Diet (giữ lại 14,286 mẫu chất lượng cao) và kích hoạt huấn luyện nền mượt mà.
+  - **Giảm overfitting vĩ mô:** Kế thừa sự thành công của cấu hình đối xứng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`), chúng ta thực hiện phẫu thuật thu hẹp mạng xuống `D_MODEL: 96` và tăng gấp đôi regularization (`WEIGHT_DECAY: 0.0030`) để ngăn chặn hoàn toàn việc validation loss phân kỳ sớm.
+  - **Thu hẹp cửa sổ:** Thu hẹp `WINDOW_SIZE` từ 25 về `20` nến và rút ngắn `FAST_HIT_BARS` về `5` nến nhằm giúp AI nhận diện nhạy bén hơn các momentum vi mô, hạn chế kẹt lệnh trong các đợt đảo chiều thanh khoản phiên Á.
+  - **Trạng thái:** Đã lọc sạch dữ liệu vĩ mô (giữ lại 12,559 nến cực sạch) và đang kích hoạt huấn luyện nền mượt mà.
