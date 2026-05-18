@@ -6,7 +6,7 @@
         "asian": {
             "start": "00:00",
             "end": "07:00",
-            "run_id": "run_20260511_102100_v5_asian_ultimate_sniper",
+            "run_id": "run_20260515_125021_v5_asian_w20_fh5_attn",
             "config_id": "CFG_XAG_ASIAN_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
@@ -15,16 +15,16 @@
             },
             "feature_engineering": {
                 "TP_PIPS": 30,
-                "SL_PIPS": 30,
+                "SL_PIPS": 35,
                 "MAX_HOLD_BARS": 20,
                 "PIP_SIZE": 0.001,
-                "WINDOW_SIZE": 45,
+                "WINDOW_SIZE": 20,
                 "STEP_SIZE": 1,
                 "ORDER_FLOW": true,
                 "VOL_REGIME": true,
                 "ZERO_NOISE_TARGET": false,
                 "CLEAN_DATA_DIET": true,
-                "FAST_HIT_BARS": 7,
+                "FAST_HIT_BARS": 5,
                 "MACRO_FEATURES": {
                     "XAUUSDm": [
                         "log_ret",
@@ -41,7 +41,7 @@
                     ]
                 },
                 "LABEL_MODE": "pct",
-                "TP_PCT": 0.0035,
+                "TP_PCT": 0.003,
                 "SL_PCT": 0.0035
             },
             "data_source": {
@@ -56,8 +56,8 @@
         "london": {
             "start": "07:00",
             "end": "13:00",
-            "run_id": "run_20260511_191400_v5_ny_stable_anchor_plus",
-            "config_id": "CFG_XAG_NY_V5",
+            "run_id": "run_20260516_060355_v5_london_balanced_refiner",
+            "config_id": "CFG_XAG_LONDON_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
                 "min_prob_thresh": 0.73,
@@ -65,10 +65,10 @@
             },
             "feature_engineering": {
                 "TP_PIPS": 30,
-                "SL_PIPS": 30,
+                "SL_PIPS": 35,
                 "MAX_HOLD_BARS": 20,
                 "PIP_SIZE": 0.001,
-                "WINDOW_SIZE": 60,
+                "WINDOW_SIZE": 20,
                 "STEP_SIZE": 1,
                 "ORDER_FLOW": true,
                 "VOL_REGIME": true,
@@ -80,10 +80,14 @@
                         "log_ret",
                         "volume",
                         "bb_width"
+                    ],
+                    "DXYm": [
+                        "log_ret",
+                        "volume"
                     ]
                 },
                 "LABEL_MODE": "pct",
-                "TP_PCT": 0.005,
+                "TP_PCT": 0.004,
                 "SL_PCT": 0.004
             },
             "data_source": {
@@ -96,7 +100,7 @@
         "ny": {
             "start": "13:00",
             "end": "23:59",
-            "run_id": "run_20260511_191400_v5_ny_stable_anchor_plus",
+            "run_id": "run_20260510_140500_v5_ny_stable_sniper",
             "config_id": "CFG_XAG_NY_V5",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
