@@ -180,7 +180,7 @@ class WinRateEvaluatorV3:
             tus_score=tus_score
         )
 
-    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf"), samples_per_day: float = 400.0) -> EpochEvalResultV3:
+    def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf"), samples_per_day: float = 400.0, *args, **kwargs) -> EpochEvalResultV3:
         # logits.shape = [Batch, 3] -> Class 0=Sell, 1=Buy, 2=Sideway
         
         # Đảm bảo trung bình 2 lệnh/ngày.
