@@ -1,3 +1,10 @@
+### [2026-05-18 12:10:00] - HOÀN THIỆN ĐỐI XỨNG 1:1 BALANCED SNIPER: run_20260518_121000_v5_ny_balanced_sniper
+- **Mục tiêu:** Vượt mốc Score **0.75** | Win Rate **>75%** dưới Monthly Split.
+- **Ý tưởng đột phá & Cấu hình:**
+  - **Sự hoàn hảo của đối xứng:** Nhờ kết quả rực rỡ của phiên Á khi dùng tỷ lệ đối xứng 1:1, chúng ta áp dụng hoàn toàn cho New York với `TP: 40 pips / SL: 40 pips` (perfect 1:1) để triệt tiêu mọi CE Loss penalty spikes.
+  - **Cơ chế dẫn dắt thanh khoản:** Giữ bộ chỉ số macro BTC/ETH/Gold làm động lực, window rộng `WINDOW_SIZE: 25` kết hợp pooling attention nhạy bén.
+  - **Trạng thái:** Đang tiến hành chuẩn bị dữ liệu và huấn luyện nền local.
+
 ### [2026-05-18 11:00:00] - KỶ LỤC ĐỘT PHÁ VĨ MÔ CRYPTO ANCHOR (CHAMPION MỚI PHIÊN MỸ): run_20260518_110000_v5_ny_macro_elite
 - **Kết quả:** Composite Score = **0.6780** | Win Rate = **72.73%** | Early Stopped ở Epoch **131**
 - **Trạng thái:** Hoàn tất training xuất sắc và đã tự động sync lên HuggingFace HUB thành công!
