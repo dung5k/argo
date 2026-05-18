@@ -37,9 +37,29 @@ print = custom_print
 
 try:
     from src.orchestration.tg_helper import TelegramBot
-    with open(os.path.join(safe_script_dir, "tg_config.json"), "r", encoding='utf-8') as f:
-        tg_cfg = json.load(f)
-    tg_bot = TelegramBot(tg_cfg.get("bot_token", "")) if tg_cfg.get("bot_token") else None
+    tg_cfg = {}
+    try:
+        with open(os.path.join(safe_script_dir, "tg_config.json"), "r", encoding='utf-8') as f:
+            tg_cfg = json.load(f)
+    except:
+        pass
+        
+    try:
+        vscode_path = os.path.join(safe_script_dir, ".vscode", "settings.json")
+        if os.path.exists(vscode_path):
+            with open(vscode_path, "r", encoding='utf-8') as f:
+                vsc = json.load(f)
+            vsc_token = vsc.get("antigravityBridge.teleBotToken")
+            if vsc_token:
+                tg_cfg["bot_token"] = vsc_token
+            vsc_chat = vsc.get("antigravityBridge.whitelistChatIds")
+            if vsc_chat:
+                tg_cfg["allowed_chat_ids"] = [int(x.strip()) if x.strip().isdigit() else x.strip() for x in vsc_chat.split(",")]
+    except Exception:
+        pass
+        
+    tg_bot_token = tg_cfg.get("bot_token", "")
+    tg_bot = TelegramBot(tg_bot_token) if tg_bot_token else None
     tg_chat_id = tg_cfg.get("allowed_chat_ids", [])[0] if tg_cfg.get("allowed_chat_ids") else None
 except Exception:
     tg_bot, tg_chat_id = None, None
