@@ -163,3 +163,16 @@
 - **Phân tích chi tiết & Insight:**
   - **Cấu hình & Tối ưu:** Sử dụng lại `D_MODEL: 128`, `WINDOW_SIZE: 25` và `FAST_HIT_BARS: 6` để phục hồi dung lượng biểu diễn của mô hình. Tăng cường regularization bằng `WEIGHT_DECAY: 0.0025`, `DROPOUT: 0.35`, `LAYER_DROP: 0.40`, nới `LABEL_SMOOTHING: 0.15` và làm mịn `LEARNING_RATE: 1.5e-05`.
   - **Đánh giá kết quả:** Mô hình hội tụ rất ổn định và đạt kết quả đột phá **0.4633** Score, Win Rate **47.92%**. Quá trình validation loss phân kỳ đã được kéo dài đáng kể (Early Stopped ở Epoch 53 thay vì Epoch 48). Tuy nhiên, kết quả này vẫn chưa vượt qua đỉnh cao lịch sử của Asian V5.
+
+
+---
+
+### [2026-05-18 15:45:00] - TỐI ƯU HÓA ĐỘT PHÁ QUANTUM SNIPER: run_20260518_154500_v5_asian_quantum_sniper
+- **Ý tưởng & Cấu hình:**
+  - **Tên ý tưởng:** "Quantum Sniper" (`run_20260518_154500_v5_asian_quantum_sniper`)
+  - **Đặc điểm ý tưởng & Cấu hình:**
+    - Cân bằng dung lượng biểu diễn: Giữ vững cấu trúc mạnh `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
+    - Chống quét SL sớm (Whipsaws): Nới nhẹ tỷ lệ đối xứng lên `TP_PCT: 0.0035 / SL_PCT: 0.0035` (35 pips) giúp lệnh có thêm biên dao động tự do trong phiên Á biến động hẹp.
+    - Cường hóa Regularization: Tăng Weight Decay lên `0.0035`, nới Label Smoothing lên `0.18` và Focal Gamma lên `3.0` để tối ưu hóa khả năng chống overfitting triệt để.
+    - Điều chỉnh learning rate mượt mà về `2.0e-05` giúp AI học sâu và chắc chắn qua từng epoch.
+  - **Trạng thái:** Đã chuẩn bị dữ liệu cực sạch (giữ lại 10,245 mẫu với phân bổ nhãn lý tưởng) và đã kích hoạt thành công tiến trình huấn luyện ngầm.
