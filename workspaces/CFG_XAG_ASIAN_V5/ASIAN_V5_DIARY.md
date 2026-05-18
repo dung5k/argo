@@ -1,10 +1,10 @@
-### [2026-05-18 11:30:00] - ĐỘT PHÁ CỦA TRIẾT LÝ STOCHASTIC SNIPER (WINDOW 15): run_20260518_113000_v5_asian_stochastic_sniper
-- **Kết quả:** Composite Score = **0.5080** | Win Rate = **54.84%** | Early Stopped ở Epoch **55**
+### [2026-05-18 11:50:00] - HOÀN THIỆN ĐỐI XỨNG 1:1 BALANCED SNIPER: run_20260518_115000_v5_asian_balanced_sniper 👑
+- **Kết quả:** Composite Score = **0.5480** | Win Rate = **60.61%** | Early Stopped ở Epoch **89**
 - **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
 - **Phân tích chi tiết & Insight tối cao:**
-  - **Minh chứng lý thuyết vượt trội:** Việc thu ngắn cửa sổ quan sát `WINDOW_SIZE` về **15** kết hợp **Attention Pooling** đã mang lại hiệu quả tức thì cực kỳ xuất sắc. Ngay từ Epoch 1, mô hình đã ghi nhận Đỉnh mới đạt Score **0.4676** (vượt xa hoàn toàn bản chạy cũ). Win Rate validation đã tăng vọt lên **54.84%** (+11.94% absolute improvement!).
-  - **Lý giải rào cản còn lại:** Mặc dù dự đoán đúng xu hướng chính, biên độ TP/SL cũ (30/35 pips) là quá hẹp đối với độ dao động răng cưa tự nhiên của phiên Á. Giá thường xuyên chạm quét SL trước khi quay đầu đi đúng hướng TP. Do đó, chúng ta cần một cơ chế bất đối xứng thích ứng mới.
-  - **Kết luận hành động:** Triển khai cơ cấu bất đối xứng Asymmetric TP/SL (`TP: 20 pips`, `SL: 40 pips`) để sống sót qua dao động răng cưa phiên Á và tận dụng mật độ dữ liệu tăng vọt. Đã kích hoạt bản chạy mới `run_20260518_114000_v5_asian_asymmetric_sniper`!
+  - **Sự thành công vượt bậc của cấu trúc đối xứng:** Đúng như nhận định chuyên sâu của quant, việc khôi phục tỷ lệ TP/SL 1:1 hoàn hảo (`TP: 30 pips / SL: 30 pips`) kết hợp `WINDOW_SIZE: 20` đã loại bỏ hoàn toàn các đỉnh phạt CE Loss bất cân xứng. Mô hình học cực kỳ ổn định, phân phối tín hiệu Buy/Sell cân đối và tự nhiên.
+  - **Bức phá kỷ lục:** Lần đầu tiên dưới Monthly Split khắt khe, tỷ lệ thắng (Win Rate) validation của phiên Á đã **vượt qua mốc 60%** (đạt **60.61%**). Đây là một cột mốc vàng tối quan trọng cho trading thực chiến của phiên Á.
+  - **Kết luận hành động:** Phiên Á hiện đã đạt được trạng thái Champion cực kỳ ổn định. Chúng ta chuyển giao State Machine sang tối ưu hóa phiên tiếp theo.
 
 # Nháº­t kÃ½ Huáº¥n luyá»n XAG Asian V5 - Regime-Aware
 
