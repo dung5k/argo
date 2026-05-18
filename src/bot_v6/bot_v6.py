@@ -170,8 +170,10 @@ def _send_raw_tg(msg):
             report += f"\n💰 Giá hiện tại: {G_CURRENT_PRICE:,.2f}"
             
         prefix = f"[{TARGET_SYMBOL}] "
+        brain_id = globals().get('CONFIG', {}).get("brain_id", "")
+        brain_str = f" [Não: {brain_id}]" if brain_id else ""
         clean_msg = msg.replace(prefix, "").replace(f"[{TARGET_SYMBOL}]", "").strip()
-        full_msg = prefix + clean_msg + report
+        full_msg = f"[{TARGET_SYMBOL}]{brain_str} " + clean_msg + report
         try: tg_bot.send_message(tg_chat_id, full_msg)
         except: pass
 

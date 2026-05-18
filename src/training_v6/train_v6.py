@@ -102,7 +102,7 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     l = len(train_loader)
     return total_loss_val/l, total_recon/l, total_class/l
 
-def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000):
+def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000, hold_bars=20, samples_per_day=400.0):
     model.eval()
     total_loss_val = 0.0
     total_recon = 0.0
@@ -138,8 +138,8 @@ def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_m
     cat_logits = torch.cat(all_logits, dim=0)
     cat_labels = torch.cat(all_labels, dim=0)
     
-    evaluator = WinRateEvaluatorV3(freq_min_N=freq_min_N, freq_max_N=freq_max_N)
-    res = evaluator.evaluate(cat_logits, cat_labels, val_loss=avg_loss, val_mse=avg_recon, val_ce=avg_class)
+    evaluator = WinRateEvaluatorV3(freq_min_N=freq_min_N, freq_max_N=freq_max_N, hold_bars=hold_bars)
+    res = evaluator.evaluate(cat_logits, cat_labels, val_loss=avg_loss, val_mse=avg_recon, val_ce=avg_class, samples_per_day=samples_per_day)
     return res
 
 def main():
@@ -489,9 +489,10 @@ def main():
             tf_num = int(''.join(filter(str.isdigit, base_tf)) or 5)
             samples_per_day = session_mins / tf_num
             total_samples = len(Xs[0])
-            approx_days = total_samples / max(1, samples_per_day)
+            approx_days = total_samples / max(1.0, samples_per_day)
         except:
             approx_days = 0
+            samples_per_day = 400.0
 
         symbols_list = []
         for inp in mtf_inputs:
@@ -626,11 +627,14 @@ def main():
     freq_min = config.get("TRAINING", {}).get("FREQ_MIN_N", 50)
     freq_max = config.get("TRAINING", {}).get("FREQ_MAX_N", 500)
     
+    # [V3] Đọc cấu hình hold_bars từ config
+    hold_bars = config.get("FEATURE_ENGINEERING", {}).get("MAX_HOLD_BARS", 20)
+    
     while True:
         epoch += 1
         current_optimizer = optimizer
         tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max)
+        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max, hold_bars=hold_bars, samples_per_day=samples_per_day)
 
         comp_score  = eval_res.composite_score()
         val_ce_loss = eval_res.val_ce   # Sử dụng trực tiếp CrossEntropy Loss từ evaluator
@@ -720,8 +724,8 @@ def main():
             except Exception as e:
                 print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
 
-            # Đẩy Chart Telegram
-            plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
+            # [TẠM DISABLE] Đẩy Chart Telegram trong khi đào tạo
+            # plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
             
             # Chỉ đẩy đúng thư mục run hiện tại lên HuggingFace nếu có bật SYNC_CHUNKS
             try:
@@ -740,20 +744,20 @@ def main():
         else:
             pass # Continuous wait
 
-        # Báo cáo Telegram định kỳ
-        current_time = time.time()
-        if (current_time - last_report_time) >= report_interval_seconds:
-            last_report_time = current_time
-            plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
-            if tbot and chat_id:
-                try:
-                    report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
-                    report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
-                    report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
-                    tbot.send_message(chat_id, report_msg)
-                    print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
-                except Exception as e:
-                    print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
+        # [TẠM DISABLE] Báo cáo Telegram định kỳ
+        # current_time = time.time()
+        # if (current_time - last_report_time) >= report_interval_seconds:
+        #     last_report_time = current_time
+        #     plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
+        #     if tbot and chat_id:
+        #         try:
+        #             report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
+        #             report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
+        #             report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
+        #             tbot.send_message(chat_id, report_msg)
+        #             print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
+        #         except Exception as e:
+        #             print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
 
     # ==========================================
     # QUẢN LÝ DUNG LƯỢNG & ĐỒNG BỘ SAU TRAINING

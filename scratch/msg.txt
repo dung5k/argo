@@ -1,14 +1,18 @@
-🏯 [ASIAN V6 MTF] Tạo Run Mới - LEADING INDICATOR (LeadBTC_180).
+🏯 [LONDON V6 MTF] Tạo Run Mới (LeadingInd 110).
 
-🎯 CHIẾN LƯỢC MỚI: CHỈ BÁO DẪN DẮT
-Lần đầu tiên áp dụng định hướng của Sếp Lê: Tìm mã biến động TRƯỚC LTC.
+📊 Kết quả FarmSeed 109:
+- Best Val Loss tại Epoch 61. Composite Score: 0.0080
+- Win Rate: 56.41% (Threshold 0.68) | 66.66% (Threshold 0.76)
 
-📐 Cấu hình LeadBTC_180:
-- Input 1: LTCUSDT 1min (W20) - Tín hiệu gốc
-- Input 2: BTCUSDT 15min (W30) - CHỈ BÁO DẪN DẮT MỚI
-- TP: 0.25% | SL: 0.20% (Micro-Scalping)
-- D_MODEL: 32 | LR: 2e-5
+📈 Bảng tổng kết 6 vòng gần nhất (Chuyển sang "Leading Indicator"):
+| Seed | Score  | WR@0.75 | WR@0.87 | Hòa Vốn |
+|------|--------|---------|---------|---------|
+| 105  | 0.0975 | 12.56%  | 34.21%  | 27.3%   |
+| 106  | 0.2892 | 42.20%  | 50.00%  | 33.3%   |
+| 107  | 0.2972 | 43.04%  | 50.00%  | 33.3%   |
+| 108  | 0.2964 | 36.71%  | 52.54%  | 33.3%   |
+| 109  | 0.0080 | N/A     | N/A     | 33.3%   |
+| 110  | N/A    | N/A     | N/A     | 33.3%   |
 
-Giả thuyết: BTC biến động trước LTC. Khung 15 phút BTC cho tầm nhìn xa, bộ não sẽ học quy luật trễ pha giữa BTC và LTC.
-
-🚀 LeadBTC_180 (PID 16992) đã kích hoạt! Mục tiêu: Phá vỡ kỷ lục 77.27% bằng sức mạnh của Leading Indicator!
+Nhận định ngắn về xu hướng Score/WR: FarmSeed 109 sụp đổ thảm hại do nhiễu loạn Random Seed, chứng tỏ cấu trúc "Độc Lập 1 Mã" đã tới giới hạn. Chuyển chiến lược sang "Chỉ Báo Dẫn Dắt" (Leading Indicator)!
+🚀 LeadingInd 110 (PID 14044) đã bùng cháy! Mục tiêu: Bổ sung mã BTCUSDT (15m) làm nguồn dự báo phụ trợ, kỳ vọng giải quyết được tình trạng mù thông tin khi có tin tức lớn giật giá ở phiên London!

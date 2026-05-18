@@ -118,9 +118,9 @@ class AAMT_ResidualClassificationHead(nn.Module):
         bottleneck = max(32, d_model // 2)
         
         self.fc1 = nn.Linear(d_model, bottleneck)
-        self.bn1 = nn.BatchNorm1d(bottleneck)
+        self.ln1 = nn.LayerNorm(bottleneck)  # LayerNorm: an toàn với batch_size=1 khi inference
         self.fc2 = nn.Linear(bottleneck, bottleneck)
-        self.bn2 = nn.BatchNorm1d(bottleneck)
+        self.ln2 = nn.LayerNorm(bottleneck)  # LayerNorm: an toàn với batch_size=1 khi inference
         self.fc_out = nn.Linear(bottleneck, num_classes)
         
         self.skip_proj = nn.Linear(d_model, bottleneck) if d_model != bottleneck else nn.Identity()
@@ -132,12 +132,12 @@ class AAMT_ResidualClassificationHead(nn.Module):
         skip = self.skip_proj(latent_vector)
         
         x = self.fc1(latent_vector)
-        x = self.bn1(x)
+        x = self.ln1(x)
         x = self.act(x)
         x = self.dropout(x)
         
         x = self.fc2(x)
-        x = self.bn2(x)
+        x = self.ln2(x)
         x = x + skip
         x = self.act(x)
         x = self.dropout(x)
@@ -148,9 +148,10 @@ class AAMT_ResidualClassificationHead(nn.Module):
 class AAMT_ClassificationHead(nn.Module):
     def __init__(self, d_model=128, num_classes=3):
         super().__init__()
+        # LayerNorm thay thế BatchNorm1d: hoạt động đúng với batch_size=1 khi live inference
         self.classifier = nn.Sequential(
             nn.Linear(d_model, 64),
-            nn.BatchNorm1d(64),
+            nn.LayerNorm(64),
             nn.GELU(),
             nn.Dropout(0.25),
             nn.Linear(64, num_classes)
