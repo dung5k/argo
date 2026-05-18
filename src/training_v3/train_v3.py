@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-except Exception:
-    pass
+import builtins
+orig_print = builtins.print
+def safe_print(*args, **kwargs):
+    try:
+        orig_print(*args, **kwargs)
+    except UnicodeEncodeError:
+        safe_args = [
+            str(arg).encode('ascii', errors='replace').decode('ascii')
+            for arg in args
+        ]
+        orig_print(*safe_args, **kwargs)
+builtins.print = safe_print
 import json
 import argparse
 import time
