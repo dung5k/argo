@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 806, in <module>
+    main()
+  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 307, in main
+    Xs_tr = [X[train_mask] for X in Xs]
+  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 307, in <listcomp>
+    Xs_tr = [X[train_mask] for X in Xs]
+IndexError: boolean index did not match indexed array along dimension 0; dimension is 34966 but corresponding boolean dimension is 37076
