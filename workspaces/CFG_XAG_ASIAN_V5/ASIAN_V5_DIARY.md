@@ -1,17 +1,3 @@
-### [2026-05-18 12:30:00] - HOÀN THIỆN ĐỐI XỨNG HỘI TỤ (BALANCED CONVERGENT): run_20260518_123000_v5_asian_balanced_convergent
-- **Kết quả:** Composite Score = **0.3394** | Win Rate = **36.67%** | Early Stopped ở Epoch **44**
-- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
-- **Phân tích chi tiết & Insight tối cao:**
-  - **Lý giải kết quả:** Việc hạ thấp learning rate xuống `2e-5` giúp quá trình học mượt mà hơn nhưng lại khiến mô hình hội tụ quá chậm, bị trôi vào điểm cực trị cục bộ (local minimum) có bias Buy lớn (`100B/0S`). Do đó, độ chính xác thực tế bị giảm sút.
-  - **Kết luận hành động:** Giữ vững bản chạy kỷ lục vô địch tuyệt đối **`run_20260518_115000_v5_asian_balanced_sniper`** (Score **0.5480** | Win Rate **60.61%**) làm Champion chính thức cho phiên Á V5!
-
-### [2026-05-18 12:30:00] - HOÀN THIỆN ĐỐI XỨNG HỘI TỤ (BALANCED CONVERGENT): run_20260518_123000_v5_asian_balanced_convergent
-- **Mục tiêu:** Vượt mốc Score **0.60** | Win Rate **>62%** dưới Monthly Split.
-- **Ý tưởng đột phá & Cấu hình:**
-  - **Hội tụ mượt mà:** Nhờ bài học từ bản chạy D160 bị quá khớp, chúng ta giữ cấu trúc vừa vặn `D_MODEL: 128` nhưng hạ thấp `LEARNING_RATE: 2e-05` kết hợp `ES_PATIENCE: 25` để mô hình học chậm rãi, chắc chắn, hội tụ sâu hơn vào các cực trị toán học của phân phối 1:1 đối xứng.
-  - **Cơ chế dẫn dắt:** Tiếp tục dùng bộ macro features BTC/ETH/Gold dẫn hướng dòng tiền.
-  - **Trạng thái:** Đang tiến hành chuẩn bị dữ liệu và huấn luyện nền local.
-
 # Nháº­t kÃ½ Huáº¥n luyá»n XAG Asian V5 - Regime-Aware
 
 ## ð Báº£ng VÃ ng ThÃ nh TÃ­ch V5 (Top 3)
@@ -154,3 +140,12 @@
 - **Hành động:** Đóng gói bản Ultimate này làm cấu hình sản xuất vĩnh viễn cho Phase V5.
 
 ---
+
+### [2026-05-18 13:45:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION PULSE: run_20260518_134500_v5_asian_precision_pulse
+- **Đặc điểm ý tưởng & Cấu hình:**
+  - Nhận diện bối cảnh: Asian V5 đang là phiên yếu nhất (Score 0.5480) dưới Monthly Split. Hệ thống quyết định khởi chạy tối ưu hóa đột phá.
+  - Cấu hình "Precision Pulse": 128 D_MODEL, 8 N_HEAD, 3 NUM_LAYERS, LR=2.5e-05, WD=0.0015.
+  - Nới nhẹ `FAST_HIT_BARS` lên 6 nến và mở rộng `WINDOW_SIZE` lên 25 nến để cung cấp thêm ngữ cảnh vi mô cho AI.
+  - Giữ nguyên tỷ lệ đối xứng vàng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`) nhằm bảo vệ sự cân bằng Buy/Sell, loại bỏ hoàn toàn hiện tượng bias gây méo CE Loss.
+  - Đưa bộ ba mỏ neo Macro: Vàng (XAUUSDm) cùng Crypto (BTCUSDm, ETHUSDm) làm động lực dẫn dắt.
+  - Trạng thái: Đã chuẩn bị dữ liệu cực sạch qua Clean Data Diet (giữ lại 14,286 mẫu chất lượng cao) và kích hoạt huấn luyện nền mượt mà.
