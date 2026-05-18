@@ -1,15 +1,8 @@
-### [2026-05-18 12:20:00] - NÂNG CẤP MÔ HÌNH KHỔNG LỒ (GIANT SNIPER): run_20260518_122000_v5_asian_giant_sniper
-- **Kết quả:** Composite Score = **0.4932** | Win Rate = **50.00%** | Early Stopped ở Epoch **46**
-- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
-- **Phân tích chi tiết & Insight tối cao:**
-  - **Lý giải kết quả:** Việc tăng kích thước lên `D_MODEL: 160` khiến mô hình có độ tự do quá cao, dễ dẫn đến hiện tượng quá khớp (overfitting) các đặc trưng nhiễu động nhỏ của phiên Á, làm giảm Win Rate thực tế xuống còn **50.00%**.
-  - **Kết luận hành động:** Giữ vững bản chạy kỷ lục vô địch **`run_20260518_115000_v5_asian_balanced_sniper`** (Score **0.5480** | Win Rate **60.61%**) làm Champion chính thức cho phiên Á V5!
-
-### [2026-05-18 12:20:00] - NÂNG CẤP MÔ HÌNH KHỔNG LỒ (GIANT SNIPER): run_20260518_122000_v5_asian_giant_sniper
-- **Mục tiêu:** Vượt mốc Score **0.65** | Win Rate **>62%** dưới Monthly Split.
+### [2026-05-18 12:30:00] - HOÀN THIỆN ĐỐI XỨNG HỘI TỤ (BALANCED CONVERGENT): run_20260518_123000_v5_asian_balanced_convergent
+- **Mục tiêu:** Vượt mốc Score **0.60** | Win Rate **>62%** dưới Monthly Split.
 - **Ý tưởng đột phá & Cấu hình:**
-  - **Kiến trúc dung lượng lớn:** Kế thừa thành tựu rực rỡ của bản Balanced Sniper vừa rồi (Win Rate 60.61%), chúng ta tăng lực nâng cấp mô hình lên kích thước khổng lồ `D_MODEL: 160` nhằm mở rộng dung lượng bộ nhớ attention, tối ưu hóa các đặc trưng phi tuyến tính phức tạp của phiên Á.
-  - **Sự hoàn hảo của đối xứng:** Giữ tỷ lệ TP/SL 1:1 (`TP: 30 pips / SL: 30 pips`) và `WINDOW_SIZE: 20` để loại bỏ méo CE Loss.
+  - **Hội tụ mượt mà:** Nhờ bài học từ bản chạy D160 bị quá khớp, chúng ta giữ cấu trúc vừa vặn `D_MODEL: 128` nhưng hạ thấp `LEARNING_RATE: 2e-05` kết hợp `ES_PATIENCE: 25` để mô hình học chậm rãi, chắc chắn, hội tụ sâu hơn vào các cực trị toán học của phân phối 1:1 đối xứng.
+  - **Cơ chế dẫn dắt:** Tiếp tục dùng bộ macro features BTC/ETH/Gold dẫn hướng dòng tiền.
   - **Trạng thái:** Đang tiến hành chuẩn bị dữ liệu và huấn luyện nền local.
 
 # Nháº­t kÃ½ Huáº¥n luyá»n XAG Asian V5 - Regime-Aware
