@@ -194,3 +194,16 @@
   - **Phân tích chi tiết & Insight:**
     - **Đánh giá kết quả:** Đây là một thắng lợi cực lớn về mặt cấu trúc! Mô hình đạt sự đối xứng lệnh hoàn hảo tuyệt đối: **17 Buy và 17 Sell** tại best threshold `0.55`, triệt tiêu hoàn toàn bias mua/bán. Win Rate đạt **58.82%** và Composite Score đạt **0.5131** - rất sát với champion baseline (Score 0.5480, WR 60.61%). 
     - **Bài học rút ra:** Việc nới lỏng các regularizer (WD = 0.0015, LS = 0.08) đã chứng minh tính đúng đắn khi giúp mô hình vượt qua hiện tượng underfitting của Quantum Sniper trước đó. Đối xứng 1:1 kết hợp với regularization vừa phải là chiếc chìa khóa vàng cho phiên Á! Champion baseline `run_20260518_115000_v5_asian_balanced_sniper` vẫn tạm thời dẫn đầu nhưng Pure Precision Sniper là cấu hình có độ đối xứng lệnh an toàn và hoàn mỹ nhất.
+
+---
+
+### [2026-05-18 16:30:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION FLOW SCALPER: run_20260518_163000_v5_asian_precision_flow_scalper
+- **Ý tưởng & Cấu hình:**
+  - **Tên ý tưởng:** "Precision Flow Scalper" (`run_20260518_163000_v5_asian_precision_flow_scalper`)
+  - **Đặc điểm ý tưởng & Cấu hình:**
+    - Cân bằng dung lượng biểu diễn: Giữ `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
+    - Đối xứng 1:1 hoàn mỹ: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để đảm bảo không bị méo loss phân loại.
+    - Nới nhẹ thời gian giữ lệnh: Nới `FAST_HIT_BARS: 6` (tăng từ 5 nến) giúp mô hình có thêm thời gian tiệm cận TP đầy đủ hơn trong phiên Á di chuyển chậm, khắc phục triệt để hiện tượng kẹt lệnh do whipsaws ngắn hạn.
+    - Tinh chỉnh cường độ Regularization: Weight Decay `0.0012`, Label Smoothing `0.05` và Focal Gamma `2.0` nhằm cho phép mô hình tối đa hóa sự tự tin vào các biên phân loại sắc nét mà không làm loãng đặc tính nến.
+    - Học tập mượt mà: Learning Rate `2.5e-05` giúp AI hội tụ cực kỳ mượt mà.
+  - **Trạng thái:** Đang tiến hành huấn luyện nền local.
