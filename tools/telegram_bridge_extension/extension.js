@@ -59,7 +59,7 @@ function checkPendingMessages() {
             if (pendingParams && pendingParams.length > 0) {
                 fs.unlinkSync(pendingPath);
 
-                let combinedQuery = "[BỐI CẢNH BẮT BUỘC: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. MỌI PHẢN HỒI DÀNH CHO NGƯỜI DÙNG NÀO PHẢI ĐƯỢC GỬI QUA TELEGRAM VỀ ĐÚNG NHÓM CHAT ĐÓ bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung_đầy_đủ>\" --channel <ID_Của_Họ>`. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi hoàn tất toàn bộ công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --channel <ID_Cuối> --done` để báo hệ thống rảnh!]\n\n";
+                let combinedQuery = "[BỐI CẢNH BẮT BUỘC: Trong lúc bạn đang bận, người dùng từ Telegram đã gửi các tin nhắn sau. Hãy xem xét và xử lý TOÀN BỘ chúng. MỌI PHẢN HỒI DÀNH CHO SẾP PHẢI ĐƯỢC GỬI TOÀN BỘ QUA TELEGRAM bằng lệnh `python .agent/send_to_tele.py \"<Nội_dung_đầy_đủ>\"`. TUYỆT ĐỐI KHÔNG trả lời giải thích trong khung chat IDE mà chỉ gửi tóm tắt vào Tele. Khi hoàn tất công việc, BẮT BUỘC gọi: `python .agent/send_to_tele.py \"<Kết_quả_cuối>\" --done` để báo hệ thống rảnh!]\n\n";
                 pendingParams.forEach((item, index) => {
                     let cName = item.chatName || "Unknown";
                     combinedQuery += `--- Tin nhắn ${index + 1} từ "${cName}" (ID: ${item.chatId}) ---\n${item.queryToAgent}\n\n`;
@@ -114,7 +114,11 @@ function getNetworkConfig() {
             return JSON.parse(fs.readFileSync(netPath, 'utf8'));
         }
     } catch(e) {}
-    return null;
+    // Fallback if network_config.json is deleted
+    return {
+        mqtt_broker: "mqtt://127.0.0.1:1883",
+        mqtt_base_topic: "argo/network/v1/agents"
+    };
 }
 
 function getAgentIdentity() {
@@ -247,13 +251,6 @@ function sendTelegramMessage(chatId, text, overrideToken = '') {
             }
         });
     });
-    
-    // Set socket timeout of 15 seconds to prevent hanging on network drops
-    req.setTimeout(15000, () => {
-        logDebug(`[SEND TIMEOUT] request hung. Destroying.`);
-        req.destroy();
-    });
-
     req.on('error', (e) => {
         console.error('Telegram Send Error', e);
         logDebug(`[SEND NETWORK ERROR] ${e.message || e}`);
@@ -415,18 +412,31 @@ function pollTelegram() {
             }
             telegramPollingTimeout = setTimeout(pollTelegram, 1000);
         });
+        
+        res.on('error', (e) => {
+            console.error("Response Stream Error", e);
+            logDebug(`[POLL RES ERROR] ${e}`);
+            if (telegramPollingTimeout) clearTimeout(telegramPollingTimeout);
+            telegramPollingTimeout = setTimeout(pollTelegram, 3000);
+        });
+        
+        res.on('aborted', () => {
+            logDebug(`[POLL ABORTED] Connection aborted`);
+            if (telegramPollingTimeout) clearTimeout(telegramPollingTimeout);
+            telegramPollingTimeout = setTimeout(pollTelegram, 3000);
+        });
     });
     
-    // Set an explicit socket timeout of 45 seconds (Long polling is 30s) to prevent silent hangs on network drops
-    req.setTimeout(45000, () => {
-        logDebug(`[POLL TIMEOUT] Long polling request hung. Destroying socket to force retry.`);
-        req.destroy();
-    });
-
     req.on('error', (e) => {
         console.error("Polling Error", e);
         logDebug(`[POLL NETWORK ERROR] ${e.message || e}`);
         telegramPollingTimeout = setTimeout(pollTelegram, 3000);
+    });
+    
+    // Prevent request from hanging indefinitely due to silent connection drops
+    req.setTimeout(35000, () => {
+        logDebug(`[POLL TIMEOUT] Request hanging. Destroying connection.`);
+        req.destroy();
     });
 }
 
@@ -850,9 +860,8 @@ def signal_done_to_extension():
     except:
         pass
 
-def send_via_telegram_api(content, is_done=False, override_chat_ids=None):
-    token, default_chat_ids, agent_identity = get_telegram_config(target_channels=None)
-    chat_ids = override_chat_ids if override_chat_ids else default_chat_ids
+def send_via_telegram_api(content, is_done=False, target_channels=None):
+    token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if not token or not chat_ids:
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
         return False
@@ -877,12 +886,11 @@ def send_via_telegram_api(content, is_done=False, override_chat_ids=None):
     
     return success
 
-def send_to_telegram(content, is_done=False, override_chat_ids=None):
+def send_to_telegram(content, is_done=False, target_channels=None):
     if not content: return
-    token, default_chat_ids, agent_identity = get_telegram_config(target_channels=None)
-    chat_ids = override_chat_ids if override_chat_ids else default_chat_ids
+    token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
-    send_via_telegram_api(content, is_done, override_chat_ids)
+    send_via_telegram_api(content, is_done, target_channels)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
@@ -896,15 +904,17 @@ if __name__ == '__main__':
         idx = sys.argv.index('--channel')
         if idx + 1 < len(sys.argv):
             target_channels = sys.argv[idx + 1]
-            
-    content = ""
-    for i in range(1, len(sys.argv)):
-        if sys.argv[i] == '--done': continue
-        if sys.argv[i] == '--channel': continue
-        if sys.argv[i-1] == '--channel': continue
-        content = sys.argv[i]
-        break
+            sys.argv.pop(idx + 1)
+        sys.argv.pop(idx)
         
+    if '--target' in sys.argv:
+        idx = sys.argv.index('--target')
+        if idx + 1 < len(sys.argv):
+            target_channels = sys.argv[idx + 1]
+            sys.argv.pop(idx + 1)
+        sys.argv.pop(idx)
+        
+    content = sys.argv[1] if len(sys.argv) > 1 else ""
     send_to_telegram(content, is_done, target_channels)
 `;
     fs.writeFileSync(scriptPath, pyContent);
