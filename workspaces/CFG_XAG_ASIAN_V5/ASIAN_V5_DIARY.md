@@ -1,4 +1,11 @@
 ### [2026-05-18 12:30:00] - HOÀN THIỆN ĐỐI XỨNG HỘI TỤ (BALANCED CONVERGENT): run_20260518_123000_v5_asian_balanced_convergent
+- **Kết quả:** Composite Score = **0.3394** | Win Rate = **36.67%** | Early Stopped ở Epoch **44**
+- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
+- **Phân tích chi tiết & Insight tối cao:**
+  - **Lý giải kết quả:** Việc hạ thấp learning rate xuống `2e-5` giúp quá trình học mượt mà hơn nhưng lại khiến mô hình hội tụ quá chậm, bị trôi vào điểm cực trị cục bộ (local minimum) có bias Buy lớn (`100B/0S`). Do đó, độ chính xác thực tế bị giảm sút.
+  - **Kết luận hành động:** Giữ vững bản chạy kỷ lục vô địch tuyệt đối **`run_20260518_115000_v5_asian_balanced_sniper`** (Score **0.5480** | Win Rate **60.61%**) làm Champion chính thức cho phiên Á V5!
+
+### [2026-05-18 12:30:00] - HOÀN THIỆN ĐỐI XỨNG HỘI TỤ (BALANCED CONVERGENT): run_20260518_123000_v5_asian_balanced_convergent
 - **Mục tiêu:** Vượt mốc Score **0.60** | Win Rate **>62%** dưới Monthly Split.
 - **Ý tưởng đột phá & Cấu hình:**
   - **Hội tụ mượt mà:** Nhờ bài học từ bản chạy D160 bị quá khớp, chúng ta giữ cấu trúc vừa vặn `D_MODEL: 128` nhưng hạ thấp `LEARNING_RATE: 2e-05` kết hợp `ES_PATIENCE: 25` để mô hình học chậm rãi, chắc chắn, hội tụ sâu hơn vào các cực trị toán học của phân phối 1:1 đối xứng.
