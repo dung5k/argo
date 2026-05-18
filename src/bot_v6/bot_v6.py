@@ -669,9 +669,20 @@ def bot_background_loop():
             msg_pred += f"\nLãi/Lỗ trong ngày: {daily_pnl:+.2f}$"
 
         print(f"[BOT V6] {msg_pred}")
-        # Gửi output hiện tại của mô hình qua Telegram (theo yêu cầu của user)
-        # Để tránh spam, tg_notify đã được cấu hình chỉ gửi tin quan trọng
-        tg_notify(msg_pred)
+        
+        # [YÊU CẦU SẾP] Gửi tin nhắn Telegram khi lần đầu tiên tính được output của bộ não mới
+        current_brain = CONFIG.get("HF_RUN_ID", "")
+        if not hasattr(bot_background_loop, 'last_reported_brain'):
+            bot_background_loop.last_reported_brain = None
+            
+        if current_brain != bot_background_loop.last_reported_brain:
+            prefix = f"🧠 [DỰ ĐOÁN ĐẦU TIÊN - NÃO: {current_brain}]\n"
+            tg_notify(prefix + msg_pred)
+            bot_background_loop.last_reported_brain = current_brain
+        else:
+            # Gửi tin định kỳ nếu có sự kiện hoặc giãn cách (mặc định cho v6 nếu có action BUY/SELL)
+            if action in [0, 2]: # BUY/SELL
+                tg_notify(msg_pred)
         
         trading_path = CONFIG.get("MT5_PATH", r"C:\Program Files\MetaTrader 5\terminal64.exe")
         if not os.path.exists(trading_path):

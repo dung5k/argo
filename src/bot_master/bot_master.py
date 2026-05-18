@@ -382,15 +382,24 @@ def bot_background_loop():
             msg_pred = f"🎯 KẾT QUẢ DỰ ĐOÁN:\nNến {gui_time} | L: {mse:.4f}\n(Thresh: {engine.mse_threshold:.4f})\nTỷ lệ: BUY={probs['buy']:.2%} | SELL={probs['sell']:.2%}\nHành động: {action}"
             print(f"[BOT MASTER] {msg_pred}")
             
-            # Chỉ thông báo Tele khi: 3 lần warmup đầu HOẶC có tín hiệu thật (BUY/SELL)
-            is_trade_action = action in ["BUY", "SELL"]
-            
-            if tele_msg_count < 3 or is_trade_action:
-                prefix = "🔥 [TÍN HIỆU VÀO LỆNH] " if is_trade_action else "📊 [CẬP NHẬT ĐỊNH KỲ] "
+            # [YÊU CẦU SẾP] Gửi tin nhắn Telegram khi lần đầu tiên tính được output của bộ não mới
+            current_brain = CONFIG.get("HF_RUN_ID", "")
+            if not hasattr(bot_background_loop, 'last_reported_brain'):
+                bot_background_loop.last_reported_brain = None
+                
+            if current_brain != bot_background_loop.last_reported_brain:
+                prefix = f"🧠 [DỰ ĐOÁN ĐẦU TIÊN - NÃO: {current_brain}]\n"
                 tg_notify(prefix + msg_pred)
-                if not is_trade_action:
-                    tele_msg_count += 1
-                    
+                bot_background_loop.last_reported_brain = current_brain
+            else:
+                # Chỉ thông báo Tele khi: 3 lần warmup đầu HOẶC có tín hiệu thật (BUY/SELL)
+                is_trade_action = action in ["BUY", "SELL"]
+                if tele_msg_count < 3 or is_trade_action:
+                    prefix = "🔥 [TÍN HIỆU VÀO LỆNH] " if is_trade_action else "📊 [CẬP NHẬT ĐỊNH KỲ] "
+                    tg_notify(prefix + msg_pred)
+                    if not is_trade_action:
+                        tele_msg_count += 1
+                        
             trade_manager.execute_trade(action, probs, mse, actual_target_sym=actual_sym)
             gui_status = f"Khóa Mốc. Hành động: {action}"
         else: # V2
