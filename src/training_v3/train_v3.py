@@ -199,6 +199,7 @@ def main():
     import shutil
     import subprocess
     legacy_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", "legacy_run", "data", "tensors")
+    base_tensor_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors")
 
     if not os.path.exists(x_path):
         # THỬ ĐỒNG BỘ TỪ HUGGINGFACE TRƯỚC!
@@ -229,9 +230,17 @@ def main():
             except Exception as e:
                 print(f"❌ Lỗi tải Tensor từ HF Dataset: {e}", flush=True)
             
-        # Nếu vẫn không có, thử copy từ legacy_run
+        # Nếu vẫn không có, thử copy từ base_tensor_dir
         if not os.path.exists(x_path):
-            if os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+            if os.path.exists(os.path.join(base_tensor_dir, f"X_tensor_{cfg_id}.npy")):
+                print(f"Bản sao Tensor từ base_tensor_dir sang {run_id}...", flush=True)
+                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"P_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl",
+                                 f"X_train_{cfg_id}.npy", f"Y_train_{cfg_id}.npy", f"P_train_{cfg_id}.npy",
+                                 f"X_val_{cfg_id}.npy", f"Y_val_{cfg_id}.npy", f"P_val_{cfg_id}.npy"]:
+                    src_file = os.path.join(base_tensor_dir, filename)
+                    if os.path.exists(src_file):
+                        shutil.copy(src_file, os.path.join(tensor_local_dir, filename))
+            elif os.path.exists(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy")):
                 print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
@@ -729,5 +738,33 @@ def main():
     except Exception as e:
         print(f"â Œ Lá»—i khi Push: {e}", flush=True)
 
+    if cfg_id.startswith("CFG_XAG_"):
+        try:
+            import subprocess
+            subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v5_training_done"], capture_output=True)
+            print("[CLEANUP] Đã tự động gọi trigger xag_v5_training_done tới Extension.", flush=True)
+        except Exception as e:
+            print(f"[CLEANUP] Lỗi gọi trigger xag_v5_training_done: {e}", flush=True)
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        try:
+            import sys
+            import json
+            import subprocess
+            config_path = "workspaces/CFG_XAU_NY_V3_5/base_config.json"
+            for arg in sys.argv:
+                if arg.endswith("config.json"):
+                    config_path = arg
+                    break
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            cfg_id = config.get('CONFIG_ID', '')
+            if cfg_id.startswith("CFG_XAG_"):
+                subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v5_training_done"], capture_output=True)
+                print("[FATAL TRIGGER] Đã gửi tín hiệu phục hồi hệ thống khi gặp lỗi crash.", flush=True)
+        except:
+            pass
+        raise e

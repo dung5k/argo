@@ -199,8 +199,10 @@ class WinRateEvaluatorV3:
             step = (max_thresh - 0.53) / (self.n_thresholds - 1)
             thresholds = [round(0.53 + step * i, 4) for i in range(self.n_thresholds)]
         else:
-            thresholds = [0.53, 0.68, 0.84, 0.99] # Mặc định giãn đều nếu không có tín hiệu cao
-            max_thresh = 0.99
+            # [CẢI TIẾN ARGO2] Nếu không có tín hiệu cực cao, dùng dải ngưỡng mịn màng 0.53 - 0.56
+            # thay vì nhảy vọt lên 0.68, 0.84, 0.99 để tránh triệt tiêu Composite Score về 0
+            thresholds = [0.53, 0.54, 0.55, 0.56]
+            max_thresh = 0.56
         metrics_list = []
         for t in thresholds:
             m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t)

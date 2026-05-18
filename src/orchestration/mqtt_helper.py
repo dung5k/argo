@@ -1,6 +1,14 @@
+import sys
 import json
 import threading
 import paho.mqtt.client as mqtt
+
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='backslashreplace')
+    except Exception:
+        pass
 
 BROKER = "broker.emqx.io"
 PORT = 8883
@@ -22,10 +30,10 @@ class MqttHelper:
 
     def _on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print(f"[MQTT] Đã kết nối với máy chủ vô tuyến ({BROKER})")
+            print(f"[MQTT] Da ket noi voi may chu vo tuyen ({BROKER})")
             self.client.subscribe(self.cmd_topic)
         else:
-            print(f"[MQTT] Lỗi kết nối: code {rc}")
+            print(f"[MQTT] Loi ket noi: code {rc}")
 
     def _on_message(self, client, userdata, msg):
         try:

@@ -247,6 +247,13 @@ function sendTelegramMessage(chatId, text, overrideToken = '') {
             }
         });
     });
+    
+    // Set socket timeout of 15 seconds to prevent hanging on network drops
+    req.setTimeout(15000, () => {
+        logDebug(`[SEND TIMEOUT] request hung. Destroying.`);
+        req.destroy();
+    });
+
     req.on('error', (e) => {
         console.error('Telegram Send Error', e);
         logDebug(`[SEND NETWORK ERROR] ${e.message || e}`);
@@ -410,6 +417,12 @@ function pollTelegram() {
         });
     });
     
+    // Set an explicit socket timeout of 45 seconds (Long polling is 30s) to prevent silent hangs on network drops
+    req.setTimeout(45000, () => {
+        logDebug(`[POLL TIMEOUT] Long polling request hung. Destroying socket to force retry.`);
+        req.destroy();
+    });
+
     req.on('error', (e) => {
         console.error("Polling Error", e);
         logDebug(`[POLL NETWORK ERROR] ${e.message || e}`);
