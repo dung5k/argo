@@ -213,7 +213,12 @@ class V3DataProcessor:
 
         try:
             import torch
-            tensor = torch.tensor(window_df.values, dtype=torch.float32).unsqueeze(0)
+            values = window_df.values
+            if self.model_input_dim and values.shape[1] < self.model_input_dim:
+                pad_cols = self.model_input_dim - values.shape[1]
+                self.log_callback(f"[DataProcessorV3] ⚠️ Tự động đệm {pad_cols} cột số 0 từ {values.shape[1]} lên {self.model_input_dim} cho khớp model weights mới.")
+                values = np.pad(values, ((0, 0), (0, pad_cols)), mode='constant', constant_values=0.0)
+            tensor = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
             self.log_callback(f"[DataProcessorV3] ===== ✅ Pipeline hoàn tất thành công | {tuple(tensor.shape)} =====")
             return tensor, None
         except Exception as e:
