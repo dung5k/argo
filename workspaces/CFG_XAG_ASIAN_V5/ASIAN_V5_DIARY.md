@@ -179,3 +179,18 @@
   - **Phân tích chi tiết & Insight:**
     - **Đánh giá kết quả:** Quantum Sniper đạt mức đối xứng lệnh cực đẹp (18 Buy, 18 Sell ở Best threshold 0.5567) nhờ cơ chế đối xứng 1:1 và nới nhẹ biên lên 35 pips. Tuy nhiên, việc tăng Weight Decay quá mạnh lên `0.0035` kết hợp với Label Smoothing `0.18` đã làm "mềm" các đặc trưng phân loại quá mức, khiến Win Rate thực tế bị kéo lùi về **44.44%** và Composite Score đạt **0.440**.
     - **Bài học rút ra:** Mặc dù đối xứng 1:1 là đúng đắn để triệt tiêu bias, việc siết quá chặt các regularizer (WD > 0.003, LS > 0.15) có thể triệt tiêu cả các tín hiệu phân loại hữu ích trong phiên Á có thanh khoản mỏng. Bản chạy kỷ lục `run_20260518_115000_v5_asian_balanced_sniper` (Score **0.5480**) vẫn được giữ vững làm Champion tối cao dưới Monthly Split hôm nay!
+
+---
+
+### [2026-05-18 16:00:00] - TỐI ƯU HÓA ĐỘT PHÁ PURE PRECISION SNIPER: run_20260518_160000_v5_asian_pure_precision_sniper
+- **Ý tưởng & Cấu hình:**
+  - **Tên ý tưởng:** "Pure Precision Sniper" (`run_20260518_160000_v5_asian_pure_precision_sniper`)
+  - **Đặc điểm ý tưởng & Cấu hình:**
+    - Cân bằng dung lượng biểu diễn: Giữ `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
+    - Đối xứng 1:1 cổ điển: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để lệnh có không gian dao động tự do hoàn hảo.
+    - Giảm cường độ Regularization: Giảm Weight Decay xuống `0.0015`, Label Smoothing xuống `0.08` và Focal Gamma `2.0` nhằm cho phép mô hình học các biên phân loại sắc nét cho các mẫu thanh khoản mỏng.
+    - Tăng Learning Rate lên `3.0e-05` giúp AI nhanh chóng thoát khỏi cực tiểu địa phương.
+  - **Kết quả:** Composite Score = **0.5131** | Win Rate = **58.82%** | Early Stopped ở Epoch **54** (Best Epoch 19)
+  - **Phân tích chi tiết & Insight:**
+    - **Đánh giá kết quả:** Đây là một thắng lợi cực lớn về mặt cấu trúc! Mô hình đạt sự đối xứng lệnh hoàn hảo tuyệt đối: **17 Buy và 17 Sell** tại best threshold `0.55`, triệt tiêu hoàn toàn bias mua/bán. Win Rate đạt **58.82%** và Composite Score đạt **0.5131** - rất sát với champion baseline (Score 0.5480, WR 60.61%). 
+    - **Bài học rút ra:** Việc nới lỏng các regularizer (WD = 0.0015, LS = 0.08) đã chứng minh tính đúng đắn khi giúp mô hình vượt qua hiện tượng underfitting của Quantum Sniper trước đó. Đối xứng 1:1 kết hợp với regularization vừa phải là chiếc chìa khóa vàng cho phiên Á! Champion baseline `run_20260518_115000_v5_asian_balanced_sniper` vẫn tạm thời dẫn đầu nhưng Pure Precision Sniper là cấu hình có độ đối xứng lệnh an toàn và hoàn mỹ nhất.
