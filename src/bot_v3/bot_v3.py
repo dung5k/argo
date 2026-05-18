@@ -683,12 +683,23 @@ def bot_background_loop():
         time.sleep(1)
 
 def update_ui(root, lbl_time, lbl_session, canvas_pred, lbl_action, lbl_status, tree, lbl_thr, lbl_target=None):
+    global gui_brain_tooltip
     if lbl_target: lbl_target.config(text=TARGET_SYMBOL)
     lbl_time.config(text=f"🕒 {gui_time}")
     lbl_session.config(text=f"🌐 {gui_session}")
     lbl_action.config(text=f"🎯 Chiến thuật: {trade_manager.gui_action}")
     lbl_status.config(text=f"⚙️ {gui_status}")
     lbl_thr.config(text=trade_manager.gui_thr_text)
+    # Refresh tooltip metrics định kỳ mỗi 5 phút (300 * 500ms = 150,000ms)
+    if not hasattr(update_ui, '_tooltip_refresh_counter'):
+        update_ui._tooltip_refresh_counter = 0
+    update_ui._tooltip_refresh_counter += 1
+    if update_ui._tooltip_refresh_counter >= 600:  # 600 * 500ms = 5 phút
+        update_ui._tooltip_refresh_counter = 0
+        try:
+            gui_brain_tooltip = _get_all_brains_report()
+        except Exception:
+            pass
     
     for item in tree.get_children():
         tree.delete(item)
@@ -793,7 +804,8 @@ def start_overlay_dashboard():
     lbl_session = tk.Label(root, text="🌐 Phiên: Đang khởi chạy", fg="#aa66ff", bg="#080b12", font=("Consolas", 9), cursor="hand2")
     lbl_session.pack()
     # Tooltip thành tích đào tạo — hiển thị khi di chuột qua tên não
-    ToolTip(lbl_session, lambda: gui_brain_tooltip)
+    # Gọi _get_all_brains_report() trực tiếp để luôn có dữ liệu mới nhất
+    ToolTip(lbl_session, _get_all_brains_report)
     canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
     canvas_pred.pack(pady=3, fill=tk.X, padx=15)
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang ngủ", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))
