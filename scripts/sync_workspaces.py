@@ -18,7 +18,9 @@ IGNORE_RULES = [
     "*/data/raw/*", 
     "*/data/tensors/*",
     "*.parquet",
-    "*.npy"
+    "*.npy",
+    "*.pth",
+    "*.pkl"
 ]
 
 import argparse
