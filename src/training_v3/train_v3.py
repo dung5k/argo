@@ -774,6 +774,8 @@ if __name__ == "__main__":
         main()
     except BaseException as e:
         import traceback
+        import sys
+        traceback.print_exc(file=sys.stderr)
         try:
             with open("crash_traceback.txt", "w", encoding="ascii", errors="replace") as tb_f:
                 traceback.print_exc(file=tb_f)
