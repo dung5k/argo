@@ -1,10 +1,9 @@
-### [2026-05-18 11:50:00] - HOÀN THIỆN ĐỐI XỨNG 1:1 BALANCED SNIPER: run_20260518_115000_v5_asian_balanced_sniper 👑
-- **Kết quả:** Composite Score = **0.5480** | Win Rate = **60.61%** | Early Stopped ở Epoch **89**
-- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
-- **Phân tích chi tiết & Insight tối cao:**
-  - **Sự thành công vượt bậc của cấu trúc đối xứng:** Đúng như nhận định chuyên sâu của quant, việc khôi phục tỷ lệ TP/SL 1:1 hoàn hảo (`TP: 30 pips / SL: 30 pips`) kết hợp `WINDOW_SIZE: 20` đã loại bỏ hoàn toàn các đỉnh phạt CE Loss bất cân xứng. Mô hình học cực kỳ ổn định, phân phối tín hiệu Buy/Sell cân đối và tự nhiên.
-  - **Bức phá kỷ lục:** Lần đầu tiên dưới Monthly Split khắt khe, tỷ lệ thắng (Win Rate) validation của phiên Á đã **vượt qua mốc 60%** (đạt **60.61%**). Đây là một cột mốc vàng tối quan trọng cho trading thực chiến của phiên Á.
-  - **Kết luận hành động:** Phiên Á hiện đã đạt được trạng thái Champion cực kỳ ổn định. Chúng ta chuyển giao State Machine sang tối ưu hóa phiên tiếp theo.
+### [2026-05-18 12:20:00] - NÂNG CẤP MÔ HÌNH KHỔNG LỒ (GIANT SNIPER): run_20260518_122000_v5_asian_giant_sniper
+- **Mục tiêu:** Vượt mốc Score **0.65** | Win Rate **>62%** dưới Monthly Split.
+- **Ý tưởng đột phá & Cấu hình:**
+  - **Kiến trúc dung lượng lớn:** Kế thừa thành tựu rực rỡ của bản Balanced Sniper vừa rồi (Win Rate 60.61%), chúng ta tăng lực nâng cấp mô hình lên kích thước khổng lồ `D_MODEL: 160` nhằm mở rộng dung lượng bộ nhớ attention, tối ưu hóa các đặc trưng phi tuyến tính phức tạp của phiên Á.
+  - **Sự hoàn hảo của đối xứng:** Giữ tỷ lệ TP/SL 1:1 (`TP: 30 pips / SL: 30 pips`) và `WINDOW_SIZE: 20` để loại bỏ méo CE Loss.
+  - **Trạng thái:** Đang tiến hành chuẩn bị dữ liệu và huấn luyện nền local.
 
 # Nháº­t kÃ½ Huáº¥n luyá»n XAG Asian V5 - Regime-Aware
 
