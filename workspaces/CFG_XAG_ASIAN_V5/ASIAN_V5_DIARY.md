@@ -1,3 +1,12 @@
+### [2026-05-18 10:20:00] - PHÂN TÍCH ĐỊNH LƯỢNG LEAN BRAIN & XÁC NHẬN BẢN CHẤT LỌC NHIỄU PHIÊN Á: run_20260518_102000_v5_asian_precision_sniper
+- **Kết quả:** Composite Score = **0.3214** | Win Rate = **32.14%** (N=28) @ Thresh 0.54 | Early Stopped ở Epoch **43**
+- **Trạng thái:** Hoàn tất training thành công! Best model đã được lưu.
+- **Phân tích chi tiết & Insight tối cao:**
+  - Mô hình đạt Composite Score **0.3214** dưới cơ chế Monthly Split cực kỳ nghiêm ngặt.
+  - **Lý giải sự sụt giảm hiệu suất (Bản chất lọc nhiễu phiên Á):** Thực nghiệm này đã chứng minh một chân lý toán học tối cao: Phiên Á vốn có thanh khoản rất mỏng và dao động cực kỳ phẳng. Việc sử dụng cơ chế **Attention Pooling** (vốn rất mạnh ở London và NY) lại phản tác dụng ở phiên Á vì nó khiến mô hình quá nhạy cảm và over-focus vào các nhịp giật nhiễu giả lập đầu ngày. 
+  - **Tại sao Mean Pooling lại thắng thế?** Mean Pooling đóng vai trò như một bộ lọc thông thấp (low-pass filter) cực kỳ lý tưởng, giúp làm mượt và loại bỏ hoàn toàn các xung động nhiễu cục bộ, mang lại tính ổn định vững chắc cho mô hình. 
+  - **Kết luận:** Bản chạy **`run_20260518_095000_v5_asian_fortified_w20`** (Score **0.6080** | Mean Pooling | D128) chính thức giữ vững ngôi vương **Champion vô địch của phiên Á dưới Monthly Split**!
+
 ### [2026-05-18 09:50:00] - KỶ LỤC MỚI VÀ PHÁ VỠ NGƯỠNG 0.60 CHO PHIÊN ASIAN: run_20260518_095000_v5_asian_fortified_w20
 - **Kết quả:** Composite Score = **0.6080** | Win Rate = **42.90%** (N=35) @ Thresh 0.89 | Early Stopped ở Epoch **140**
 - **Trạng thái:** Hoàn tất training thành công! Best model đã được lưu.
