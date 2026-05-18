@@ -25,9 +25,9 @@ def get_telegram_config(target_channels=None):
             import re
             with open(settings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.teleBotToken"\\s*:\\s*"([^"]+)"', content)
             if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.whitelistChatIds"\\s*:\\s*"([^"]+)"', content)
             if m: default_chat_id = m.group(1)
     except Exception:
         pass
@@ -107,8 +107,6 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
     
     text = f"🤖 {agent_identity}:\n\n{content}"
     success = False
-    import ssl
-    ssl_context = ssl._create_unverified_context()
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
         if not chat_id: continue
@@ -117,7 +115,7 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
         headers = {'Content-Type': 'application/json'}
         req = urllib.request.Request(url, data=data, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+            with urllib.request.urlopen(req, timeout=10) as response:
                 success = True
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)

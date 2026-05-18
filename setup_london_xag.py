@@ -1,4 +1,4 @@
-﻿import os, json
+import os, json
 from datetime import datetime
 
 base_cfg_path = r'workspaces\CFG_XAG_LONDON_V5\runs\run_20260516_060355_v5_london_balanced_refiner\config.json'
@@ -26,8 +26,8 @@ config['FEATURE_ENGINEERING']['TP_PCT'] = 0.0035
 config['FEATURE_ENGINEERING']['SL_PCT'] = 0.0035
 config['FEATURE_ENGINEERING']['FAST_HIT_BARS'] = 8
 
-macs = config['FEATURE_ENGINEERING'].get('MACRO_FEATURES', [])
-config['FEATURE_ENGINEERING']['MACRO_FEATURES'] = [m for m in macs if 'XAU' in m]
+macs = config['FEATURE_ENGINEERING'].get('MACRO_FEATURES', {})
+config['FEATURE_ENGINEERING']['MACRO_FEATURES'] = {k: v for k, v in macs.items() if 'XAU' in k}
 
 config['RUN_ID'] = run_id
 config['HF_RUN_ID'] = run_id
