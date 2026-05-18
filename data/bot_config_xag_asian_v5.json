@@ -10,7 +10,7 @@
         "DESCRIPTION": "Asian session - Crypto Macro Regime"
     },
     "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
-    "HF_RUN_ID": "",
+    "HF_RUN_ID": "run_20260515_125021_v5_asian_w20_fh5_attn",
     "HF_CLOUD": {
         "DATASET_REPO": "dung5k/argo_workspaces",
         "MODEL_REPO": "dung5k/argo_workspaces",
@@ -88,6 +88,6 @@
     },
     "LIVE_BOT": {
         "MAX_ABSOLUTE_MSE": 1.0,
-        "MIN_PROBABILITY_THRESH": 0.53
+        "MIN_PROBABILITY_THRESH": 0.58
     }
 }

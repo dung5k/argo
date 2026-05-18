@@ -58,7 +58,8 @@
         "TIMEFRAME": "M1",
         "ROUTING": {
             "LTCUSDT": "BINANCE",
-            "BTCUSDT": "BINANCE"
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE"
         }
     },
     "LIVE_BOT": {
