@@ -154,10 +154,10 @@ def main():
     parser.add_argument("--scratch", action="store_true", help="Bỏ qua kế thừa, train lại từ đầu")
     parser.add_argument("--session", default="ny", help="Session target (bo qua, doc tu config file)")
     parser.add_argument("--run-id", default="", help="ID của lượt chạy (vd: legacy_run)")
+    parser.add_argument("--log-to-file", action="store_true", help="Ghi log trực tiếp ra file UTF-8")
     args = parser.parse_args()
     
     config_path = args.config if args.config else "workspaces/CFG_XAU_NY_V3_5/base_config.json"
-    print(f"Loading config from: {config_path}", flush=True)
     
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
@@ -174,6 +174,17 @@ def main():
 
     run_dir = os.path.join(_ROOT, "workspaces", cfg_id, "runs", run_id)
     os.makedirs(run_dir, exist_ok=True)
+    
+    if getattr(args, "log_to_file", False):
+        log_dir = os.path.join(run_dir, "results")
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "train_v3.log")
+        log_file = open(log_path, "w", encoding="utf-8", errors="replace")
+        sys.stdout = log_file
+        sys.stderr = log_file
+        print(f"[INTERNAL REDIRECT] Redirected stdout & stderr to: {log_path}", flush=True)
+        
+    print(f"Loading config from: {config_path}", flush=True)
     run_config_path = os.path.join(run_dir, "config.json")
     
     if os.path.exists(run_config_path):
