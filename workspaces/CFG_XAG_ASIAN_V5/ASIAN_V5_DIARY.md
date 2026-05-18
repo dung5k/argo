@@ -175,4 +175,7 @@
     - Chống quét SL sớm (Whipsaws): Nới nhẹ tỷ lệ đối xứng lên `TP_PCT: 0.0035 / SL_PCT: 0.0035` (35 pips) giúp lệnh có thêm biên dao động tự do trong phiên Á biến động hẹp.
     - Cường hóa Regularization: Tăng Weight Decay lên `0.0035`, nới Label Smoothing lên `0.18` và Focal Gamma lên `3.0` để tối ưu hóa khả năng chống overfitting triệt để.
     - Điều chỉnh learning rate mượt mà về `2.0e-05` giúp AI học sâu và chắc chắn qua từng epoch.
-  - **Trạng thái:** Đã chuẩn bị dữ liệu cực sạch (giữ lại 10,245 mẫu với phân bổ nhãn lý tưởng) và đã kích hoạt thành công tiến trình huấn luyện ngầm.
+  - **Kết quả:** Composite Score = **0.440** | Win Rate = **44.44%** | Early Stopped ở Epoch **31** (Best Epoch 6)
+  - **Phân tích chi tiết & Insight:**
+    - **Đánh giá kết quả:** Quantum Sniper đạt mức đối xứng lệnh cực đẹp (18 Buy, 18 Sell ở Best threshold 0.5567) nhờ cơ chế đối xứng 1:1 và nới nhẹ biên lên 35 pips. Tuy nhiên, việc tăng Weight Decay quá mạnh lên `0.0035` kết hợp với Label Smoothing `0.18` đã làm "mềm" các đặc trưng phân loại quá mức, khiến Win Rate thực tế bị kéo lùi về **44.44%** và Composite Score đạt **0.440**.
+    - **Bài học rút ra:** Mặc dù đối xứng 1:1 là đúng đắn để triệt tiêu bias, việc siết quá chặt các regularizer (WD > 0.003, LS > 0.15) có thể triệt tiêu cả các tín hiệu phân loại hữu ích trong phiên Á có thanh khoản mỏng. Bản chạy kỷ lục `run_20260518_115000_v5_asian_balanced_sniper` (Score **0.5480**) vẫn được giữ vững làm Champion tối cao dưới Monthly Split hôm nay!
