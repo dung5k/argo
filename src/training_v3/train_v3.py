@@ -772,7 +772,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except BaseException as e:
         import traceback
         try:
             with open("crash_traceback.txt", "w", encoding="ascii", errors="replace") as tb_f:
