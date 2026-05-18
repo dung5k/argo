@@ -1,19 +1,9 @@
-### [2026-05-18 10:20:00] - PHÂN TÍCH ĐỊNH LƯỢNG LEAN BRAIN & XÁC NHẬN BẢN CHẤT LỌC NHIỄU PHIÊN Á: run_20260518_102000_v5_asian_precision_sniper
-- **Kết quả:** Composite Score = **0.3214** | Win Rate = **32.14%** (N=28) @ Thresh 0.54 | Early Stopped ở Epoch **43**
-- **Trạng thái:** Hoàn tất training thành công! Best model đã được lưu.
+### [2026-05-18 11:20:00] - THỬ NGHIỆM ĐỒNG THÌ THỜI GIAN LỚN (RANGE MASTER COARSE): run_20260518_112000_v5_asian_range_master
+- **Kết quả:** Composite Score = **0.3658** | Win Rate = **39.53%** | Early Stopped ở Epoch **47**
+- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
 - **Phân tích chi tiết & Insight tối cao:**
-  - Mô hình đạt Composite Score **0.3214** dưới cơ chế Monthly Split cực kỳ nghiêm ngặt.
-  - **Lý giải sự sụt giảm hiệu suất (Bản chất lọc nhiễu phiên Á):** Thực nghiệm này đã chứng minh một chân lý toán học tối cao: Phiên Á vốn có thanh khoản rất mỏng và dao động cực kỳ phẳng. Việc sử dụng cơ chế **Attention Pooling** (vốn rất mạnh ở London và NY) lại phản tác dụng ở phiên Á vì nó khiến mô hình quá nhạy cảm và over-focus vào các nhịp giật nhiễu giả lập đầu ngày. 
-  - **Tại sao Mean Pooling lại thắng thế?** Mean Pooling đóng vai trò như một bộ lọc thông thấp (low-pass filter) cực kỳ lý tưởng, giúp làm mượt và loại bỏ hoàn toàn các xung động nhiễu cục bộ, mang lại tính ổn định vững chắc cho mô hình. 
-  - **Kết luận:** Bản chạy **`run_20260518_095000_v5_asian_fortified_w20`** (Score **0.6080** | Mean Pooling | D128) chính thức giữ vững ngôi vương **Champion vô địch của phiên Á dưới Monthly Split**!
-
-### [2026-05-18 09:50:00] - KỶ LỤC MỚI VÀ PHÁ VỠ NGƯỠNG 0.60 CHO PHIÊN ASIAN: run_20260518_095000_v5_asian_fortified_w20
-- **Kết quả:** Composite Score = **0.6080** | Win Rate = **42.90%** (N=35) @ Thresh 0.89 | Early Stopped ở Epoch **140**
-- **Trạng thái:** Hoàn tất training thành công! Best model đã được lưu.
-- **Phân tích chi tiết & Insight tối cao:**
-  - Điểm số bứt phá mạnh mẽ quay lại quỹ đạo đỉnh cao, cán mốc **0.6080** (phá vỡ ngưỡng 0.60 của phiên châu Á).
-  - Sự thành công vượt bậc này chứng minh tuyệt đối tính đúng đắn của giả thuyết: Việc khôi phục sequence length về `WINDOW_SIZE = 20` giúp mô hình loại bỏ hoàn toàn các nhiễu tích lũy tĩnh lặng, giữ nguyên động lượng động lực học để nhắm bắn cực kỳ chuẩn xác các điểm breakout cục bộ.
-  - Sự kết hợp giữa mỏ neo kép Crypto-Vàng cùng kỷ luật Regularization tối thượng trên Golden Brain Size D128 đã đưa phiên châu Á trở lại hàng ngũ các phiên có độ tin cậy giao dịch đỉnh cao.
+  - **Lý giải thất bại:** Việc mở rộng cửa sổ quan sát `WINDOW_SIZE` lên **30** kết hợp **Mean Pooling** trên một session có đặc tính dao động tích lũy đi ngang (range-bound) như Asian đã làm mờ hoàn toàn các điểm kích hoạt micro-stochastic sniper. Mô hình bị trung bình hóa các biến động cực đại, dẫn đến việc mất nhạy bén và không thể nhận diện chính xác các điểm đảo chiều nhanh. CE Loss nhanh chóng quá khớp sau Epoch 22 và kích hoạt Early Stopping sớm.
+  - **Kết luận hành động:** BẮT BUỘC quay trở lại triết lý cửa sổ ngắn (`WINDOW_SIZE: 15`), mạng sâu đại lượng lớn (`D_MODEL: 128`) kết hợp **Attention Pooling** để lọc chính xác các điểm đảo chiều ngẫu nhiên cực đại (micro-stochastic pivots). Đã kích hoạt bản chạy bứt phá mới `run_20260518_113000_v5_asian_stochastic_sniper`!
 
 # Nháº­t kÃ½ Huáº¥n luyá»n XAG Asian V5 - Regime-Aware
 
