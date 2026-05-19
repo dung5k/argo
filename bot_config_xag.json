@@ -49,7 +49,7 @@
         }
     },
     "LIVE_BOT": {
-        "PAPER_TRADE": true,
+        "PAPER_TRADE": false,
         "TRADE_PLATFORM": "EXNESS",
         "MAX_ABSOLUTE_MSE": 1.0,
         "MIN_PROBABILITY_THRESH": 0.58,
