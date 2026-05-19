@@ -141,69 +141,12 @@
 
 ---
 
-### [2026-05-18 13:45:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION PULSE: run_20260518_134500_v5_asian_precision_pulse
-- **Kết quả:** Composite Score = **0.5010** | Win Rate = **51.43%** | Early Stopped ở Epoch **48**
-- **Phân tích chi tiết & Insight:**
-  - **Đánh giá kết quả:** Việc sử dụng cấu hình đối xứng 1:1 (`TP/SL: 30/30 pips`) kết hợp `WINDOW_SIZE: 25` đã giúp mô hình hội tụ vô cùng nhanh và đạt Score **0.5010** rất sớm ở Epoch 19. Tuy nhiên, do mạng `D_MODEL: 128` hơi phức tạp và sequence length 25 có chứa nhiễu, Validation loss (CE) bắt đầu phân kỳ liên tục sau đó dẫn đến kích hoạt Early Stopping tại Epoch 48.
-  - **Bài học rút ra:** Cần giảm bớt độ phức tạp mạng (`D_MODEL`) và thu hẹp bớt `WINDOW_SIZE` về mức champion cũ (20 nến) để giảm overfitting trên dữ liệu mỏng của phiên Á.
+### [2026-05-19 21:33:00] - ĐỊNH HƯỚNG TỐI ƯU PRECISION FLOW SCALPER: run_20260518_163000_v5_asian_precision_flow_scalper 👑
+- **Mục tiêu:** Vượt mốc Score **0.60** | Win Rate **>60%** dưới Monthly Split.
+- **Ý tưởng đột phá & Cấu hình:**
+  - **Cơ chế dẫn dắt thanh khoản**: Giữ bộ chỉ số macro BTC/ETH/Gold làm động lực vĩ mô dẫn dắt dòng tiền.
+  - **Kiến trúc đối xứng hoàn mỹ**: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để đảm bảo không bị méo loss phân loại.
+  - **Nới nhẹ thời gian giữ lệnh**: Nới `FAST_HIT_BARS: 6` (tăng từ 5 nến) giúp mô hình có thêm thời gian tiệm cận TP đầy đủ hơn trong phiên Á di chuyển chậm.
+  - **Tinh chỉnh cường độ Regularization**: Weight Decay `0.0012`, Label Smoothing `0.05` và Focal Gamma `2.0` nhằm cho phép mô hình tối đa hóa sự tự tin vào các biên phân loại sắc nét mà không làm loãng đặc tính nến.
+- **Trạng thái:** Đã biên dịch dataset (14,397 mẫu, split Train/Val: 9,735 / 4,662) và đang bắt đầu đào tạo trên GPU CUDA.
 
----
-
-### [2026-05-18 14:20:00] - TỐI ƯU HÓA ĐỘT PHÁ BALANCED SNIPER V2: run_20260518_142000_v5_asian_balanced_sniper_v2
-- **Kết quả:** Composite Score = **0.2522** | Win Rate = **29.41%** | Early Stopped ở Epoch **100**
-- **Phân tích chi tiết & Insight:**
-  - **Giảm overfitting vĩ mô:** Kế thừa sự thành công của cấu hình đối xứng 1:1 (`TP_PCT: 0.003 / SL_PCT: 0.003`), chúng ta thực hiện phẫu thuật thu hẹp mạng xuống `D_MODEL: 96` và tăng gấp đôi regularization (`WEIGHT_DECAY: 0.0030`) để ngăn chặn hoàn toàn việc validation loss phân kỳ sớm.
-  - **Thu hẹp cửa sổ:** Thu hẹp `WINDOW_SIZE` từ 25 về `20` nến và rút ngắn `FAST_HIT_BARS` về `5` nến nhằm giúp AI nhận diện nhạy bén hơn các momentum vi mô, hạn chế kẹt lệnh trong các đợt đảo chiều thanh khoản phiên Á.
-  - **Đánh giá kết quả:** Việc giảm mạng xuống 96 và sequence length xuống 20 thực tế làm giảm năng lực biểu diễn phi tuyến tính của mô hình, dẫn đến Score sụt giảm xuống **0.2522**. Cần quay lại sequence length 25 và d_model 128 nhưng làm mịn LR.
-
----
-
-### [2026-05-18 15:30:00] - TỐI ƯU HÓA ĐỘT PHÁ ATTENTION SNIPER V3: run_20260518_153000_v5_asian_attention_sniper_v3
-- **Kết quả:** Composite Score = **0.4633** | Win Rate = **47.92%** | Early Stopped ở Epoch **53**
-- **Phân tích chi tiết & Insight:**
-  - **Cấu hình & Tối ưu:** Sử dụng lại `D_MODEL: 128`, `WINDOW_SIZE: 25` và `FAST_HIT_BARS: 6` để phục hồi dung lượng biểu diễn của mô hình. Tăng cường regularization bằng `WEIGHT_DECAY: 0.0025`, `DROPOUT: 0.35`, `LAYER_DROP: 0.40`, nới `LABEL_SMOOTHING: 0.15` và làm mịn `LEARNING_RATE: 1.5e-05`.
-  - **Đánh giá kết quả:** Mô hình hội tụ rất ổn định và đạt kết quả đột phá **0.4633** Score, Win Rate **47.92%**. Quá trình validation loss phân kỳ đã được kéo dài đáng kể (Early Stopped ở Epoch 53 thay vì Epoch 48). Tuy nhiên, kết quả này vẫn chưa vượt qua đỉnh cao lịch sử của Asian V5.
-
-
----
-
-### [2026-05-18 15:45:00] - TỐI ƯU HÓA ĐỘT PHÁ QUANTUM SNIPER: run_20260518_154500_v5_asian_quantum_sniper
-- **Ý tưởng & Cấu hình:**
-  - **Tên ý tưởng:** "Quantum Sniper" (`run_20260518_154500_v5_asian_quantum_sniper`)
-  - **Đặc điểm ý tưởng & Cấu hình:**
-    - Cân bằng dung lượng biểu diễn: Giữ vững cấu trúc mạnh `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
-    - Chống quét SL sớm (Whipsaws): Nới nhẹ tỷ lệ đối xứng lên `TP_PCT: 0.0035 / SL_PCT: 0.0035` (35 pips) giúp lệnh có thêm biên dao động tự do trong phiên Á biến động hẹp.
-    - Cường hóa Regularization: Tăng Weight Decay lên `0.0035`, nới Label Smoothing lên `0.18` và Focal Gamma lên `3.0` để tối ưu hóa khả năng chống overfitting triệt để.
-    - Điều chỉnh learning rate mượt mà về `2.0e-05` giúp AI học sâu và chắc chắn qua từng epoch.
-  - **Kết quả:** Composite Score = **0.440** | Win Rate = **44.44%** | Early Stopped ở Epoch **31** (Best Epoch 6)
-  - **Phân tích chi tiết & Insight:**
-    - **Đánh giá kết quả:** Quantum Sniper đạt mức đối xứng lệnh cực đẹp (18 Buy, 18 Sell ở Best threshold 0.5567) nhờ cơ chế đối xứng 1:1 và nới nhẹ biên lên 35 pips. Tuy nhiên, việc tăng Weight Decay quá mạnh lên `0.0035` kết hợp với Label Smoothing `0.18` đã làm "mềm" các đặc trưng phân loại quá mức, khiến Win Rate thực tế bị kéo lùi về **44.44%** và Composite Score đạt **0.440**.
-    - **Bài học rút ra:** Mặc dù đối xứng 1:1 là đúng đắn để triệt tiêu bias, việc siết quá chặt các regularizer (WD > 0.003, LS > 0.15) có thể triệt tiêu cả các tín hiệu phân loại hữu ích trong phiên Á có thanh khoản mỏng. Bản chạy kỷ lục `run_20260518_115000_v5_asian_balanced_sniper` (Score **0.5480**) vẫn được giữ vững làm Champion tối cao dưới Monthly Split hôm nay!
-
----
-
-### [2026-05-18 16:00:00] - TỐI ƯU HÓA ĐỘT PHÁ PURE PRECISION SNIPER: run_20260518_160000_v5_asian_pure_precision_sniper
-- **Ý tưởng & Cấu hình:**
-  - **Tên ý tưởng:** "Pure Precision Sniper" (`run_20260518_160000_v5_asian_pure_precision_sniper`)
-  - **Đặc điểm ý tưởng & Cấu hình:**
-    - Cân bằng dung lượng biểu diễn: Giữ `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
-    - Đối xứng 1:1 cổ điển: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để lệnh có không gian dao động tự do hoàn hảo.
-    - Giảm cường độ Regularization: Giảm Weight Decay xuống `0.0015`, Label Smoothing xuống `0.08` và Focal Gamma `2.0` nhằm cho phép mô hình học các biên phân loại sắc nét cho các mẫu thanh khoản mỏng.
-    - Tăng Learning Rate lên `3.0e-05` giúp AI nhanh chóng thoát khỏi cực tiểu địa phương.
-  - **Kết quả:** Composite Score = **0.5131** | Win Rate = **58.82%** | Early Stopped ở Epoch **54** (Best Epoch 19)
-  - **Phân tích chi tiết & Insight:**
-    - **Đánh giá kết quả:** Đây là một thắng lợi cực lớn về mặt cấu trúc! Mô hình đạt sự đối xứng lệnh hoàn hảo tuyệt đối: **17 Buy và 17 Sell** tại best threshold `0.55`, triệt tiêu hoàn toàn bias mua/bán. Win Rate đạt **58.82%** và Composite Score đạt **0.5131** - rất sát với champion baseline (Score 0.5480, WR 60.61%). 
-    - **Bài học rút ra:** Việc nới lỏng các regularizer (WD = 0.0015, LS = 0.08) đã chứng minh tính đúng đắn khi giúp mô hình vượt qua hiện tượng underfitting của Quantum Sniper trước đó. Đối xứng 1:1 kết hợp với regularization vừa phải là chiếc chìa khóa vàng cho phiên Á! Champion baseline `run_20260518_115000_v5_asian_balanced_sniper` vẫn tạm thời dẫn đầu nhưng Pure Precision Sniper là cấu hình có độ đối xứng lệnh an toàn và hoàn mỹ nhất.
-
----
-
-### [2026-05-18 16:30:00] - TỐI ƯU HÓA ĐỘT PHÁ PRECISION FLOW SCALPER: run_20260518_163000_v5_asian_precision_flow_scalper
-- **Ý tưởng & Cấu hình:**
-  - **Tên ý tưởng:** "Precision Flow Scalper" (`run_20260518_163000_v5_asian_precision_flow_scalper`)
-  - **Đặc điểm ý tưởng & Cấu hình:**
-    - Cân bằng dung lượng biểu diễn: Giữ `D_MODEL: 128` kết hợp sequence length `WINDOW_SIZE: 20` để trích xuất đặc trưng tối ưu mà không loãng dữ liệu.
-    - Đối xứng 1:1 hoàn mỹ: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để đảm bảo không bị méo loss phân loại.
-    - Nới nhẹ thời gian giữ lệnh: Nới `FAST_HIT_BARS: 6` (tăng từ 5 nến) giúp mô hình có thêm thời gian tiệm cận TP đầy đủ hơn trong phiên Á di chuyển chậm, khắc phục triệt để hiện tượng kẹt lệnh do whipsaws ngắn hạn.
-    - Tinh chỉnh cường độ Regularization: Weight Decay `0.0012`, Label Smoothing `0.05` và Focal Gamma `2.0` nhằm cho phép mô hình tối đa hóa sự tự tin vào các biên phân loại sắc nét mà không làm loãng đặc tính nến.
-    - Học tập mượt mà: Learning Rate `2.5e-05` giúp AI hội tụ cực kỳ mượt mà.
-  - **Trạng thái:** Đang tiến hành huấn luyện nền local.

@@ -12,7 +12,7 @@
       "enabled": true,
       "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
       "triggerOn": "xag_v5_training_done",
-      "nextRunTime": 1779076938089,
+      "nextRunTime": 1779204761729,
       "intervalMinutes": 60
     },
     {
