@@ -52,6 +52,7 @@
         "PAPER_TRADE": true,
         "TRADE_PLATFORM": "EXNESS",
         "MAX_ABSOLUTE_MSE": 1.0,
-        "MIN_PROBABILITY_THRESH": 0.58
+        "MIN_PROBABILITY_THRESH": 0.58,
+        "TELEGRAM_NOTIFY_EVERY_CANDLE": true
     }
 }
