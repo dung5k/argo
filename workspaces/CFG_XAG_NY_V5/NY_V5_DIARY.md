@@ -6,6 +6,7 @@
 |---|---|---|---|
 | `run_20260510_140500` | **88.6%** | **0.8595** | Stable Sniper (NEW WORLD RECORD) |
 | `run_20260508_171500` | **96.7%** | **0.8425** | Deep Scalp L4 (Former Record) |
+| `run_20260519_214910_v5_ny_momentum_precision_sniper` | **69.2%** | **0.6538** | Momentum Precision Sniper (Cuda-Tuned) |
 | `run_20260508_230000` | **80.6%** | **0.7877** | Sniper LS 0.25 |
 | `run_20260508_200000` | **88.0%** | 0.750 | Anti-Overfit (Gamma 3, LS 0.2), 29 feat |
 | `run_20260507_253000` | **86.7%** | 0.725 | Macro RSI/Mom, JPY anchor |
@@ -16,6 +17,14 @@
 | `run_20260508_210000` | 75.0% | 0.750 | Sniper TP6/SL3 |
 | `run_20260508_203000` | 77.4% | 0.692 | Stability Anti-Overfit |
 | `run_20260508_223000` | 65.1% | 0.632 | Sniper Stable FHB=8 |
+
+---
+
+### [2026-05-19 22:35] - Đánh giá Run: run_20260519_214910_v5_ny_momentum_precision_sniper
+- **Kết quả:** Composite Score = **0.6538** | Best WR = **69.23%** | Early Stop @ Epoch 234.
+- **Phân tích:** Huấn luyện thành công trên CUDA GPU với độ chính xác cao. Trình tự Early Stopping được kích hoạt tại Epoch 234 khi Validation Loss liên tiếp tăng trong 25 Epoch, giúp mô hình bảo toàn được bộ trọng số tối ưu nhất mà không bị quá khớp (overfit). Đạt chỉ số Win Rate xuất sắc 69.23% (vượt xa baseline yêu cầu là 60%).
+- **Hành động:** Đồng bộ hóa thành công lên HuggingFace Cloud làm Baseline chất lượng cao cho các phiên NY tiếp theo.
+
 
 ---
 
