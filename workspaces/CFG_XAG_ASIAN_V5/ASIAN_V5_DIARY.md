@@ -3,6 +3,15 @@
 ## ð Báº£ng VÃ ng ThÃ nh TÃ­ch V5 (Top 3)
 | Run ID | Win Rate | Score | Đặc điểm |
 |---
+### [2026-05-19 22:44:00] - TỐI ƯU MOMENTUM & CO THẮT BIÊN ĐỘ (ALPHA SNIPER): run_20260519_224600_v5_asian_alpha_momentum_sniper
+- **Kết quả:** Composite Score = **0.5324** | Win Rate = **55.56%** | Early Stopped ở Epoch **99**
+- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
+- **Phân tích chi tiết & Insight tối cao:**
+  - **Lý giải kết quả:** Việc thử nghiệm tăng `TP_PCT` lên 0.0035 và nới rộng `FAST_HIT_BARS=5` trong môi trường thanh khoản siêu mỏng và yên ắng của phiên Á đã làm tăng số lượng lệnh kẹt và dính SL do co thắt biên độ ngắn hạn (volatility squeeze). Win Rate dừng lại ở mức 55.56%, không vượt qua được Champion run `run_20260511_102100_v5_asian_ultimate_sniper` (WR 86.67%).
+  - **Kết luận hành động:** Giữ nguyên cấu hình vô địch **`run_20260511_102100_v5_asian_ultimate_sniper`** (Score **0.7840** | Win Rate **86.67%**) làm Champion chính thức cho phiên Asian V5!
+
+---
+
 ### [2026-05-11 03:12] - Đánh giá Run: run_20260511_022400_v5_asian_pure_focus
 - **Kết quả:** Composite Score = **0.7250** | Best WR = 76.74% | Early Stop @ Epoch 170.
 - **Vấn đề phát hiện:** THÀNH CÔNG VƯỢT BẬC. Việc loại bỏ nhiễu Crypto (BTC, ETH) đã chứng minh tính đúng đắn tuyệt đối cho phiên Á. Win Rate tăng vọt lên gần 77%, Score vượt ngưỡng 0.70. Đây là Baseline mới cho phiên Asian.
