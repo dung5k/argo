@@ -138,6 +138,16 @@ if os.path.exists(root_tensors):
         os.remove(os.path.join(root_tensors, f))
     print("Cleaned root tensors directory.")
 
+print(">>> [PHASE 0.1] PREPARE RAW DATA PARQUETS...", flush=True)
+raw_dir = "workspaces/CFG_LTC_ASIAN_V6/data/raw"
+os.makedirs(raw_dir, exist_ok=True)
+for sym_file in ["LTCUSDT_BINANCE_1M_2026.parquet", "BTCUSDT_BINANCE_1M_2026.parquet", "ETHUSDT_BINANCE_1M_2026.parquet"]:
+    src = os.path.join("data/history", sym_file)
+    dst = os.path.join(raw_dir, sym_file)
+    if os.path.exists(src) and not os.path.exists(dst):
+        shutil.copy(src, dst)
+        print(f"Copied {sym_file} to raw directory.")
+
 print(">>> [PHASE 1] BUILD TENSOR DATASET...", flush=True)
 sp1 = subprocess.run([sys.executable, "scripts/prepare_v6_dataset.py", "--config", r"{config_path}", "--no-upload"], env=env)
 if sp1.returncode != 0:
