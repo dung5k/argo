@@ -4,12 +4,12 @@
       "id": "cleanup_storage",
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
-      "nextRunTime": 1779091349026,
+      "nextRunTime": 1779203951531,
       "intervalMinutes": 60
     },
     {
       "id": "xag_all_sessions_v5_auto_tuning",
-      "enabled": false,
+      "enabled": true,
       "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
       "triggerOn": "xag_v5_training_done",
       "nextRunTime": 1779076938089,
@@ -17,10 +17,10 @@
     },
     {
       "id": "ltc_all_sessions_v6_auto_tuning",
-      "enabled": true,
+      "enabled": false,
       "promptFile": ".agent/periodic_prompt_ltc_all_sessions_v6_local.md",
       "triggerOn": "ltc_v6_training_done",
-      "nextRunTime": 1779091709138,
+      "nextRunTime": 1779203981533,
       "intervalMinutes": 60
     },
     {
