@@ -19,18 +19,18 @@ for sym_file in ["LTCUSDT_BINANCE_1M_2026.parquet", "BTCUSDT_BINANCE_1M_2026.par
         print(f"Copied {sym_file} to raw directory.")
 
 print(">>> [PHASE 1] BUILD TENSOR DATASET...", flush=True)
-sp1 = subprocess.run([sys.executable, "scripts/prepare_v6_dataset.py", "--config", r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192511_v6_ASIAN_5m_BalancedCapacity_214\config.json", "--no-upload"], env=env)
+sp1 = subprocess.run([r"C:rgoenv\Scripts\python.exe", "scripts/prepare_v6_dataset.py", "--config", r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192703_v6_ASIAN_5m_BalancedCapacity_214\config.json", "--no-upload"], env=env)
 if sp1.returncode != 0:
     print("FATAL ERROR: prepare_v6_dataset failed!")
     sys.exit(1)
 
 print(">>> [PHASE 2] INJECT TENSORS INTO RUN DIRECTORY...", flush=True)
-run_dir_tensors = r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192511_v6_ASIAN_5m_BalancedCapacity_214/data/tensors"
+run_dir_tensors = r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192703_v6_ASIAN_5m_BalancedCapacity_214/data/tensors"
 os.makedirs(run_dir_tensors, exist_ok=True)
 for f in os.listdir(root_tensors):
     if f.endswith(".npy") or f.endswith(".pkl"):
         shutil.copy(os.path.join(root_tensors, f), os.path.join(run_dir_tensors, f))
 
 print(">>> [PHASE 3] START TRAINING...", flush=True)
-proc = subprocess.Popen([sys.executable, "-u", "src/training_v6/train_v6.py", r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192511_v6_ASIAN_5m_BalancedCapacity_214\config.json", "--run-id", "run_20260519_192511_v6_ASIAN_5m_BalancedCapacity_214", "--scratch"], stdout=open("train_v6_asian.log", "w", encoding="utf-8"), stderr=subprocess.STDOUT, env=env)
+proc = subprocess.Popen([r"C:rgoenv\Scripts\python.exe", "-u", "src/training_v6/train_v6.py", r"workspaces\CFG_LTC_ASIAN_V6\runs\run_20260519_192703_v6_ASIAN_5m_BalancedCapacity_214\config.json", "--run-id", "run_20260519_192703_v6_ASIAN_5m_BalancedCapacity_214", "--scratch"], stdout=open("train_v6_asian.log", "w", encoding="utf-8"), stderr=subprocess.STDOUT, env=env)
 print("PID:", proc.pid)
