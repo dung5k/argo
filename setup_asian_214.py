@@ -146,7 +146,7 @@ for sym_file in ["LTCUSDT_BINANCE_1M_2026.parquet", "BTCUSDT_BINANCE_1M_2026.par
     dst = os.path.join(raw_dir, sym_file)
     if os.path.exists(src) and not os.path.exists(dst):
         shutil.copy(src, dst)
-        print(f"Copied {sym_file} to raw directory.")
+        print(f"Copied {{sym_file}} to raw directory.")
 
 print(">>> [PHASE 1] BUILD TENSOR DATASET...", flush=True)
 sp1 = subprocess.run([sys.executable, "scripts/prepare_v6_dataset.py", "--config", r"{config_path}", "--no-upload"], env=env)
