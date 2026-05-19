@@ -149,7 +149,7 @@ for sym_file in ["LTCUSDT_BINANCE_1M_2026.parquet", "BTCUSDT_BINANCE_1M_2026.par
         print(f"Copied {{sym_file}} to raw directory.")
 
 print(">>> [PHASE 1] BUILD TENSOR DATASET...", flush=True)
-sp1 = subprocess.run([sys.executable, "scripts/prepare_v6_dataset.py", "--config", r"{config_path}", "--no-upload"], env=env)
+sp1 = subprocess.run([r"C:\argo\venv\Scripts\python.exe", "scripts/prepare_v6_dataset.py", "--config", r"{config_path}", "--no-upload"], env=env)
 if sp1.returncode != 0:
     print("FATAL ERROR: prepare_v6_dataset failed!")
     sys.exit(1)
@@ -162,7 +162,7 @@ for f in os.listdir(root_tensors):
         shutil.copy(os.path.join(root_tensors, f), os.path.join(run_dir_tensors, f))
 
 print(">>> [PHASE 3] START TRAINING...", flush=True)
-proc = subprocess.Popen([sys.executable, "-u", "src/training_v6/train_v6.py", r"{config_path}", "--run-id", "{run_id}", "--scratch"], stdout=open("train_v6_asian.log", "w", encoding="utf-8"), stderr=subprocess.STDOUT, env=env)
+proc = subprocess.Popen([r"C:\argo\venv\Scripts\python.exe", "-u", "src/training_v6/train_v6.py", r"{config_path}", "--run-id", "{run_id}", "--scratch"], stdout=open("train_v6_asian.log", "w", encoding="utf-8"), stderr=subprocess.STDOUT, env=env)
 print("PID:", proc.pid)
 '''
 
