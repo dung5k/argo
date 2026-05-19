@@ -140,13 +140,3 @@
 - **Hành động:** Đóng gói bản Ultimate này làm cấu hình sản xuất vĩnh viễn cho Phase V5.
 
 ---
-
-### [2026-05-19 21:33:00] - ĐỊNH HƯỚNG TỐI ƯU PRECISION FLOW SCALPER: run_20260518_163000_v5_asian_precision_flow_scalper 👑
-- **Mục tiêu:** Vượt mốc Score **0.60** | Win Rate **>60%** dưới Monthly Split.
-- **Ý tưởng đột phá & Cấu hình:**
-  - **Cơ chế dẫn dắt thanh khoản**: Giữ bộ chỉ số macro BTC/ETH/Gold làm động lực vĩ mô dẫn dắt dòng tiền.
-  - **Kiến trúc đối xứng hoàn mỹ**: Giữ `TP_PCT: 0.0030 / SL_PCT: 0.0030` (30 pips) để đảm bảo không bị méo loss phân loại.
-  - **Nới nhẹ thời gian giữ lệnh**: Nới `FAST_HIT_BARS: 6` (tăng từ 5 nến) giúp mô hình có thêm thời gian tiệm cận TP đầy đủ hơn trong phiên Á di chuyển chậm.
-  - **Tinh chỉnh cường độ Regularization**: Weight Decay `0.0012`, Label Smoothing `0.05` và Focal Gamma `2.0` nhằm cho phép mô hình tối đa hóa sự tự tin vào các biên phân loại sắc nét mà không làm loãng đặc tính nến.
-- **Trạng thái:** Đã biên dịch dataset (14,397 mẫu, split Train/Val: 9,735 / 4,662) và đang bắt đầu đào tạo trên GPU CUDA.
-
