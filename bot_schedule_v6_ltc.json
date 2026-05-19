@@ -6,11 +6,11 @@
         "asian": {
             "start": "23:00",
             "end": "07:00",
-            "run_id": "run_20260515_152956_v6_ASIAN_5m_CapacityScaling_211",
+            "run_id": "run_20260519_192733_v6_ASIAN_5m_BalancedCapacity_214",
             "config_id": "CFG_LTC_ASIAN_V6",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
-                "min_prob_thresh": 0.74,
+                "min_prob_thresh": 0.59,
                 "mse_thresh_perc": 70.0
             },
             "feature_engineering": {
@@ -64,14 +64,14 @@
                 "STEP_SIZE": 1
             },
             "training": {
-                "D_MODEL": 64,
+                "D_MODEL": 32,
                 "N_HEAD": 8,
                 "NUM_LAYERS": 3,
                 "BATCH_SIZE": 256,
                 "WARMUP_EPOCHS": 15,
                 "FINETUNE_EPOCHS": 80,
                 "LEARNING_RATE": 1e-05,
-                "DROPOUT_RATE": 0.2,
+                "DROPOUT_RATE": 0.08,
                 "LR_SCHEDULER": "cosine_warm",
                 "POOLING": "attention"
             }
