@@ -18,6 +18,13 @@
 | `run_20260508_203000` | 77.4% | 0.692 | Stability Anti-Overfit |
 | `run_20260508_223000` | 65.1% | 0.632 | Sniper Stable FHB=8 |
 
+### [2026-05-19 22:51:00] - BẤT ĐỐI XỨNG MOMENTUM & LỌC NHIỄU PHIÊN MỸ (ALPHA SNIPER): run_20260519_224700_v5_ny_alpha_momentum_sniper
+- **Kết quả:** Composite Score = **0.5720** | Win Rate = **57.69%** | Early Stopped ở Epoch **230**
+- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
+- **Phân tích chi tiết & Insight tối cao:**
+  - **Lý giải kết quả:** Việc thử nghiệm tỷ lệ bất đối xứng `TP_PCT` lên 0.0050 và `SL_PCT` giữ ở 0.0035 trong phiên Mỹ đã mở rộng biên độ mục tiêu đáng kể. Tuy nhiên, do biên độ dao động mạnh lúc mở cửa phiên Mỹ thường kéo theo các pha Liquidity Sweeps quét qua hai đầu trước khi đi đúng xu hướng lớn, việc siết SL quá chặt (0.0035) khiến mô hình dễ bị quét SL sớm trước khi chạm được TP. Win Rate dừng lại ở mức 57.69%, chưa vượt qua được Champion run `run_20260510_140500` (WR 88.60%).
+  - **Kết luận hành động:** Giữ nguyên cấu hình kỷ lục vô địch thế giới **`run_20260510_140500`** (Score **0.8595** | Win Rate **88.60%**) làm Champion chính thức cho phiên New York V5!
+
 ---
 
 ### [2026-05-19 22:35] - Đánh giá Run: run_20260519_214910_v5_ny_momentum_precision_sniper
