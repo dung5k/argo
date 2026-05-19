@@ -1,26 +1,3 @@
-### [2026-05-18 12:10:00] - HOÀN THIỆN ĐỐI XỨNG 1:1 BALANCED SNIPER: run_20260518_121000_v5_ny_balanced_sniper 👑
-- **Kết quả:** Composite Score = **0.6875** | Win Rate = **71.43%** | Early Stopped ở Epoch **34**
-- **Trạng thái:** Hoàn tất training và đã sync lên HuggingFace HUB.
-- **Phân tích chi tiết & Insight tối cao:**
-  - **Đỉnh cao vinh quang mới:** Việc trả New York về tỷ lệ đối xứng 1:1 (`TP: 40 pips / SL: 40 pips`) kết hợp `WINDOW_SIZE: 25` đã chính thức xô đổ kỷ lục cũ, thiết lập **đỉnh cao Composite Score mới là 0.6875** cùng Win Rate ấn tượng **71.43%**.
-  - **Khẳng định lý thuyết Quant:** Thiết kế đối xứng hoàn hảo 1:1 giúp mô hình học cân bằng cả hai chiều Buy/Sell, loại bỏ hoàn toàn hiện tượng bias gây méo CE Loss. Kết hợp với các leading indicator từ crypto và gold, mô hình đã chốt chặn chính xác xu thế đột phá của phiên Mỹ.
-  - **Kết luận hành động:** Chính thức vinh danh **`run_20260518_121000_v5_ny_balanced_sniper`** là Tân Vương Vô Địch phiên Mỹ (New York V5 Champion)!
-
-### [2026-05-18 12:10:00] - HOÀN THIỆN ĐỐI XỨNG 1:1 BALANCED SNIPER: run_20260518_121000_v5_ny_balanced_sniper
-- **Mục tiêu:** Vượt mốc Score **0.75** | Win Rate **>75%** dưới Monthly Split.
-- **Ý tưởng đột phá & Cấu hình:**
-  - **Sự hoàn hảo của đối xứng:** Nhờ kết quả rực rỡ của phiên Á khi dùng tỷ lệ đối xứng 1:1, chúng ta áp dụng hoàn toàn cho New York với `TP: 40 pips / SL: 40 pips` (perfect 1:1) để triệt tiêu mọi CE Loss penalty spikes.
-  - **Cơ chế dẫn dắt thanh khoản:** Giữ bộ chỉ số macro BTC/ETH/Gold làm động lực, window rộng `WINDOW_SIZE: 25` kết hợp pooling attention nhạy bén.
-  - **Trạng thái:** Đang tiến hành chuẩn bị dữ liệu và huấn luyện nền local.
-
-### [2026-05-18 11:00:00] - KỶ LỤC ĐỘT PHÁ VĨ MÔ CRYPTO ANCHOR (CHAMPION MỚI PHIÊN MỸ): run_20260518_110000_v5_ny_macro_elite
-- **Kết quả:** Composite Score = **0.6780** | Win Rate = **72.73%** | Early Stopped ở Epoch **131**
-- **Trạng thái:** Hoàn tất training xuất sắc và đã tự động sync lên HuggingFace HUB thành công!
-- **Phân tích chi tiết & Insight tối cao:**
-  - Mô hình bứt phá đạt Composite Score **0.6780** và Win Rate **72.73%** dưới cơ chế Monthly Split cực kỳ nghiêm ngặt.
-  - **Lý giải khoa học thành công:** Việc đưa bộ đôi Crypto mỏ neo **BTCUSDm và ETHUSDm** vào `MACRO_FEATURES` đã mang lại tác dụng dẫn dắt xu hướng vĩ mô (leading risk-on/risk-off indicators) tuyệt đối hoàn hảo cho phiên Mỹ. Do dòng tiền lớn của phiên Mỹ luôn chuyển dịch cực kỳ nhanh giữa các tài sản lỏng (Gold vs Crypto), việc AI nắm bắt được quán tính của Crypto giúp nó dự đoán chính xác các điểm đảo chiều thanh khoản của Bạc (XAG).
-  - **Kết luận:** Bản chạy **`run_20260518_110000_v5_ny_macro_elite`** chính thức soán ngôi vương và trở thành **Tân Vương Champion vô song của phiên Mỹ (New York V5)** dưới Monthly Split!
-
 # 🇺🇸 DIARY: AUTO-TUNING XAG NEW YORK BRAIN V5 — REGIME-AWARE
 
 ## 🏆 BẢNG VÀNG THÀNH TÍCH V5 (QUY TẮC: TOP 3 HOẶC WR >= 80%)
