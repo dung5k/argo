@@ -6,7 +6,7 @@
         "asian": {
             "start": "23:00",
             "end": "07:00",
-            "run_id": "run_20260519_192733_v6_ASIAN_5m_BalancedCapacity_214",
+            "run_id": "run_20260515_161352_v6_ASIAN_5m_DeepMicro_213",
             "config_id": "CFG_LTC_ASIAN_V6",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
@@ -14,9 +14,10 @@
                 "mse_thresh_perc": 70.0
             },
             "feature_engineering": {
+                "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
                 "TP_PCT": 0.003,
                 "SL_PCT": 0.0025,
-                "MAX_HOLD_BARS": 24,
+                "MAX_HOLD_BARS": 96,
                 "FAST_HIT_BARS": 5,
                 "LABEL_MODE": "pct",
                 "PIP_SIZE": 0.01,
@@ -26,7 +27,7 @@
                     {
                         "SYMBOL": "LTCUSDT",
                         "TIMEFRAME": "5min",
-                        "WINDOW_SIZE": 24,
+                        "WINDOW_SIZE": 96,
                         "FEATURES": [
                             "log_return_close",
                             "body_pct",
@@ -34,28 +35,19 @@
                             "rsi_14_scaled",
                             "hour_sin",
                             "hour_cos",
-                            "delta_volume",
-                            "vol_surge_ratio"
+                            "volatility_index",
+                            "order_flow_imbalance",
+                            "atr_14_scaled"
                         ]
                     },
                     {
                         "SYMBOL": "BTCUSDT",
-                        "TIMEFRAME": "15min",
-                        "WINDOW_SIZE": 8,
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 96,
                         "FEATURES": [
                             "log_return_close",
-                            "body_pct",
-                            "bb_width",
-                            "rsi_14_scaled"
-                        ]
-                    },
-                    {
-                        "SYMBOL": "ETHUSDT",
-                        "TIMEFRAME": "15min",
-                        "WINDOW_SIZE": 8,
-                        "FEATURES": [
-                            "log_return_close",
-                            "body_pct"
+                            "volatility_index",
+                            "order_flow_imbalance"
                         ]
                     }
                 ],
@@ -64,14 +56,14 @@
                 "STEP_SIZE": 1
             },
             "training": {
-                "D_MODEL": 32,
+                "D_MODEL": 64,
                 "N_HEAD": 8,
                 "NUM_LAYERS": 3,
                 "BATCH_SIZE": 256,
                 "WARMUP_EPOCHS": 15,
                 "FINETUNE_EPOCHS": 80,
-                "LEARNING_RATE": 1e-05,
-                "DROPOUT_RATE": 0.08,
+                "LEARNING_RATE": 1.5e-05,
+                "DROPOUT_RATE": 0.2,
                 "LR_SCHEDULER": "cosine_warm",
                 "POOLING": "attention"
             }
@@ -79,7 +71,7 @@
         "london": {
             "start": "07:00",
             "end": "13:00",
-            "run_id": "run_20260510_181835_v6_london_win60",
+            "run_id": "run_20260511_110000_v6_LONDON_1m_TP9_SL3_HolyGrail",
             "config_id": "CFG_LTC_LONDON_V6",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
@@ -87,9 +79,10 @@
                 "mse_thresh_perc": 70.0
             },
             "feature_engineering": {
-                "TP_PCT": 0.003,
+                "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
+                "TP_PCT": 0.004,
                 "SL_PCT": 0.002,
-                "MAX_HOLD_BARS": 60,
+                "MAX_HOLD_BARS": 30,
                 "LABEL_MODE": "pct",
                 "PIP_SIZE": 0.01,
                 "lot_size": 0.1,
@@ -97,59 +90,57 @@
                 "MTF_INPUTS": [
                     {
                         "SYMBOL": "LTCUSDT",
-                        "TIMEFRAME": "1m",
-                        "WINDOW_SIZE": 60,
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 90,
                         "FEATURES": [
                             "log_return_close",
                             "body_pct",
-                            "delta_volume",
-                            "cum_delta_session",
-                            "vol_surge_ratio",
-                            "rsi_5_scaled",
+                            "bb_width",
+                            "rsi_14_scaled",
                             "hour_sin",
                             "hour_cos"
                         ]
                     },
                     {
-                        "SYMBOL": "LTCUSDT",
-                        "TIMEFRAME": "15min",
-                        "WINDOW_SIZE": 16,
+                        "SYMBOL": "BTCUSDT",
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 90,
                         "FEATURES": [
                             "log_return_close",
-                            "delta_volume",
-                            "vol_surge_ratio",
-                            "bb_width"
+                            "body_pct",
+                            "rsi_14_scaled"
                         ]
                     },
                     {
-                        "SYMBOL": "BTCUSDT",
-                        "TIMEFRAME": "1h",
-                        "WINDOW_SIZE": 12,
+                        "SYMBOL": "ETHUSDT",
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 90,
                         "FEATURES": [
                             "log_return_close",
-                            "corr_60_LTCUSDT",
-                            "bb_width"
+                            "body_pct",
+                            "rsi_14_scaled"
                         ]
                     }
                 ],
-                "VOL_REGIME": true,
-                "ORDER_FLOW": true
+                "VOL_REGIME": false,
+                "ORDER_FLOW": false
             },
             "training": {
                 "D_MODEL": 64,
-                "N_HEAD": 8,
+                "N_HEAD": 4,
                 "NUM_LAYERS": 3,
-                "BATCH_SIZE": 128,
-                "WARMUP_EPOCHS": 20,
-                "FINETUNE_EPOCHS": 50,
-                "LEARNING_RATE": 5e-05,
-                "DROPOUT_RATE": 0.05
+                "BATCH_SIZE": 64,
+                "WARMUP_EPOCHS": 15,
+                "FINETUNE_EPOCHS": 60,
+                "LEARNING_RATE": 0.0001,
+                "DROPOUT_RATE": 0.1,
+                "LR_SCHEDULER": "cosine_warm"
             }
         },
         "ny": {
             "start": "13:00",
             "end": "22:59",
-            "run_id": "run_20260510_200324_v6_ny_win60",
+            "run_id": "run_20260520_035500_v6_NY_HolyGrail_Final",
             "brain_id": "NY_Seed_001",
             "config_id": "CFG_LTC_NY_V6",
             "dataset_repo": "dung5k/argo_workspaces",
@@ -158,19 +149,21 @@
                 "mse_thresh_perc": 70.0
             },
             "training": {
-                "D_MODEL": 64,
+                "D_MODEL": 128,
                 "N_HEAD": 8,
-                "NUM_LAYERS": 3,
-                "BATCH_SIZE": 256,
-                "WARMUP_EPOCHS": 20,
-                "FINETUNE_EPOCHS": 50,
-                "LEARNING_RATE": 5e-05,
-                "DROPOUT_RATE": 0.1
+                "NUM_LAYERS": 4,
+                "BATCH_SIZE": 64,
+                "WARMUP_EPOCHS": 10,
+                "FINETUNE_EPOCHS": 80,
+                "LEARNING_RATE": 1.5e-05,
+                "DROPOUT_RATE": 0.3,
+                "LR_SCHEDULER": "cosine_warm"
             },
             "feature_engineering": {
+                "âš ï¸_STRICT_WARNING_âš ï¸": "Táº¤T Cáº¢ MODULE MACRO_FEATURES LÃ€ Báº®T BUá»˜C.",
                 "TP_PCT": 0.005,
                 "SL_PCT": 0.003,
-                "MAX_HOLD_BARS": 60,
+                "MAX_HOLD_BARS": 180,
                 "LABEL_MODE": "pct",
                 "PIP_SIZE": 0.01,
                 "lot_size": 0.1,
@@ -178,49 +171,39 @@
                 "MTF_INPUTS": [
                     {
                         "SYMBOL": "LTCUSDT",
-                        "TIMEFRAME": "1m",
-                        "WINDOW_SIZE": 60,
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 180,
                         "FEATURES": [
                             "log_return_close",
                             "body_pct",
-                            "delta_volume",
-                            "cum_delta_session",
-                            "vol_surge_ratio",
-                            "rsi_5_scaled",
+                            "bb_width",
+                            "rsi_14_scaled",
                             "hour_sin",
-                            "hour_cos"
-                        ]
-                    },
-                    {
-                        "SYMBOL": "LTCUSDT",
-                        "TIMEFRAME": "15min",
-                        "WINDOW_SIZE": 16,
-                        "FEATURES": [
-                            "log_return_close",
-                            "delta_volume",
-                            "vol_surge_ratio",
-                            "bb_width"
+                            "hour_cos",
+                            "volatility_index",
+                            "order_flow_imbalance",
+                            "atr_14_scaled"
                         ]
                     },
                     {
                         "SYMBOL": "BTCUSDT",
-                        "TIMEFRAME": "1h",
-                        "WINDOW_SIZE": 12,
+                        "TIMEFRAME": "5min",
+                        "WINDOW_SIZE": 180,
                         "FEATURES": [
                             "log_return_close",
-                            "corr_60_LTCUSDT",
-                            "bb_width"
+                            "volatility_index",
+                            "order_flow_imbalance"
                         ]
                     }
                 ],
-                "VOL_REGIME": true,
-                "ORDER_FLOW": true
+                "VOL_REGIME": false,
+                "ORDER_FLOW": false
             }
         },
         "weekend": {
             "start": "00:00",
             "end": "23:59",
-            "run_id": "run_20260511_043635_v3",
+            "run_id": "run_20260520_035500_v6_NY_HolyGrail_Final",
             "config_id": "CFG_LTC_WEEKEND_V6",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
