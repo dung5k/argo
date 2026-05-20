@@ -72,6 +72,9 @@
         "RAW_LOCAL_DIR": "workspaces/CFG_LTC_ASIAN_V6/data/raw",
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M5",
+        "BROKERS": {
+            "BINANCE": "LOCAL"
+        },
         "ROUTING": {
             "LTCUSDT": "BINANCE",
             "BTCUSDT": "BINANCE"
