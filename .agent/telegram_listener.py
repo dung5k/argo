@@ -6,9 +6,17 @@ import urllib.request
 import urllib.error
 import re
 
+import ssl
+
 try:
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
+# Bỏ qua xác thực SSL (Fix lỗi tự ký SSL certificate của Windows/Antivirus)
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
 except Exception:
     pass
 
