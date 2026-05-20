@@ -315,7 +315,8 @@ function sendTelegramMessage(chatId, text, overrideToken = '') {
         headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postData)
-        }
+        },
+        rejectUnauthorized: false
     }, (res) => {
         let body = '';
         res.on('data', chunk => body += chunk);
@@ -367,7 +368,8 @@ function sendTypingAction() {
             headers: {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(postData)
-            }
+            },
+            rejectUnauthorized: false
         }, (res) => {
             res.on('data', () => {});
         });
@@ -466,7 +468,12 @@ function pollTelegram() {
     
     const url = `https://api.telegram.org/bot${token}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
     
-    const req = https.get(url, (res) => {
+    const req = https.get({
+        hostname: 'api.telegram.org',
+        port: 443,
+        path: `/bot${token}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`,
+        rejectUnauthorized: false
+    }, (res) => {
         let body = '';
         res.on('data', chunk => body += chunk);
         res.on('end', () => {
@@ -861,9 +868,9 @@ def get_telegram_config(target_channels=None):
             import re
             with open(settings_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            m = re.search(r'"antigravityBridge\\\\.teleBotToken"\\\\s*:\\\\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.teleBotToken"\\s*:\\s*"([^"]+)"', content)
             if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge\\\\.whitelistChatIds"\\\\s*:\\\\s*"([^"]+)"', content)
+            m = re.search(r'"antigravityBridge\\.whitelistChatIds"\\s*:\\s*"([^"]+)"', content)
             if m: default_chat_id = m.group(1)
     except Exception:
         pass
@@ -951,7 +958,9 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
         headers = {'Content-Type': 'application/json'}
         req = urllib.request.Request(url, data=data, headers=headers)
         try:
-            with urllib.request.urlopen(req, timeout=10) as response:
+            import ssl
+            ssl_context = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, context=ssl_context, timeout=10) as response:
                 success = True
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
