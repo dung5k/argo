@@ -1,5 +1,5 @@
 {
-    "agent_identity": "Argo2",
+    "agent_identity": "Argo1",
     "mqtt_broker": "mqtt://broker.emqx.io:1883",
     "mqtt_base_topic": "argo/network/v1/agents",
     "channels": {
