@@ -414,20 +414,23 @@ class FeatureEngineeringV3:
             feature_blocks = [f_pa, f_vol, f_time]
             
             # Thêm thủ công volume và spread (nếu có) vào f_micro tạm thời để không bị rỗng
-            f_micro = pd.DataFrame(index=df.index)
+            f_micro_clean = pd.DataFrame(index=df.index)
             if volume_col and volume_col in df.columns:
-                f_micro['volume'] = np.log1p(df[volume_col].clip(lower=0).fillna(0))
+                f_micro_clean['volume'] = np.log1p(df[volume_col].clip(lower=0).fillna(0))
             else:
-                f_micro['volume'] = 0.0 # Fallback
+                f_micro_clean['volume'] = 0.0 # Fallback
                 
             spread_col = cols.get(f"{prefix}_spread".lower())
             if spread_col and spread_col in df.columns:
-                f_micro['spread'] = np.log1p(df[spread_col].clip(lower=0).fillna(0))
+                f_micro_clean['spread'] = np.log1p(df[spread_col].clip(lower=0).fillna(0))
             else:
-                f_micro['spread'] = 0.0 # Fallback for Binance/Crypto
+                f_micro_clean['spread'] = 0.0 # Fallback for Binance/Crypto
                 
-            if not f_micro.empty:
-                feature_blocks.append(f_micro)
+            if 'order_flow_imbalance' in f_micro.columns:
+                f_micro_clean['order_flow_imbalance'] = f_micro['order_flow_imbalance']
+                
+            if not f_micro_clean.empty:
+                feature_blocks.append(f_micro_clean)
         else:
             feature_blocks = [f_pa, f_vol, f_mom, f_time, f_micro]
         
