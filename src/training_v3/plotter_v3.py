@@ -105,10 +105,17 @@ def plot_and_notify_v3(
         if tg_token and tg_chat_id:
             try:
                 bot = TelegramBot(tg_token)
-                bot.send_photo(int(tg_chat_id), chart_path, caption=f"📊 [V3] Validation ({cfg_name}) - Epoch {epoch}")
-                print(f"  ✅ Đã gửi biểu đồ Telegram cho Epoch {epoch}.", flush=True)
+                # Theo yêu cầu khắt khe của Sếp Lê: việc training KHÔNG CẦN gửi ảnh. Gửi text tóm tắt.
+                msg_content = (
+                    f"📊 <b>[V3] Validation ({cfg_name}) - Epoch {epoch}</b>\n"
+                    f"🏆 <b>Score:</b> {eval_res.composite_score():.4f}\n"
+                    f"📉 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n\n"
+                    f"<pre>{eval_res.format_summary()}</pre>"
+                )
+                bot.send_message(int(tg_chat_id), msg_content)
+                print(f"  ✅ Đã gửi thông tin tóm tắt Epoch {epoch} qua Telegram (Không kèm ảnh).", flush=True)
             except Exception as e:
-                print(f"  ❌ Lỗi gửi Telegram Plot: {e}", flush=True)
+                print(f"  ❌ Lỗi gửi Telegram Message: {e}", flush=True)
             return
 
         _candidates = [
@@ -153,13 +160,15 @@ def plot_and_notify_v3(
                 pfx = f"🚀 <b>[Argo2] AAMT_V3 [{cfg_name}]</b> Đã Phá Kỷ Lục!"
             caption = (
                 f"{pfx}\n"
-                f"\U0001f539 <b>Epoch:</b> {epoch}\n"
-                f"\U0001f539 <b>Best Score:</b> {eval_res.composite_score():.4f}\n"
-                f"\U0001f539 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n"
+                f"🔹 <b>Epoch:</b> {epoch}\n"
+                f"🔹 <b>Best Score:</b> {eval_res.composite_score():.4f}\n"
+                f"🔹 <b>MSE Loss:</b> {eval_res.val_mse:.4f}\n"
                 f"<pre>{eval_res.format_summary()}</pre>"
             )
-            bot.send_photo(chat_id, photo_path=chart_path, caption=caption)
+            # Theo yêu cầu khắt khe của Sếp Lê: việc training KHÔNG CẦN gửi ảnh. Gửi text tóm tắt.
+            bot.send_message(chat_id, caption)
+            print(f"  ✅ Đã gửi thông tin tóm tắt Epoch {epoch} qua Telegram (Không kèm ảnh).", flush=True)
         except Exception as e:
-            print(f"  \u274c Lỗi gửi Telegram Plot: {e}", flush=True)
+            print(f"  ❌ Lỗi gửi Telegram Message: {e}", flush=True)
     else:
-        print(f"  \u26a0\ufe0f Không tìm thấy file cấu hình Telegram. Bỏ qua gửi Telegram.", flush=True)
+        print(f"  ⚠️ Không tìm thấy file cấu hình Telegram. Bỏ qua gửi Telegram.", flush=True)
