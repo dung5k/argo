@@ -78,7 +78,9 @@ def main():
                             name = message['chat'].get('first_name', 'User')
                             
                             if chat_id not in whitelist:
-                                # Bỏ qua ID lạ, tiếp tục loop
+                                print(f"[CẢNH BÁO] Nhận tin nhắn từ Chat ID chưa Whitelist: {chat_id} (Tên: {name}) | Nội dung: {text}", flush=True)
+                                with open(offset_file, 'w') as f:
+                                    f.write(str(offset))
                                 continue
                             
                             # Cập nhật offset để lần sau không đọc lại tin nhắn này
