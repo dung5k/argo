@@ -89,11 +89,29 @@ class BinanceAdapter(BaseDataAdapter):
                 else:
                     self.exchange.hostname = 'api.binance.com'
                     
-                ohlcv = self.exchange.fetch_ohlcv(binance_sym, tf_ccxt, limit=fetch_limit)
-                if not ohlcv:
+                raw_symbol = binance_sym.replace("/", "")
+                if self.market_type in ['future', 'swap', 'delivery']:
+                    klines = self.exchange.fapiPublicGetKlines({'symbol': raw_symbol, 'interval': tf_ccxt, 'limit': fetch_limit})
+                else:
+                    klines = self.exchange.publicGetKlines({'symbol': raw_symbol, 'interval': tf_ccxt, 'limit': fetch_limit})
+                
+                if not klines:
                     continue
                 
-                df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                processed_klines = []
+                for k in klines:
+                    processed_klines.append({
+                        'timestamp': int(k[0]),
+                        'open': float(k[1]),
+                        'high': float(k[2]),
+                        'low': float(k[3]),
+                        'close': float(k[4]),
+                        'volume': float(k[5]),
+                        'taker_buy': float(k[9]),
+                        'taker_sell': float(k[5]) - float(k[9])
+                    })
+                    
+                df = pd.DataFrame(processed_klines)
                 df['time'] = df['timestamp'] / 1000.0  # seconds
                 df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
                 df.set_index('datetime', inplace=True)
@@ -155,18 +173,36 @@ class BinanceAdapter(BaseDataAdapter):
         
         while since_ts < end_ts:
             try:
-                ohlcv = self.exchange.fetch_ohlcv(binance_sym, tf_ccxt, since_ts, limit)
-                if not ohlcv:
+                raw_symbol = binance_sym.replace("/", "")
+                if self.market_type in ['future', 'swap', 'delivery']:
+                    klines = self.exchange.fapiPublicGetKlines({'symbol': raw_symbol, 'interval': tf_ccxt, 'startTime': since_ts, 'limit': limit})
+                else:
+                    klines = self.exchange.publicGetKlines({'symbol': raw_symbol, 'interval': tf_ccxt, 'startTime': since_ts, 'limit': limit})
+                    
+                if not klines:
                     break
+                    
+                processed_klines = []
+                for k in klines:
+                    processed_klines.append({
+                        'timestamp': int(k[0]),
+                        'open': float(k[1]),
+                        'high': float(k[2]),
+                        'low': float(k[3]),
+                        'close': float(k[4]),
+                        'volume': float(k[5]),
+                        'taker_buy': float(k[9]),
+                        'taker_sell': float(k[5]) - float(k[9])
+                    })
                     
                 # Có thể api trả về lố qua end_ts, lọc sạch rác ở khúc nối
-                ohlcv = [o for o in ohlcv if o[0] <= end_ts]
-                if not ohlcv:
+                processed_klines = [k for k in processed_klines if k['timestamp'] <= end_ts]
+                if not processed_klines:
                     break
                     
-                all_ohlcv.extend(ohlcv)
+                all_ohlcv.extend(processed_klines)
                 # Dịch con trỏ thời gian đi + 1 frame
-                since_ts = ohlcv[-1][0] + 60000 
+                since_ts = processed_klines[-1]['timestamp'] + 60000 
                 
             except ccxt.NetworkError as e:
                 self.log_message(f"[{binance_sym}] NetworkError: {e}")
@@ -178,7 +214,7 @@ class BinanceAdapter(BaseDataAdapter):
         if not all_ohlcv:
             return pd.DataFrame()
             
-        df = pd.DataFrame(all_ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df = pd.DataFrame(all_ohlcv)
         df['time'] = df['timestamp'] / 1000.0  # seconds
         df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
         df.set_index('datetime', inplace=True)
