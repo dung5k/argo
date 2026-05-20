@@ -1,0 +1,92 @@
+{
+    "HF_RUN_ID": "run_20260515_161352_v6_ASIAN_5m_DeepMicro_213",
+    "MT5_PATH": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "TARGET_SYMBOL": "LTCUSDT",
+    "EXECUTION_SYMBOL": "LTCUSDm",
+    "TARGET_PREFIX": "LTCUSDT",
+    "CONFIG_ID": "CFG_LTC_ASIAN_V6",
+    "VERSION": "6.0",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
+        "TP_PCT": 0.003,
+        "SL_PCT": 0.0025,
+        "MAX_HOLD_BARS": 96,
+        "FAST_HIT_BARS": 5,
+        "LABEL_MODE": "pct",
+        "PIP_SIZE": 0.01,
+        "lot_size": 0.1,
+        "CRYPTO_MODE": true,
+        "MTF_INPUTS": [
+            {
+                "SYMBOL": "LTCUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 96,
+                "FEATURES": [
+                    "log_return_close",
+                    "body_pct",
+                    "bb_width",
+                    "rsi_14_scaled",
+                    "hour_sin",
+                    "hour_cos",
+                    "volatility_index",
+                    "order_flow_imbalance",
+                    "atr_14_scaled"
+                ]
+            },
+            {
+                "SYMBOL": "BTCUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 96,
+                "FEATURES": [
+                    "log_return_close",
+                    "volatility_index",
+                    "order_flow_imbalance"
+                ]
+            }
+        ],
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true,
+        "STEP_SIZE": 1
+    },
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 256,
+        "WARMUP_EPOCHS": 15,
+        "FINETUNE_EPOCHS": 80,
+        "LEARNING_RATE": 1.5e-05,
+        "DROPOUT_RATE": 0.25,
+        "LR_SCHEDULER": "cosine_warm",
+        "POOLING": "attention"
+    },
+    "MT5_PATHS": {
+        "BINANCE": "LOCAL"
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "workspaces/CFG_LTC_ASIAN_V6/data/raw",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M5",
+        "ROUTING": {
+            "LTCUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE"
+        }
+    },
+    "LIVE_BOT": {
+        "PAPER_TRADE": true,
+        "TRADE_PLATFORM": "BINANCE",
+        "MAX_ABSOLUTE_MSE": 0.8,
+        "MIN_PROBABILITY_THRESH": 0.59
+    },
+    "SESSION": "asian",
+    "SESSION_UTC": {
+        "START": "23:00",
+        "END": "07:00"
+    },
+    "RUN_ID": ""
+}

@@ -360,6 +360,7 @@ def bot_background_loop():
     global gui_status, gui_prediction, gui_time, gui_session, gui_market_data, CONFIG, gui_probs, gui_brain_tooltip
     print("[BOT V6] ===== Khởi động OOP Modules V6.0 (DUAL-ENCODER MASTER) =====")
     
+    DISABLE_MT5 = (TARGET_SYMBOL in ("LTCUSDT", "LTCUSDm"))
     engine = V6InferenceEngine(log_callback=print)
     mt5_manager = MT5DataManager(log_callback=print, target_sym=TARGET_SYMBOL, config_path=config_file)
     
@@ -382,11 +383,14 @@ def bot_background_loop():
         backup_path = mt5_init_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
         if os.path.exists(backup_path): mt5_init_path = backup_path
         
-    gui_status = "Đang kết nối MT5 (Dữ liệu)..."
     import MetaTrader5 as mt5
-    if not mt5.initialize(path=mt5_init_path, timeout=5000):
-        gui_status = "❌ Lỗi kết nối MT5 Terminal!"
-        print("[BOT V6] ⚠️ Cảnh báo: Không thể khởi tạo kết nối MT5 Terminal. Sẽ chạy dựa trên Binance/Local.")
+    if not DISABLE_MT5:
+        gui_status = "Đang kết nối MT5 (Dữ liệu)..."
+        if not mt5.initialize(path=mt5_init_path, timeout=5000):
+            gui_status = "❌ Lỗi kết nối MT5 Terminal!"
+            print("[BOT V6] ⚠️ Cảnh báo: Không thể khởi tạo kết nối MT5 Terminal. Sẽ chạy dựa trên Binance/Local.")
+    else:
+        gui_status = "Đang kết nối Binance (Không dùng MT5)..."
         
     last_tick_err_time = 0
     brain_loaded = False
@@ -519,7 +523,7 @@ def bot_background_loop():
             backup_path = trading_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
             if os.path.exists(backup_path): trading_path = backup_path
             
-        if mt5_manager.current_connected_path != trading_path:
+        if not DISABLE_MT5 and mt5_manager.current_connected_path != trading_path:
             mt5.shutdown()
             mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
@@ -689,7 +693,7 @@ def bot_background_loop():
             backup_path = trading_path.replace(r"C:\Program Files", r"D:\mt5").replace("C:\\Program Files", "D:\\mt5")
             if os.path.exists(backup_path): trading_path = backup_path
 
-        if mt5_manager.current_connected_path != trading_path:
+        if not DISABLE_MT5 and mt5_manager.current_connected_path != trading_path:
             mt5.shutdown()
             mt5.initialize(path=trading_path)
             mt5_manager.current_connected_path = trading_path
