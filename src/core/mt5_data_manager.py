@@ -320,7 +320,7 @@ class MT5DataManager:
                 renamed_df = df.copy()
                 rename_map = {}
                 for col in renamed_df.columns:
-                    if col in ['open', 'high', 'low', 'close', 'volume', 'real_volume', 'spread']:
+                    if col in ['open', 'high', 'low', 'close', 'volume', 'real_volume', 'spread', 'taker_buy_volume', 'taker_sell_volume']:
                         expected = None
                         if f"{mapped_name}_{col}" in self.features or f"{mapped_name}_{col}_log_ret" in self.features:
                             expected = f"{mapped_name}_{col}"

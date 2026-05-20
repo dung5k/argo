@@ -54,7 +54,7 @@ class FeatureEngineeringV3:
         return features
         
     def calculate_microstructure(self, df, open_col, high_col, low_col, close_col,
-                                  volume_col=None, adx_period=10, vwap_period=20):
+                                  volume_col=None, adx_period=10, vwap_period=20, taker_buy_col=None, taker_sell_col=None):
         """
         [MỚI - P1/P2] Nhóm Vi cấu trúc thị trường:
         - body_pct   : Độ đặc của thân nến (Marubozu detection)
@@ -95,9 +95,9 @@ class FeatureEngineeringV3:
             features['vwap_distance_ny'] = (df[close_col] - vwap_ny) / (vwap_ny + 1e-6)
 
             # -- [MỚI V4] Order Flow Imbalance (Taker Buy vs Taker Sell)
-            if 'taker_buy_volume' in df.columns:
-                taker_buy = df['taker_buy_volume'].clip(lower=0)
-                taker_sell = (vol - taker_buy).clip(lower=0)
+            if taker_buy_col and taker_sell_col and taker_buy_col in df.columns and taker_sell_col in df.columns:
+                taker_buy = df[taker_buy_col].clip(lower=0)
+                taker_sell = df[taker_sell_col].clip(lower=0)
                 features['order_flow_imbalance'] = (taker_buy - taker_sell) / (vol + 1e-6)
                 # Tích luỹ Order Flow Imbalance trong phiên NY (từ 13:30 UTC)
                 features['cum_ofi_ny'] = features['order_flow_imbalance'].groupby(ny_session_key).cumsum()
@@ -399,7 +399,9 @@ class FeatureEngineeringV3:
         
         # [MỚI P1/P2] Microstructure features: body_pct, vroc, adx, vwap_distance
         volume_col = cols.get(f"{prefix}_volume".lower()) or cols.get(f"{prefix}_real_volume".lower())
-        f_micro = self.calculate_microstructure(df, open_col, high_col, low_col, close_col, volume_col=volume_col)
+        taker_buy_col = cols.get(f"{prefix}_taker_buy_volume".lower()) or cols.get("taker_buy_volume")
+        taker_sell_col = cols.get(f"{prefix}_taker_sell_volume".lower()) or cols.get("taker_sell_volume")
+        f_micro = self.calculate_microstructure(df, open_col, high_col, low_col, close_col, volume_col=volume_col, taker_buy_col=taker_buy_col, taker_sell_col=taker_sell_col)
         
         if getattr(self, 'zero_noise_target', False):
             print("[FE] CẢNH BÁO: Kích hoạt ZERO_NOISE_TARGET! Loại bỏ toàn bộ TA rác của Target Symbol (chỉ giữ log_ret, spread, volume, time).")
