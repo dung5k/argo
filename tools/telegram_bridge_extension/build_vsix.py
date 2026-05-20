@@ -1,9 +1,9 @@
-"""Build VSIX - dùng đúng manifest format từ bản 1.2.7 đang chạy tốt."""
+"""Build VSIX - packs extension.js, package.json, README.md, and node_modules recursively."""
 import zipfile
 import os
 import json
 
-ext_dir = r'd:\DungLA\client1\tools\telegram_bridge_extension'
+ext_dir = os.path.dirname(os.path.abspath(__file__))
 
 with open(os.path.join(ext_dir, 'package.json'), 'r') as f:
     pkg = json.load(f)
@@ -13,7 +13,6 @@ name = pkg['name']
 vsix_name = f"{name}-{version}.vsix"
 vsix_path = os.path.join(ext_dir, vsix_name)
 
-# Sao chép y hệt format từ bản 1.2.7
 content_types = '<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension=".js" ContentType="application/javascript"/><Default Extension=".json" ContentType="application/json"/><Default Extension=".vsixmanifest" ContentType="text/xml"/></Types>'
 
 vsixmanifest = f'''<?xml version="1.0" encoding="utf-8"?>
@@ -34,13 +33,25 @@ vsixmanifest = f'''<?xml version="1.0" encoding="utf-8"?>
 if os.path.exists(vsix_path):
     os.remove(vsix_path)
 
+print("Building VSIX package...")
 with zipfile.ZipFile(vsix_path, 'w', zipfile.ZIP_DEFLATED) as z:
     z.writestr('[Content_Types].xml', content_types)
     z.writestr('extension.vsixmanifest', vsixmanifest)
+    
+    # Pack root files
     z.write(os.path.join(ext_dir, 'extension.js'), 'extension/extension.js')
     z.write(os.path.join(ext_dir, 'package.json'), 'extension/package.json')
+    if os.path.exists(os.path.join(ext_dir, 'README.md')):
+        z.write(os.path.join(ext_dir, 'README.md'), 'extension/README.md')
+        
+    # Pack node_modules recursively
+    node_modules_path = os.path.join(ext_dir, 'node_modules')
+    if os.path.exists(node_modules_path):
+        for root, dirs, files in os.walk(node_modules_path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, ext_dir)
+                archive_name = os.path.join('extension', rel_path).replace('\\', '/')
+                z.write(full_path, archive_name)
 
-print(f"✅ VSIX {version} built: {os.path.getsize(vsix_path)} bytes")
-with zipfile.ZipFile(vsix_path, 'r') as z:
-    for info in z.infolist():
-        print(f"  {info.filename} ({info.file_size})")
+print(f"VSIX {version} built successfully: {os.path.getsize(vsix_path)} bytes")
