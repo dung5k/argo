@@ -32,7 +32,7 @@ def resample_dataframe(df_raw, freq):
         else:
             resampled[col] = df_raw[col].resample(pd_rule).last().ffill().bfill()
             
-    return resampled.dropna()
+    return resampled.fillna(0)
 
 class V6DataProcessor:
     def __init__(self, scaler_path: str, inference_feats: list, config: dict, log_callback=None):

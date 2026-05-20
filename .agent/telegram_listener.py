@@ -87,8 +87,17 @@ def main():
                             with open(offset_file, 'w') as f:
                                 f.write(str(offset))
                             
-                            # IN RA ĐỂ ĐÁNH THỨC ANTIGRAVITY (DUY TRÌ VÒNG LẶP LIÊN TỤC ỔN ĐỊNH)
-                            print(f"\n[TELEGRAM_MESSAGE_RECEIVED]\nUser: {name}\nID: {chat_id}\nMessage: {text}", flush=True)
+                            # IN RA VÀ LẬP TỨC THOÁT (EXIT) ĐỂ ĐÁNH THỨC ANTIGRAVITY
+                            print(f"\n[TELEGRAM_MESSAGE_RECEIVED]", flush=True)
+                            print(f"User: {name}", flush=True)
+                            print(f"ID: {chat_id}", flush=True)
+                            print(f"Message: {text}", flush=True)
+                            print(f"\n[AI_MANDATORY_ACTIONS]", flush=True)
+                            print(f"1. Gửi ack ngay: python .agent/send_to_tele.py \"⚡ Đang xử lý...\"", flush=True)
+                            print(f"2. Xử lý yêu cầu.", flush=True)
+                            print(f"3. Gửi kết quả: python .agent/send_to_tele.py \"[kết quả]\" --done", flush=True)
+                            print(f"4. Restart: python -u .agent/telegram_listener.py", flush=True)
+                            sys.exit(0)
                         else:
                             # Không phải tin nhắn text, vẫn update offset
                             with open(offset_file, 'w') as f:

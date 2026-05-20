@@ -31,7 +31,7 @@ import logging
 
 log_dir = os.path.join(safe_script_dir, "workspaces", "shared_meta", "logs")
 os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"trade_bot_v3_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
+log_file = os.path.join(log_dir, f"trade_bot_v6_{datetime.now(timezone.utc).strftime('%Y%m%d')}.log")
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(message)s',

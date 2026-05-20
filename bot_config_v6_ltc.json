@@ -57,12 +57,27 @@
         "DATASET_SUFFIX": "2026",
         "TIMEFRAME": "M1",
         "BROKERS": {
-            "BINANCE": "LOCAL"
+            "DEFAULT": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+            "EXNESS": "C:\\Program Files\\MetaTrader 5 EXNESS\\terminal64.exe",
+            "BINANCE": "BINANCE"
         },
         "ROUTING": {
+            "USTECm": "EXNESS",
+            "DXYm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "LTCUSDm": "EXNESS",
             "LTCUSDT": "BINANCE",
             "BTCUSDT": "BINANCE",
             "ETHUSDT": "BINANCE"
+        },
+        "CRYPTO_BINANCE": {
+            "SYMBOLS": [
+                "LTC/USDT",
+                "BTC/USDT",
+                "ETH/USDT"
+            ],
+            "TIMEFRAME": "1m",
+            "SINCE": "2025-01-01T00:00:00Z"
         }
     },
     "LIVE_BOT": {

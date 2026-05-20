@@ -2,7 +2,6 @@
 setlocal
 chcp 65001 > nul
 set PYTHONIOENCODING=utf-8
-set PYTHONUTF8=1
 
 TITLE AAMT MASTER V6 [LTCUSD - 24H]
 
