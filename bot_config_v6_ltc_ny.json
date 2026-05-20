@@ -12,8 +12,8 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "\u00e2\u0161\u00a0\u00ef\u00b8\u008f_STRICT_WARNING_\u00e2\u0161\u00a0\u00ef\u00b8\u008f": "T\u00e1\u00ba\u00a4T C\u00e1\u00ba\u00a2 MODULE MACRO_FEATURES L\u00c3\u20ac B\u00e1\u00ba\u00aeT BU\u00e1\u00bb\u02dcC.",
-        "TP_PCT": 0.005,
+        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
+        "TP_PCT": 0.006,
         "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 180,
         "LABEL_MODE": "pct",
@@ -23,8 +23,8 @@
         "MTF_INPUTS": [
             {
                 "SYMBOL": "LTCUSDT",
-                "TIMEFRAME": "15min",
-                "WINDOW_SIZE": 30,
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 180,
                 "FEATURES": [
                     "log_return_close",
                     "body_pct",
@@ -36,32 +36,65 @@
                     "order_flow_imbalance",
                     "atr_14_scaled"
                 ]
+            },
+            {
+                "SYMBOL": "BTCUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 180,
+                "FEATURES": [
+                    "log_return_close",
+                    "volatility_index",
+                    "order_flow_imbalance"
+                ]
+            },
+            {
+                "SYMBOL": "ETHUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 180,
+                "FEATURES": [
+                    "log_return_close",
+                    "volatility_index",
+                    "order_flow_imbalance"
+                ]
+            },
+            {
+                "SYMBOL": "DOGEUSDT",
+                "TIMEFRAME": "5min",
+                "WINDOW_SIZE": 180,
+                "FEATURES": [
+                    "log_return_close",
+                    "volatility_index",
+                    "order_flow_imbalance"
+                ]
             }
         ],
-        "VOL_REGIME": false,
-        "ORDER_FLOW": false
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true,
+        "WINDOW_SIZE": 180
     },
     "TRAINING": {
         "D_MODEL": 128,
         "N_HEAD": 8,
         "NUM_LAYERS": 4,
-        "BATCH_SIZE": 256,
-        "WARMUP_EPOCHS": 15,
-        "FINETUNE_EPOCHS": 60,
-        "LEARNING_RATE": 5e-05,
+        "BATCH_SIZE": 64,
+        "WARMUP_EPOCHS": 10,
+        "FINETUNE_EPOCHS": 80,
+        "LEARNING_RATE": 1e-05,
         "DROPOUT_RATE": 0.3,
         "LR_SCHEDULER": "cosine_warm"
     },
     "MT5_PATHS": {
-        "BINANCE": "LOCAL"
+        "BINANCE": "BINANCE"
     },
     "DATA_SOURCE": {
         "RAW_LOCAL_DIR": "workspaces/CFG_LTC_NY_V6/data/raw",
         "DATASET_SUFFIX": "2026",
-        "TIMEFRAME": "M1",
+        "TIMEFRAME": "M5",
         "ROUTING": {
             "LTCUSDT": "BINANCE",
-            "BTCUSDT": "BINANCE"
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE"
         }
     },
     "LIVE_BOT": {
