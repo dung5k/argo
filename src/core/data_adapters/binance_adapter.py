@@ -107,8 +107,8 @@ class BinanceAdapter(BaseDataAdapter):
                         'low': float(k[3]),
                         'close': float(k[4]),
                         'volume': float(k[5]),
-                        'taker_buy': float(k[9]),
-                        'taker_sell': float(k[5]) - float(k[9])
+                        'taker_buy_volume': float(k[9]),
+                        'taker_sell_volume': float(k[5]) - float(k[9])
                     })
                     
                 df = pd.DataFrame(processed_klines)
@@ -191,8 +191,8 @@ class BinanceAdapter(BaseDataAdapter):
                         'low': float(k[3]),
                         'close': float(k[4]),
                         'volume': float(k[5]),
-                        'taker_buy': float(k[9]),
-                        'taker_sell': float(k[5]) - float(k[9])
+                        'taker_buy_volume': float(k[9]),
+                        'taker_sell_volume': float(k[5]) - float(k[9])
                     })
                     
                 # Có thể api trả về lố qua end_ts, lọc sạch rác ở khúc nối
