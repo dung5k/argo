@@ -125,8 +125,10 @@ class V6DataProcessor:
                 df_tf_feat = fe_mtf.transform_scaler(df_tf_feat)
                 
                 col_order_tf = self.column_orders[i]
-                available_cols_tf = [c for c in col_order_tf if c in df_tf_feat.columns]
-                scaled_tf_df = df_tf_feat[available_cols_tf]
+                for c in col_order_tf:
+                    if c not in df_tf_feat.columns:
+                        df_tf_feat[c] = 0.0
+                scaled_tf_df = df_tf_feat[col_order_tf]
                 
                 if len(scaled_tf_df) < w_size:
                     self.log_callback(f"[DataProcessorV6] ⚠️ Không đủ nến {tf}: {len(scaled_tf_df)} < {w_size}")

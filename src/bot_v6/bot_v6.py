@@ -460,6 +460,22 @@ def bot_background_loop():
                 m_path, s_path, i_feats, n_feat = cloud.sync_session_model(cfg_id)
                 active_run_id = target_run_id
                 
+                # Auto-sync CONFIG with the original training config.json
+                run_config_path = os.path.join(os.path.dirname(m_path), "config.json")
+                if not os.path.exists(run_config_path):
+                    run_config_path = os.path.join(os.path.dirname(os.path.dirname(m_path)), "config.json")
+                    
+                if os.path.exists(run_config_path):
+                    print(f"[BOT V6] 📂 Tải cấu hình huấn luyện gốc config.json từ: {run_config_path}")
+                    with open(run_config_path, "r", encoding="utf-8") as rf:
+                        orig_config = json.load(rf)
+                    if "FEATURE_ENGINEERING" in orig_config:
+                        CONFIG["FEATURE_ENGINEERING"] = orig_config["FEATURE_ENGINEERING"]
+                        print("[BOT V6] ✅ Đồng bộ thành công FEATURE_ENGINEERING từ config gốc.")
+                    if "TRAINING" in orig_config:
+                        CONFIG["TRAINING"] = orig_config["TRAINING"]
+                        print("[BOT V6] ✅ Đồng bộ thành công TRAINING từ config gốc.")
+                
                 arch = CONFIG.get("TRAINING", {})
                 window_size = CONFIG.get("FEATURE_ENGINEERING", {}).get("WINDOW_SIZE", 60)
                 d_model = arch.get("D_MODEL", 128)
