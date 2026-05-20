@@ -87,9 +87,8 @@ def main():
                             with open(offset_file, 'w') as f:
                                 f.write(str(offset))
                             
-                            # IN RA VÀ LẬP TỨC THOÁT (EXIT) ĐỂ ĐÁNH THỨC ANTIGRAVITY
+                            # IN RA ĐỂ ĐÁNH THỨC ANTIGRAVITY (DUY TRÌ VÒNG LẶP LIÊN TỤC ỔN ĐỊNH)
                             print(f"\n[TELEGRAM_MESSAGE_RECEIVED]\nUser: {name}\nID: {chat_id}\nMessage: {text}", flush=True)
-                            sys.exit(0)
                         else:
                             # Không phải tin nhắn text, vẫn update offset
                             with open(offset_file, 'w') as f:
