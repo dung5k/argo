@@ -32,11 +32,7 @@ def start_listener():
     print(f"[WATCHDOG] Khởi động telegram_listener.py...", flush=True)
     listener_proc = subprocess.Popen(
         [sys.executable, LISTENER_SCRIPT],
-        cwd=PROJECT_ROOT,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        encoding='utf-8',
-        errors='replace'
+        cwd=PROJECT_ROOT
     )
     print(f"[WATCHDOG] Listener đã start, PID={listener_proc.pid}", flush=True)
 
