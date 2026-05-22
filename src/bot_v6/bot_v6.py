@@ -461,9 +461,11 @@ def bot_background_loop():
                 active_run_id = target_run_id
                 
                 # Auto-sync CONFIG with the original training config.json
-                run_config_path = os.path.join(os.path.dirname(m_path), "config.json")
+                run_config_path = os.path.join(safe_script_dir, "workspaces", cfg_id, "runs", active_run_id, "config.json")
                 if not os.path.exists(run_config_path):
                     run_config_path = os.path.join(os.path.dirname(os.path.dirname(m_path)), "config.json")
+                if not os.path.exists(run_config_path):
+                    run_config_path = os.path.join(os.path.dirname(m_path), "config.json")
                     
                 if os.path.exists(run_config_path):
                     print(f"[BOT V6] 📂 Tải cấu hình huấn luyện gốc config.json từ: {run_config_path}")
@@ -475,6 +477,8 @@ def bot_background_loop():
                     if "TRAINING" in orig_config:
                         CONFIG["TRAINING"] = orig_config["TRAINING"]
                         print("[BOT V6] ✅ Đồng bộ thành công TRAINING từ config gốc.")
+                else:
+                    print(f"[BOT V6] ❌ KHÔNG TÌM THẤY config.json gốc tại {os.path.dirname(os.path.dirname(m_path))}! Bot có thể hoạt động sai lệch!")
                 
                 arch = CONFIG.get("TRAINING", {})
                 window_size = CONFIG.get("FEATURE_ENGINEERING", {}).get("WINDOW_SIZE", 60)

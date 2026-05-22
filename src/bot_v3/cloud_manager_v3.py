@@ -63,6 +63,16 @@ class V3CloudManager:
 
         model_path = ""
         local_scaler_path = ""
+
+        try:
+            # Attempt to download config.json
+            self._download_file(self.model_repo, f"workspaces/{config_id}/runs/{run_id}/config.json")
+        except Exception:
+            try:
+                self._download_file(self.dataset_repo, f"workspaces/{config_id}/runs/{run_id}/config.json")
+            except Exception:
+                pass
+
         scaler_feats = []
 
         try:
