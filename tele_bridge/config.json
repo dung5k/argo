@@ -1,0 +1,21 @@
+{
+    "telegram": {
+        "bot_token": "YOUR_TELEGRAM_BOT_TOKEN_HERE",
+        "allowed_chat_ids": [
+            "YOUR_CHAT_ID_HERE"
+        ],
+        "tasks_file": "../.agent/tasks.json"
+    },
+    "auto_clicker": {
+        "enabled": true,
+        "scan_interval": 0.5,
+        "cooldown_after_click": 2.0,
+        "confidence_threshold": 0.85,
+        "region": {
+            "top": 0,
+            "left": 0,
+            "width": 1920,
+            "height": 1080
+        }
+    }
+}
