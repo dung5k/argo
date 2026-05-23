@@ -10,9 +10,9 @@ Hệ thống gọi bạn từ bộ quản lý Task JSON (task id: `xag_all_sessi
 
 ### Kiến trúc Workspace V6 MTF
 Hệ thống bao gồm 3 không gian làm việc chính cho 3 phiên:
-- **Châu Á (Asian):** `bot_config_v6_xag_asian.json` | Workspace: `workspaces/CFG_XAG_ASIAN_V6/` | Diary: `ASIAN_V6_DIARY.md`
-- **Luân Đôn (London):** `bot_config_v6_xag_london.json` | Workspace: `workspaces/CFG_XAG_LONDON_V6/` | Diary: `LONDON_V6_DIARY.md`
-- **New York (NY):** `bot_config_v6_xag_ny.json` | Workspace: `workspaces/CFG_XAG_NY_V6/` | Diary: `NY_V6_DIARY.md`
+- **Châu Á (Asian):** `config.json` gốc trong `workspaces/CFG_XAG_ASIAN_V6/` | Diary: `ASIAN_V6_DIARY.md`
+- **Luân Đôn (London):** `config.json` gốc trong `workspaces/CFG_XAG_LONDON_V6/` | Diary: `LONDON_V6_DIARY.md`
+- **New York (NY):** `config.json` gốc trong `workspaces/CFG_XAG_NY_V6/` | Diary: `NY_V6_DIARY.md`
 
 ### Đặc điểm Các Phiên Giao Dịch
 - **Asian (00:00 - 07:00 UTC):** Thanh khoản mỏng, giá đi ngang, Micro-Scalping.
@@ -46,7 +46,7 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 1. **Quản lý Hàng Đợi:** Nếu có run đang chờ của phiên được chọn thì tiến hành xử lý.
 2. **Tạo Run Mới cho Phiên Được Chọn:** Nếu hàng đợi RỖNG, bạn BẮT BUỘC tạo run mới cho phiên đã chọn:
    - Sinh RUN_ID: `run_YYYYMMDD_HHMMSS_v6_<TÊN_PHIÊN>_<tên_ý_tưởng>`
-   - Copy config gốc của phiên đó (`bot_config_v6_xag_<phiên>.json`) và áp dụng Search Space.
+   - Copy config gốc của phiên đó (`workspaces/CFG_XAG_<TÊN_PHIÊN>_V6/config.json`) và áp dụng Search Space.
 3. **Kích hoạt Huấn luyện An Toàn:** 
    - ĐỂ ĐẢM BẢO AN TOÀN, bạn **KHÔNG ĐƯỢC** gọi trực tiếp PowerShell `Get-CimInstance` hay `Start-Process`.
    - Dùng lệnh chạy python cơ bản an toàn hoặc script python trung gian thay vì shell script cấp thấp, kết hợp `notify_done.py` với cờ hiệu `xag_v6_training_done`.
