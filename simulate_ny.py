@@ -221,9 +221,9 @@ def get_best_run_dir(workspace_path):
 
 def main():
     workspace = os.path.join(_ROOT, "workspaces", "CFG_LTC_NY_V6")
-    run_dir = get_best_run_dir(workspace)
-    if not run_dir:
-        print("[FATAL] Không tìm thấy thư mục Run nào hoàn chỉnh (Score > 0).")
+    run_dir = os.path.join(workspace, "runs", "run_20260524_003205_v6_NY_resume_epoch_104")
+    if not os.path.exists(run_dir):
+        print("[FATAL] Không tìm thấy thư mục Run.")
         sys.exit(1)
         
     config_path = os.path.join(run_dir, "config.json")
@@ -290,7 +290,25 @@ def main():
     
     # Notify Telegram
     msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 NY) đã tự động chạy lại xong hoàn tất!\n\nKết quả (04/05 - 18/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
-    os.system(f'python .agent/send_to_tele.py "{msg}" --channel 1816854047')
+    try:
+        import json as _json, random as _rnd
+        from datetime import datetime as _dt
+        with open(".agent/tasks.json", "r", encoding="utf-8") as f:
+            tasks = _json.load(f)
+    except:
+        tasks = []
+    tasks.append({
+        "task_id": _rnd.randint(1000000, 9999999),
+        "status": "completed",
+        "prompt": "system_auto_report",
+        "chat_id": 1816854047,
+        "reply_message": msg,
+        "reply_status": "pending",
+        "timestamp": _dt.now().isoformat()
+    })
+    import json as _json2
+    with open(".agent/tasks.json", "w", encoding="utf-8") as f:
+        _json2.dump(tasks, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()

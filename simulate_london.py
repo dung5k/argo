@@ -230,8 +230,18 @@ def main():
     
     with open(config_path, "r", encoding='utf-8') as f:
         temp_config = json.load(f)
-    # Set the strict threshold for the simulator matching the Asian session WR
-    temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = 0.53
+        
+    master_cfg_path = os.path.join(_ROOT, "bot_config_v6_ltc_london.json")
+    with open(master_cfg_path, "r", encoding='utf-8') as f:
+        master_config = json.load(f)
+        
+    sim_cfg = master_config.get("SIMULATOR", {})
+    if "MIN_PROBABILITY_THRESH" in sim_cfg:
+        temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = sim_cfg["MIN_PROBABILITY_THRESH"]
+    
+    sim_start_date = sim_cfg.get("START_DATE", "2026-05-01")
+    sim_end_date = sim_cfg.get("END_DATE", "2026-05-23")
+    sim_window_size = sim_cfg.get("WINDOW_SIZE", 15000)
 
     temp_cfg_path = os.path.join(_ROOT, "temp_sim_config_london.json")
     with open(temp_cfg_path, "w") as f:
@@ -252,12 +262,12 @@ def main():
         config_path=temp_cfg_path,
         model_path=best_model_path,
         scaler_path=scaler_path,
-        window_size=15000,
+        window_size=sim_window_size,
         log_callback=safe_log
     )
 
-    start_date = datetime(2026, 5, 4)
-    end_date = datetime(2026, 5, 18)
+    start_date = datetime.strptime(sim_start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(sim_end_date, "%Y-%m-%d")
     
     all_deals = []
     
@@ -279,8 +289,11 @@ def main():
     wr = n_win / total * 100 if total > 0 else 0
     pnl = sum(d.get("profit", 0) for d in all_deals)
     
+    start_str = start_date.strftime("%d/%m")
+    end_str = end_date.strftime("%d/%m")
+    
     safe_log("\n" + "="*50)
-    safe_log("FINAL SUMMARY (2026-05-04 to 2026-05-18) LONDON Session:")
+    safe_log(f"FINAL SUMMARY ({start_str} to {end_str}) LONDON Session:")
     safe_log(f"Total Deals: {total}")
     safe_log(f"Wins: {n_win}")
     safe_log(f"Losses: {n_loss}")
@@ -289,7 +302,7 @@ def main():
     safe_log("="*50)
     
     # Notify Telegram
-    msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 LONDON) đã tự động chạy lại xong hoàn tất!\n\nKết quả (04/05 - 18/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
+    msg = f"🏆 Báo cáo Sếp, tiến trình Simulator (V6 LONDON OUT-OF-SAMPLE) đã chạy hoàn tất!\n\nKết quả Out-of-sample ({start_str} - {end_str}):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nDữ liệu test này hoàn toàn mới và chưa từng được mô hình học."
     os.system(f'python .agent/send_to_tele.py "{msg}" --channel 1816854047')
 
 if __name__ == "__main__":

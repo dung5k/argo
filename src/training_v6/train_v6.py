@@ -751,6 +751,17 @@ def main():
                 except Exception as e:
                     print(f"  \u274c Lỗi Push HF: {e}", flush=True)
                 
+                # [HOLY GRAIL EARLY STOPPING]
+                if best_score >= 0.150 and best_win_rate >= 0.85:
+                    es_msg = f"\n\U0001f6d1 D\u1ea4U HI\u1ec6U \u0110\u00c3 T\u1ed0T (HOLY GRAIL) k\u00edch ho\u1ea1t t\u1ea1i Epoch {epoch}!\n"
+                    es_msg += f"   Score \u0111\u1ea1t {best_score:.4f} v\u00e0 WinRate {best_win_rate*100:.1f}%. D\u1eebng \u0111\u00e0o t\u1ea1o \u0111\u1ec3 tr\u00e1nh Overfitting.\n"
+                    print(es_msg, flush=True)
+                    if 'tbot' in locals() and 'chat_id' in locals():
+                        try:
+                            tbot.send_message(chat_id, f"\U0001f3c6 <b>[{client_id}] T\u1ef0 \u0110\u1ed8NG D\u1eeaNG (HOLY GRAIL)</b>\n" + es_msg)
+                        except: pass
+                    break
+
                 if phoenix:
                     pass
                 last_report_time = time.time()

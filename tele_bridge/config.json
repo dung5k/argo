@@ -1,8 +1,8 @@
 {
     "telegram": {
-        "bot_token": "YOUR_TELEGRAM_BOT_TOKEN_HERE",
+        "bot_token": "8778828373:AAE6gYFhRUxyKHc5UfEavqMPBzeathAOPxQ",
         "allowed_chat_ids": [
-            "YOUR_CHAT_ID_HERE"
+            1816854047
         ],
         "tasks_file": "../.agent/tasks.json"
     },
