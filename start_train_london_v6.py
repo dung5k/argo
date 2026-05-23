@@ -8,7 +8,7 @@ env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1", FORCE_CPU="0")
 
 print("No need to generate tensors again, using fast local copy...")
 proc = subprocess.Popen(
-    [r"C:\argo\venv\Scripts\python.exe", "-u", "src/training_v6/train_v6.py", config_path, "--run-id", run_id],
+    [r"C:\argo\venv\Scripts\python.exe", "-u", "src/training_v6/train_v6.py", config_path, "--run-id", run_id, "--scratch"],
     stdout=open("train_v6_london.log", "w", encoding="utf-8"),
     stderr=subprocess.STDOUT,
     env=env,
