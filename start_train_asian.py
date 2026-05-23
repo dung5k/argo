@@ -9,7 +9,7 @@ config_path = r"workspaces\CFG_XAG_ASIAN_V6\runs\run_20260524_063400_v6_asian_in
 env = dict(os.environ,
     PYTHONIOENCODING="utf-8",
     PYTHONUTF8="1",
-    PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:128",
+    PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:32",
     FORCE_CPU="0"
 )
 
