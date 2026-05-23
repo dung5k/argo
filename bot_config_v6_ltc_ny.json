@@ -12,7 +12,7 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
+        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
         "TP_PCT": 0.006,
         "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 180,
@@ -81,7 +81,9 @@
         "FINETUNE_EPOCHS": 80,
         "LEARNING_RATE": 1e-05,
         "DROPOUT_RATE": 0.3,
-        "LR_SCHEDULER": "cosine_warm"
+        "LR_SCHEDULER": "cosine_warm",
+        "TRAIN_START": "2025-04-01",
+        "VAL_END": "2026-04-30"
     },
     "MT5_PATHS": {
         "BINANCE": "BINANCE"

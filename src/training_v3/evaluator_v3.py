@@ -45,7 +45,7 @@ class EpochEvalResultV3:
         # Sử dụng Score của ngưỡng L3 (Index 2) và L4 (Index 3)
         l3 = self.threshold_metrics[2].balanced_score
         l4 = self.threshold_metrics[3].balanced_score
-        return (1.4 * l3 + 1.0 * l4) / 2.4
+        return (2.0 * l4 + 1.0 * l3) / 3.0
 
     def format_summary(self) -> str:
         parts = [str(m) for m in self.threshold_metrics]
@@ -151,24 +151,25 @@ class WinRateEvaluatorV3:
         n_signals = n_buy + n_sell
         win_rate = n_correct / n_signals if n_signals > 0 else 0.0
 
-        # Áp dụng phạt Mất Cân Bằng (Balance Penalty)
-        score = win_rate
-        if n_signals > 0:
-            balance_ratio = min(n_buy, n_sell) / max(1, max(n_buy, n_sell))
-            # Nếu 1 chiều cực liệt (0%), thì ratio=0 -> x0.6 (phạt cực mạnh)
-            balance_factor = 1.0 + 0.0 * balance_ratio
-            score = win_rate * balance_factor
-
-            # Áp dụng phạt Số Lượng Lệnh (Frequency Penalty)
-            # → Chống under-trading (chỉ bắn vài lệnh, WR 100%) và over-trading (spam lệnh, dính spread)
-            freq_factor = self.calculate_frequency_penalty(
-                total_signals=n_signals,
-                min_N=self.freq_min_N,
-                max_N=self.freq_max_N
-            )
-            score = score * freq_factor
-
+        import math
+        # 1. Edge: chi tinh phan WinRate vuot qua 50%
+        edge = max(0.0, win_rate - 0.50)
+        
+        # 2. Reliability: phan thuong cho su on dinh (CLT)
+        reliability_factor = math.sqrt(n_signals) if n_signals > 0 else 0.0
+        
+        # 3. Risk (Time Under Stress proxy)
         tus_score = 1.0 - abs(n_buy - n_sell) / n_signals if n_signals > 0 else 0.0
+        risk_factor = tus_score if tus_score > 0 else 0.1
+        
+        # 4. Frequency Penalty
+        freq_factor = self.calculate_frequency_penalty(
+            total_signals=n_signals,
+            min_N=self.freq_min_N,
+            max_N=self.freq_max_N
+        )
+        
+        score = edge * reliability_factor * risk_factor * freq_factor
 
         return ThresholdMetricsV3(
             threshold=threshold,

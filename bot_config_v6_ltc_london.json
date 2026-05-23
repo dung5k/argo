@@ -34,7 +34,8 @@
                     "hour_cos",
                     "volatility_index",
                     "order_flow_imbalance",
-                    "atr_14_scaled"
+                    "atr_14_scaled",
+                    "volume"
                 ]
             },
             {
@@ -44,7 +45,8 @@
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",
-                    "order_flow_imbalance"
+                    "order_flow_imbalance",
+                    "volume"
                 ]
             }
         ],

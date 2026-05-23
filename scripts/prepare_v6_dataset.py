@@ -92,7 +92,10 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
     df_raw = df_list[0].copy()
     for df_next in df_list[1:]:
         df_raw = df_raw.join(df_next, how="outer")
-    df_raw = df_raw.sort_index().ffill(limit=5)
+    df_raw = df_raw.sort_index().ffill().bfill()
+    cols_to_drop = [c for c in df_raw.columns if "timestamp" in c.lower()]
+    if cols_to_drop:
+        df_raw = df_raw.drop(columns=cols_to_drop)
     print(f"  ✅ df_raw tổng hợp: {df_raw.shape[0]:,} dòng × {df_raw.shape[1]} cột", flush=True)
     return df_raw
 
@@ -150,13 +153,15 @@ def get_split_class(target_time, target_idx, base_timestamps, monthly_split, mon
 def get_split_class(target_time, target_idx, base_timestamps, split_time=None, embargo_time=None, weekly_split=False):
     if weekly_split:
         import datetime
-        delta_days = (target_time.date() - datetime.date(2024, 1, 1)).days
+        delta_days = (target_time.date() - datetime.date(2025, 4, 1)).days
+        if delta_days < 0:
+            return 0
         week_index = delta_days // 7
-        cycle = week_index % 5
+        cycle = week_index % 4
         if cycle < 3:
             return 0 # Train
         else:
-            return 1 # Val (Khoảng trống cuối tuần 2 ngày tự nhiên làm Embargo Gap)
+            return 1 # Val (1 week test)
             
     if split_time is not None and embargo_time is not None:
         if target_time < split_time:
@@ -404,6 +409,7 @@ def main():
         print(f"     Đã lọc {len(final_cols)} features: {final_cols[:3]}...")
         
         # 3.5 Fit scaler (trên 80% thời gian đầu)
+        print(f'     [DEBUG SHAPE] len(df_f) = {len(df_f)}')
         train_idx = int(len(df_f) * 0.8)
         train_mask = np.zeros(len(df_f), dtype=bool)
         train_mask[:train_idx] = True
