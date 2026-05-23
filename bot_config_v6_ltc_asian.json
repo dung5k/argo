@@ -12,7 +12,7 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
+        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
         "TP_PCT": 0.003,
         "SL_PCT": 0.002,
         "MAX_HOLD_BARS": 96,
@@ -60,7 +60,7 @@
         "BATCH_SIZE": 256,
         "WARMUP_EPOCHS": 15,
         "FINETUNE_EPOCHS": 80,
-        "LEARNING_RATE": 1.8e-05,
+        "LEARNING_RATE": 1.5e-05,
         "DROPOUT_RATE": 0.25,
         "LR_SCHEDULER": "cosine_warm",
         "POOLING": "attention",
@@ -93,5 +93,6 @@
         "START": "23:00",
         "END": "07:00"
     },
-    "RUN_ID": ""
+    "RUN_ID": "run_20260524_051022_v6_ASIAN_improve_score",
+    "STATE": "IDLE_READY"
 }
