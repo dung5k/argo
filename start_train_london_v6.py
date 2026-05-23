@@ -12,7 +12,6 @@ proc = subprocess.Popen(
     stdout=open("train_v6_london.log", "w", encoding="utf-8"),
     stderr=subprocess.STDOUT,
     env=env,
-    creationflags=0x00000008,
-    close_fds=True
+    creationflags=0x08000000
 )
 print("Training started in background. PID:", proc.pid)
