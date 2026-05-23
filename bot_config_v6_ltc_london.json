@@ -61,7 +61,7 @@
         "BATCH_SIZE": 256,
         "WARMUP_EPOCHS": 10,
         "FINETUNE_EPOCHS": 80,
-        "LEARNING_RATE": 1.8e-05,
+        "LEARNING_RATE": 1e-05,
         "DROPOUT_RATE": 0.25,
         "LR_SCHEDULER": "cosine_warm",
         "TRAIN_START": "2025-04-01",
@@ -99,5 +99,7 @@
         "END_DATE": "2026-05-23",
         "WINDOW_SIZE": 15000,
         "MIN_PROBABILITY_THRESH": 0.53
-    }
+    },
+    "RUN_ID": "run_20260524_043048_v6_LONDON_improve_wr",
+    "STATE": "IDLE_READY"
 }
