@@ -4,7 +4,7 @@ import sys
 
 run_id = "run_20260523_212500_v6_london_init"
 config_path = r"workspaces\CFG_XAG_LONDON_V6\runs\run_20260523_212500_v6_london_init\config.json"
-env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1", FORCE_CPU="0")
+env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1", FORCE_CPU="1")
 
 print("No need to generate tensors again, using fast local copy...")
 proc = subprocess.Popen(
