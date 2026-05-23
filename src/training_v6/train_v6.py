@@ -407,9 +407,8 @@ def main():
                 msg = f"\u274c Lỗi kế thừa Model: {e}"
                 print(f"  {msg}", flush=True)
         else:
-            msg = f"❌ Không tìm thấy CSDL trọng số cũ nào cho {inherit_cfg_id} trên HF để kế thừa! Yêu cầu kế thừa đã bị thất bại. Dừng hệ thống!"
+            msg = f"⚠️ Cảnh báo: Không tìm thấy trọng số cũ cho {inherit_cfg_id}. Tự động chuyển sang Đào tạo MỚI hoàn toàn từ đầu (Random Initialization)!"
             print(f"  {msg}", flush=True)
-            raise FileNotFoundError(msg)
             
     tbot = None
     chat_id = None
