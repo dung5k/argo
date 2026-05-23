@@ -11,6 +11,8 @@ proc = subprocess.Popen(
     [r"C:\argo\venv\Scripts\python.exe", "-u", "src/training_v6/train_v6.py", config_path, "--run-id", run_id],
     stdout=open("train_v6_london.log", "w", encoding="utf-8"),
     stderr=subprocess.STDOUT,
-    env=env
+    env=env,
+    creationflags=0x00000008,
+    close_fds=True
 )
 print("Training started in background. PID:", proc.pid)
