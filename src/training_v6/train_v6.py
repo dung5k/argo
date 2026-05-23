@@ -334,7 +334,8 @@ def main():
     train_loader = DataLoader(TensorDataset(*tensor_args_tr), batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(TensorDataset(*tensor_args_va), batch_size=batch_size, shuffle=False)
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    force_cpu = os.environ.get("FORCE_CPU", "0") == "1"
+    device = torch.device("cpu" if force_cpu else ("cuda" if torch.cuda.is_available() else "cpu"))
     print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
     
     # 2. Sinh mạng neural AAMTV3
