@@ -194,7 +194,7 @@ def main():
     
     # 1. Kéo Dataset (Features V3, 37 Cột) từ mây về
     print("\u2601\ufe0f Đang tải Dataset Tensor từ HuggingFace HUB...", flush=True)
-    tensor_local_dir = os.path.join(run_dir, "data", "tensors")
+    tensor_local_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "tensors")
     os.makedirs(tensor_local_dir, exist_ok=True)
     
     x_path = os.path.join(tensor_local_dir, f"X_tensor_{cfg_id}_tf0.npy")
@@ -630,135 +630,146 @@ def main():
     # [V3] Đọc cấu hình hold_bars từ config
     hold_bars = config.get("FEATURE_ENGINEERING", {}).get("MAX_HOLD_BARS", 20)
     
-    while True:
-        epoch += 1
-        current_optimizer = optimizer
-        tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-        eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max, hold_bars=hold_bars, samples_per_day=samples_per_day)
-
-        comp_score  = eval_res.composite_score()
-        val_ce_loss = eval_res.val_ce   # Sử dụng trực tiếp CrossEntropy Loss từ evaluator
-        current_lr  = optimizer.param_groups[0]['lr']
-        print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | LR={current_lr:.2e} | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
-
-        # [V2] Báo scheduler bước — tương thích cả 2 loại
-        if lr_scheduler_type == "cosine_warm":
-            lr_scheduler.step()  # CosineAnnealing step mỗi epoch
-        else:
-            lr_scheduler.step(val_ce_loss)  # ReduceLROnPlateau step theo val loss
-
-        # [PHÁC ĐỒ 3] Early Stopping: theo dõi CE Loss val
-        if val_ce_loss < _es_best_ce_val:
-            _es_best_ce_val = val_ce_loss
-            _es_streak      = 0
-        else:
-            _es_streak += 1
-            if _es_streak >= _ES_PATIENCE:
-                es_msg = f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!\n"
-                es_msg += f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})\n"
-                es_msg += f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất."
-                print(es_msg, flush=True)
-                if tbot and chat_id:
-                    try:
-                        tbot.send_message(chat_id, f"🛑 <b>[{client_id}] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
-                    except Exception:
-                        pass
-                break
-        
-        improved = comp_score > best_score
-        if improved:
-            best_score      = comp_score
-            best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
-            _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
-            _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
+    try:
+        while True:
+            epoch += 1
+            current_optimizer = optimizer
+            tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
+            eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max, hold_bars=hold_bars, samples_per_day=samples_per_day)
+    
+            comp_score  = eval_res.composite_score()
+            val_ce_loss = eval_res.val_ce   # Sử dụng trực tiếp CrossEntropy Loss từ evaluator
+            current_lr  = optimizer.param_groups[0]['lr']
+            print(f"[Epoch {epoch}] Loss(MSE:{tr_recon:.4f}/CE:{tr_class:.4f}) | LR={current_lr:.2e} | Val {eval_res.format_summary().replace(chr(10), ' | ')}", flush=True)
+    
+            # [V2] Báo scheduler bước — tương thích cả 2 loại
+            if lr_scheduler_type == "cosine_warm":
+                lr_scheduler.step()  # CosineAnnealing step mỗi epoch
+            else:
+                lr_scheduler.step(val_ce_loss)  # ReduceLROnPlateau step theo val loss
+    
+            # [PHÁC ĐỒ 3] Early Stopping: theo dõi CE Loss val
+            if val_ce_loss < _es_best_ce_val:
+                _es_best_ce_val = val_ce_loss
+                _es_streak      = 0
+            else:
+                _es_streak += 1
+                if _es_streak >= _ES_PATIENCE:
+                    es_msg = f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!\n"
+                    es_msg += f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})\n"
+                    es_msg += f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất."
+                    print(es_msg, flush=True)
+                    if tbot and chat_id:
+                        try:
+                            tbot.send_message(chat_id, f"🛑 <b>[{client_id}] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
+                        except Exception:
+                            pass
+                    break
+            
+            improved = comp_score > best_score
+            if improved:
+                best_score      = comp_score
+                best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
+                _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
+                _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
             print(f"  🏆 [ARGO2] ĐỈNH MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
-            
-            # Save local
-            model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")
-            torch.save(model.state_dict(), model_export_path)
-            
-            # Ghi json metrics theo chuẩn V2
-            try:
-                session_name = config.get("SESSION", "ny").lower()
-                target_sym = config.get("TARGET_SYMBOL", "xauusd").lower().replace('m', '')
-                nfe = config.get("MODEL_DIMENSIONS", {}).get("num_features", 38)
-                t_metrics = []
-                for m in eval_res.threshold_metrics:
-                    t_metrics.append({
-                        "threshold": float(m.threshold),
-                        "total_signals": int(m.total_signals),
-                        "win_rate": float(m.win_rate),
-                        "avg_win_return": 0.001,
-                        "avg_loss_return": 0.001,
-                        "ev_score": float(m.balanced_score),
-                        "sharpe_score": 0.0,
-                        "tus_score": float(m.tus_score),
-                        "total_buy": int(m.n_buy),
-                        "total_sell": int(m.n_sell)
-                    })
-                    
-                metrics_data = {
-                    "target": target_sym,
-                    "version": "Transformer_V3",
-                    "dimensions": {
-                        "num_features_target": 0,
-                        "num_features_macro": nfe
-                    },
-                    "sessions": {
-                        session_name: {
-                            "BEST_VLOSS": {
-                                "epoch": int(epoch),
-                                "max_threshold": float(max([m.threshold for m in eval_res.threshold_metrics])) if eval_res.threshold_metrics else 0.5,
-                                "composite_score": float(eval_res.composite_score()),
-                                "val_loss": float(eval_res.val_loss),
-                                "threshold_metrics": t_metrics,
-                                "win_rates": [float(m.win_rate) for m in eval_res.threshold_metrics],
-                                "thresholds": [float(m.threshold) for m in eval_res.threshold_metrics],
-                                "totals": [int(m.total_signals) for m in eval_res.threshold_metrics]
+            if 'tbot' in locals() and 'chat_id' in locals():
+                try:
+                    tbot.send_message(chat_id, f"🏆 <b>[{client_id}] KỶ LỤC MỚI!</b>\nCấu hình: {cfg_id}\nEpoch: {epoch} | Score: {best_score:.4f} | WinRate: {best_win_rate*100:.1f}%")
+                except: pass
+                
+                # Save local
+                model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")
+                torch.save(model.state_dict(), model_export_path)
+                
+                # Ghi json metrics theo chuẩn V2
+                try:
+                    session_name = config.get("SESSION", "ny").lower()
+                    target_sym = config.get("TARGET_SYMBOL", "xauusd").lower().replace('m', '')
+                    nfe = config.get("MODEL_DIMENSIONS", {}).get("num_features", 38)
+                    t_metrics = []
+                    for m in eval_res.threshold_metrics:
+                        t_metrics.append({
+                            "threshold": float(m.threshold),
+                            "total_signals": int(m.total_signals),
+                            "win_rate": float(m.win_rate),
+                            "avg_win_return": 0.001,
+                            "avg_loss_return": 0.001,
+                            "ev_score": float(m.balanced_score),
+                            "sharpe_score": 0.0,
+                            "tus_score": float(m.tus_score),
+                            "total_buy": int(m.n_buy),
+                            "total_sell": int(m.n_sell)
+                        })
+                        
+                    metrics_data = {
+                        "target": target_sym,
+                        "version": "Transformer_V3",
+                        "dimensions": {
+                            "num_features_target": 0,
+                            "num_features_macro": nfe
+                        },
+                        "sessions": {
+                            session_name: {
+                                "BEST_VLOSS": {
+                                    "epoch": int(epoch),
+                                    "max_threshold": float(max([m.threshold for m in eval_res.threshold_metrics])) if eval_res.threshold_metrics else 0.5,
+                                    "composite_score": float(eval_res.composite_score()),
+                                    "val_loss": float(eval_res.val_loss),
+                                    "threshold_metrics": t_metrics,
+                                    "win_rates": [float(m.win_rate) for m in eval_res.threshold_metrics],
+                                    "thresholds": [float(m.threshold) for m in eval_res.threshold_metrics],
+                                    "totals": [int(m.total_signals) for m in eval_res.threshold_metrics]
+                                }
                             }
                         }
                     }
-                }
-                with open(os.path.join(results_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
-                    json.dump(metrics_data, fm, indent=4)
-            except Exception as e:
-                print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
-
-            # [TẠM DISABLE] Đẩy Chart Telegram trong khi đào tạo
-            # plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
-            
-            # Chỉ đẩy đúng thư mục run hiện tại lên HuggingFace nếu có bật SYNC_CHUNKS
+                    with open(os.path.join(results_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
+                        json.dump(metrics_data, fm, indent=4)
+                except Exception as e:
+                    print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
+    
+                # [TẠM DISABLE] Đẩy Chart Telegram trong khi đào tạo
+                # plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
+                
+                # Chỉ đẩy đúng thư mục run hiện tại lên HuggingFace nếu có bật SYNC_CHUNKS
+                try:
+                    sync_chunks = config.get("HF_CLOUD", {}).get("SYNC_CHUNKS", True)
+                    if sync_chunks:
+                        print(f"  ☁️ Đang PUSH run {run_id} lên HF (Background)...", flush=True)
+                        from scripts.sync_workspaces import push_run
+                        import threading
+                        threading.Thread(target=push_run, args=(cfg_id, run_id), daemon=True).start()
+                except Exception as e:
+                    print(f"  \u274c Lỗi Push HF: {e}", flush=True)
+                
+                if phoenix:
+                    pass
+                last_report_time = time.time()
+            else:
+                pass # Continuous wait
+    
+            # [TẠM DISABLE] Báo cáo Telegram định kỳ
+            # current_time = time.time()
+            # if (current_time - last_report_time) >= report_interval_seconds:
+            #     last_report_time = current_time
+            #     plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
+            #     if tbot and chat_id:
+            #         try:
+            #             report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
+            #             report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
+            #             report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
+            #             tbot.send_message(chat_id, report_msg)
+            #             print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
+            #         except Exception as e:
+            #             print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
+    
+    except KeyboardInterrupt:
+        print("\n[INFO] Nguoi dung da dung (KeyboardInterrupt)!")
+        if 'tbot' in locals() and 'chat_id' in locals():
             try:
-                sync_chunks = config.get("HF_CLOUD", {}).get("SYNC_CHUNKS", True)
-                if sync_chunks:
-                    print(f"  ☁️ Đang PUSH run {run_id} lên HF (Background)...", flush=True)
-                    from scripts.sync_workspaces import push_run
-                    import threading
-                    threading.Thread(target=push_run, args=(cfg_id, run_id), daemon=True).start()
-            except Exception as e:
-                print(f"  \u274c Lỗi Push HF: {e}", flush=True)
-            
-            if phoenix:
-                pass
-            last_report_time = time.time()
-        else:
-            pass # Continuous wait
-
-        # [TẠM DISABLE] Báo cáo Telegram định kỳ
-        # current_time = time.time()
-        # if (current_time - last_report_time) >= report_interval_seconds:
-        #     last_report_time = current_time
-        #     plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
-        #     if tbot and chat_id:
-        #         try:
-        #             report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
-        #             report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
-        #             report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
-        #             tbot.send_message(chat_id, report_msg)
-        #             print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
-        #         except Exception as e:
-        #             print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
-
+                tbot.send_message(chat_id, f"🛑 <b>[{client_id}] TRAINING ĐÃ DỪNG LẠI!</b>\n(KeyboardInterrupt)\nEpoch: {epoch}\nKỷ lục: {best_score:.4f} | WinRate: {best_win_rate*100:.1f}%")
+            except: pass
     # ==========================================
     # QUẢN LÝ DUNG LƯỢNG & ĐỒNG BỘ SAU TRAINING
     # ==========================================
