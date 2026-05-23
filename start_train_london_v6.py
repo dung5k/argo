@@ -10,6 +10,7 @@ env = dict(os.environ,
     PYTHONUTF8="1",
     # GPU Training: fix CUDA memory fragmentation on GTX 1660 SUPER (6GB VRAM)
     PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:128",
+    FORCE_CPU="0"
 )
 
 print("Starting London V6 Training on GPU (scratch)...")
@@ -32,3 +33,8 @@ except KeyboardInterrupt:
 finally:
     log_file.close()
     print("Training finished with code:", proc.returncode)
+    
+    # Notify completion to trigger the next State Machine run
+    print("Sending trigger: xag_v6_training_done...")
+    subprocess.run([sys.executable, ".agent/notify_done.py", "xag_v6_training_done"], env=env)
+
