@@ -379,7 +379,7 @@ def main():
     else:
         print("\n[INHERIT] Đang tìm trọng số cũ để kế thừa từ Workspaces...", flush=True)
         import glob
-        inherit_cfg_id = config.get("INHERIT_CONFIG_ID", cfg_id)
+        inherit_cfg_id = config.get("INHERIT_CONFIG_ID", config.get("TRAINING", {}).get("INHERIT_CONFIG_ID", cfg_id))
         if run_dir:
             pattern = os.path.join(_ROOT, "workspaces", inherit_cfg_id, "runs", "**", "brains", "**", f"aamt_v3_{inherit_cfg_id}_final.pth")
         else:
