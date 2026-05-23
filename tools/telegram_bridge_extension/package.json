@@ -1,0 +1,80 @@
+{
+  "name": "antigravity-telegram-bridge",
+  "displayName": "Antigravity Telegram Bridge",
+  "description": "Telegram Webhook & Bridge for Antigravity AI Bot",
+  "version": "1.5.4",
+  "publisher": "antigravity",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/test/test.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "auto-click-bridge.restart",
+        "title": "Restart Bridge Server"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Bridge Bot",
+      "properties": {
+        "antigravityBridge.botActive": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": true,
+          "description": "Activate or deactivate the Antigravity Telegram Bridge polling for this workspace."
+        },
+        "antigravityBridge.agentIdentity": {
+          "type": "string",
+          "scope": "resource",
+          "default": "Antigravity",
+          "description": "The unique name/identity of this AI Agent in the MQTT network (e.g., Argo1, Argo2)."
+        },
+        "antigravityBridge.teleBotToken": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Telegram Bot Token for managing messaging."
+        },
+        "antigravityBridge.whitelistChatIds": {
+          "type": "string",
+          "scope": "resource",
+          "default": "",
+          "description": "Comma separated list of allowed Chat IDs."
+        },
+        "antigravityBridge.agentWorkingDir": {
+          "type": "string",
+          "scope": "resource",
+          "default": ".agent",
+          "description": "Directory to watch for response.txt. If relative, it uses the first open workspace."
+        },
+        "antigravityBridge.tasksConfigFile": {
+          "type": "string",
+          "scope": "resource",
+          "default": ".agent/tasks.json",
+          "description": "Path to the JSON file managing multiple periodic tasks."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "mqtt": "^5.5.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/test/test/issues"
+  },
+  "homepage": "https://github.com/test/test#readme"
+}
