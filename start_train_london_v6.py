@@ -5,9 +5,14 @@ import time
 
 run_id = "run_20260523_212500_v6_london_init"
 config_path = r"workspaces\CFG_XAG_LONDON_V6\runs\run_20260523_212500_v6_london_init\config.json"
-env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1", FORCE_CPU="1")
+env = dict(os.environ,
+    PYTHONIOENCODING="utf-8",
+    PYTHONUTF8="1",
+    # GPU Training: fix CUDA memory fragmentation on GTX 1660 SUPER (6GB VRAM)
+    PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:128",
+)
 
-print("Starting London V6 Training in persistent background...")
+print("Starting London V6 Training on GPU (scratch)...")
 log_file = open("train_v6_london.log", "w", encoding="utf-8")
 
 proc = subprocess.Popen(
@@ -16,7 +21,7 @@ proc = subprocess.Popen(
     stderr=subprocess.STDOUT,
     env=env
 )
-print("Training started. PID:", proc.pid)
+print("Training started on GPU. PID:", proc.pid)
 
 try:
     while proc.poll() is None:

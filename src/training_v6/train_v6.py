@@ -51,6 +51,8 @@ def train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs
     criterion.set_lambdas(lambda_recon=1.0, lambda_class=0.0)
     
     print(f"--- \U0001f680 BẮT ĐẦU WARM-UP AUTOENCODER ({epochs} Epochs) ---", flush=True)
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
     for epoch in range(epochs):
         total_recon_loss = 0.0
         for batch_idx, batch in enumerate(train_loader):
