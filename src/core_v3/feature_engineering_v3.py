@@ -555,6 +555,19 @@ class FeatureEngineeringV3:
         
         return final_features
         
+    def fit_scaler(self, features_df):
+        """Chỉ tìm và lưu thông số Scaler (Median, IQR) từ dữ liệu truyền vào (thường là Train Set)"""
+        def _no_scale(col):
+            return (
+                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
+                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
+                or col.endswith('_target_corr_60')
+            )
+        cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
+        if cols_to_scale:
+            self.scaler.fit(features_df[cols_to_scale])
+            self.is_fitted = True
+            
     def fit_transform_scaler(self, features_df):
         """Scale data trong lúc Training"""
         # Tránh scale các cột đã nằm trong biên [-1, 1] hoặc [0, 1]:
