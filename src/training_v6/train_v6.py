@@ -471,6 +471,22 @@ def main():
                     if tg_chat_id: tg_chat_id = int(tg_chat_id)
                     break
 
+        # 3. Fallback cuối cùng: Cố gắng parse JSON trực tiếp từ .vscode/settings.json nếu vẫn thiếu credentials
+        if not tg_token or not tg_chat_id:
+            if os.path.exists(settings_path):
+                try:
+                    with open(settings_path, 'r', encoding='utf-8') as f:
+                        vsc_cfg = json.load(f)
+                    if not tg_token:
+                        tg_token = vsc_cfg.get("antigravityBridge.teleBotToken")
+                    if not tg_chat_id:
+                        chat_ids = vsc_cfg.get("antigravityBridge.whitelistChatIds")
+                        if chat_ids:
+                            chat_id_str = str(chat_ids).split(",")[0].strip()
+                            if chat_id_str: tg_chat_id = int(chat_id_str)
+                except Exception:
+                    pass
+
         if not tg_token or not tg_chat_id:
             raise ValueError("Không tìm thấy Telegram credentials (file JSON hoặc env vars)")
 
