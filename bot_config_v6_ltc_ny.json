@@ -29,7 +29,11 @@
                     "log_return_close",
                     "body_pct",
                     "bb_width",
-                    "rsi_14_scaled",
+                    "atr_normalized",
+                    "rsi_5_scaled",
+                    "chop_14",
+                    "volume_effort",
+                    "vol_surge_ratio",
                     "hour_sin",
                     "hour_cos"
                 ]
@@ -39,7 +43,9 @@
                 "TIMEFRAME": "5min",
                 "WINDOW_SIZE": 180,
                 "FEATURES": [
-                    "log_return_close"
+                    "log_return_close",
+                    "bb_width",
+                    "vol_surge_ratio"
                 ]
             },
             {
@@ -47,7 +53,8 @@
                 "TIMEFRAME": "5min",
                 "WINDOW_SIZE": 180,
                 "FEATURES": [
-                    "log_return_close"
+                    "log_return_close",
+                    "bb_width"
                 ]
             },
             {
@@ -64,14 +71,14 @@
         "WINDOW_SIZE": 180
     },
     "TRAINING": {
-        "D_MODEL": 128,
-        "N_HEAD": 8,
-        "NUM_LAYERS": 4,
+        "D_MODEL": 64,
+        "N_HEAD": 4,
+        "NUM_LAYERS": 2,
         "BATCH_SIZE": 64,
         "WARMUP_EPOCHS": 10,
         "FINETUNE_EPOCHS": 80,
         "LEARNING_RATE": 1e-05,
-        "DROPOUT_RATE": 0.3,
+        "DROPOUT_RATE": 0.4,
         "LR_SCHEDULER": "cosine_warm",
         "TRAIN_START": "2025-04-01",
         "VAL_END": "2026-04-30"
@@ -93,8 +100,8 @@
     "LIVE_BOT": {
         "PAPER_TRADE": true,
         "TRADE_PLATFORM": "BINANCE",
-        "MAX_ABSOLUTE_MSE": 0.8,
-        "MIN_PROBABILITY_THRESH": 0.59
+        "MAX_ABSOLUTE_MSE": 1.5,
+        "MIN_PROBABILITY_THRESH": 0.46
     },
     "SESSION": "ny",
     "SESSION_UTC": {
