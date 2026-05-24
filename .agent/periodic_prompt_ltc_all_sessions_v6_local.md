@@ -25,12 +25,12 @@ Hệ thống bao gồm 3 không gian làm việc chính cho 3 phiên:
 2. **Bộ não AI có nhiệm vụ tìm ra quy luật** của sự biến động giữa các mã dẫn dắt và LTC.
 3. Bạn được toàn quyền quyết định thêm/bớt bất kỳ SYMBOL nào vào `MTF_INPUTS` làm chỉ báo dẫn dắt trong mỗi vòng đào tạo của phiên được chọn. Đảm bảo SYMBOL mới có trong `DATA_SOURCE.ROUTING`.
 
-### Quyền Hạn Tìm Kiếm & Tinh Chỉnh
-Bạn được trao **TOÀN QUYỀN MẠNH MẼ** để thay đổi bất kỳ thành phần nào trong cấu hình nhằm tìm ra "chén thánh":
-- **Siêu tham số Học Sâu (Deep Learning):** Tự do tinh chỉnh LR, Dropout, Batch Size, Optimizer, Weight Decay, v.v. Không giới hạn phạm vi, hãy mạnh dạn đề xuất nếu bạn có giả thuyết.
-- **Quy tắc Giao dịch:** Linh hoạt điều chỉnh TP/SL, R:R (thậm chí < 1.0 nếu phiên giao dịch đi ngang).
-- **Base Timeframe (TF):** Bạn được cấp quyền ĐỔI LINH HOẠT Base Timeframe (`TIMEFRAME` của phần tử đầu tiên trong `MTF_INPUTS`) sang `1min`, `5min`, `15min` tùy chiến lược.
-- **Feature Engineering:** Toàn quyền thêm/bớt FEATURES đầu vào. Đừng ngại thử nghiệm các tính năng mới lạ.
+### Quyền Hạn Tìm Kiếm & Tinh Chỉnh (Cần Tư Duy Sắc Bén)
+
+Bạn được trao **TOÀN QUYỀN MẠNH MẼ** để thay đổi cấu hình, nhưng phải có cơ sở toán học:
+* **Siêu tham số DL:** Tự do tinh chỉnh LR, Dropout, Batch Size, Optimizer. CHÚ Ý: Mục tiêu tối thượng là làm giảm **Validation CE Loss**, không phải chỉ nhìn vào Win Rate.
+* **Chỉ báo dẫn dắt (Leading Indicators):** Khi thêm SYMBOL mới vào `MTF_INPUTS`, hãy ưu tiên các tài sản có tính dẫn dắt dòng tiền thị trường Crypto (như BTC, ETH) hoặc Vĩ mô (như DXY).
+* **Base Timeframe & Nhãn (Labels):** Bạn được quyền ĐỔI LINH HOẠT Base Timeframe (`1min`, `5min`, `15min`). **LUẬT THÉP:** Nếu tăng Base Timeframe lên lớn hơn, BẮT BUỘC phải nới rộng ngưỡng Take Profit / Stop Loss (TP/SL) tương ứng để bù đắp độ biến động (Volatility) cao hơn của nến lớn, tránh bị nhiễu nhãn.
 
 ---
 
@@ -38,9 +38,10 @@ Bạn được trao **TOÀN QUYỀN MẠNH MẼ** để thay đổi bất kỳ t
 Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực thi hành động tương ứng. KHÔNG ĐƯỢC bỏ qua State nào.
 
 ### STATE 0: INIT & ANALYSIS (Tổng hợp & Đánh giá Toàn Cục)
+
 1. **Đọc Log & Diary của cả 3 phiên:** Kiểm tra các run mới nhất trong `runs/` của từng workspace và đọc các `DIARY.md` tương ứng.
-2. **Tổng hợp kết quả tốt nhất:** Trích xuất Score và Win Rate tốt nhất hiện tại của mỗi phiên (Asian, London, NY).
-3. **Quyết định phiên đào tạo tiếp theo:** Dựa trên kết quả, hãy phân tích xem phiên nào đang có kết quả yếu nhất cần cải thiện, hoặc phiên nào đang có đà tối ưu tốt cần chạy tiếp. Chọn ra **MỘT PHIÊN DUY NHẤT** để đào tạo trong vòng tiếp theo.
+2. **Tổng hợp kết quả tốt nhất:** Trích xuất **Val CE Loss (Quan trọng nhất)**, Score và Win Rate tốt nhất hiện tại của mỗi phiên (Asian, London, NY).
+3. **Quyết định phiên đào tạo tiếp theo (Explore vs Exploit):** Dựa trên kết quả, hãy phân tích xem phiên nào đang có Val Loss giảm ổn định nhất (Đáng để Exploit - Đào sâu tiếp), hoặc phiên nào đang bị kẹt/overfit cần thử bộ Feature mới (Explore - Khám phá). Chọn ra **MỘT PHIÊN DUY NHẤT** để đào tạo.
 
 ### STATE 1: QUEUE MANAGEMENT & CONTINUOUS TRAINING (Khởi Tạo Đào Tạo Phiên Được Chọn)
 1. **Quản lý Hàng Đợi:** Nếu có run đang chờ của phiên được chọn thì tiến hành xử lý.
@@ -57,13 +58,13 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 > 
 > Mỗi lần kết thúc State Machine, BẮT BUỘC gửi báo cáo theo đúng mẫu sau:
 > 
-> ```
+> ```text
 > 🤖 Argo2 (ĐIỀU PHỐI TOÀN CỤC V6):
 > 
-> 🌍 TỔNG HỢP KẾT QUẢ TỐT NHẤT 3 PHIÊN:
-> 1️⃣ 🏯 ASIAN V6: Score <S_A> | Win Rate: <W_A>%
-> 2️⃣ 💂‍♂️ LONDON V6: Score <S_L> | Win Rate: <W_L>%
-> 3️⃣ 🗽 NEW YORK V6: Score <S_N> | Win Rate: <W_N>%
+> 🌍 TỔNG HỢP KẾT QUẢ BEST RUN 3 PHIÊN:
+> 1️⃣ 🏯 ASIAN V6 : Val Loss <V_A> | Score <S_A> | WR: <W_A>%
+> 2️⃣ 💂‍♂️ LONDON V6: Val Loss <V_L> | Score <S_L> | WR: <W_L>%
+> 3️⃣ 🗽 NY V6    : Val Loss <V_N> | Score <S_N> | WR: <W_N>%
 > 
 > 🎯 QUYẾT ĐỊNH ĐÀO TẠO TIẾP THEO:
 > 👉 Đã chọn phiên: **<TÊN PHIÊN (ASIAN/LONDON/NY)>**
@@ -72,7 +73,8 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 > - Base TF: <TF> | LR: <LR> | TP/SL: <TP/SL>
 > - Leading Indicators: <Liệt kê các mã>
 > 
-> <Phân tích lý do tại sao lại chọn phiên này để đào tạo tiếp. Đưa ra kỳ vọng đột phá dựa trên dữ liệu tổng hợp.>
+> 🧠 Lập luận của AI: <Giải thích ngắn gọn 1-2 câu lý do chọn phiên này và kỳ vọng của việc thay đổi Cấu hình/Indicator để ép Val Loss xuống thấp hơn.>
+> 
 > ```
 > 
 > **LƯU Ý:** 
