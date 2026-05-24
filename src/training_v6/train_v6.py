@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+if os.environ.get("FORCE_CPU", "0") == "1":
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"):
