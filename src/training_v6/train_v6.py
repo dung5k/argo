@@ -767,7 +767,6 @@ def main():
             else:
                 _es_streak += 1
                 if comp_score > best_score:
-                    best_score = comp_score
                     print(f"  Luu y: Score/WR tang (Score: {comp_score:.4f}) nhung Loss khong giam ({val_ce_loss:.4f}). Bo qua viec save model.", flush=True)
 
                 if _es_streak >= _ES_PATIENCE:
