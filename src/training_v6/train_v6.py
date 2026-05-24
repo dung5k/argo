@@ -702,8 +702,30 @@ def main():
                 print(f"  [ARGO2] MO HINH HOI TU TOT NHAT! Val CE Loss = {_es_best_ce_val:.4f} (WR: {best_win_rate*100:.1f}%). Luu model...", flush=True)
                 if 'tbot' in locals() and 'chat_id' in locals():
                     try:
-                        tbot.send_message(chat_id, f"[ARGO2] TOI UU LOSS THANH CONG!\nCau hinh: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%")
-                    except: pass
+                        best_metric = next((m for m in eval_res.threshold_metrics if m.win_rate == best_win_rate), None)
+                        if not best_metric and eval_res.threshold_metrics:
+                            best_metric = eval_res.threshold_metrics[-1]
+                        
+                        if best_metric:
+                            msg = (
+                                f"[ARGO2] 🟢 TOI UU LOSS THANH CONG!\n"
+                                f"⚙️ Cau hinh: {cfg_id}\n"
+                                f"🔄 Epoch: {epoch} | LR: {current_lr:.2e} (Patience: {_es_streak}/{_ES_PATIENCE})\n\n"
+                                f"📊 KET QUA MACHINE LEARNING:\n"
+                                f"- Val CE Loss  : {val_ce_loss:.4f} (Train Loss: {tr_class:.4f})\n"
+                                f"- WinRate      : {best_metric.win_rate*100:.1f}%\n"
+                                f"- Precision    : {best_metric.precision*100:.1f}% | F1-Score: {best_metric.f1_score:.2f}\n\n"
+                                f"💰 KET QUA THUC CHIEN (Tren tap Val):\n"
+                                f"- Profit Factor: {best_metric.profit_factor:.2f}\n"
+                                f"- Max Drawdown : {-best_metric.max_drawdown:.1f} R\n"
+                                f"- Est. PnL     : {best_metric.expected_value * best_metric.total_signals:.1f} R\n"
+                                f"- So lenh      : {best_metric.total_signals} lenh"
+                            )
+                        else:
+                            msg = f"[ARGO2] 🟢 TOI UU LOSS THANH CONG!\nCau hinh: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%"
+                        tbot.send_message(chat_id, msg)
+                    except Exception as e: 
+                        print(f"Telegram error: {e}")
                 
                 # Save local
                 model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")

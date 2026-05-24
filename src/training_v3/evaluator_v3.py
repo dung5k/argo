@@ -18,6 +18,12 @@ class ThresholdMetricsV3:
     n_sell: int = 0
     balanced_score: float = 0.0  # Điểm đánh giá (phạt nếu tỷ lệ Buy/Sell lệch quá lớn)
     tus_score: float = 0.0  # Time Under Stress / Total Units Scaled
+    precision: float = 0.0
+    recall: float = 0.0
+    f1_score: float = 0.0
+    profit_factor: float = 0.0
+    max_drawdown: float = 0.0
+    expected_value: float = 0.0
 
     def __str__(self) -> str:
         b_ratio = min(self.n_buy, self.n_sell) / max(1, max(self.n_buy, self.n_sell))
@@ -111,7 +117,7 @@ class WinRateEvaluatorV3:
                 break
         return max_thresh
 
-    def _compute_metrics(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor, hard_labels: torch.Tensor, threshold: float) -> ThresholdMetricsV3:
+    def _compute_metrics(self, prob_sell: torch.Tensor, prob_buy: torch.Tensor, hard_labels: torch.Tensor, threshold: float, total_ground_truth: int) -> ThresholdMetricsV3:
         buy_mask  = prob_buy > threshold
         sell_mask = prob_sell > threshold
         
@@ -150,26 +156,66 @@ class WinRateEvaluatorV3:
 
         n_signals = n_buy + n_sell
         win_rate = n_correct / n_signals if n_signals > 0 else 0.0
+        
+        # ML Metrics
+        precision = win_rate
+        recall = n_correct / total_ground_truth if total_ground_truth > 0 else 0.0
+        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        
+        # Quant Metrics
+        gross_profit = n_correct * 2.0
+        gross_loss = (n_signals - n_correct) * 1.0
+        profit_factor = gross_profit / gross_loss if gross_loss > 0 else (99.9 if gross_profit > 0 else 0.0)
+        expected_value = (gross_profit - gross_loss) / n_signals if n_signals > 0 else 0.0
+        
+        # Simulate PnL Curve for Max Drawdown
+        current_pnl = 0.0
+        peak_pnl = 0.0
+        mdd = 0.0
+        next_free_bar = 0
+        
+        for i in range(seq_len):
+            if i < next_free_bar:
+                continue
+            is_buy = buy_arr[i]
+            is_sell = sell_arr[i]
+            if is_buy and not is_sell:
+                if lbl_arr[i] == 1:
+                    current_pnl += 2.0
+                else:
+                    current_pnl -= 1.0
+                if current_pnl > peak_pnl: peak_pnl = current_pnl
+                dd = peak_pnl - current_pnl
+                if dd > mdd: mdd = dd
+                next_free_bar = i + hold_bars
+            elif is_sell and not is_buy:
+                if lbl_arr[i] == 0:
+                    current_pnl += 2.0
+                else:
+                    current_pnl -= 1.0
+                if current_pnl > peak_pnl: peak_pnl = current_pnl
+                dd = peak_pnl - current_pnl
+                if dd > mdd: mdd = dd
+                next_free_bar = i + hold_bars
 
         import math
-        # 1. Edge: chi tinh phan WinRate vuot qua 50%
-        edge = max(0.0, win_rate - 0.50)
+        # 1. Total PnL (Expected Value)
+        # Giả định TP=2, SL=1 (R:R=2:1)
+        ev = win_rate * 2.0 - (1.0 - win_rate) * 1.0
+        total_pnl = max(0.0, ev * n_signals)
         
-        # 2. Reliability: phan thuong cho su on dinh (CLT)
-        reliability_factor = math.sqrt(n_signals) if n_signals > 0 else 0.0
-        
-        # 3. Risk (Time Under Stress proxy)
+        # 2. Risk (Time Under Stress proxy)
         tus_score = 1.0 - abs(n_buy - n_sell) / n_signals if n_signals > 0 else 0.0
         risk_factor = tus_score if tus_score > 0 else 0.1
         
-        # 4. Frequency Penalty
+        # 3. Frequency Penalty
         freq_factor = self.calculate_frequency_penalty(
             total_signals=n_signals,
             min_N=self.freq_min_N,
             max_N=self.freq_max_N
         )
         
-        score = edge * reliability_factor * risk_factor * freq_factor
+        score = total_pnl * risk_factor * freq_factor
 
         return ThresholdMetricsV3(
             threshold=threshold,
@@ -178,7 +224,13 @@ class WinRateEvaluatorV3:
             n_sell=n_sell,
             win_rate=win_rate,
             balanced_score=score,
-            tus_score=tus_score
+            tus_score=tus_score,
+            precision=precision,
+            recall=recall,
+            f1_score=f1_score,
+            profit_factor=profit_factor,
+            max_drawdown=mdd,
+            expected_value=expected_value
         )
 
     def evaluate(self, logits: torch.Tensor, hard_labels: torch.Tensor, val_loss: float, val_mse: float, val_ce: float = float("inf"), samples_per_day: float = 400.0, *args, **kwargs) -> EpochEvalResultV3:
@@ -204,9 +256,19 @@ class WinRateEvaluatorV3:
             # thay vì nhảy vọt lên 0.68, 0.84, 0.99 để tránh triệt tiêu Composite Score về 0
             thresholds = [0.53, 0.54, 0.55, 0.56]
             max_thresh = 0.56
+        # Calculate Total Ground Truth Signals (Max capacity)
+        lbl_arr = hard_labels.cpu().numpy()
+        total_ground_truth = 0
+        next_free = 0
+        for i in range(len(lbl_arr)):
+            if i >= next_free:
+                if lbl_arr[i] == 0 or lbl_arr[i] == 1:
+                    total_ground_truth += 1
+                    next_free = i + self.hold_bars
+                    
         metrics_list = []
         for t in thresholds:
-            m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t)
+            m = self._compute_metrics(prob_sell, prob_buy, hard_labels, t, total_ground_truth)
             metrics_list.append(m)
 
         best_score = max((m.balanced_score for m in metrics_list), default=0.0)
