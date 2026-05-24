@@ -431,42 +431,50 @@ def main():
     if not client_id or client_id == "UnknownClient":
         client_id = socket.gethostname()[:8]
     try:
-        # Khởi tạo credentials rỗng
-        tg_token = None
-        tg_chat_id = None
-        
-        # 1. ƯU TIÊN HÀNG ĐẦU: Đọc trực tiếp từ cấu hình Extension VSCode (.vscode/settings.json)
-        settings_path = os.path.join(_ROOT, '.vscode', 'settings.json')
-        if os.path.exists(settings_path):
+        # Cố gắng lấy Telegram credentials từ Environment Variables trước (Ưu tiên số 1 theo yêu cầu của Sếp Lê)
+        tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        if tg_chat_id:
             try:
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    vsc_cfg = json.load(f)
-                tg_token = vsc_cfg.get("antigravityBridge.teleBotToken")
-                chat_ids = vsc_cfg.get("antigravityBridge.whitelistChatIds")
-                if chat_ids:
-                    chat_id_str = str(chat_ids).split(",")[0].strip()
-                    if chat_id_str: tg_chat_id = int(chat_id_str)
+                tg_chat_id = int(tg_chat_id)
             except Exception:
-                pass
+                tg_chat_id = None
                 
-            # Regex fallback cho .vscode/settings.json nếu json.load thất bại
-            if not tg_token or not tg_chat_id:
-                import re
+        # 1. Đọc từ cấu hình của Extension VSCode (.vscode/settings.json) nếu env vars bị thiếu
+        settings_path = os.path.join(_ROOT, '.vscode', 'settings.json')
+        if not tg_token or not tg_chat_id:
+            if os.path.exists(settings_path):
                 try:
                     with open(settings_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                        vsc_cfg = json.load(f)
                     if not tg_token:
-                        m = re.search(r'"antigravityBridge.teleBotToken"\s*:\s*"([^"]+)"', content)
-                        if m: tg_token = m.group(1)
+                        tg_token = vsc_cfg.get("antigravityBridge.teleBotToken")
                     if not tg_chat_id:
-                        m = re.search(r'"antigravityBridge.whitelistChatIds"\s*:\s*"([^"]+)"', content)
-                        if m: 
-                            chat_id_str = m.group(1).split(",")[0].strip()
+                        chat_ids = vsc_cfg.get("antigravityBridge.whitelistChatIds")
+                        if chat_ids:
+                            chat_id_str = str(chat_ids).split(",")[0].strip()
                             if chat_id_str: tg_chat_id = int(chat_id_str)
                 except Exception:
                     pass
+                    
+                # Regex fallback cho .vscode/settings.json nếu json.load thất bại
+                if not tg_token or not tg_chat_id:
+                    import re
+                    try:
+                        with open(settings_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        if not tg_token:
+                            m = re.search(r'"antigravityBridge.teleBotToken"\s*:\s*"([^"]+)"', content)
+                            if m: tg_token = m.group(1)
+                        if not tg_chat_id:
+                            m = re.search(r'"antigravityBridge.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                            if m: 
+                                chat_id_str = m.group(1).split(",")[0].strip()
+                                if chat_id_str: tg_chat_id = int(chat_id_str)
+                    except Exception:
+                        pass
 
-        # 2. ƯU TIÊN 2: Đọc từ các file cấu hình cục bộ của hệ thống (tg_config.json hoặc telegram_bot_info.json)
+        # 2. Đọc từ các file cấu hình cục bộ của hệ thống (tg_config.json hoặc telegram_bot_info.json) nếu vẫn thiếu
         tg_config_candidates = [
             os.path.join(_ROOT, ".agent", "telegram_bot_info.json"),
             os.path.join(_ROOT, "tg_config.json"),
@@ -485,17 +493,6 @@ def main():
                         break
                     except Exception:
                         pass
-
-        # 3. FALLBACK CUỐI CÙNG: Đọc từ Environment Variables nếu tất cả các file cấu hình đều thiếu
-        if not tg_token:
-            tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-        if not tg_chat_id:
-            env_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-            if env_chat_id:
-                try:
-                    tg_chat_id = int(env_chat_id)
-                except Exception:
-                    pass
 
         if not tg_token or not tg_chat_id:
             raise ValueError("Không tìm thấy Telegram credentials (file JSON hoặc env vars)")
