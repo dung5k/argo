@@ -326,8 +326,16 @@ def main():
     cw_dict = {u: n_samples / (n_classes * c) for u, c in zip(unique_tr, counts_tr)}
     # Khởi tạo mảng weights đảm bảo độ dài 3 (cho 3 class: 0, 1, 2)
     cw_array = [cw_dict.get(i, 1.0) for i in range(3)]
-    
-    print(f"[CLASS WEIGHTS] Trọng số cân bằng lớp: {cw_array}", flush=True)
+
+    # [ARGO2] Hỗ trợ MANUAL_CLASS_WEIGHTS từ config để override balanced weights
+    # Dùng khi dataset mất cân bằng nghiêm trọng (ví dụ Sideway chiếm 70%+)
+    # Format: [weight_sell, weight_buy, weight_sideway] — ví dụ: [3.5, 5.0, 0.3]
+    manual_cw = train_cfg.get("MANUAL_CLASS_WEIGHTS", None)
+    if manual_cw and len(manual_cw) == 3:
+        cw_array = manual_cw
+        print(f"[CLASS WEIGHTS] ⚠️ OVERRIDE thủ công từ config: {cw_array}", flush=True)
+    else:
+        print(f"[CLASS WEIGHTS] Trọng số cân bằng lớp (tự động): {cw_array}", flush=True)
 
     # Wrap into TensorDataset. PyTorch TensorDataset có thể nhận nhiều tham số (*tensors)
     tensor_args_tr = [torch.tensor(X_tr, dtype=torch.float32) for X_tr in Xs_tr] + [torch.tensor(Y_tr, dtype=torch.long)]
