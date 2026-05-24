@@ -356,8 +356,8 @@ def main():
     d_model = train_cfg.get("D_MODEL", 128)
     nheads = train_cfg.get("N_HEADS", train_cfg.get("N_HEAD", 8))
     num_layers = train_cfg.get("NUM_LAYERS", 4)
-    dropout = train_cfg.get("DROPOUT", 0.25)
-    d_ff = train_cfg.get("D_FF", 512)
+    dropout = train_cfg.get("DROPOUT", train_cfg.get("DROPOUT_RATE", 0.25))
+    d_ff = train_cfg.get("D_FF", d_model * 4)
     
     print(f"[MODEL] Init with: d_model={d_model}, nhead={nheads}, num_layers={num_layers}, dropout={dropout}, d_ff={d_ff}", flush=True)
     
@@ -689,41 +689,27 @@ def main():
             else:
                 lr_scheduler.step(val_ce_loss)  # ReduceLROnPlateau step theo val loss
     
-            # [PHÁC ĐỒ 3] Early Stopping: theo dõi CE Loss val
-            if val_ce_loss < _es_best_ce_val:
+                        # [PHÁC ĐỒ 3] Early Stopping & Model Checkpointing
+            improved = val_ce_loss < _es_best_ce_val
+            
+            if improved:
                 _es_best_ce_val = val_ce_loss
                 _es_streak      = 0
-            else:
-                _es_streak += 1
-                if _es_streak >= _ES_PATIENCE:
-                    es_msg = f"\n🛑 EARLY STOPPING kích hoạt tại Epoch {epoch}!\n"
-                    es_msg += f"   CE Loss val đã tăng liên tiếp {_es_streak} epoch ({_es_best_ce_val:.4f} → {val_ce_loss:.4f})\n"
-                    es_msg += f"   Best model đã được lưu. Dừng training để bảo toàn trọng số tốt nhất."
-                    print(es_msg, flush=True)
-                    if tbot and chat_id:
-                        try:
-                            tbot.send_message(chat_id, f"🛑 <b>[{client_id}] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
-                        except Exception:
-                            pass
-                    break
-            
-            improved = comp_score > best_score
-            if improved:
+                
                 best_score      = comp_score
                 best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
-                _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
-                _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
-            print(f"  🏆 [ARGO2] ĐỈNH MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
-            if 'tbot' in locals() and 'chat_id' in locals():
-                try:
-                    tbot.send_message(chat_id, f"🏆 <b>[{client_id}] KỶ LỤC MỚI!</b>\nCấu hình: {cfg_id}\nEpoch: {epoch} | Score: {best_score:.4f} | WinRate: {best_win_rate*100:.1f}%")
-                except: pass
+                
+                print(f"  [ARGO2] MO HINH HOI TU TOT NHAT! Val CE Loss = {_es_best_ce_val:.4f} (WR: {best_win_rate*100:.1f}%). Luu model...", flush=True)
+                if 'tbot' in locals() and 'chat_id' in locals():
+                    try:
+                        tbot.send_message(chat_id, f"[ARGO2] TOI UU LOSS THANH CONG!\nCau hinh: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%")
+                    except: pass
                 
                 # Save local
                 model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")
                 torch.save(model.state_dict(), model_export_path)
                 
-                # Ghi json metrics theo chuẩn V2
+                # Ghi json metrics
                 try:
                     session_name = config.get("SESSION", "ny").lower()
                     target_sym = config.get("TARGET_SYMBOL", "xauusd").lower().replace('m', '')
@@ -768,40 +754,34 @@ def main():
                     with open(os.path.join(results_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
                         json.dump(metrics_data, fm, indent=4)
                 except Exception as e:
-                    print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
-    
-                # [TẠM DISABLE] Đẩy Chart Telegram trong khi đào tạo
-                # plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
+                    print(f"  Loi ghi json metrics: {e}", flush=True)
                 
-                # Chỉ đẩy đúng thư mục run hiện tại lên HuggingFace nếu có bật SYNC_CHUNKS
                 try:
                     sync_chunks = config.get("HF_CLOUD", {}).get("SYNC_CHUNKS", True)
                     if sync_chunks:
-                        print(f"  ☁️ Đang PUSH run {run_id} lên HF (Background)...", flush=True)
                         from scripts.sync_workspaces import push_run
                         import threading
                         threading.Thread(target=push_run, args=(cfg_id, run_id), daemon=True).start()
                 except Exception as e:
-                    print(f"  \u274c Lỗi Push HF: {e}", flush=True)
-                
-                # [HOLY GRAIL EARLY STOPPING]
-                if best_score >= 0.150 and best_win_rate >= 0.85:
-                    es_msg = f"\n\U0001f6d1 D\u1ea4U HI\u1ec6U \u0110\u00c3 T\u1ed0T (HOLY GRAIL) k\u00edch ho\u1ea1t t\u1ea1i Epoch {epoch}!\n"
-                    es_msg += f"   Score \u0111\u1ea1t {best_score:.4f} v\u00e0 WinRate {best_win_rate*100:.1f}%. D\u1eebng \u0111\u00e0o t\u1ea1o \u0111\u1ec3 tr\u00e1nh Overfitting.\n"
+                    print(f"  Loi kich hoat Push: {e}", flush=True)
+            else:
+                _es_streak += 1
+                if comp_score > best_score:
+                    best_score = comp_score
+                    print(f"  Luu y: Score/WR tang (Score: {comp_score:.4f}) nhung Loss khong giam ({val_ce_loss:.4f}). Bo qua viec save model.", flush=True)
+
+                if _es_streak >= _ES_PATIENCE:
+                    es_msg = f"\nEARLY STOPPING kich hoat tai Epoch {epoch}!\n"
+                    es_msg += f"   CE Loss val khong cai thien lien tiep {_es_streak} epoch (Tot nhat: {_es_best_ce_val:.4f})\n"
                     print(es_msg, flush=True)
                     if 'tbot' in locals() and 'chat_id' in locals():
                         try:
-                            tbot.send_message(chat_id, f"\U0001f3c6 <b>[{client_id}] T\u1ef0 \u0110\u1ed8NG D\u1eeaNG (HOLY GRAIL)</b>\n" + es_msg)
-                        except: pass
+                            tbot.send_message(chat_id, f"[ARGO2] HE THONG DUNG DAO TAO\n" + es_msg)
+                        except Exception:
+                            pass
                     break
-
-                if phoenix:
-                    pass
-                last_report_time = time.time()
-            else:
-                pass # Continuous wait
     
-            # [TẠM DISABLE] Báo cáo Telegram định kỳ
+# [TẠM DISABLE] Báo cáo Telegram định kỳ
             # current_time = time.time()
             # if (current_time - last_report_time) >= report_interval_seconds:
             #     last_report_time = current_time
