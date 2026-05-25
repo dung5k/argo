@@ -61,20 +61,21 @@ class V6HistoricalSimulator(HistoricalSimulator):
 
         self._build_full_merged()
 
-        # Rename columns to match target_prefix with 'm' (case-insensitive to support uppercase raw columns like 'XAGUSD_')
-        rename_dict = {}
+        # Duplicate columns to match target_prefix with 'm' (case-insensitive to support uppercase raw columns like 'XAGUSD_')
         for col in self._merged_full.columns:
             col_lower = col.lower()
             if "xagusd_" in col_lower:
-                rename_dict[col] = col.replace("XAGUSD", "XAGUSDm").replace("xagusd", "xagusdm")
+                new_col = col.replace("XAGUSD", "XAGUSDm").replace("xagusd", "xagusdm")
+                self._merged_full[new_col] = self._merged_full[col]
             elif "xauusd_" in col_lower:
-                rename_dict[col] = col.replace("XAUUSD", "XAUUSDm").replace("xauusd", "xauusdm")
+                new_col = col.replace("XAUUSD", "XAUUSDm").replace("xauusd", "xauusdm")
+                self._merged_full[new_col] = self._merged_full[col]
             elif "btcusd_" in col_lower:
-                rename_dict[col] = col.replace("BTCUSD", "BTCUSDm").replace("btcusd", "btcusdm")
+                new_col = col.replace("BTCUSD", "BTCUSDm").replace("btcusd", "btcusdm")
+                self._merged_full[new_col] = self._merged_full[col]
             elif "ethusd_" in col_lower:
-                rename_dict[col] = col.replace("ETHUSD", "ETHUSDm").replace("ethusd", "ethusdm")
-        if rename_dict:
-            self._merged_full = self._merged_full.rename(columns=rename_dict)
+                new_col = col.replace("ETHUSD", "ETHUSDm").replace("ethusd", "ethusdm")
+                self._merged_full[new_col] = self._merged_full[col]
 
         self._ensure_engine()
 
