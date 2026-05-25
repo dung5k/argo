@@ -43,6 +43,17 @@ class V6HistoricalSimulator(HistoricalSimulator):
             log_callback=self.log
         )
 
+    def _load_parquets(self):
+        super()._load_parquets()
+        # Lọc dữ liệu để giảm dung lượng, chỉ giữ từ ngày 2026-04-15 trở đi để tiết kiệm RAM tối đa
+        cutoff_date = pd.Timestamp("2026-04-15", tz="UTC")
+        self.log(f"Filtering parquet dataframes to keep only data after {cutoff_date}...")
+        for sym_key in list(self._symbol_dfs.keys()):
+            df = self._symbol_dfs[sym_key]
+            filtered_df = df[df.index >= cutoff_date]
+            self._symbol_dfs[sym_key] = filtered_df
+            self.log(f"  {sym_key} filtered: {len(filtered_df):,} rows")
+
     def run(self, date_str: str, session: str = "asian") -> pd.DataFrame:
         self.log("=" * 60)
         self.log(f"SIMULATOR V6 | Date={date_str} | Session={session.upper()}")
