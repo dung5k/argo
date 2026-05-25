@@ -49,6 +49,21 @@ class V6HistoricalSimulator(HistoricalSimulator):
         self.log("=" * 60)
 
         self._build_full_merged()
+
+        # Rename columns to match target_prefix with 'm'
+        rename_dict = {}
+        for col in self._merged_full.columns:
+            if col.startswith("xagusd_"):
+                rename_dict[col] = col.replace("xagusd_", "xagusdm_")
+            elif col.startswith("xauusd_"):
+                rename_dict[col] = col.replace("xauusd_", "xauusdm_")
+            elif col.startswith("btcusd_"):
+                rename_dict[col] = col.replace("btcusd_", "btcusdm_")
+            elif col.startswith("ethusd_"):
+                rename_dict[col] = col.replace("ethusd_", "ethusdm_")
+        if rename_dict:
+            self._merged_full = self._merged_full.rename(columns=rename_dict)
+
         self._ensure_engine()
 
         target_symbol = self.config.get("TARGET_SYMBOL", "XAGUSDm")
@@ -193,7 +208,7 @@ def main():
     # Khoảng thời gian Out-Of-Sample
     sim_start_date = sim_cfg.get("START_DATE", "2026-05-01")
     sim_end_date = sim_cfg.get("END_DATE", "2026-05-23")
-    sim_window_size = sim_cfg.get("WINDOW_SIZE", 15000)
+    sim_window_size = min(sim_cfg.get("WINDOW_SIZE", 2000), 2000)
 
     temp_cfg_path = os.path.join(_ROOT, "temp_sim_config_asian.json")
     try:
