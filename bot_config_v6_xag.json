@@ -1,0 +1,123 @@
+{
+    "CONFIG_ID": "CFG_XAG_ASIAN_V6",
+    "VERSION": "6.0",
+    "SESSION": "asian",
+    "TARGET_SYMBOL": "XAGUSDT",
+    "EXECUTION_SYMBOL": "XAGUSDT",
+    "DISABLE_MT5": true,
+    "TARGET_PREFIX": "XAGUSDT",
+    "SESSION_UTC": {
+        "START": "00:00",
+        "END": "06:59",
+        "DESCRIPTION": "Asian session - XAG (00:00-07:00 UTC) | V5 Regime-Aware"
+    },
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/XAG_v5_tensor_asian",
+        "MODEL_REPO": "dung5k/argo_data",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PCT": 0.005,
+        "SL_PCT": 0.003,
+        "MAX_HOLD_BARS": 20,
+        "LABEL_MODE": "pct",
+        "PIP_SIZE": 0.01,
+        "WINDOW_SIZE": 60,
+        "STEP_SIZE": 1,
+        "CRYPTO_MODE": true,
+        "ZERO_NOISE_TARGET": false,
+        "CLEAN_DATA_DIET": true,
+        "FAST_HIT_BARS": 5,
+        "MTF_WINDOWS": [],
+        "VOL_REGIME": true,
+        "ORDER_FLOW": true,
+        "MACRO_FEATURES": {
+            "BTCUSDT": [
+                "log_ret",
+                "bb_width",
+                "volume",
+                "corr_60"
+            ],
+            "ETHUSDT": [
+                "log_ret",
+                "volume",
+                "corr_60"
+            ],
+            "XRPUSDT": [
+                "log_ret",
+                "volume"
+            ],
+            "BCHUSDT": [
+                "log_ret"
+            ],
+            "DOGEUSDT": [
+                "log_ret",
+                "volume"
+            ]
+        }
+    },
+    "TRAINING": {
+        "D_MODEL": 128,
+        "N_HEAD": 8,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 128,
+        "LEARNING_RATE": 5e-05,
+        "WEIGHT_DECAY": 0.0001,
+        "DROPOUT": 0.2,
+        "LAYER_DROP": 0.25,
+        "POOLING": "mean",
+        "CLS_HEAD": "residual",
+        "FOCAL_GAMMA": 2.0,
+        "LABEL_SMOOTHING": 0.1,
+        "RECON_LOSS_WEIGHT": 0.05,
+        "EPOCHS_PHASE_1": 10,
+        "FREQ_MIN_N": 80,
+        "FREQ_MAX_N": 600,
+        "ES_PATIENCE": 25,
+        "LR_SCHEDULER": "cosine_warm",
+        "PATIENCE": 15,
+        "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
+        "MSE_GATE_PERCENTILE": 0.0
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_ASIAN_V5/data/raw",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "DEFAULT": "D:\\mt5\\MetaTrader 5\\terminal64.exe",
+            "BINANCE": "BINANCE"
+        },
+        "ROUTING": {
+            "XAGUSDT": "BINANCE",
+            "BTCUSDT": "BINANCE",
+            "ETHUSDT": "BINANCE",
+            "XRPUSDT": "BINANCE",
+            "BCHUSDT": "BINANCE",
+            "DOGEUSDT": "BINANCE"
+        },
+        "CRYPTO_BINANCE": {
+            "SYMBOLS": [
+                "XAG/USDT",
+                "BTC/USDT",
+                "ETH/USDT",
+                "XRP/USDT",
+                "BCH/USDT",
+                "DOGE/USDT"
+            ],
+            "TIMEFRAME": "1m",
+            "SINCE": "2025-01-01T00:00:00Z"
+        }
+    },
+    "LIVE_BOT": {
+        "TRADE_PLATFORM": "BINANCE",
+        "MAX_ABSOLUTE_MSE": 0.8,
+        "MIN_PROBABILITY_THRESH": 0.57,
+        "BINANCE_EXECUTION": {
+            "LOT_SIZE": 0.5,
+            "LEVERAGE": 10
+        }
+    },
+    "DATASET": {
+        "FAST_HIT_BARS": 10
+    }
+}
