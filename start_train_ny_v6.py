@@ -36,6 +36,8 @@ proc = subprocess.Popen(
     env=env
 )
 print("Training started on CPU. PID:", proc.pid)
+with open("ny_v6_cpu_pid.txt", "w") as f_pid:
+    f_pid.write(str(proc.pid))
 
 try:
     while proc.poll() is None:
