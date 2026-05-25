@@ -3,8 +3,8 @@ import os
 import sys
 import time
 
-run_id = "run_20260524_082100_v6_ny_init"
-config_path = r"workspaces\CFG_XAG_NY_V6\runs\run_20260524_082100_v6_ny_init\config.json"
+run_id = "run_20260525_223000_v6_ny_mtf_expansion"
+config_path = r"workspaces\CFG_XAG_NY_V6\runs\run_20260525_223000_v6_ny_mtf_expansion\config.json"
 
 env = dict(os.environ,
     PYTHONIOENCODING="utf-8",
