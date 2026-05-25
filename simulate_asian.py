@@ -61,17 +61,18 @@ class V6HistoricalSimulator(HistoricalSimulator):
 
         self._build_full_merged()
 
-        # Rename columns to match target_prefix with 'm'
+        # Rename columns to match target_prefix with 'm' (case-insensitive to support uppercase raw columns like 'XAGUSD_')
         rename_dict = {}
         for col in self._merged_full.columns:
-            if col.startswith("xagusd_"):
-                rename_dict[col] = col.replace("xagusd_", "xagusdm_")
-            elif col.startswith("xauusd_"):
-                rename_dict[col] = col.replace("xauusd_", "xauusdm_")
-            elif col.startswith("btcusd_"):
-                rename_dict[col] = col.replace("btcusd_", "btcusdm_")
-            elif col.startswith("ethusd_"):
-                rename_dict[col] = col.replace("ethusd_", "ethusdm_")
+            col_lower = col.lower()
+            if "xagusd_" in col_lower:
+                rename_dict[col] = col.replace("XAGUSD", "XAGUSDm").replace("xagusd", "xagusdm")
+            elif "xauusd_" in col_lower:
+                rename_dict[col] = col.replace("XAUUSD", "XAUUSDm").replace("xauusd", "xauusdm")
+            elif "btcusd_" in col_lower:
+                rename_dict[col] = col.replace("BTCUSD", "BTCUSDm").replace("btcusd", "btcusdm")
+            elif "ethusd_" in col_lower:
+                rename_dict[col] = col.replace("ETHUSD", "ETHUSDm").replace("ethusd", "ethusdm")
         if rename_dict:
             self._merged_full = self._merged_full.rename(columns=rename_dict)
 
