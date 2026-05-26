@@ -2,6 +2,8 @@ import subprocess
 import os
 import sys
 import time
+import shutil
+import glob
 from datetime import datetime
 import json
 import importlib.util
@@ -64,6 +66,66 @@ def get_ai_decision(prompt_path, symbol):
     except json.JSONDecodeError as e:
         print("Lỗi parse JSON:", e)
         return None
+
+def cleanup_old_runs(symbol, version, keep_top_n=2):
+    """Dọn dẹp các run cũ, chỉ giữ lại top N run tốt nhất cho mỗi phiên."""
+    sessions = ["asian", "london", "ny", "weekend"]
+    total_deleted = 0
+    
+    for session in sessions:
+        workspace = f"workspaces/CFG_{symbol}_{session.upper()}_{version}"
+        runs_dir = os.path.join(workspace, "runs")
+        if not os.path.exists(runs_dir):
+            continue
+        
+        # Thu thập metrics của tất cả các run
+        scored_runs = []
+        unscored_runs = []
+        
+        for run_name in os.listdir(runs_dir):
+            run_path = os.path.join(runs_dir, run_name)
+            if not os.path.isdir(run_path):
+                continue
+            
+            metrics_path = os.path.join(run_path, "results", "training_metrics_v3.json")
+            if os.path.exists(metrics_path):
+                try:
+                    with open(metrics_path, "r", encoding="utf-8") as f:
+                        m = json.load(f)
+                    best_score = 0
+                    for sess_data in m.get("sessions", {}).values():
+                        best = sess_data.get("BEST_VLOSS", {})
+                        score = best.get("composite_score", 0)
+                        if score > best_score:
+                            best_score = score
+                    scored_runs.append((run_name, best_score))
+                except Exception:
+                    unscored_runs.append(run_name)
+            else:
+                unscored_runs.append(run_name)
+        
+        # Sắp xếp theo score giảm dần
+        scored_runs.sort(key=lambda x: x[1], reverse=True)
+        
+        # Giữ lại top N run có score
+        runs_to_keep = set(r[0] for r in scored_runs[:keep_top_n])
+        runs_to_delete = [r[0] for r in scored_runs[keep_top_n:]] + unscored_runs
+        
+        for run_name in runs_to_delete:
+            run_path = os.path.join(runs_dir, run_name)
+            try:
+                shutil.rmtree(run_path)
+                total_deleted += 1
+                print(f"  🗑️ Đã xóa: {run_path}")
+            except Exception as e:
+                print(f"  ⚠️ Lỗi xóa {run_path}: {e}")
+        
+        if runs_to_keep:
+            print(f"  ✅ {session.upper()}: Giữ lại {len(runs_to_keep)} run tốt nhất, xóa {len(runs_to_delete)} run cũ.")
+    
+    if total_deleted > 0:
+        print(f"\n🧹 TỔNG DỌN DẸP: Đã xóa {total_deleted} run cũ.")
+    return total_deleted
 
 def update_config(session_name, updates, symbol, version, start_date, end_date, custom_params_dict):
     config_file = f"bot_config_{version.lower()}_{symbol.lower()}_{session_name}.json"
@@ -224,6 +286,9 @@ def run_training_loop(args):
         
         print(f"\n--- [7] HOÀN TẤT PHIÊN {target_session.upper()} ---")
         subprocess.run([sys.executable, ".agent/notify_done.py", f"{symbol.lower()}_{version.lower()}_training_done"], env=env)
+        
+        print(f"\n--- [8] DỌN DẸP CÁC RUN CŨ ---")
+        cleanup_old_runs(symbol, version, keep_top_n=2)
         
         target_session = next_target_session
         updates = next_updates
