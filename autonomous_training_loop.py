@@ -117,6 +117,12 @@ def run_training_loop(args):
             
     setup_prompt(prompt_path)
     
+    try:
+        start_msg = f"🚀 **HỆ THỐNG AUTO-TRAINING {version.upper()} KHỞI ĐỘNG** 🚀\n- Mã giao dịch: {symbol}\n- Bắt đầu tiến hành phân tích lịch sử để đưa ra quyết định vòng lặp đầu tiên..."
+        subprocess.run([sys.executable, ".agent/send_to_tele.py", start_msg], check=False)
+    except Exception as e:
+        print(f"Lỗi gửi thông báo khởi động: {e}")
+    
     env = dict(os.environ,
         PYTHONIOENCODING="utf-8",
         PYTHONUTF8="1",
