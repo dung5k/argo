@@ -9,6 +9,12 @@ Su dung: python .agent/skill_training_report.py [--channel <id>]
 import os, json, glob, sys, subprocess
 from datetime import datetime
 
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 def scan_workspace(workspace_dir):
     """Quet toan bo runs trong workspace, tra ve danh sach ket qua."""
     results = []
@@ -249,6 +255,7 @@ def main():
         try:
             subprocess.run(cmd, check=False)
             print("Bao cao da gui qua send_to_tele.py!")
+            print(report)
         except Exception as e:
             print(f"Loi khi goi send_to_tele.py: {e}")
     else:
