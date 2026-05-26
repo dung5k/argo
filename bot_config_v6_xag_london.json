@@ -12,7 +12,7 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
+        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
         "TP_PCT": 0.004,
         "SL_PCT": 0.004,
         "MAX_HOLD_BARS": 20,
@@ -70,7 +70,7 @@
         "D_MODEL": 128,
         "N_HEAD": 8,
         "NUM_LAYERS": 4,
-        "BATCH_SIZE": 256,
+        "BATCH_SIZE": 128,
         "WARMUP_EPOCHS": 10,
         "FINETUNE_EPOCHS": 80,
         "LEARNING_RATE": 1.8e-05,
