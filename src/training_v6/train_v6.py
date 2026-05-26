@@ -448,7 +448,7 @@ def main():
                     with open(settings_path, 'r', encoding='utf-8') as f:
                         vsc_cfg = json.load(f)
                     if not tg_token:
-                        tg_token = vsc_cfg.get("antigravityBridge.teleBotToken")
+                        tg_token = os.environ.get("TELEGRAM_BOT_TOKEN") or vsc_cfg.get("antigravityBridge.teleBotToken")
                     if not tg_chat_id:
                         chat_ids = vsc_cfg.get("antigravityBridge.whitelistChatIds")
                         if chat_ids:

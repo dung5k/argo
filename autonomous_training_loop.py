@@ -117,6 +117,12 @@ def run_training_loop(args):
             
     setup_prompt(prompt_path)
     
+    try:
+        start_msg = f"🚀 **HỆ THỐNG AUTO-TRAINING {version.upper()} KHỞI ĐỘNG** 🚀\n- Mã giao dịch: {symbol}\n- Bắt đầu tiến hành phân tích lịch sử để đưa ra quyết định vòng lặp đầu tiên..."
+        subprocess.run([sys.executable, ".agent/send_to_tele.py", start_msg], check=False)
+    except Exception as e:
+        print(f"Lỗi gửi thông báo khởi động: {e}")
+    
     env = dict(os.environ,
         PYTHONIOENCODING="utf-8",
         PYTHONUTF8="1",
@@ -161,6 +167,12 @@ def run_training_loop(args):
 
     while True:
         print(f"\n--- [6] ĐÀO TẠO (TRAIN_{version}): {target_session.upper()} ---")
+        try:
+            train_msg = f"🔥 **BẮT ĐẦU HUẤN LUYỆN (TRAIN)** 🔥\n- Phiên: {target_session.upper()}\n- Version: {version}\n- Đã chuẩn bị Data xong, quá trình ép xung nơ-ron chính thức bắt đầu!"
+            subprocess.run([sys.executable, ".agent/send_to_tele.py", train_msg], check=False)
+        except Exception as e:
+            pass
+            
         log_train = os.path.join(new_run_dir, f'train_{version.lower()}.log')
         f_train_log = open(log_train, 'w', encoding='utf-8')
         train_process = subprocess.Popen(

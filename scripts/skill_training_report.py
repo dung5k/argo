@@ -9,6 +9,12 @@ Su dung: python .agent/skill_training_report.py [--channel <id>]
 import os, json, glob, sys, subprocess
 from datetime import datetime
 
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 def scan_workspace(workspace_dir):
     """Quet toan bo runs trong workspace, tra ve danh sach ket qua."""
     results = []
@@ -240,30 +246,20 @@ def main():
         if idx + 1 < len(sys.argv):
             channel = sys.argv[idx + 1]
     
-    import random
-    tasks_file = os.path.join(base_dir, ".agent", "tasks.json")
-    try:
-        with open(tasks_file, "r", encoding="utf-8") as f:
-            tasks = json.load(f)
-        # tasks.json có thể là dict (object) thay vì list — cần normalize về list
-        if not isinstance(tasks, list):
-            tasks = []
-    except:
-        tasks = []
-    
-    tasks.append({
-        "task_id": random.randint(1000000, 9999999),
-        "status": "completed",
-        "prompt": "training_report",
-        "chat_id": int(channel) if channel else 1816854047,
-        "reply_message": report,
-        "reply_status": "pending",
-        "timestamp": datetime.now().isoformat()
-    })
-    with open(tasks_file, "w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=2, ensure_ascii=False)
-    print("Bao cao da gui thanh cong!")
-    print(report)
+    # Gui qua Telegram bang send_to_tele.py de ho tro headless server
+    send_script = os.path.join(base_dir, ".agent", "send_to_tele.py")
+    if os.path.exists(send_script):
+        cmd = [sys.executable, send_script, report]
+        if channel:
+            cmd.extend(["--channel", str(channel)])
+        try:
+            subprocess.run(cmd, check=False)
+            print("Bao cao da gui qua send_to_tele.py!")
+            print(report)
+        except Exception as e:
+            print(f"Loi khi goi send_to_tele.py: {e}")
+    else:
+        print(report)
 
 if __name__ == "__main__":
     main()

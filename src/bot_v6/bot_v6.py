@@ -173,9 +173,14 @@ try:
     except Exception:
         pass
         
-    tg_bot_token = tg_cfg.get("bot_token", "")
+    tg_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN") or tg_cfg.get("bot_token", "")
     tg_bot = TelegramBot(tg_bot_token) if tg_bot_token else None
-    tg_chat_id = tg_cfg.get("allowed_chat_ids", [])[0] if tg_cfg.get("allowed_chat_ids") else None
+    
+    tg_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if tg_chat_id:
+        tg_chat_id = int(tg_chat_id)
+    else:
+        tg_chat_id = tg_cfg.get("allowed_chat_ids", [])[0] if tg_cfg.get("allowed_chat_ids") else None
 except Exception:
     tg_bot, tg_chat_id = None, None
 
