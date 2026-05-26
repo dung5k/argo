@@ -42,4 +42,4 @@ workspaces/
 MACHINE_INFO.md
 
 
-node_modules/
+node_modules/!.agent/*.py
