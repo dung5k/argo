@@ -5,14 +5,16 @@ import time
 from datetime import datetime
 import json
 import importlib.util
+import argparse
 
-# 1. Update strategy prompt to ask for JSON output
-prompt_path = os.path.join(".agent", "strategy_prompt_LTC.md")
-with open(prompt_path, "r", encoding="utf-8") as f:
-    prompt_text = f.read()
+def setup_prompt(prompt_path):
+    if not os.path.exists(prompt_path):
+        return
+    with open(prompt_path, "r", encoding="utf-8") as f:
+        prompt_text = f.read()
 
-if "json" not in prompt_text.lower():
-    prompt_text += """\n\nBẮT BUỘC: Phần cuối cùng của câu trả lời của bạn PHẢI chứa một khối JSON (nằm trong ```json ... ```) với định dạng sau để hệ thống tự động thiết lập cấu hình:
+    if "json" not in prompt_text.lower():
+        prompt_text += """\n\nBẮT BUỘC: Phần cuối cùng của câu trả lời của bạn PHẢI chứa một khối JSON (nằm trong ```json ... ```) với định dạng sau để hệ thống tự động thiết lập cấu hình:
 ```json
 {
   "target_session": "asian", // "asian", "london", hoặc "ny"
@@ -26,15 +28,14 @@ if "json" not in prompt_text.lower():
 ```
 Lưu ý: Chỉ cập nhật các tham số bạn cho là cần thiết (Explore). Nếu không cần đổi gì (Exploit), để config_updates rỗng {}.
 """
-    with open(prompt_path, "w", encoding="utf-8") as f:
-        f.write(prompt_text)
+        with open(prompt_path, "w", encoding="utf-8") as f:
+            f.write(prompt_text)
 
-def get_ai_decision():
+def get_ai_decision(prompt_path, symbol):
     print("--- [1] TỔNG HỢP BÁO CÁO VÀ GỌI AI ---")
-    # Run skill_training_report.py to get the report
     try:
         report_output = subprocess.check_output(
-            [sys.executable, ".agent/skill_training_report.py", "--prompt-file", prompt_path, "--symbol", "LTC"],
+            [sys.executable, ".agent/skill_training_report.py", "--prompt-file", prompt_path, "--symbol", symbol],
             env=os.environ,
             text=True,
             encoding="utf-8"
@@ -45,7 +46,6 @@ def get_ai_decision():
     
     print(report_output)
     
-    # Parse JSON from AI output
     import re
     match = re.search(r"```json\n(.*?)\n```", report_output, re.DOTALL)
     if not match:
@@ -59,8 +59,8 @@ def get_ai_decision():
         print("Lỗi parse JSON:", e)
         return None
 
-def update_config(session_name, updates):
-    config_file = f"bot_config_v6_ltc_{session_name}.json"
+def update_config(session_name, updates, symbol, version, start_date, end_date, custom_params_dict):
+    config_file = f"bot_config_{version.lower()}_{symbol.lower()}_{session_name}.json"
     if not os.path.exists(config_file):
         print(f"Không tìm thấy file config {config_file}")
         return config_file
@@ -68,7 +68,20 @@ def update_config(session_name, updates):
     with open(config_file, "r", encoding="utf-8") as f:
         cfg = json.load(f)
         
-    for k, v in updates.items():
+    # Áp dụng các thay đổi từ AI
+    all_updates = updates.copy()
+    
+    # Ghi đè bằng custom_params từ CLI (nếu có)
+    if custom_params_dict:
+        all_updates.update(custom_params_dict)
+        
+    # Ghi đè bằng start_date và end_date từ CLI (nếu có)
+    if start_date:
+        all_updates["TRAIN.TRAIN_START"] = start_date
+    if end_date:
+        all_updates["TRAIN.TRAIN_END"] = end_date
+
+    for k, v in all_updates.items():
         parts = k.split('.')
         current = cfg
         for part in parts[:-1]:
@@ -83,7 +96,21 @@ def update_config(session_name, updates):
         
     return config_file
 
-def run_training_loop():
+def run_training_loop(args):
+    symbol = args.symbol.upper()
+    version = args.version.upper()
+    prompt_path = args.prompt_file or os.path.join(".agent", f"strategy_prompt_{symbol}.md")
+    
+    custom_params = {}
+    if args.custom_params:
+        try:
+            custom_params = json.loads(args.custom_params)
+        except json.JSONDecodeError as e:
+            print("Lỗi parse JSON cho --custom-params:", e)
+            sys.exit(1)
+            
+    setup_prompt(prompt_path)
+    
     env = dict(os.environ,
         PYTHONIOENCODING="utf-8",
         PYTHONUTF8="1",
@@ -91,8 +118,7 @@ def run_training_loop():
         FORCE_CPU="0"
     )
     
-    # --- KHỞI TẠO VÒNG LẶP ĐẦU TIÊN ---
-    decision = get_ai_decision()
+    decision = get_ai_decision(prompt_path, symbol)
     if not decision:
         print("AI không đưa ra quyết định hợp lệ, mặc định chạy 'asian' để an toàn.")
         target_session = "asian"
@@ -104,9 +130,9 @@ def run_training_loop():
     print(f"\n🎯 QUYẾT ĐỊNH ĐÀO TẠO ĐẦU TIÊN: {target_session.upper()}")
     print(f"🔧 Cập nhật cấu hình: {updates}")
     
-    config_src = update_config(target_session, updates)
-    workspace = f"workspaces/CFG_LTC_{target_session.upper()}_V6"
-    run_id = datetime.now().strftime(f"run_%Y%m%d_%H%M%S_v6_{target_session}")
+    config_src = update_config(target_session, updates, symbol, version, args.start_date, args.end_date, custom_params)
+    workspace = f"workspaces/CFG_{symbol}_{target_session.upper()}_{version}"
+    run_id = datetime.now().strftime(f"run_%Y%m%d_%H%M%S_{version.lower()}_{target_session}")
     runs_dir = os.path.join(workspace, 'runs')
     os.makedirs(runs_dir, exist_ok=True)
     new_run_dir = os.path.join(runs_dir, run_id)
@@ -123,26 +149,23 @@ def run_training_loop():
     log_prep = os.path.join(new_run_dir, 'prepare_dataset.log')
     with open(log_prep, 'w', encoding='utf-8') as f_log:
         subprocess.run(
-            [sys.executable, 'scripts/prepare_v6_dataset.py', '--config', config_dst, '--no-upload'],
+            [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', config_dst, '--no-upload'],
             env=env, stdout=f_log, stderr=subprocess.STDOUT
         )
 
-    # VÒNG LẶP CHÍNH
     while True:
-        # Bắt đầu training cho phiên hiện tại (chạy ngầm background process)
-        print(f"\n--- [6] ĐÀO TẠO (TRAIN_V6): {target_session.upper()} ---")
-        log_train = os.path.join(new_run_dir, 'train_v6.log')
+        print(f"\n--- [6] ĐÀO TẠO (TRAIN_{version}): {target_session.upper()} ---")
+        log_train = os.path.join(new_run_dir, f'train_{version.lower()}.log')
         f_train_log = open(log_train, 'w', encoding='utf-8')
         train_process = subprocess.Popen(
-            [sys.executable, '-u', 'src/training_v6/train_v6.py', config_dst, '--run-id', run_id, '--scratch', '--session', target_session],
+            [sys.executable, '-u', f'src/training_{version.lower()}/train_{version.lower()}.py', config_dst, '--run-id', run_id, '--scratch', '--session', target_session],
             env=env,
             stdout=f_train_log,
             stderr=subprocess.STDOUT
         )
 
-        # TRONG KHI ĐANG TRAINING: Phân tích AI và chuẩn bị dữ liệu cho phiên TIẾP THEO
         print(f"\n--- [PRE-FETCH] AI ĐANG PHÂN TÍCH VÀ CHUẨN BỊ CHO PHIÊN TIẾP THEO TRONG KHI ĐANG TRAIN ---")
-        next_decision = get_ai_decision()
+        next_decision = get_ai_decision(prompt_path, symbol)
         if not next_decision:
             print("AI không đưa ra quyết định hợp lệ, mặc định chạy 'asian' để an toàn.")
             next_target_session = "asian"
@@ -154,9 +177,9 @@ def run_training_loop():
         print(f"\n🎯 QUYẾT ĐỊNH ĐÀO TẠO TIẾP THEO SẼ LÀ: {next_target_session.upper()}")
         print(f"🔧 Cập nhật cấu hình: {next_updates}")
         
-        next_config_src = update_config(next_target_session, next_updates)
-        next_workspace = f"workspaces/CFG_LTC_{next_target_session.upper()}_V6"
-        next_run_id = datetime.now().strftime(f"run_%Y%m%d_%H%M%S_v6_{next_target_session}")
+        next_config_src = update_config(next_target_session, next_updates, symbol, version, args.start_date, args.end_date, custom_params)
+        next_workspace = f"workspaces/CFG_{symbol}_{next_target_session.upper()}_{version}"
+        next_run_id = datetime.now().strftime(f"run_%Y%m%d_%H%M%S_{version.lower()}_{next_target_session}")
         next_runs_dir = os.path.join(next_workspace, 'runs')
         os.makedirs(next_runs_dir, exist_ok=True)
         next_new_run_dir = os.path.join(next_runs_dir, next_run_id)
@@ -173,19 +196,17 @@ def run_training_loop():
         next_log_prep = os.path.join(next_new_run_dir, 'prepare_dataset.log')
         with open(next_log_prep, 'w', encoding='utf-8') as f_prep_log:
             subprocess.run(
-                [sys.executable, 'scripts/prepare_v6_dataset.py', '--config', next_config_dst, '--no-upload'],
+                [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', next_config_dst, '--no-upload'],
                 env=env, stdout=f_prep_log, stderr=subprocess.STDOUT
             )
         print("--- [PRE-FETCH] CHUẨN BỊ XONG. ĐỢI TIẾN TRÌNH TRAIN HIỆN TẠI KẾT THÚC ---")
 
-        # Đợi training hiện tại hoàn tất
         train_process.wait()
         f_train_log.close()
         
         print(f"\n--- [7] HOÀN TẤT PHIÊN {target_session.upper()} ---")
-        subprocess.run([sys.executable, ".agent/notify_done.py", "ltc_v6_training_done"], env=env)
+        subprocess.run([sys.executable, ".agent/notify_done.py", f"{symbol.lower()}_{version.lower()}_training_done"], env=env)
         
-        # Chuyển đổi trạng thái: dữ liệu tiếp theo trở thành dữ liệu hiện tại
         target_session = next_target_session
         updates = next_updates
         config_src = next_config_src
@@ -197,4 +218,13 @@ def run_training_loop():
         time.sleep(10)
 
 if __name__ == "__main__":
-    run_training_loop()
+    parser = argparse.ArgumentParser(description="Autonomous Training Loop")
+    parser.add_argument("--symbol", type=str, default="LTC", help="Mã giao dịch (VD: LTC, XAG)")
+    parser.add_argument("--version", type=str, default="v6", help="Phiên bản kiến trúc (VD: v6, v5)")
+    parser.add_argument("--prompt-file", type=str, default=None, help="Đường dẫn đến file prompt strategy")
+    parser.add_argument("--start-date", type=str, default=None, help="Ngày bắt đầu training (YYYY-MM-DD)")
+    parser.add_argument("--end-date", type=str, default=None, help="Ngày kết thúc training (YYYY-MM-DD)")
+    parser.add_argument("--custom-params", type=str, default=None, help="JSON chứa các tham số config cần ghi đè")
+    
+    args = parser.parse_args()
+    run_training_loop(args)

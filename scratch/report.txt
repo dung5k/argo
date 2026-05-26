@@ -1,7 +1,0 @@
-📊 BÁO CÁO GIAO DỊCH LTC BOT V3 (Định Kỳ)
-
-💰 Số dư ảo (Balance): 10,000.00$ (+0.00$)
-📉 Lệnh đang mở (Open): 0 lệnh
-✅ Lịch sử gần đây: Chưa có giao dịch ảo nào được ghi nhận.
-⚙️ Tình trạng hệ thống: ⚠️ Không tìm thấy file lưu trạng thái giao dịch ảo cho LTC. Log file gần nhất báo lỗi "Lỗi Áp dụng Scaler: The feature names should match those that were passed during fit" làm gián đoạn DataProcessorV3. LTC chưa có tín hiệu giao dịch mới.
-📌 Note gửi Sếp Lê: Đã kiểm tra, tất cả các task đào tạo tự động (asian, london, ny) hiện đang được vô hiệu hóa (disable) theo yêu cầu.

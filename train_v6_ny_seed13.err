@@ -1,23 +1,0 @@
-C:\argo\venv\lib\site-packages\huggingface_hub\utils\_validators.py:206: UserWarning: The `local_dir_use_symlinks` argument is deprecated and ignored in `snapshot_download`. Downloading to a local directory does not use symlinks anymore.
-  warnings.warn(
-Fetching ... files: 0it [00:00, ?it/s]Fetching ... files: 1it [00:00,  3.38it/s]Fetching ... files: 2it [00:00,  3.12it/s]Fetching ... files: 5it [00:00,  6.47it/s]Fetching ... files: 6it [00:01,  5.88it/s]Fetching ... files: 9it [00:01,  7.10it/s]Fetching ... files: 10it [00:01,  6.38it/s]Fetching ... files: 13it [00:02,  7.45it/s]Fetching ... files: 14it [00:02,  5.99it/s]Fetching ... files: 18it [00:02,  6.32it/s]Fetching ... files: 21it [00:03,  6.81it/s]Fetching ... files: 22it [00:03,  6.62it/s]Fetching ... files: 25it [00:03,  6.62it/s]Fetching ... files: 27it [00:04,  7.46it/s]Fetching ... files: 29it [00:04,  6.26it/s]Fetching ... files: 31it [00:04,  7.73it/s]Fetching ... files: 33it [00:05,  6.30it/s]Fetching ... files: 35it [00:05,  7.31it/s]Fetching ... files: 37it [00:05,  8.81it/s]Fetching ... files: 39it [00:05,  6.88it/s]Fetching ... files: 41it [00:05,  8.34it/s]Fetching ... files: 43it [00:06,  5.16it/s]Fetching ... files: 46it [00:06,  6.74it/s]Fetching ... files: 48it [00:07,  7.81it/s]Fetching ... files: 50it [00:07,  6.63it/s]Fetching ... files: 53it [00:07,  8.74it/s]Fetching ... files: 55it [00:08,  6.85it/s]Fetching ... files: 57it [00:08,  8.14it/s]Fetching ... files: 59it [00:08,  6.60it/s]Fetching ... files: 62it [00:09,  6.75it/s]Fetching ... files: 63it [00:09,  6.80it/s]Fetching ... files: 66it [00:09,  8.91it/s]Fetching ... files: 68it [00:10,  5.99it/s]Fetching ... files: 71it [00:10,  8.15it/s]Fetching ... files: 73it [00:10,  6.88it/s]Fetching ... files: 75it [00:10,  7.57it/s]Fetching ... files: 77it [00:11,  6.83it/s]Fetching ... files: 79it [00:11,  7.24it/s]Fetching ... files: 82it [00:11,  7.58it/s]Fetching ... files: 83it [00:12,  6.60it/s]Fetching ... files: 87it [00:12,  6.85it/s]Fetching ... files: 89it [00:12,  8.07it/s]Fetching ... files: 91it [00:12,  8.86it/s]Fetching ... files: 93it [00:13,  7.49it/s]Fetching ... files: 94it [00:13,  5.22it/s]Fetching ... files: 98it [00:14,  7.50it/s]Fetching ... files: 100it [00:14,  6.93it/s]Fetching ... files: 102it [00:14,  7.45it/s]Fetching ... files: 105it [00:14,  7.91it/s]Fetching ... files: 107it [00:15,  7.95it/s]Fetching ... files: 108it [00:15,  7.82it/s]Fetching ... files: 109it [00:15,  6.01it/s]Fetching ... files: 112it [00:16,  6.94it/s]Fetching ... files: 115it [00:16,  8.35it/s]Fetching ... files: 115it [00:16,  7.07it/s]
-Traceback (most recent call last):
-  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 806, in <module>
-    main()
-  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 636, in main
-    tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-  File "D:\DungLA\client1\src\training_v6\train_v6.py", line 96, in train_finetuning_phase
-    optimizer.step()
-  File "C:\argo\venv\lib\site-packages\torch\optim\lr_scheduler.py", line 65, in wrapper
-    return wrapped(*args, **kwargs)
-  File "C:\argo\venv\lib\site-packages\torch\optim\optimizer.py", line 88, in wrapper
-    return func(*args, **kwargs)
-  File "C:\argo\venv\lib\site-packages\torch\autograd\grad_mode.py", line 28, in decorate_context
-    return func(*args, **kwargs)
-  File "C:\argo\venv\lib\site-packages\torch\optim\adamw.py", line 137, in step
-    F.adamw(params_with_grad,
-  File "C:\argo\venv\lib\site-packages\torch\optim\_functional.py", line 132, in adamw
-    exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
-RuntimeError: CUDA error: out of memory
-CUDA kernel errors might be asynchronously reported at some other API call,so the stacktrace below might be incorrect.
-For debugging consider passing CUDA_LAUNCH_BLOCKING=1.

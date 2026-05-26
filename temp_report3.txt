@@ -1,5 +1,0 @@
-﻿Dạ báo cáo Sếp, Epoch 5 đã chạy xong từ lâu rồi ạ! Hiện tại tốc độ train Fast Strategy đang rất mượt, hệ thống đã chạy một mạch tới **Epoch 18** luôn rồi Sếp nhé!
-
-Tại Epoch 18 mới nhất, Win Rate vẫn giữ phong độ cực cao ở mức **90.2%** (tại ngưỡng tín hiệu an toàn >=92%). 
-
-Mọi thứ đang đi đúng lộ trình thiết kế. Em vẫn đang trực chiến theo dõi ạ!

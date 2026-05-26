@@ -1,9 +1,0 @@
-﻿Dạ Sếp, em vừa kiểm tra file log trực tiếp của Bot Live. Hiện tại bot vẫn **CHƯA** tính toán ra output dự báo ạ.
-
-🔍 **Nguyên nhân cốt lõi:**
-Bộ não Fast Strategy của chúng ta được thiết kế chạy trên khung Base Timeframe là **5 phút (5min)**. 
-Nguyên tắc của Live Bot là nó phải **chờ đến đúng khoảnh khắc cây nến 5 phút đóng cửa** (ví dụ: đúng 13:05:00, 13:10:00, 13:15:00...) thì mới bắt đầu gom đủ khối lượng giao dịch để tính toán ra bộ Features chuẩn xác nhất. 
-
-Hiện tại thời gian là 13:01, nên bot đang hiển thị Quy hoạch xong 0 luồng tín hiệu tức là nó đang liên tục quét và phục kích chờ đến đúng 13:05:00 để "bắt" trọn cây nến đầu tiên và nhả Output đó ạ! 
-
-Sếp cứ yên tâm chờ đúng thời điểm đóng nến, hệ thống sẽ tự động bung kết quả!
