@@ -167,6 +167,12 @@ def run_training_loop(args):
 
     while True:
         print(f"\n--- [6] ĐÀO TẠO (TRAIN_{version}): {target_session.upper()} ---")
+        try:
+            train_msg = f"🔥 **BẮT ĐẦU HUẤN LUYỆN (TRAIN)** 🔥\n- Phiên: {target_session.upper()}\n- Version: {version}\n- Đã chuẩn bị Data xong, quá trình ép xung nơ-ron chính thức bắt đầu!"
+            subprocess.run([sys.executable, ".agent/send_to_tele.py", train_msg], check=False)
+        except Exception as e:
+            pass
+            
         log_train = os.path.join(new_run_dir, f'train_{version.lower()}.log')
         f_train_log = open(log_train, 'w', encoding='utf-8')
         train_process = subprocess.Popen(
