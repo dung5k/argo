@@ -244,11 +244,22 @@ def main():
     tasks_file = os.path.join(base_dir, ".agent", "tasks.json")
     try:
         with open(tasks_file, "r", encoding="utf-8") as f:
-            tasks = json.load(f)
+            tasks_data = json.load(f)
     except:
-        tasks = []
+        tasks_data = {"tasks": []}
     
-    tasks.append({
+    if isinstance(tasks_data, list):
+        task_list = tasks_data
+        tasks_data = {"tasks": task_list}
+    elif isinstance(tasks_data, dict):
+        if "tasks" not in tasks_data:
+            tasks_data["tasks"] = []
+        task_list = tasks_data["tasks"]
+    else:
+        task_list = []
+        tasks_data = {"tasks": task_list}
+    
+    task_list.append({
         "task_id": random.randint(1000000, 9999999),
         "status": "completed",
         "prompt": "training_report",
@@ -257,8 +268,9 @@ def main():
         "reply_status": "pending",
         "timestamp": datetime.now().isoformat()
     })
+    
     with open(tasks_file, "w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=2, ensure_ascii=False)
+        json.dump(tasks_data, f, indent=2, ensure_ascii=False)
     print("Bao cao da gui thanh cong!")
     print(report)
 
