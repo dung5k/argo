@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-python autonomous_training_loop.py --symbol LTC
+python autonomous_training_loop.py --symbol LTC --version v6 > training_debug.log 2>&1
 pause

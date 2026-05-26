@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-if os.environ.get("FORCE_CPU", "0") == "1":
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
-if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 import json
 import argparse
@@ -346,10 +343,7 @@ def main():
     train_loader = DataLoader(TensorDataset(*tensor_args_tr), batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(TensorDataset(*tensor_args_va), batch_size=batch_size, shuffle=False)
     
-    force_cpu = os.environ.get("FORCE_CPU", "0") == "1"
-    if force_cpu:
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    device = torch.device("cpu" if force_cpu else ("cuda" if torch.cuda.is_available() else "cpu"))
+    device = torch.device("cuda")
     print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
     
     # 2. Sinh mạng neural AAMTV3
