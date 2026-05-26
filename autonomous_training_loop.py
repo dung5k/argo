@@ -7,6 +7,12 @@ import json
 import importlib.util
 import argparse
 
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 def setup_prompt(prompt_path):
     if not os.path.exists(prompt_path):
         return
