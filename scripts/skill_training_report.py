@@ -240,39 +240,19 @@ def main():
         if idx + 1 < len(sys.argv):
             channel = sys.argv[idx + 1]
     
-    import random
-    tasks_file = os.path.join(base_dir, ".agent", "tasks.json")
-    try:
-        with open(tasks_file, "r", encoding="utf-8") as f:
-            tasks_data = json.load(f)
-    except:
-        tasks_data = {"tasks": []}
-    
-    if isinstance(tasks_data, list):
-        task_list = tasks_data
-        tasks_data = {"tasks": task_list}
-    elif isinstance(tasks_data, dict):
-        if "tasks" not in tasks_data:
-            tasks_data["tasks"] = []
-        task_list = tasks_data["tasks"]
+    # Gui qua Telegram bang send_to_tele.py de ho tro headless server
+    send_script = os.path.join(base_dir, ".agent", "send_to_tele.py")
+    if os.path.exists(send_script):
+        cmd = [sys.executable, send_script, report]
+        if channel:
+            cmd.extend(["--channel", str(channel)])
+        try:
+            subprocess.run(cmd, check=False)
+            print("Bao cao da gui qua send_to_tele.py!")
+        except Exception as e:
+            print(f"Loi khi goi send_to_tele.py: {e}")
     else:
-        task_list = []
-        tasks_data = {"tasks": task_list}
-    
-    task_list.append({
-        "task_id": random.randint(1000000, 9999999),
-        "status": "completed",
-        "prompt": "training_report",
-        "chat_id": int(channel) if channel else 1816854047,
-        "reply_message": report,
-        "reply_status": "pending",
-        "timestamp": datetime.now().isoformat()
-    })
-    
-    with open(tasks_file, "w", encoding="utf-8") as f:
-        json.dump(tasks_data, f, indent=2, ensure_ascii=False)
-    print("Bao cao da gui thanh cong!")
-    print(report)
+        print(report)
 
 if __name__ == "__main__":
     main()
