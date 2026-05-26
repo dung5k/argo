@@ -76,7 +76,7 @@
         "LEARNING_RATE": 1.8e-05,
         "DROPOUT_RATE": 0.25,
         "LR_SCHEDULER": "cosine_warm",
-        "TRAIN_START": "2025-04-01",
+        "TRAIN_START": "2025-01-01",
         "VAL_END": "2026-04-30",
         "FOCAL_GAMMA": 2.0
     },
