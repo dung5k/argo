@@ -245,6 +245,9 @@ def main():
     try:
         with open(tasks_file, "r", encoding="utf-8") as f:
             tasks = json.load(f)
+        # tasks.json có thể là dict (object) thay vì list — cần normalize về list
+        if not isinstance(tasks, list):
+            tasks = []
     except:
         tasks = []
     
