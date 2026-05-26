@@ -121,7 +121,7 @@ def run_training_loop(args):
         PYTHONIOENCODING="utf-8",
         PYTHONUTF8="1",
         PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:32",
-        FORCE_CPU="0"
+        FORCE_CPU="1"
     )
     
     decision = get_ai_decision(prompt_path, symbol)
