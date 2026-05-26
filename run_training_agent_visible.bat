@@ -18,5 +18,11 @@ for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v TELEGRAM_CHAT_ID ^| fi
 for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v GEMINI_API_KEY ^| findstr GEMINI_API_KEY') do set "GEMINI_API_KEY=%%b"
 for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v HF_TOKEN ^| findstr HF_TOKEN') do set "HF_TOKEN=%%b"
 
-powershell -Command "C:\argo\venv\Scripts\python.exe -u autonomous_training_loop.py | Tee-Object -FilePath training_agent_console.log"
+if "%COMPUTERNAME%"=="DESKTOP-N67BHMU" (
+    set ARGO_SYMBOL=LTC
+) else (
+    set ARGO_SYMBOL=XAG
+)
+
+powershell -Command "C:\argo\venv\Scripts\python.exe -u autonomous_training_loop.py --symbol %ARGO_SYMBOL% | Tee-Object -FilePath training_agent_console.log"
 pause
