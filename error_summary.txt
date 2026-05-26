@@ -1,3 +1,0 @@
-🚨 **PERIODIC LOG AUDIT ALERT** 🚨
-
-- [Database Error] [JinaReranker] Timeout after 8000ms — falling back to heuristic

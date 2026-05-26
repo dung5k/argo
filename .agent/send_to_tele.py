@@ -105,9 +105,7 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
         return False
     
-    # Xử lý ký tự xuống dòng: thay \n literal thành newline thật
-    content = content.replace('\\n', '\n')
-    text = f"🤖 {agent_identity}:\n{content}"
+    text = f"🤖 {agent_identity}:\n\n{content}"
     success = False
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
@@ -158,4 +156,5 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
+    content = content.replace('\\n', '\n')
     send_to_telegram(content, is_done, target_channels)

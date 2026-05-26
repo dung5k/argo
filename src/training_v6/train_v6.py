@@ -707,22 +707,25 @@ def main():
                             best_metric = eval_res.threshold_metrics[-1]
                         
                         if best_metric:
+                            val_days = approx_days * len(Xs_va[0]) / max(1.0, float(len(Xs[0]))) if 'approx_days' in locals() and 'Xs_va' in locals() and 'Xs' in locals() else 1.0
+                            trades_per_day = best_metric.total_signals / max(0.1, val_days)
                             msg = (
-                                f"[ARGO2] 🟢 TOI UU LOSS THANH CONG!\n"
-                                f"⚙️ Cau hinh: {cfg_id}\n"
+                                f"[ARGO2] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\n"
+                                f"⚙️ Cấu hình: {cfg_id}\n"
                                 f"🔄 Epoch: {epoch} | LR: {current_lr:.2e} (Patience: {_es_streak}/{_ES_PATIENCE})\n\n"
-                                f"📊 KET QUA MACHINE LEARNING:\n"
+                                f"📊 KẾT QUẢ MACHINE LEARNING:\n"
                                 f"- Val CE Loss  : {val_ce_loss:.4f} (Train Loss: {tr_class:.4f})\n"
                                 f"- WinRate      : {best_metric.win_rate*100:.1f}%\n"
                                 f"- Precision    : {best_metric.precision*100:.1f}% | F1-Score: {best_metric.f1_score:.2f}\n\n"
-                                f"💰 KET QUA THUC CHIEN (Tren tap Val):\n"
+                                f"💰 KẾT QUẢ THỰC CHIẾN (Trên tập Val):\n"
                                 f"- Profit Factor: {best_metric.profit_factor:.2f}\n"
                                 f"- Max Drawdown : {-best_metric.max_drawdown:.1f} R\n"
                                 f"- Est. PnL     : {best_metric.expected_value * best_metric.total_signals:.1f} R\n"
-                                f"- So lenh      : {best_metric.total_signals} lenh"
+                                f"- Số lệnh      : {best_metric.total_signals} lệnh ({trades_per_day:.1f} lệnh/ngày)\n"
+                                f"- TUS Score    : {best_metric.tus_score:.2f}"
                             )
                         else:
-                            msg = f"[ARGO2] 🟢 TOI UU LOSS THANH CONG!\nCau hinh: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%"
+                            msg = f"[ARGO2] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\nCấu hình: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%"
                         tbot.send_message(chat_id, msg)
                     except Exception as e: 
                         print(f"Telegram error: {e}")

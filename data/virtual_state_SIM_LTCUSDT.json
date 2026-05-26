@@ -1,0 +1,16 @@
+{
+    "virtual_balance": 9995.8,
+    "virtual_ticket_counter": 1244,
+    "active_trade_loggers": {},
+    "history_deals": [
+        {
+            "ticket": 1244,
+            "order_type": "B\u00c1N",
+            "entry_price": 57.87,
+            "close_price": 58.29,
+            "profit": -4.200000000000017,
+            "close_time": "2026-05-25T10:48:43.385107",
+            "reason": "Giu lenh qua 96 phut"
+        }
+    ]
+}
