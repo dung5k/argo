@@ -266,6 +266,35 @@ function setupMQTT() {
     }
 }
 
+async function checkAndPromptEnvVars() {
+    let token = process.env.TELEGRAM_BOT_TOKEN;
+    let chatId = process.env.TELEGRAM_CHAT_ID;
+    
+    let missing = false;
+    if (!token) {
+        token = await vscode.window.showInputBox({ prompt: "Please enter your TELEGRAM_BOT_TOKEN for Antigravity Bridge", password: true });
+        if (token) {
+            process.env.TELEGRAM_BOT_TOKEN = token;
+            require('child_process').exec(`setx TELEGRAM_BOT_TOKEN "${token}"`);
+            vscode.window.showInformationMessage("TELEGRAM_BOT_TOKEN saved to system environment variables.");
+        } else {
+            missing = true;
+        }
+    }
+    
+    if (!chatId) {
+        chatId = await vscode.window.showInputBox({ prompt: "Please enter your TELEGRAM_CHAT_ID (or multiple IDs separated by comma)" });
+        if (chatId) {
+            process.env.TELEGRAM_CHAT_ID = chatId;
+            require('child_process').exec(`setx TELEGRAM_CHAT_ID "${chatId}"`);
+            vscode.window.showInformationMessage("TELEGRAM_CHAT_ID saved to system environment variables.");
+        } else {
+            missing = true;
+        }
+    }
+    return !missing;
+}
+
 function getConfig() {
     const config = vscode.workspace.getConfiguration('antigravityBridge');
     const root = getWorkspaceRoot();
@@ -280,11 +309,8 @@ function getConfig() {
         tasksConfig = path.join(root, tasksConfig);
     }
     
-    const token = config.get('teleBotToken') || '';
-    const chatId = config.get('whitelistChatIds') || '';
-    
-    if (token) process.env.TELEGRAM_BOT_TOKEN = token;
-    if (chatId) process.env.TELEGRAM_CHAT_ID = chatId;
+    const token = process.env.TELEGRAM_BOT_TOKEN || '';
+    const chatId = process.env.TELEGRAM_CHAT_ID || '';
 
     return {
         botActive: config.get('botActive') ?? true,
@@ -1004,8 +1030,10 @@ if __name__ == '__main__':
     fs.writeFileSync(scriptPath, pyContent);
 }
 
-function activate(context) {
+async function activate(context) {
     console.log('Antigravity Bridge Bot is active');
+    
+    await checkAndPromptEnvVars();
     
     // ensureSendScript() is now called after server binds port
     

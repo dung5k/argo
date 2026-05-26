@@ -2,7 +2,7 @@
   "name": "antigravity-telegram-bridge",
   "displayName": "Antigravity Telegram Bridge",
   "description": "Telegram Webhook & Bridge for Antigravity AI Bot",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "publisher": "antigravity",
   "repository": {
     "type": "git",
@@ -36,18 +36,6 @@
           "scope": "resource",
           "default": "Antigravity",
           "description": "The unique name/identity of this AI Agent in the MQTT network (e.g., Argo1, Argo2)."
-        },
-        "antigravityBridge.teleBotToken": {
-          "type": "string",
-          "scope": "resource",
-          "default": "",
-          "description": "Telegram Bot Token for managing messaging."
-        },
-        "antigravityBridge.whitelistChatIds": {
-          "type": "string",
-          "scope": "resource",
-          "default": "",
-          "description": "Comma separated list of allowed Chat IDs."
         },
         "antigravityBridge.agentWorkingDir": {
           "type": "string",
