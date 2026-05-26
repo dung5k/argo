@@ -67,8 +67,11 @@ def get_ai_decision(prompt_path, symbol):
         print("Lỗi parse JSON:", e)
         return None
 
-def cleanup_old_runs(symbol, version, keep_top_n=2):
+def cleanup_old_runs(symbol, version, exclude_runs=None, keep_top_n=2):
     """Dọn dẹp các run cũ, chỉ giữ lại top N run tốt nhất cho mỗi phiên."""
+    if exclude_runs is None:
+        exclude_runs = []
+    
     sessions = ["asian", "london", "ny", "weekend"]
     total_deleted = 0
     
@@ -83,6 +86,8 @@ def cleanup_old_runs(symbol, version, keep_top_n=2):
         unscored_runs = []
         
         for run_name in os.listdir(runs_dir):
+            if run_name in exclude_runs:
+                continue
             run_path = os.path.join(runs_dir, run_name)
             if not os.path.isdir(run_path):
                 continue
@@ -235,15 +240,17 @@ def run_training_loop(args):
             pass
             
         log_train = os.path.join(new_run_dir, f'train_{version.lower()}.log')
-        f_train_log = open(log_train, 'w', encoding='utf-8')
-        train_process = subprocess.Popen(
-            [sys.executable, '-u', f'src/training_{version.lower()}/train_{version.lower()}.py', config_dst, '--run-id', run_id, '--scratch', '--session', target_session],
-            env=env,
-            stdout=f_train_log,
-            stderr=subprocess.STDOUT
-        )
+        
+        train_cmd = [sys.executable, '-u', f'src/training_{version.lower()}/train_{version.lower()}.py', config_dst, '--run-id', run_id, '--scratch', '--session', target_session]
+        with open(log_train, 'w', encoding='utf-8') as f_log:
+            train_process = subprocess.Popen(train_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
+            for line in train_process.stdout:
+                f_log.write(line)
+                if "Epoch" in line or "[Warm-up]" in line or "[Best]" in line or "composite_score" in line:
+                    print(f"  -> [Train Monitor] {line.strip()}")
+            train_process.wait()
 
-        print(f"\n--- [PRE-FETCH] AI ĐANG PHÂN TÍCH VÀ CHUẨN BỊ CHO PHIÊN TIẾP THEO TRONG KHI ĐANG TRAIN ---")
+        print(f"\n--- [NEXT STEP] AI ĐANG PHÂN TÍCH VÀ CHUẨN BỊ CHO PHIÊN TIẾP THEO ---")
         next_decision = get_ai_decision(prompt_path, symbol)
         if not next_decision:
             print("AI không đưa ra quyết định hợp lệ, mặc định chạy 'asian' để an toàn.")
@@ -258,6 +265,8 @@ def run_training_loop(args):
         
         next_config_src = update_config(next_target_session, next_updates, symbol, version, args.start_date, args.end_date, custom_params)
         next_workspace = f"workspaces/CFG_{symbol}_{next_target_session.upper()}_{version}"
+        import time
+        time.sleep(1)
         next_run_id = datetime.now().strftime(f"run_%Y%m%d_%H%M%S_{version.lower()}_{next_target_session}")
         next_runs_dir = os.path.join(next_workspace, 'runs')
         os.makedirs(next_runs_dir, exist_ok=True)
@@ -273,21 +282,23 @@ def run_training_loop(args):
 
         print(f"\n--- [PRE-FETCH] LẤY DỮ LIỆU: {next_target_session.upper()} ---")
         next_log_prep = os.path.join(next_new_run_dir, 'prepare_dataset.log')
-        with open(next_log_prep, 'w', encoding='utf-8') as f_prep_log:
-            subprocess.run(
-                [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', next_config_dst, '--no-upload'],
-                env=env, stdout=f_prep_log, stderr=subprocess.STDOUT
-            )
-        print("--- [PRE-FETCH] CHUẨN BỊ XONG. ĐỢI TIẾN TRÌNH TRAIN HIỆN TẠI KẾT THÚC ---")
-
-        train_process.wait()
-        f_train_log.close()
+        
+        prep_cmd = [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', next_config_dst, '--no-upload']
+        with open(next_log_prep, 'w', encoding='utf-8') as f_log:
+            prep_process = subprocess.Popen(prep_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
+            for line in prep_process.stdout:
+                f_log.write(line)
+                if "Ráp Tensor" in line or "100%" in line:
+                    print(f"  -> [Prep Monitor] {line.strip()}")
+            prep_process.wait()
+        
+        print("--- [PRE-FETCH] CHUẨN BỊ XONG. TIẾP TỤC VÒNG LẶP ---")
         
         print(f"\n--- [7] HOÀN TẤT PHIÊN {target_session.upper()} ---")
         subprocess.run([sys.executable, ".agent/notify_done.py", f"{symbol.lower()}_{version.lower()}_training_done"], env=env)
         
         print(f"\n--- [8] DỌN DẸP CÁC RUN CŨ ---")
-        cleanup_old_runs(symbol, version, keep_top_n=2)
+        cleanup_old_runs(symbol, version, exclude_runs=[run_id, next_run_id], keep_top_n=2)
         
         target_session = next_target_session
         updates = next_updates

@@ -18,6 +18,5 @@ for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v TELEGRAM_CHAT_ID ^| fi
 for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v GEMINI_API_KEY ^| findstr GEMINI_API_KEY') do set "GEMINI_API_KEY=%%b"
 for /f "tokens=2*" %%a in ('reg query HKCU\Environment /v HF_TOKEN ^| findstr HF_TOKEN') do set "HF_TOKEN=%%b"
 
-C:\argo\venv\Scripts\python.exe -u autonomous_training_loop.py
-
+powershell -Command "C:\argo\venv\Scripts\python.exe -u autonomous_training_loop.py | Tee-Object -FilePath training_agent_console.log"
 pause

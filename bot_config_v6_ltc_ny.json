@@ -56,14 +56,6 @@
                     "log_return_close",
                     "bb_width"
                 ]
-            },
-            {
-                "SYMBOL": "DOGEUSDT",
-                "TIMEFRAME": "5min",
-                "WINDOW_SIZE": 180,
-                "FEATURES": [
-                    "log_return_close"
-                ]
             }
         ],
         "VOL_REGIME": true,
@@ -93,8 +85,7 @@
         "ROUTING": {
             "LTCUSDT": "BINANCE",
             "BTCUSDT": "BINANCE",
-            "ETHUSDT": "BINANCE",
-            "DOGEUSDT": "BINANCE"
+            "ETHUSDT": "BINANCE"
         }
     },
     "LIVE_BOT": {
