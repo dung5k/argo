@@ -41,7 +41,7 @@ def get_ai_decision(prompt_path, symbol):
     print("--- [1] TỔNG HỢP BÁO CÁO VÀ GỌI AI ---")
     try:
         report_output = subprocess.check_output(
-            [sys.executable, ".agent/skill_training_report.py", "--prompt-file", prompt_path, "--symbol", symbol],
+            [sys.executable, "scripts/skill_training_report.py", "--prompt-file", prompt_path, "--symbol", symbol],
             env=os.environ,
             text=True,
             encoding="utf-8"
