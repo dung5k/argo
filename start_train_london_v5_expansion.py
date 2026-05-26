@@ -3,8 +3,8 @@ import os
 import sys
 import time
 
-run_id = "run_20260526_025000_v5_london_hyper_momentum_precision_cpu"
-config_path = r"workspaces\CFG_XAG_LONDON_V5\runs\run_20260526_025000_v5_london_hyper_momentum_precision_cpu\config.json"
+run_id = "run_20260526_082000_v5_london_gold_crypto_momentum"
+config_path = r"workspaces\CFG_XAG_LONDON_V5\runs\run_20260526_082000_v5_london_gold_crypto_momentum\config.json"
 
 env = dict(os.environ,
     PYTHONIOENCODING="utf-8",
