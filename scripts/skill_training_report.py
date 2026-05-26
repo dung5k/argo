@@ -214,12 +214,12 @@ def main():
             import requests, time
             payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
             
-            max_retries = 3
+            max_retries = 5
             ai_text = None
             last_error = ""
             for attempt in range(max_retries):
                 try:
-                    res = requests.post(url, json=payload, timeout=25)
+                    res = requests.post(url, json=payload, timeout=90)
                     if res.status_code == 200:
                         ai_text = res.json()["candidates"][0]["content"]["parts"][0]["text"]
                         break
@@ -229,8 +229,9 @@ def main():
                     last_error = str(ex)
                 
                 if attempt < max_retries - 1:
-                    print(f"[Retry] Gọi Gemini thất bại (lần {attempt+1}/{max_retries}). Thử lại sau 2s... Lỗi: {last_error}")
-                    time.sleep(2)
+                    wait_time = 3 * (attempt + 1)
+                    print(f"[Retry] Gọi Gemini thất bại (lần {attempt+1}/{max_retries}). Thử lại sau {wait_time}s... Lỗi: {last_error}")
+                    time.sleep(wait_time)
                     
             if ai_text:
                 report += "\n\n🤖 Argo2 AI Phân Tích:\n" + ai_text
