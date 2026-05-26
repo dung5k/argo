@@ -49,10 +49,10 @@ try:
         if os.path.exists(vscode_path):
             with open(vscode_path, "r", encoding='utf-8') as f:
                 vsc = json.load(f)
-            vsc_token = vsc.get("antigravityBridge.teleBotToken")
+            vsc_token = os.environ.get("TELEGRAM_BOT_TOKEN") or vsc.get("antigravityBridge.teleBotToken")
             if vsc_token:
                 tg_cfg["bot_token"] = vsc_token
-            vsc_chat = vsc.get("antigravityBridge.whitelistChatIds")
+            vsc_chat = os.environ.get("TELEGRAM_CHAT_ID") or vsc.get("antigravityBridge.whitelistChatIds")
             if vsc_chat:
                 tg_cfg["allowed_chat_ids"] = [int(x.strip()) if x.strip().isdigit() else x.strip() for x in vsc_chat.split(",")]
     except Exception:
