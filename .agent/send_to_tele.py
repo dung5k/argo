@@ -111,7 +111,7 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
 def send_to_telegram(content, is_done=False, target_channels=None):
     if not content: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
-    if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
+    # if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
     send_via_telegram_api(content, is_done, target_channels)
 
 if __name__ == '__main__':
