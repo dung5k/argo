@@ -1,0 +1,22 @@
+{
+  "tasks": [
+    {
+      "id": "cleanup_storage",
+      "enabled": true,
+      "command": "python scripts/cleanup_host_storage.py",
+      "intervalMinutes": 60
+    },
+    {
+      "id": "ltc_all_sessions_v6_auto_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_ltc_all_sessions_v6_local.md",
+      "intervalMinutes": 60
+    },
+    {
+      "id": "xag_all_sessions_v5_auto_tuning",
+      "enabled": false,
+      "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
+      "intervalMinutes": 60
+    }
+  ]
+}
