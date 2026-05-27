@@ -263,12 +263,12 @@ class HistoricalSimulator:
         self._ensure_engine()
 
         # ── Khởi tạo VirtualTradeManager (module gốc bot_v3) ──
-        from src.bot_v3.virtual_trade_manager_v3 import V3VirtualTradeManager
+        from src.simulator.backtest_vtm import BacktestVirtualTradeManager
 
         target_symbol = self.config.get("TARGET_SYMBOL", "XAGUSDm")
         # Tên symbol sim để tránh ghi đè state file bot live
         sim_symbol    = f"SIM_{target_symbol}"
-        virtual_tm    = V3VirtualTradeManager(
+        virtual_tm    = BacktestVirtualTradeManager(
             target_symbol=sim_symbol,
             config=self.config,
             log_callback=self.log,
@@ -295,6 +295,11 @@ class HistoricalSimulator:
         if target_col is None:
             raise ValueError(f"Không tìm thấy cột close cho {self.target_prefix}")
 
+        prefix = target_col.replace("_close", "")
+        open_col = f"{prefix}_open"
+        high_col = f"{prefix}_high"
+        low_col = f"{prefix}_low"
+
         session_df = self._merged_full[
             (self._merged_full.index >= session_start) &
             (self._merged_full.index <  session_end) &
@@ -312,8 +317,16 @@ class HistoricalSimulator:
         n_feat = self._engine.num_features
         self._ensure_processor(list(range(n_feat)))
 
-        # ── Point size (XAG = 0.001/pip) ──
-        point = self.config.get("FEATURE_ENGINEERING", {}).get("PIP_SIZE", 0.001)
+        # ── Point size và Config Backtest ──
+        fe_config = self.config.get("FEATURE_ENGINEERING", {})
+        point = fe_config.get("PIP_SIZE", 0.001)
+        # Anh có thể map slippage và spread mặc định từ config, ở đây lấy cứng hoặc từ data
+        default_spread_pips = self.config.get("SIMULATOR", {}).get("SPREAD_PIPS", 1.0)
+        slippage_pips = self.config.get("SIMULATOR", {}).get("SLIPPAGE_PIPS", 0.5) 
+
+        # ── Khoảng thời gian phiên ──
+        # ── Biến lưu tín hiệu chờ khớp (Mô phỏng Latency) ──
+        # ĐÃ BỎ: Thay bằng BacktestVirtualTradeManager
 
         # ── Replay từng nến ──
         results       = []
@@ -321,17 +334,28 @@ class HistoricalSimulator:
         self.log(f"Replay {len(candle_times)} nến...")
 
         for candle_time in candle_times:
-            close_price = session_df.loc[candle_time, target_col]
+            row = session_df.loc[candle_time]
+            close_p = row[target_col]
+            open_p = row[open_col] if open_col in session_df.columns else close_p
+            high_p = row[high_col] if high_col in session_df.columns else close_p
+            low_p = row[low_col] if low_col in session_df.columns else close_p
+            
+            # Nếu parquet lưu spread theo points, quy đổi ra pips (chia 10)
+            c_spread = f"{prefix}_spread"
+            raw_spread = row.get(c_spread, default_spread_pips * 10)
+            spread_pips = raw_spread / 10.0 if raw_spread > 0 else default_spread_pips
 
-            # Inject thời gian giả lập để cooldown/MAX_HOLD_BARS hoạt động đúng
-            candle_unix = candle_time.timestamp()
-            virtual_tm.sim_clock = candle_unix
+            virtual_tm.sim_clock = candle_time.timestamp()
 
-            # Bước 1: Cập nhật vị thế ảo với giá nến hiện tại → check TP/SL/Trailing
-            virtual_tm.update_virtual_positions(
-                current_bid=close_price,
-                current_ask=close_price,
+            # Bước 1: Dùng hàm OHLC để khớp pending, sweep râu và dời trailing
+            virtual_tm.update_virtual_positions_ohlc(
+                open_p=open_p,
+                high_p=high_p,
+                low_p=low_p,
+                close_p=close_p,
                 point=point,
+                spread_pips=spread_pips,
+                slippage_pips=slippage_pips
             )
 
             # Bước 2: Lấy window lịch sử cho pipeline AI
@@ -353,24 +377,25 @@ class HistoricalSimulator:
             if action is None:
                 continue
 
-            # Bước 4: Thực thi qua VirtualTradeManager (ĐÚNG THUẬT TOÁN GỐC)
-            # Module xử lý: không mở 2 lệnh, reversal, cooldown, MAX_HOLD_BARS
-            virtual_tm.execute_trade(
-                action=action,
-                probs_dict=probs,
-                mse_loss=mse,
-                current_bid=close_price,
-                current_ask=close_price,
-                point=point,
-                actual_target_sym=target_symbol,
-            )
+            # Bước 4: Chờ khớp lệnh ở nến tiếp theo (Mô phỏng Latency)
+            if action in ("BUY", "SELL"):
+                close_ask = close_p + (spread_pips * point * 10)
+                virtual_tm.execute_trade(
+                    action=action,
+                    probs_dict=probs,
+                    mse_loss=mse,
+                    current_bid=close_p,
+                    current_ask=close_ask,
+                    point=point,
+                    actual_target_sym=target_symbol,
+                )
 
             # Bước 5: Ghi log
             results.append({
                 "time":        candle_time,
-                "close":       close_price,
+                "close":       close_p,
                 "action":      action,
-                "gui_action":  virtual_tm.gui_action,
+                "gui_action":  "PENDING_EXEC" if action in ("BUY", "SELL") else virtual_tm.gui_action,
                 "buy_prob":    probs.get("buy", 0),
                 "sell_prob":   probs.get("sell", 0),
                 "hold_prob":   probs.get("hold", 0),
@@ -383,7 +408,7 @@ class HistoricalSimulator:
                 self.log(
                     f"🔔 [{candle_time.strftime('%H:%M')}] {action} | "
                     f"B={probs.get('buy',0):.2f} S={probs.get('sell',0):.2f} | "
-                    f"→ {virtual_tm.gui_action}"
+                    f"→ PENDING_EXEC (Delay sang nến kế)"
                 )
 
         # ── Tổng kết ──
