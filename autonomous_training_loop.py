@@ -133,9 +133,18 @@ def cleanup_old_runs(symbol, version, exclude_runs=None, keep_top_n=2):
     return total_deleted
 
 def update_config(session_name, updates, symbol, version, start_date, end_date, custom_params_dict):
-    config_file = f"bot_config_{version.lower()}_{symbol.lower()}_{session_name}.json"
+    # Support both root config format (v6) and data/ format (v5)
+    config_file_v6 = f"bot_config_{version.lower()}_{symbol.lower()}_{session_name}.json"
+    config_file_v5 = f"data/bot_config_{symbol.lower()}_{session_name}_{version.lower()}.json"
+    
+    config_file = config_file_v6
+    if os.path.exists(config_file_v6):
+        config_file = config_file_v6
+    elif os.path.exists(config_file_v5):
+        config_file = config_file_v5
+        
     if not os.path.exists(config_file):
-        print(f"Không tìm thấy file config {config_file}")
+        print(f"Không tìm thấy file config nào (đã check {config_file_v6} và {config_file_v5})")
         return config_file
         
     with open(config_file, "r", encoding="utf-8") as f:
@@ -240,8 +249,12 @@ def run_training_loop(args):
             pass
             
         log_train = os.path.join(new_run_dir, f'train_{version.lower()}.log')
-        
-        train_cmd = [sys.executable, '-u', f'src/training_{version.lower()}/train_{version.lower()}.py', config_dst, '--run-id', run_id, '--scratch', '--session', target_session]
+        # Gọi hệ thống train
+        train_script = f"src/training_{version.lower()}/train_{version.lower()}.py"
+        if not os.path.exists(train_script) and version.lower() == "v5":
+            train_script = "src/training_v3/train_v3.py"
+            
+        train_cmd = [sys.executable, '-u', train_script, config_dst, '--run-id', run_id, '--scratch', '--session', target_session]
         with open(log_train, 'w', encoding='utf-8') as f_log:
             train_process = subprocess.Popen(train_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
             for line in train_process.stdout:
@@ -249,6 +262,19 @@ def run_training_loop(args):
                 if "Epoch" in line or "[Warm-up]" in line or "[Best]" in line or "composite_score" in line:
                     print(f"  -> [Train Monitor] {line.strip()}")
             train_process.wait()
+
+        print(f"\n--- [EVALUATE & SIMULATE] KIỂM TRA NGƯỠNG CHO {target_session.upper()} ---")
+        try:
+            eval_cmd = [
+                sys.executable, "scripts/evaluate_and_simulate.py",
+                "--run-dir", new_run_dir,
+                "--session", target_session,
+                "--symbol", symbol,
+                "--version", version
+            ]
+            subprocess.run(eval_cmd, env=env, check=False)
+        except Exception as e:
+            print(f"Lỗi khi chạy Evaluate & Simulate: {e}")
 
         print(f"\n--- [NEXT STEP] AI ĐANG PHÂN TÍCH VÀ CHUẨN BỊ CHO PHIÊN TIẾP THEO ---")
         next_decision = get_ai_decision(prompt_path, symbol)
