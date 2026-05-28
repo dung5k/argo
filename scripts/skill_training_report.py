@@ -111,8 +111,15 @@ def main():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     workspaces_dir = os.path.join(base_dir, "workspaces")
     
+    # Parse symbol from args first to filter workspaces
+    target_symbol = None
+    if "--symbol" in sys.argv:
+        idx = sys.argv.index("--symbol")
+        if idx + 1 < len(sys.argv):
+            target_symbol = sys.argv[idx + 1].upper()
+
     # Dinh nghia cac workspace can quet
-    workspace_configs = [
+    all_workspace_configs = [
         # LTC V6
         {"dir": "CFG_LTC_ASIAN_V6", "name": "PHIEN CHAU A (LTC ASIAN V6)", "emoji": "🌏", "sniper": 60},
         {"dir": "CFG_LTC_LONDON_V6", "name": "PHIEN LONDON (LTC LONDON V6)", "emoji": "🇬🇧", "sniper": 60},
@@ -123,9 +130,18 @@ def main():
         {"dir": "CFG_XAG_LONDON_V5", "name": "PHIEN LONDON (XAG LONDON V5)", "emoji": "🇬🇧", "sniper": 80},
         {"dir": "CFG_XAG_NY_V5", "name": "PHIEN NEW YORK (XAG NY V5)", "emoji": "🇺🇸", "sniper": 80},
     ]
-    
+
+    workspace_configs = []
+    for cfg in all_workspace_configs:
+        if target_symbol:
+            if f"_{target_symbol}_" in cfg["dir"]:
+                workspace_configs.append(cfg)
+        else:
+            workspace_configs.append(cfg)
+
     today = datetime.now().strftime("%d/%m/%Y")
-    report_lines = [f"🏆 BAO CAO THANH TICH DAO TAO TOAN HE THONG — {today}", ""]
+    report_title = f"🏆 BAO CAO THANH TICH DAO TAO TOAN HE THONG ({target_symbol}) — {today}" if target_symbol else f"🏆 BAO CAO THANH TICH DAO TAO TOAN HE THONG — {today}"
+    report_lines = [report_title, ""]
     
     # Thu thap ket qua de lam bang so sanh
     summary_data = []
