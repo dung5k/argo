@@ -320,8 +320,14 @@ def main():
     )
 
     label_df = labeler.apply_triple_barrier_fast_hit(df_raw_1m, actual_open, actual_high, actual_low)
-    clean_mask = labeler.get_clean_mask(label_df, fast_hit_bars=args.fast_hit_bars, include_sideway=True)
-
+    
+    # --- RELABEL MESSY SETUPS TO SIDEWAY (2) ---
+    is_messy = (label_df['hit_bars'] > args.fast_hit_bars)
+    label_df.loc[is_messy, 'target_class'] = 2
+    
+    import pandas as pd
+    clean_mask = pd.Series(True, index=label_df.index)
+    # ------------------------------------------
     # Xác định mốc thời gian chia Train/Val (80/20) và Embargo (2880 nến 1m)
     split_idx_time = int(len(label_df) * 0.8)
     split_time = label_df.index[split_idx_time]

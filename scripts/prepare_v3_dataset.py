@@ -411,8 +411,14 @@ def main():
           flush=True)
 
     label_df = labeler.apply_triple_barrier_fast_hit(df_raw, actual_open, actual_high, actual_low)
-    clean_mask = labeler.get_clean_mask(label_df, fast_hit_bars=FAST_HIT_BARS, include_sideway=True)
-
+    
+    # --- RELABEL MESSY SETUPS TO SIDEWAY (2) ---
+    is_messy = (label_df['hit_bars'] > FAST_HIT_BARS)
+    label_df.loc[is_messy, 'target_class'] = 2
+    
+    import pandas as pd
+    clean_mask = pd.Series(True, index=label_df.index)
+    # ------------------------------------------
     # [FIX CẬP NHẬT] Downsample Class 2 để cân bằng với Class 0 và 1
     if 2 in label_df["target_class"].values:
         idx_c0 = label_df.index[(label_df["target_class"] == 0) & clean_mask]
