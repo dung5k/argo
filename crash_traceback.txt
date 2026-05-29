@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "D:\DungLA\client1\src\training_v3\train_v3.py", line 774, in <module>
+    main()
+  File "D:\DungLA\client1\src\training_v3\train_v3.py", line 274, in main
+    raise FileNotFoundError(
+FileNotFoundError: Kh?ng t?m th?y tensor t?i D:\DungLA\client1\workspaces\CFG_XAG_ASIAN_V5\runs\run_20260527_040000_v5_asian_crypto_anchor\data\tensors\X_tensor_CFG_XAG_ASIAN_V5.npy.
+H?y ch?y tr??c: python scripts/upload_v3_dataset.py --config D:\DungLA\client1\workspaces\CFG_XAG_ASIAN_V5\runs\run_20260527_040000_v5_asian_crypto_anchor\config.json

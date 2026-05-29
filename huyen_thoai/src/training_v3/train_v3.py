@@ -491,7 +491,7 @@ def main():
         gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
         start_msg = (
-            f"🚀 <b>[{client_id}] BẮT ĐẦU TRAINING</b>\n"
+            f"🚀 <b>[{client_id}] [App: V3] BẮT ĐẦU TRAINING</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"📋 <b>Cấu hình:</b> <code>{cfg_id}</code> (v{config.get('VERSION', '?')})\n"
             f"🎯 <b>Target:</b> {config.get('TARGET_SYMBOL', '?')} — Phiên {config.get('SESSION', '?').upper()}\n"
@@ -637,7 +637,7 @@ def main():
                 print(es_msg, flush=True)
                 if tbot and chat_id:
                     try:
-                        tbot.send_message(chat_id, f"🛑 <b>[{client_id}] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
+                        tbot.send_message(chat_id, f"🛑 <b>[{client_id}] [App: V3] HỆ THỐNG DỪNG ĐÀO TẠO (EARLY STOPPING)</b>\n" + es_msg)
                     except Exception:
                         pass
                 break
@@ -648,7 +648,7 @@ def main():
             best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
             _es_streak      = 0           # Reset Early Stopping khi có kỷ lục mới
             _es_best_ce_val = val_ce_loss  # Cập nhật ngưỡng CE tốt nhất
-            print(f"  🏆 [ARGO2] ĐỈNH MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
+            print(f"  🏆 [{client_id}] [App: V3] ĐỈNH MỚI! Composite Score = {best_score:.4f}. Lưu model...", flush=True)
             
             # Save local
             model_export_path = os.path.join(model_dir, f"aamt_v3_{cfg_id}_final.pth")
@@ -698,7 +698,7 @@ def main():
                 with open(os.path.join(results_dir, "training_metrics_v3.json"), "w", encoding="utf-8") as fm:
                     json.dump(metrics_data, fm, indent=4)
             except Exception as e:
-                print(f"  \u274c Lỗi lưu JSON metrics: {e}", flush=True)
+                print(f"  ❌ Lỗi lưu JSON metrics: {e}", flush=True)
 
             # Đẩy Chart Telegram
             plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir)
@@ -712,7 +712,7 @@ def main():
                     import threading
                     threading.Thread(target=push_run, args=(cfg_id, run_id), daemon=True).start()
             except Exception as e:
-                print(f"  \u274c Lỗi Push HF: {e}", flush=True)
+                print(f"  ❌ Lỗi Push HF: {e}", flush=True)
             
             if phoenix:
                 pass
@@ -727,7 +727,7 @@ def main():
             plot_and_notify_v3(eval_res, cfg_id, epoch, results_dir, is_periodic=True)
             if tbot and chat_id:
                 try:
-                    report_msg = f"⏳ <b>[{client_id}] [AAMT V3 ({cfg_id})] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
+                    report_msg = f"⏳ <b>[{client_id}] [App: V3] Báo cáo chặng định kỳ (Epoch {epoch})</b>\n"
                     report_msg += f"🔥 Tr Loss (MSE:{tr_recon:.4f} | CE:{tr_class:.4f})\n\n"
                     report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
                     tbot.send_message(chat_id, report_msg)
@@ -741,25 +741,25 @@ def main():
     sys.stdout = sys.__stdout__
     print(f"\n[CLEANUP] Đã kết thúc Training. Kỷ lục Score: {best_score:.4f} | Kỷ lục Win Rate: {best_win_rate*100:.2f}%", flush=True)
     # if best_win_rate < 0.60:
-    #     print(f"ðŸ—‘ï¸  Win Rate {best_win_rate*100:.2f}% < 60%. Ä ang xÃ³a thÆ° má»¥c Run rÃ¡c Ä‘á»ƒ tiáº¿t kiá»‡m á»• cá»©ng: {run_dir}", flush=True)
+    #     print(f"🗑️  Win Rate {best_win_rate*100:.2f}% < 60%. Đang xóa thư mục Run rác để tiết kiệm ổ cứng: {run_dir}", flush=True)
     #     try:
     #         import shutil
     #         shutil.rmtree(run_dir, ignore_errors=True)
-    #         print(f"âœ… Ä Ã£ xÃ³a thÃ nh cÃ´ng run rÃ¡c: {run_dir}", flush=True)
+    #         print(f"✅ Đã xóa thành công run rác: {run_dir}", flush=True)
     #         if tbot and chat_id:
-    #             tbot.send_message(chat_id, f"ðŸ—‘ï¸  <b>[{client_id}] Ä Ã£ xÃ³a Run rÃ¡c</b>\nThÆ° má»¥c: {run_id}\nLÃ½ do: Win Rate {best_win_rate*100:.2f}% < 60%")
+    #             tbot.send_message(chat_id, f"🗑️  <b>[{client_id}] Đã xóa Run rác</b>\nThư mục: {run_id}\nLý do: Win Rate {best_win_rate*100:.2f}% < 60%")
     #     except Exception as e:
-    #         print(f"â Œ Lá»—i khi xÃ³a run rÃ¡c: {e}", flush=True)
+    #         print(f"❌ Lỗi khi xóa run rác: {e}", flush=True)
     # else:
-    print(f"ðŸ† Win Rate {best_win_rate*100:.2f}% >= 60%. Ä ang PUSH lÃªn HuggingFace...", flush=True)
+    print(f"🏆 Win Rate {best_win_rate*100:.2f}% >= 60%. Đang PUSH lên HuggingFace...", flush=True)
     try:
         from scripts.sync_workspaces import push_run
         push_run(cfg_id, run_id)
-        print("âœ… Ä Ã£ Push thÃ nh cÃ´ng!", flush=True)
+        print("✅ Đã Push thành công!", flush=True)
         if tbot and chat_id:
-            tbot.send_message(chat_id, f"â˜ï¸  <b>[{client_id}] Ä Ã£ Ä‘á»“ng bá»™ lÃªn HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
+            tbot.send_message(chat_id, f"☀️ <b>[{client_id}] [App: V3] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
     except Exception as e:
-        print(f"â Œ Lá»—i khi Push: {e}", flush=True)
+        print(f"❌ Lỗi khi Push: {e}", flush=True)
 
     if cfg_id.startswith("CFG_XAG_"):
         try:

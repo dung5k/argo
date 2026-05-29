@@ -41,10 +41,10 @@ exit 0
         if os.name != 'nt':
             os.chmod(pre_commit_path, 0o755)
             
-        print("✅ Thành công! Đã cài đặt 'Người gác cổng' Pre-commit Hook.")
-        print("Từ giờ, hệ thống Git trên máy này sẽ tự động CHẶN ĐỨNG mọi nỗ lực commit file tasks.json hoặc settings.json.")
+        print("[OK] Thanh cong! Da cai dat 'Nguoi gac cong' Pre-commit Hook.")
+        print("Tu gio, he thong Git tren may nay se tu dong CHAN DUNG moi no luc commit file tasks.json hoac settings.json.")
     except Exception as e:
-        print(f"Lỗi khi ghi file hook: {e}")
+        print(f"Loi khi ghi file hook: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

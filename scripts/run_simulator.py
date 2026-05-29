@@ -151,6 +151,8 @@ def main():
     parser.add_argument("--fetch", action="store_true", help="Cào dữ liệu mới từ MT5 trước")
     parser.add_argument("--verbose", action="store_true", help="Log chi tiết pipeline")
     parser.add_argument("--window", type=int, default=1500, help="Rolling window (nến, default=1500)")
+    parser.add_argument("--model", type=str, default=None, help="Đường dẫn đến file model (.pth)")
+
     args = parser.parse_args()
 
     import json, logging
@@ -184,6 +186,7 @@ def main():
     # Chạy simulator
     sim = HistoricalSimulator(
         config_path=config_path,
+        model_path=args.model,
         window_size=args.window,
     )
 

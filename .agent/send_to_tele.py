@@ -15,8 +15,27 @@ def get_bridge_port():
     return None
 
 def get_telegram_config(target_channels=None):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    token = ""
+    default_chat_id = ""
+    try:
+        agent_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(agent_dir)
+        settings_path = os.path.join(project_root, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            import re
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+            if m: token = m.group(1)
+            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+            if m: default_chat_id = m.group(1)
+    except Exception:
+        pass
+        
+    if not token:
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    if not default_chat_id:
+        default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
         
     chat_ids = []
     try:
@@ -111,7 +130,7 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
 def send_to_telegram(content, is_done=False, target_channels=None):
     if not content: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
-    # if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
+    if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
     send_via_telegram_api(content, is_done, target_channels)
 
 if __name__ == '__main__':
@@ -137,5 +156,4 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
-    content = content.replace('\\n', '\n')
     send_to_telegram(content, is_done, target_channels)

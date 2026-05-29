@@ -539,7 +539,7 @@ def main():
         symbols_str = "\n".join(symbols_list)
 
         start_msg = (
-            f"🚀 <b>[{client_id}] BẮT ĐẦU TRAINING</b>\n"
+            f"🚀 <b>[{client_id}] [App: V6] BẮT ĐẦU TRAINING</b>\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"📋 <b>Cấu hình:</b> <code>{cfg_id}</code> (v{config.get('VERSION', '?')})\n"
             f"🎯 <b>Phiên giao dịch:</b> {config.get('SESSION', '?').upper()}\n"
@@ -693,7 +693,7 @@ def main():
                 best_score      = comp_score
                 best_win_rate   = max([float(m.win_rate) for m in eval_res.threshold_metrics]) if eval_res.threshold_metrics else 0.0
                 
-                print(f"  [ARGO2] MO HINH HOI TU TOT NHAT! Val CE Loss = {_es_best_ce_val:.4f} (WR: {best_win_rate*100:.1f}%). Luu model...", flush=True)
+                print(f"  [{client_id}] MO HINH HOI TU TOT NHAT! Val CE Loss = {_es_best_ce_val:.4f} (WR: {best_win_rate*100:.1f}%). Luu model...", flush=True)
                 if 'tbot' in locals() and 'chat_id' in locals():
                     try:
                         best_metric = next((m for m in eval_res.threshold_metrics if m.win_rate == best_win_rate), None)
@@ -704,7 +704,7 @@ def main():
                             val_days = approx_days * len(Xs_va[0]) / max(1.0, float(len(Xs[0]))) if 'approx_days' in locals() and 'Xs_va' in locals() and 'Xs' in locals() else 1.0
                             trades_per_day = best_metric.total_signals / max(0.1, val_days)
                             msg = (
-                                f"[ARGO2] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\n"
+                                f"[{client_id}] [App: V6] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\n"
                                 f"⚙️ Cấu hình: {cfg_id}\n"
                                 f"🔄 Epoch: {epoch} | LR: {current_lr:.2e} (Patience: {_es_streak}/{_ES_PATIENCE})\n\n"
                                 f"📊 KẾT QUẢ MACHINE LEARNING:\n"
@@ -719,7 +719,7 @@ def main():
                                 f"- TUS Score    : {best_metric.tus_score:.2f}"
                             )
                         else:
-                            msg = f"[ARGO2] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\nCấu hình: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%"
+                            msg = f"[{client_id}] [App: V6] 🟢 TỐI ƯU LOSS THÀNH CÔNG!\nCấu hình: {cfg_id}\nEpoch: {epoch} | Val CE Loss: {_es_best_ce_val:.4f} | WinRate: {best_win_rate*100:.1f}%"
                         tbot.send_message(chat_id, msg)
                     except Exception as e: 
                         print(f"Telegram error: {e}")
@@ -794,7 +794,7 @@ def main():
                     print(es_msg, flush=True)
                     if 'tbot' in locals() and 'chat_id' in locals():
                         try:
-                            tbot.send_message(chat_id, f"[ARGO2] HE THONG DUNG DAO TAO\n" + es_msg)
+                            tbot.send_message(chat_id, f"[{client_id}] [App: V6] HE THONG DUNG DAO TAO\n" + es_msg)
                         except Exception:
                             pass
                     break
@@ -811,15 +811,12 @@ def main():
             #             report_msg += f"📊 <b>Kết quả Validation:</b>\n{eval_res.format_summary()}"
             #             tbot.send_message(chat_id, report_msg)
             #             print(f"[TELEGRAM] Đã gửi báo cáo định kỳ cho epoch {epoch} sau mỗi {report_interval_seconds//60} phút", flush=True)
-            #         except Exception as e:
-            #             print(f"[TELEGRAM] Lỗi gửi báo cáo: {e}", flush=True)
-    
     except KeyboardInterrupt:
         print("\n[INFO] Nguoi dung da dung (KeyboardInterrupt)!")
         if 'tbot' in locals() and 'chat_id' in locals():
             try:
-                tbot.send_message(chat_id, f"🛑 <b>[{client_id}] TRAINING ĐÃ DỪNG LẠI!</b>\n(KeyboardInterrupt)\nEpoch: {epoch}\nKỷ lục: {best_score:.4f} | WinRate: {best_win_rate*100:.1f}%")
-            except: pass
+                tbot.send_message(chat_id, f"🛑 <b>[{client_id}] [App: V6] TRAINING ĐÃ DỪNG LẠI!</b>\n(KeyboardInterrupt)\nEpoch: {epoch}\nKỷ lục: {best_score:.4f} | WinRate: {best_win_rate*100:.1f}%")
+            except Exception: pass
     # ==========================================
     # QUẢN LÝ DUNG LƯỢNG & ĐỒNG BỘ SAU TRAINING
     # ==========================================
@@ -844,7 +841,7 @@ def main():
             push_run(cfg_id, run_id)
             print("✅ Đã Push thành công!", flush=True)
             if tbot and chat_id:
-                tbot.send_message(chat_id, f"☁️ <b>[{client_id}] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
+                tbot.send_message(chat_id, f"☁️ <b>[{client_id}] [App: V6] Đã đồng bộ lên HF</b>\nRun: {run_id}\nScore: {best_score:.4f}")
         except Exception as e:
             print(f"❌ Lỗi khi Push: {e}", flush=True)
     else:
