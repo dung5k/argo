@@ -46,14 +46,16 @@ def get_telegram_config(target_channels=None):
             with open(network_config_path, "r", encoding="utf-8") as f:
                 network_data = json.load(f)
                 
-        import socket
-        hostname = socket.gethostname().upper()
-        if "N67BHMU" in hostname:
-            agent_identity = "ARGO1"
-        elif "4C05378" in hostname:
-            agent_identity = "ARGO2"
-        else:
-            agent_identity = network_data.get("agent_identity", "Antigravity")
+        agent_identity = os.environ.get("ARGO_CLIENT_ID")
+        if not agent_identity:
+            import socket
+            hostname = socket.gethostname().upper()
+            if "N67BHMU" in hostname:
+                agent_identity = "ARGO1"
+            elif "4C05378" in hostname:
+                agent_identity = "ARGO2"
+            else:
+                agent_identity = network_data.get("agent_identity", "Antigravity")
             
         channels_dict = network_data.get("channels", {})
         
