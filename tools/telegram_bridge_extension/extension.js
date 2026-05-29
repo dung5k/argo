@@ -457,6 +457,20 @@ async function handleMessage(message) {
         return;
     }
     
+    if (text.toLowerCase() === '/screenshot' || text.toLowerCase() === '/sn') {
+        sendTelegramMessage(chatId, "📸 Đang chụp ảnh màn hình và gửi lại...");
+        const { exec } = require('child_process');
+        const root = getWorkspaceRoot() || __dirname;
+        const pythonScript = path.join(root, '.agent', 'send_to_tele.py');
+        exec(`python "${pythonScript}" "📷 Ảnh màn hình được yêu cầu bởi ${chatName}" --target ${chatId} --screenshot`, { cwd: root }, (error, stdout, stderr) => {
+            if (error) {
+                console.error("Screenshot Error:", error);
+                sendTelegramMessage(chatId, `❌ Lỗi chụp màn hình: ${error.message}`);
+            }
+        });
+        return;
+    }
+    
     let queryToAgent = text;
     if (text.startsWith('/sync_logs')) {
          queryToAgent = "Hãy chạy lệnh đồng bộ logs (sync_logs).";

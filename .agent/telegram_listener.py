@@ -95,9 +95,9 @@ def main():
                             with open(offset_file, 'w') as f:
                                 f.write(str(offset))
                                 
-                            # Nếu là lệnh /screenshot, chạy trực tiếp không cần đánh thức agent
-                            if text.strip().lower() == '/screenshot':
-                                print(f"Đã nhận lệnh /screenshot từ {name}. Đang chụp màn hình và gửi lại...", flush=True)
+                            # Nếu là lệnh /sn, chạy trực tiếp không cần đánh thức agent
+                            if text.strip().lower() in ['/sn', '/screenshot']:
+                                print(f"Đã nhận lệnh {text.strip()} từ {name}. Đang chụp màn hình và gửi lại...", flush=True)
                                 import subprocess
                                 send_tele_path = os.path.join(current_dir, "send_to_tele.py")
                                 subprocess.run([sys.executable, send_tele_path, f"📷 Ảnh màn hình được yêu cầu bởi {name}", "--target", chat_id, "--screenshot"])
