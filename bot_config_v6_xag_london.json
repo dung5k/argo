@@ -25,7 +25,7 @@
             {
                 "SYMBOL": "XAGUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 60,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "body_pct",
@@ -42,7 +42,7 @@
             {
                 "SYMBOL": "XAUUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 60,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",
@@ -53,7 +53,7 @@
             {
                 "SYMBOL": "DXYm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 60,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",
@@ -64,7 +64,7 @@
         ],
         "VOL_REGIME": true,
         "ORDER_FLOW": true,
-        "WINDOW_SIZE": 60
+        "WINDOW_SIZE": 20
     },
     "TRAINING": {
         "D_MODEL": 128,

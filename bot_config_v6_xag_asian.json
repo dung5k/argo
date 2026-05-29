@@ -25,7 +25,7 @@
             {
                 "SYMBOL": "XAGUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 96,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "body_pct",
@@ -41,7 +41,7 @@
             {
                 "SYMBOL": "XAUUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 96,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",
@@ -51,7 +51,7 @@
             {
                 "SYMBOL": "BTCUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 96,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",
@@ -61,7 +61,7 @@
             {
                 "SYMBOL": "ETHUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 96,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index",

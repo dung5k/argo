@@ -24,7 +24,7 @@
             {
                 "SYMBOL": "XAGUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 30,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "body_pct",
@@ -40,7 +40,7 @@
             {
                 "SYMBOL": "XAUUSDm",
                 "TIMEFRAME": "1m",
-                "WINDOW_SIZE": 30,
+                "WINDOW_SIZE": 20,
                 "FEATURES": [
                     "log_return_close",
                     "volatility_index"

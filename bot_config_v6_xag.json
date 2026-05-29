@@ -22,7 +22,7 @@
         "MAX_HOLD_BARS": 20,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
-        "WINDOW_SIZE": 60,
+        "WINDOW_SIZE": 20,
         "STEP_SIZE": 1,
         "CRYPTO_MODE": true,
         "ZERO_NOISE_TARGET": false,
