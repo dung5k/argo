@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import os
+sys.path.insert(0, os.path.abspath('huyen_thoai'))
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -423,7 +425,13 @@ def main():
     import socket
     client_id = os.environ.get("ARGO_CLIENT_ID", "")
     if not client_id or client_id == "UnknownClient":
-        client_id = socket.gethostname()[:8]
+        hostname = socket.gethostname().upper()
+        if "N67BHMU" in hostname:
+            client_id = "ARGO1"
+        elif "4C05378" in hostname:
+            client_id = "ARGO2"
+        else:
+            client_id = hostname[:8]
     try:
         # Cố gắng lấy Telegram credentials từ Environment Variables trước (Ưu tiên số 1 theo yêu cầu của Sếp Lê)
         tg_token = os.environ.get("TELEGRAM_BOT_TOKEN")
