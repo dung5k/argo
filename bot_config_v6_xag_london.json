@@ -24,7 +24,7 @@
         "MTF_INPUTS": [
             {
                 "SYMBOL": "XAGUSDm",
-                "TIMEFRAME": "5min",
+                "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 60,
                 "FEATURES": [
                     "log_return_close",
@@ -41,7 +41,7 @@
             },
             {
                 "SYMBOL": "XAUUSDm",
-                "TIMEFRAME": "5min",
+                "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 60,
                 "FEATURES": [
                     "log_return_close",
@@ -52,7 +52,7 @@
             },
             {
                 "SYMBOL": "DXYm",
-                "TIMEFRAME": "5min",
+                "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 60,
                 "FEATURES": [
                     "log_return_close",
