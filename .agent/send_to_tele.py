@@ -109,7 +109,7 @@ def signal_done_to_extension():
     except:
         pass
 
-def send_via_telegram_api(content, is_done=False, target_channels=None):
+def send_via_telegram_api(content, is_done=False, target_channels=None, screenshot=False):
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if not token or not chat_ids:
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
@@ -117,31 +117,62 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
     
     text = f"🤖 {agent_identity}:\n\n{content}"
     success = False
+    
+    screenshot_path = None
+    if screenshot:
+        try:
+            from PIL import ImageGrab
+            import tempfile
+            fd, screenshot_path = tempfile.mkstemp(suffix=".png")
+            os.close(fd)
+            img = ImageGrab.grab()
+            img.save(screenshot_path)
+        except Exception as e:
+            print(f"Lỗi chụp màn hình: {e}", file=sys.stderr)
+            screenshot_path = None
+
+    import requests
+
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
         if not chat_id: continue
-        url = f'https://api.telegram.org/bot{token}/sendMessage'
-        data = json.dumps({'chat_id': chat_id, 'text': text}).encode('utf-8')
-        headers = {'Content-Type': 'application/json'}
-        req = urllib.request.Request(url, data=data, headers=headers)
+        
         try:
-            import ssl
-            ssl_context = ssl._create_unverified_context()
-            with urllib.request.urlopen(req, context=ssl_context, timeout=10) as response:
-                success = True
+            if screenshot_path and os.path.exists(screenshot_path):
+                url = f'https://api.telegram.org/bot{token}/sendPhoto'
+                with open(screenshot_path, 'rb') as photo:
+                    response = requests.post(url, data={'chat_id': chat_id, 'caption': text}, files={'photo': photo}, timeout=20, verify=False)
+                if response.status_code == 200:
+                    success = True
+            else:
+                url = f'https://api.telegram.org/bot{token}/sendMessage'
+                response = requests.post(url, json={'chat_id': chat_id, 'text': text}, timeout=10, verify=False)
+                if response.status_code == 200:
+                    success = True
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
+            
+    if screenshot_path and os.path.exists(screenshot_path):
+        try:
+            os.remove(screenshot_path)
+        except:
+            pass
     
     if is_done:
         signal_done_to_extension()
     
     return success
 
-def send_to_telegram(content, is_done=False, target_channels=None):
-    if not content: return
+def send_to_telegram(content, is_done=False, target_channels=None, screenshot=False):
+    if not content and not screenshot: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
+    # If using screenshot, force API mode because bridge might not support binary photos easily
+    if screenshot:
+        send_via_telegram_api(content, is_done, target_channels, screenshot=True)
+        return
+        
     if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
-    send_via_telegram_api(content, is_done, target_channels)
+    send_via_telegram_api(content, is_done, target_channels, screenshot=False)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
@@ -149,6 +180,10 @@ if __name__ == '__main__':
     is_done = '--done' in sys.argv
     if is_done:
         sys.argv.remove('--done')
+        
+    screenshot = '--screenshot' in sys.argv
+    if screenshot:
+        sys.argv.remove('--screenshot')
         
     target_channels = None
     if '--channel' in sys.argv:
@@ -166,4 +201,4 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
-    send_to_telegram(content, is_done, target_channels)
+    send_to_telegram(content, is_done, target_channels, screenshot)
