@@ -248,76 +248,119 @@ def main():
     best_model_path = model_files[-1]
     scaler_path = os.path.join(run_dir, "brains", "scaler_CFG_LTC_NY_V6.pkl")
 
-    sim = V6HistoricalSimulator(
-        config_path=temp_cfg_path,
-        model_path=best_model_path,
-        scaler_path=scaler_path,
-        window_size=15000,
-        log_callback=safe_log
-    )
-
-    start_date = datetime(2026, 5, 4)
-    end_date = datetime(2026, 5, 18)
+    # Define multiple thresholds to test simultaneously
+    thresholds = [0.53, 0.55, 0.57, 0.59, 0.61]
+    simulators = {}
+    all_deals = {thr: [] for thr in thresholds}
     
     if args.notify:
-        thresh = temp_config.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.53)
-        msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP XAG V6 NY\n\n"
+        msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP XAG V6 NY (MULTI-THRESHOLDS)\n\n"
         msg += f"🗓 Giai đoạn: 04/05/2026 -> 18/05/2026\n"
-        msg += f"⚙️ Ngưỡng (Threshold): {thresh}\n"
+        msg += f"⚙️ Các ngưỡng đang test: {', '.join(map(str, thresholds))}\n"
         msg += f"🤖 Model: {os.path.basename(best_model_path)}"
         import subprocess
         subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
         
-    all_deals = []
+    for thr in thresholds:
+        temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = thr
+        temp_cfg_path = os.path.join(_ROOT, f"temp_sim_config_ny_{thr}.json")
+        try:
+            with open(temp_cfg_path, "w", encoding='utf-8') as f:
+                json.dump(temp_config, f)
+        except:
+            pass
+            
+        safe_log(f"Loading simulator for threshold {thr}...")
+        simulators[thr] = V6HistoricalSimulator(
+            config_path=temp_cfg_path,
+            model_path=best_model_path,
+            scaler_path=scaler_path,
+            window_size=15000,
+            log_callback=safe_log
+        )
+
+    start_date = datetime(2026, 5, 4)
+    end_date = datetime(2026, 5, 18)
     
     current_date = start_date
     while current_date <= end_date:
         d_str = current_date.strftime("%Y-%m-%d")
         safe_log(f"\n---> RUNNING SIMULATION NY FOR DATE: {d_str}")
-        try:
-            sim.run(d_str, session="ny")
-            if hasattr(sim, 'last_deals'):
-                day_deals = sim.last_deals
-                all_deals.extend(day_deals)
-                if args.notify:
+        
+        if args.notify:
+            msg = f"⏳ TIẾN ĐỘ GIẢ LẬP XAG V6 NY | NGÀY: {d_str}\n\n"
+            msg += f"📊 Kết quả các ngưỡng:\n"
+        else:
+            msg = ""
+            
+        for thr in thresholds:
+            sim = simulators[thr]
+            try:
+                sim.run(d_str, session="ny")
+                if hasattr(sim, 'last_deals'):
+                    day_deals = sim.last_deals
+                    all_deals[thr].extend(day_deals)
+                    
                     day_n_win = sum(1 for d in day_deals if d.get("profit", 0) > 0)
                     day_n_loss = sum(1 for d in day_deals if d.get("profit", 0) <= 0)
                     day_total = day_n_win + day_n_loss
                     day_wr = day_n_win / day_total * 100 if day_total > 0 else 0
                     day_pnl = sum(d.get("profit", 0) for d in day_deals)
+                    total_pnl = sum(d.get("profit", 0) for d in all_deals[thr])
                     
-                    msg = f"⏳ TIẾN ĐỘ GIẢ LẬP XAG V6 NY | NGÀY: {d_str}\n\n"
-                    msg += f"📊 Kết quả ngày:\n"
-                    msg += f"- Lệnh trong ngày: {day_total} ({day_n_win}W / {day_n_loss}L)\n"
-                    if day_total == 0:
-                        msg += "- Không có lệnh nào thoả mãn điều kiện vào lệnh.\n"
-                    else:
-                        msg += f"- Tỷ lệ thắng ngày: {day_wr:.2f}%\n"
-                        msg += f"- PnL ngày: ${day_pnl:.2f}\n"
-                    
-                    import subprocess
-                    subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
-        except Exception as e:
-            safe_log(f"Error on {d_str}: {e}")
+                    if args.notify:
+                        msg += f"🔹 Ngưỡng {thr}:\n"
+                        if day_total == 0:
+                            msg += f"   - Lệnh ngày: 0\n"
+                            msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"
+                        else:
+                            msg += f"   - Lệnh ngày: {day_total} ({day_n_win}W / {day_n_loss}L) - WR: {day_wr:.2f}%\n"
+                            msg += f"   - PnL ngày: ${day_pnl:.2f} | Tổng PnL: ${total_pnl:.2f}\n"
+            except Exception as e:
+                safe_log(f"Error on {d_str} thr {thr}: {e}")
+                
+        if args.notify:
+            import subprocess
+            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+            
         current_date += timedelta(days=1)
         
-    n_win = sum(1 for d in all_deals if d.get("profit", 0) > 0)
-    n_loss = sum(1 for d in all_deals if d.get("profit", 0) <= 0)
-    total = n_win + n_loss
-    wr = n_win / total * 100 if total > 0 else 0
-    pnl = sum(d.get("profit", 0) for d in all_deals)
+    start_str = start_date.strftime("%d/%m")
+    end_str = end_date.strftime("%d/%m")
     
     safe_log("\n" + "="*50)
-    safe_log("FINAL SUMMARY (2026-05-04 to 2026-05-18) NY Session:")
-    safe_log(f"Total Deals: {total}")
-    safe_log(f"Wins: {n_win}")
-    safe_log(f"Losses: {n_loss}")
-    safe_log(f"Win Rate: {wr:.2f}%")
-    safe_log(f"Total PnL: ${pnl:.2f}")
+    safe_log(f"FINAL SUMMARY ({start_str} to {end_str}) NY Session:")
+    
+    for thr in thresholds:
+        n_win = sum(1 for d in all_deals[thr] if d.get("profit", 0) > 0)
+        n_loss = sum(1 for d in all_deals[thr] if d.get("profit", 0) <= 0)
+        total = n_win + n_loss
+        wr = n_win / total * 100 if total > 0 else 0
+        pnl = sum(d.get("profit", 0) for d in all_deals[thr])
+        safe_log(f"--- THRESHOLD {thr} ---")
+        safe_log(f"Total Deals: {total}")
+        safe_log(f"Wins: {n_win}")
+        safe_log(f"Losses: {n_loss}")
+        safe_log(f"Win Rate: {wr:.2f}%")
+        safe_log(f"Total PnL: ${pnl:.2f}")
     safe_log("="*50)
     
     # Notify Telegram
-    msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 NY) đã tự động chạy lại xong hoàn tất!\n\nKết quả (04/05 - 18/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
+    msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 NY) đã chạy hoàn tất!\n\n"
+    msg += f"🗓 Giai đoạn: 04/05/2026 - 18/05/2026\n\n"
+    msg += f"📊 TỔNG KẾT CÁC NGƯỠNG:\n"
+    for thr in thresholds:
+        n_win = sum(1 for d in all_deals[thr] if d.get("profit", 0) > 0)
+        n_loss = sum(1 for d in all_deals[thr] if d.get("profit", 0) <= 0)
+        total = n_win + n_loss
+        wr = n_win / total * 100 if total > 0 else 0
+        pnl = sum(d.get("profit", 0) for d in all_deals[thr])
+        
+        msg += f"🔹 Ngưỡng {thr}:\n"
+        msg += f"   - Tổng lệnh: {total} ({n_win}W / {n_loss}L)\n"
+        msg += f"   - Win Rate: {wr:.2f}%\n"
+        msg += f"   - Lợi nhuận (PnL): ${pnl:.2f}\n"
+
     try:
         import json as _json, random as _rnd
         from datetime import datetime as _dt

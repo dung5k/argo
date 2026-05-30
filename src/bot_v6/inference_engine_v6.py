@@ -17,15 +17,25 @@ class V6InferenceEngine:
     Màng lọc Prob.
     """
 
-    def __init__(self, log_callback=None):
-        self.device = torch.device('cpu') if torch else "mock"
+    def __init__(self, model_path: str = None, config: dict = None, log_callback=None):
+        """
+        Khởi tạo V6InferenceEngine.
+        Nếu truyền model_path thì sẽ gọi luôn load_weights().
+        """
+        self.model_path = model_path
+        self.config = config or {}
+        self.log_callback = log_callback or (lambda x: print(x))
         self.model = None
-        self.log_callback = log_callback or print
+        self.scaler = None
         
-        self.prob_threshold = 0.55
-        
+        # Sửa thành tự động nhận diện CUDA
+        self.device = torch.device('cuda' if torch and torch.cuda.is_available() else 'cpu')
         device_str = getattr(self.device, 'type', 'mock').upper()
+        if device_str == 'CUDA':
+            device_str += f" ({torch.cuda.get_device_name(0)})"
         self.log_callback(f"[InferenceEngineV6] Khởi tạo | device={device_str}")
+
+        self.prob_threshold = 0.55
 
     def load_weights(self, model_path: str, input_dims: List[int], seq_lens: List[int], d_model: int,
                      nhead: int, num_attn_layers: int, pooling: str = 'mean', cls_head: str = 'simple') -> bool:
