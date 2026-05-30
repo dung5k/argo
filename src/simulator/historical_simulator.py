@@ -26,6 +26,10 @@ _ROOT = str(Path(__file__).resolve().parent.parent.parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+_LEGACY = os.path.join(_ROOT, "huyen_thoai")
+if _LEGACY not in sys.path:
+    sys.path.insert(0, _LEGACY)
+
 logger = logging.getLogger(__name__)
 
 
@@ -160,22 +164,31 @@ class HistoricalSimulator:
     def _ensure_engine(self):
         if self._engine is not None:
             return
-        from src.bot_v3.inference_engine_v3 import V3InferenceEngine
 
         arch       = self.config.get("TRAINING", {})
         d_model    = arch.get("D_MODEL", 128)
         nhead      = arch.get("N_HEAD", 8)
         num_layers = arch.get("NUM_LAYERS", 3)
+        
+        if self.config.get("LIVE_BOT", {}).get("MODEL_TYPE", "") == "V6":
+            from src.bot_v6.inference_engine_v6 import V6InferenceEngine
+            self._engine = V6InferenceEngine(log_callback=self.log)
+        else:
+            from src.bot_v3.inference_engine_v3 import V3InferenceEngine
+            self._engine = V3InferenceEngine(log_callback=self.log)
 
-        self._engine = V3InferenceEngine(log_callback=self.log)
-        ok = self._engine.load_weights(
-            model_path=self.model_path,
-            num_features=999,
-            d_model=d_model,
-            nhead=nhead,
-            num_attn_layers=num_layers,
-            window_size=self.seq_len,
-        )
+        is_v6 = self.config.get("LIVE_BOT", {}).get("MODEL_TYPE", "") == "V6"
+        if is_v6:
+            ok = self._engine.load_weights(self.model_path, self.config)
+        else:
+            ok = self._engine.load_weights(
+                model_path=self.model_path,
+                num_features=999,
+                d_model=d_model,
+                nhead=nhead,
+                num_attn_layers=num_layers,
+                seq_len=self.seq_len
+            )
         if not ok:
             raise RuntimeError("Không thể load model weights!")
 
