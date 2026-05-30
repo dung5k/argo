@@ -355,19 +355,16 @@ class V3VirtualTradeManager:
         if closed_tickets:
             self._save_state()
 
-        if not has_open and not just_closed:
-            now = self.sim_clock if self.sim_clock is not None else time.time()
-            if (now - self.last_close_time) < 60:
-                self.gui_action = "Chờ Cooldown 60s..."
-            else:
-                if action == "BUY":
-                    self.gui_action = "🔥 ĐÃ BẮN LỆNH MUA ẢO!"
-                    self.open_new_mt5_trade(symbol, "BUY", cfg_lot, cfg_sl, cfg_tp, preds_info, current_bid, current_ask, point)
-                elif action == "SELL":
-                    self.gui_action = "🔥 ĐÃ BẮN LỆNH BÁN ẢO!"
-                    self.open_new_mt5_trade(symbol, "SELL", cfg_lot, cfg_sl, cfg_tp, preds_info, current_bid, current_ask, point)
-                else:
-                    self.gui_action = f"Bỏ qua ({action})"
+        now = self.sim_clock if self.sim_clock is not None else time.time()
+        # BỎ ĐIỀU KIỆN CHỈ ĐƯỢC MỞ 1 LỆNH VÀ COOLDOWN
+        if action == "BUY":
+            self.gui_action = "🔥 ĐÃ BẮN LỆNH MUA ẢO!"
+            self.open_new_mt5_trade(symbol, "BUY", cfg_lot, cfg_sl, cfg_tp, preds_info, current_bid, current_ask, point)
+        elif action == "SELL":
+            self.gui_action = "🔥 ĐÃ BẮN LỆNH BÁN ẢO!"
+            self.open_new_mt5_trade(symbol, "SELL", cfg_lot, cfg_sl, cfg_tp, preds_info, current_bid, current_ask, point)
+        else:
+            self.gui_action = f"Bỏ qua ({action})"
 
     def update_gui_threshold(self):
         bot_cfg = self.config.get("LIVE_BOT", {})

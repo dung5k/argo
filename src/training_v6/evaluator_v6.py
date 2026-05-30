@@ -16,8 +16,6 @@ def fast_simulate_loop(buy_probs, sell_probs, opens, highs, lows, threshold, tp_
     next_free_bar = 0
     
     for i in range(n_rows - 1):
-        if i < next_free_bar:
-            continue
             
         is_buy = buy_probs[i] > threshold
         is_sell = sell_probs[i] > threshold
@@ -48,7 +46,6 @@ def fast_simulate_loop(buy_probs, sell_probs, opens, highs, lows, threshold, tp_
             if trade_result == 1:
                 n_win += 1
             n_buy += 1
-            next_free_bar = trade_closed_at
             
         elif is_sell and not is_buy:
             t_entry = i + 1
@@ -76,7 +73,6 @@ def fast_simulate_loop(buy_probs, sell_probs, opens, highs, lows, threshold, tp_
             if trade_result == 1:
                 n_win += 1
             n_sell += 1
-            next_free_bar = trade_closed_at
             
     return n_buy, n_sell, n_win
     
@@ -207,13 +203,8 @@ class SimulatorEvaluatorV6:
         tus_score = 1.0 - abs(n_buy - n_sell) / n_signals if n_signals > 0 else 0.0
         risk_factor = tus_score if tus_score > 0 else 0.1
         
-        # simple freq factor
-        if n_signals < self.freq_min_N:
-            freq_factor = n_signals / self.freq_min_N
-        elif n_signals > self.freq_max_N:
-            freq_factor = self.freq_max_N / n_signals
-        else:
-            freq_factor = 1.0
+        # simple freq factor - BỎ GIỚI HẠN SỐ LỆNH
+        freq_factor = 1.0
             
         trades_per_day = n_signals / max(1.0, self.val_days)
             
