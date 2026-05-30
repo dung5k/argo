@@ -277,7 +277,26 @@ def main():
             try:
                 sim.run(d_str, session=args.session)
                 if hasattr(sim, 'last_deals'):
-                    all_deals.extend(sim.last_deals)
+                    day_deals = sim.last_deals
+                    all_deals.extend(day_deals)
+                    if args.notify:
+                        day_n_win = sum(1 for d in day_deals if d.get("profit", 0) > 0)
+                        day_n_loss = sum(1 for d in day_deals if d.get("profit", 0) <= 0)
+                        day_total = day_n_win + day_n_loss
+                        day_wr = day_n_win / day_total * 100 if day_total > 0 else 0
+                        day_pnl = sum(d.get("profit", 0) for d in day_deals)
+                        
+                        msg = f"⏳ TIẾN ĐỘ GIẢ LẬP LTC V6 {args.session.upper()} | NGÀY: {d_str}\n\n"
+                        msg += f"📊 Kết quả ngày:\n"
+                        msg += f"- Lệnh trong ngày: {day_total} ({day_n_win}W / {day_n_loss}L)\n"
+                        if day_total == 0:
+                            msg += "- Không có lệnh nào thoả mãn điều kiện vào lệnh.\n"
+                        else:
+                            msg += f"- Tỷ lệ thắng ngày: {day_wr:.2f}%\n"
+                            msg += f"- PnL ngày: ${day_pnl:.2f}\n"
+                        
+                        import subprocess
+                        subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
             except Exception as e:
                 safe_log(f"Error on {d_str}: {e}")
             current_date += timedelta(days=1)
