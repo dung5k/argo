@@ -6,7 +6,7 @@ import subprocess
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 
-_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_ROOT = os.path.abspath(os.path.dirname(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
@@ -38,26 +38,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
         if self._engine is not None:
             return
         self._engine = V6InferenceEngine(log_callback=self.log)
-        mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
-        import joblib
-        input_dims = []
-        if os.path.exists(self.scaler_path):
-            try:
-                bundle = joblib.load(self.scaler_path)
-                if isinstance(bundle, dict) and 'column_orders' in bundle:
-                    input_dims = [len(order) for order in bundle['column_orders']]
-            except Exception as e:
-                self.log(f"⚠️ Error loading scaler for input_dims: {e}")
-        
-        if not input_dims:
-            input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
-            
-        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
-        train_cfg = self.config.get("TRAINING", {})
-        d_model = train_cfg.get("D_MODEL", 128)
-        nhead = train_cfg.get("N_HEAD", 8)
-        num_attn_layers = train_cfg.get("NUM_LAYERS", 4)
-        ok = self._engine.load_weights(self.model_path, input_dims=input_dims, seq_lens=seq_lens, d_model=d_model, nhead=nhead, num_attn_layers=num_attn_layers)
+        ok = self._engine.load_weights(self.model_path, self.config)
         if not ok:
             raise RuntimeError("Cannot load V6 weights!")
         bot_cfg = self.config.get("LIVE_BOT", {})
@@ -73,6 +54,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
             return
         self._processor = V6DataProcessor(
             scaler_path=self.scaler_path,
+            inference_feats=inference_feats,
             config=self.config,
             log_callback=self.log
         )
@@ -139,9 +121,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
                 
             try:
-                ok, X_list = self._processor.process_online([w_df] * len(self._processor.tf_configs))
-                if not ok:
-                    X_list = None
+                X_list, p_err = self._processor.process(w_df)
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Pipeline lỗi: {e}")
@@ -152,16 +132,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
 
             try:
-                probs = self._engine.predict_probs(X_list)
-                if probs is None:
-                    continue
-                p_sell, p_hold, p_buy = probs
-                action_code = 1
-                if p_buy >= getattr(self._engine, "prob_threshold", 0.55):
-                    action_code = 2
-                elif p_sell >= getattr(self._engine, "prob_threshold", 0.55):
-                    action_code = 0
-                result_dict = {"action": action_code, "mse": 0.0, "raw": [p_sell, p_hold, p_buy]}
+                result_dict = self._engine.predict(X_list)
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Inference lỗi: {e}")
@@ -249,10 +220,10 @@ def get_best_run_dir(workspace_path):
 
 
 def main():
-    workspace = os.path.join(_ROOT, "workspaces", "CFG_XAG_NY_V6")
-    run_dir = os.path.join(workspace, "runs", "run_20260530_150747_v6_ny")
+    workspace = os.path.join(_ROOT, "workspaces", "CFG_LTC_NY_V6")
+    run_dir = os.path.join(workspace, "runs", "run_20260524_003205_v6_NY_resume_epoch_104")
     if not os.path.exists(run_dir):
-        print("[FATAL] Cannot find Run: ", run_dir)
+        print("[FATAL] Không tìm thấy thư mục Run.")
         sys.exit(1)
         
     config_path = os.path.join(run_dir, "config.json")
@@ -261,24 +232,8 @@ def main():
         temp_config = json.load(f)
     # Set the strict threshold for the simulator matching the Asian session WR
     temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = 0.53
-    
-    # [SIM FIX] Map all 'm' symbols to non-'m' for historical data matching
-    target_sym = temp_config.get("TARGET_SYMBOL", "")
-    if target_sym.endswith("m") or target_sym.endswith("M"):
-        temp_config["TARGET_SYMBOL"] = target_sym[:-1]
-        
-    target_prefix = temp_config.get("TARGET_PREFIX", "")
-    if target_prefix.endswith("m") or target_prefix.endswith("M"):
-        temp_config["TARGET_PREFIX"] = target_prefix[:-1]
-        
-    if "FEATURE_ENGINEERING" in temp_config and "MTF_INPUTS" in temp_config["FEATURE_ENGINEERING"]:
-        for tf_cfg in temp_config["FEATURE_ENGINEERING"]["MTF_INPUTS"]:
-            sym = tf_cfg.get("SYMBOL", "")
-            if sym.endswith("m") or sym.endswith("M"):
-                tf_cfg["SYMBOL"] = sym[:-1]
-    
-    temp_cfg_path = os.path.join(_ROOT, "temp_sim_config_ny.json")
 
+    temp_cfg_path = os.path.join(_ROOT, "temp_sim_config_ny.json")
     with open(temp_cfg_path, "w") as f:
         json.dump(temp_config, f)
 
@@ -291,7 +246,7 @@ def main():
     
     model_files.sort(key=os.path.getmtime)
     best_model_path = model_files[-1]
-    scaler_path = os.path.join(run_dir, "brains", "scaler_CFG_XAG_NY_V6.pkl")
+    scaler_path = os.path.join(run_dir, "brains", "scaler_CFG_LTC_NY_V6.pkl")
 
     sim = V6HistoricalSimulator(
         config_path=temp_cfg_path,
@@ -301,8 +256,8 @@ def main():
         log_callback=safe_log
     )
 
-    start_date = datetime(2026, 5, 1)
-    end_date = datetime(2026, 5, 30)
+    start_date = datetime(2026, 5, 4)
+    end_date = datetime(2026, 5, 18)
     
     all_deals = []
     
@@ -313,21 +268,7 @@ def main():
         try:
             sim.run(d_str, session="ny")
             if hasattr(sim, 'last_deals'):
-                day_deals = sim.last_deals
-                all_deals.extend(day_deals)
-                if len(day_deals) > 0:
-                    day_n_win = sum(1 for d in day_deals if d.get("profit", 0) > 0)
-                    day_n_loss = sum(1 for d in day_deals if d.get("profit", 0) <= 0)
-                    day_total = day_n_win + day_n_loss
-                    day_wr = day_n_win / day_total * 100 if day_total > 0 else 0
-                    day_pnl = sum(d.get("profit", 0) for d in day_deals)
-                    msg = f"⏳ TIẾN ĐỘ GIẢ LẬP XAG V6 NY | NGÀY: {d_str}\n\n"
-                    msg += f"📊 Kết quả ngày:\n"
-                    msg += f"- Lệnh trong ngày: {day_total} ({day_n_win}W / {day_n_loss}L)\n"
-                    msg += f"- Tỷ lệ thắng ngày: {day_wr:.2f}%\n"
-                    msg += f"- PnL ngày: ${day_pnl:.2f}\n"
-                    import subprocess
-                    subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+                all_deals.extend(sim.last_deals)
         except Exception as e:
             safe_log(f"Error on {d_str}: {e}")
         current_date += timedelta(days=1)
@@ -347,14 +288,27 @@ def main():
     safe_log(f"Total PnL: ${pnl:.2f}")
     safe_log("="*50)
     
-    # Notify Telegram using send_to_tele.py
-    msg = f"Báo cáo Sếp Lê, tiến trình Simulator (V6 NY) từ đầu tháng 5 đến nay đã chạy xong hoàn tất!\n\nKết quả (01/05 - 30/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
+    # Notify Telegram
+    msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 NY) đã tự động chạy lại xong hoàn tất!\n\nKết quả (04/05 - 18/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
     try:
-        import subprocess
-        subprocess.run([sys.executable, ".agent/send_to_tele.py", msg, "--channel", "1816854047"], check=True)
-        safe_log("✅ Đã gửi thông báo kết quả Simulator qua Telegram!")
-    except Exception as e:
-        safe_log(f"❌ Lỗi khi gửi thông báo Telegram: {e}")
+        import json as _json, random as _rnd
+        from datetime import datetime as _dt
+        with open(".agent/tasks.json", "r", encoding="utf-8") as f:
+            tasks = _json.load(f)
+    except:
+        tasks = []
+    tasks.append({
+        "task_id": _rnd.randint(1000000, 9999999),
+        "status": "completed",
+        "prompt": "system_auto_report",
+        "chat_id": 1816854047,
+        "reply_message": msg,
+        "reply_status": "pending",
+        "timestamp": _dt.now().isoformat()
+    })
+    import json as _json2
+    with open(".agent/tasks.json", "w", encoding="utf-8") as f:
+        _json2.dump(tasks, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
