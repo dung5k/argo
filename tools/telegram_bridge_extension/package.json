@@ -35,7 +35,7 @@
           "type": "string",
           "scope": "resource",
           "default": "Antigravity",
-          "description": "The unique name/identity of this AI Agent in the MQTT network (e.g., Argo1, Argo2)."
+          "description": "The unique name/identity of this AI Agent in the MQTT network (e.g., Argo1, Argo1)."
         },
         "antigravityBridge.agentWorkingDir": {
           "type": "string",
