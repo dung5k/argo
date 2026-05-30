@@ -1,103 +1,135 @@
-import numpy as np
 import os
-import sys
 import traceback
-
+from typing import List, Optional, Tuple
+import numpy as np
 try:
     import torch
     import torch.nn.functional as F
 except ImportError:
     torch = None
 
+from src.training_v6.model_v6 import AAMT_MTF_Model
+
 class V6InferenceEngine:
+    """Động Cơ AI phi tuyến V6 (AAMT_MTF_Model) hỗ trợ Multi-Timeframe.
+    
+    Phân loại đầu ra 3 giá trị: [0=Sell, 1=Hold, 2=Buy]
+    Màng lọc Prob.
+    """
+
     def __init__(self, log_callback=None):
         self.device = torch.device('cpu') if torch else "mock"
         self.model = None
         self.log_callback = log_callback or print
-        self.mse_threshold = 70.0
-        self.prob_threshold = 0.7
-        self.log_callback(f"[InferenceEngineV6] Khởi tạo | device={getattr(self.device, 'type', 'mock').upper()}")
+        
+        self.prob_threshold = 0.55
+        
+        device_str = getattr(self.device, 'type', 'mock').upper()
+        self.log_callback(f"[InferenceEngineV6] Khởi tạo | device={device_str}")
 
-    def load_weights(self, model_path: str, config: dict) -> bool:
-        self.log_callback(f"[InferenceEngineV6] ⏳ Nạp model V6 MTF | path={os.path.basename(model_path)}")
+    def load_weights(self, model_path: str, input_dims: List[int], seq_lens: List[int], d_model: int,
+                     nhead: int, num_attn_layers: int, pooling: str = 'mean', cls_head: str = 'simple') -> bool:
+        """
+        Load model weights cho V6 MTF.
+        """
+        if torch is None:
+            self.log_callback("[InferenceEngineV6] ⚠️ Không thể load model vì pytorch chưa cài đặt!")
+            return False
+
+        if not os.path.exists(model_path):
+            self.log_callback(f"[InferenceEngineV6] ❌ File Không Tồn Tại: {model_path}")
+            return False
+
         try:
-            safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            if safe_script_dir not in sys.path:
-                sys.path.insert(0, safe_script_dir)
-
-            from src.training_v6.model_v6 import AAMT_MTF_Model
-            from packaging import version
-            
-            load_kwargs = {"map_location": self.device}
-            if version.parse(torch.__version__) >= version.parse("1.13.0"):
-                load_kwargs["weights_only"] = True
-                
-            state_dict = torch.load(model_path, **load_kwargs)
-            
-            arch = config.get("TRAINING", {})
-            d_model = arch.get("D_MODEL", 32)
-            nhead = arch.get("N_HEAD", 4)
-            num_layers = arch.get("NUM_LAYERS", 2)
-            
-            fe_cfg = config.get("FEATURE_ENGINEERING", {})
-            mtf_inputs = fe_cfg.get("MTF_INPUTS", [])
-            
-            input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_inputs]
-            seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_inputs]
-            
             self.model = AAMT_MTF_Model(
                 input_dims=input_dims,
                 seq_lens=seq_lens,
                 d_model=d_model,
                 nhead=nhead,
-                num_layers=num_layers,
+                num_layers=num_attn_layers,
                 num_classes=3,
-                pooling='mean',
-                cls_head=arch.get('CLS_HEAD', 'simple')
-            ).to(self.device)
+                pooling=pooling,
+                cls_head=cls_head,
+                layer_drop=0.0
+            )
 
-            self.model.load_state_dict(state_dict, strict=False)
+            state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
+            self.model.load_state_dict(state_dict)
+            self.model.to(self.device)
             self.model.eval()
-            self.log_callback("[InferenceEngineV6] ✅ Nạp weights thành công.")
+
+            self.log_callback(f"[InferenceEngineV6] ✔️ Load weights thành công: {os.path.basename(model_path)}")
+            self.log_callback(f"   └ input_dims={input_dims}, seq_lens={seq_lens}, params={sum(p.numel() for p in self.model.parameters())}")
             return True
         except Exception as e:
-            self.log_callback(f"[InferenceEngineV6] ❌ Lỗi load weights: {e}")
+            self.log_callback(f"[InferenceEngineV6] ❌ Lỗi Load Weights: {e}")
             self.log_callback(traceback.format_exc())
             return False
 
-    def predict(self, X_list: list) -> dict:
-        if not self.model or not X_list:
-            return {"action": 1, "prob": 0.0, "mse": 0.0, "raw": None}
-            
+    def predict(self, x_tensors: List[torch.Tensor]) -> Optional[int]:
+        """
+        Suy luận online Multi-Timeframe.
+        """
+        if self.model is None or torch is None:
+            return None
+
         try:
-            # Áp dụng Clipping để tránh ảo giác Outlier từ Static Scaler
-            tensor_list = [torch.FloatTensor(np.clip(x, -3.0, 3.0)).to(self.device) for x in X_list]
-            
-            self.model.eval()
             with torch.no_grad():
-                reconstructed_list, logits, _ = self.model(tensor_list)
-                probs = F.softmax(logits, dim=-1)[0].cpu().numpy()
+                # Move x_tensors to device
+                x_tensors_pt = []
+                for x in x_tensors:
+                    if isinstance(x, np.ndarray):
+                        x_tensors_pt.append(torch.tensor(x, dtype=torch.float32).to(self.device))
+                    else:
+                        x_tensors_pt.append(x.to(self.device))
                 
-                # Tính MSE cho base timeframe (tensor đầu tiên)
-                mse = F.mse_loss(reconstructed_list[0], tensor_list[0]).item()
+                _, logits, _ = self.model(x_tensors_pt)
                 
-            pred_class = int(np.argmax(probs))
-            max_prob = float(probs[pred_class])
-            
-            # LabelingV3 mapping: 0=Sell, 1=Buy, 2=Sideway
-            action = 1 # Default is Hold
-            if pred_class == 1 and max_prob >= self.prob_threshold:
-                action = 2 # In VirtualTradeManager, 2 = BUY
-            elif pred_class == 0 and max_prob >= self.prob_threshold:
-                action = 0 # In VirtualTradeManager, 0 = SELL
+                probs = F.softmax(logits, dim=-1) # [1, 3]
                 
-            return {
-                "action": action,
-                "prob": max_prob,
-                "mse": mse,
-                "raw": probs.tolist(),
-                "class": pred_class
-            }
+                p_sell = probs[0, 0].item()
+                p_buy  = probs[0, 2].item()
+                
+                if p_buy >= self.prob_threshold:
+                    return 2 # BUY
+                elif p_sell >= self.prob_threshold:
+                    return 0 # SELL
+                else:
+                    return 1 # HOLD
+                    
         except Exception as e:
-            self.log_callback(f"[InferenceEngineV6] ❌ Lỗi predict: {e}")
-            return {"action": 1, "prob": 0.0, "mse": 0.0, "raw": None}
+            self.log_callback(f"[InferenceEngineV6] Lỗi predict: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def predict_probs(self, x_tensors: List[torch.Tensor]) -> Optional[Tuple[float, float, float]]:
+        """
+        Trá về xác suất (p_sell, p_hold, p_buy) mà không áp threshold, giúp tiết kiệm tính toán khi test nhiều threshold.
+        """
+        if self.model is None or torch is None:
+            return None
+
+        try:
+            with torch.no_grad():
+                x_tensors_pt = []
+                for x in x_tensors:
+                    if isinstance(x, np.ndarray):
+                        x_tensors_pt.append(torch.tensor(x, dtype=torch.float32).to(self.device))
+                    else:
+                        x_tensors_pt.append(x.to(self.device))
+                
+                _, logits, _ = self.model(x_tensors_pt)
+                probs = F.softmax(logits, dim=-1) # [1, 3]
+                
+                p_sell = probs[0, 0].item()
+                p_hold = probs[0, 1].item()
+                p_buy  = probs[0, 2].item()
+                
+                return p_sell, p_hold, p_buy
+                
+        except Exception as e:
+            self.log_callback(f"[InferenceEngineV6] Lỗi predict_probs: {e}")
+            import traceback
+            traceback.print_exc()
+            return None

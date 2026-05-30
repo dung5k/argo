@@ -14,7 +14,7 @@
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
         "TP_PCT": 0.003,
-        "SL_PCT": 0.0035,
+        "SL_PCT": 0.002,
         "MAX_HOLD_BARS": 20,
         "FAST_HIT_BARS": 5,
         "LABEL_MODE": "pct",
@@ -115,5 +115,8 @@
         "START": "00:00",
         "END": "07:00"
     },
-    "RUN_ID": ""
+    "RUN_ID": "",
+    "TRAIN": {
+        "LR_INIT": 0.0001
+    }
 }

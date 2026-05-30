@@ -15,6 +15,67 @@ try:
 except Exception:
     pass
 
+_global_lock_file = None
+
+def check_single_instance(symbol):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    lock_dir_path = os.path.join(script_dir, f"autonomous_training_{symbol.lower()}.lockdir")
+    pid_file_path = os.path.join(lock_dir_path, "pid.txt")
+    
+    try:
+        # os.mkdir là hoạt động nguyên tử cấp độ OS chống Race Condition
+        os.mkdir(lock_dir_path)
+        with open(pid_file_path, "w") as f:
+            f.write(str(os.getpid()))
+            
+        import atexit
+        def cleanup_lock():
+            try:
+                if os.path.exists(pid_file_path):
+                    os.remove(pid_file_path)
+                os.rmdir(lock_dir_path)
+            except Exception:
+                pass
+        atexit.register(cleanup_lock)
+        
+    except FileExistsError:
+        # Nếu thư mục lock tồn tại, kiểm tra xem tiến trình cũ có thực sự đang chạy
+        if os.path.exists(pid_file_path):
+            try:
+                with open(pid_file_path, "r") as f:
+                    old_pid = int(f.read().strip())
+                # Kiểm tra trạng thái PID trên Windows
+                output = subprocess.check_output(f'tasklist /FI "PID eq {old_pid}" /FO CSV', shell=True).decode('utf-8')
+                if str(old_pid) in output:
+                    print(f"[LOCK] Khong the lay lock cho {symbol.upper()}. Tien trinh khac dang chay voi PID={old_pid}. Tu dong thoat!", flush=True)
+                    sys.exit(0)
+            except Exception:
+                pass
+        
+        # Nếu tiến trình cũ đã chết (orphan lock), dọn dẹp và lấy lại lock
+        try:
+            if os.path.exists(pid_file_path):
+                os.remove(pid_file_path)
+            if os.path.exists(lock_dir_path):
+                os.rmdir(lock_dir_path)
+            
+            os.mkdir(lock_dir_path)
+            with open(pid_file_path, "w") as f:
+                f.write(str(os.getpid()))
+                
+            import atexit
+            def cleanup_lock():
+                try:
+                    if os.path.exists(pid_file_path):
+                        os.remove(pid_file_path)
+                    os.rmdir(lock_dir_path)
+                except Exception:
+                    pass
+            atexit.register(cleanup_lock)
+        except Exception:
+            print(f"[LOCK] Khong the lay lock cho {symbol.upper()}. Tu dong thoat!", flush=True)
+            sys.exit(0)
+
 def setup_prompt(prompt_path):
     if not os.path.exists(prompt_path):
         return
@@ -180,6 +241,7 @@ def update_config(session_name, updates, symbol, version, start_date, end_date, 
 
 def run_training_loop(args):
     symbol = args.symbol.upper()
+    check_single_instance(symbol)
     version = args.version.upper()
     prompt_path = args.prompt_file or os.path.join(".agent", f"strategy_prompt_{symbol}.md")
     
@@ -234,9 +296,17 @@ def run_training_loop(args):
 
     print(f"\n--- [5] LẤY DỮ LIỆU ĐẦU TIÊN (PREPARE DATASET): {target_session.upper()} ---")
     log_prep = os.path.join(new_run_dir, 'prepare_dataset.log')
+    prep_script = f"scripts/prepare_{version.lower()}_dataset.py"
+    if not os.path.exists(prep_script) and version.lower() == "v5":
+        prep_script = "scripts/upload_v3_dataset.py"
+    prep_args = [sys.executable, prep_script, '--config', config_dst]
+    if version.lower() == "v5":
+        prep_args.extend(['--no-push', '--run-id', run_id])
+    else:
+        prep_args.append('--no-upload')
     with open(log_prep, 'w', encoding='utf-8') as f_log:
         subprocess.run(
-            [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', config_dst, '--no-upload'],
+            prep_args,
             env=env, stdout=f_log, stderr=subprocess.STDOUT
         )
 
@@ -309,7 +379,14 @@ def run_training_loop(args):
         print(f"\n--- [PRE-FETCH] LẤY DỮ LIỆU: {next_target_session.upper()} ---")
         next_log_prep = os.path.join(next_new_run_dir, 'prepare_dataset.log')
         
-        prep_cmd = [sys.executable, f'scripts/prepare_{version.lower()}_dataset.py', '--config', next_config_dst, '--no-upload']
+        prep_script = f"scripts/prepare_{version.lower()}_dataset.py"
+        if not os.path.exists(prep_script) and version.lower() == "v5":
+            prep_script = "scripts/upload_v3_dataset.py"
+        prep_cmd = [sys.executable, prep_script, '--config', next_config_dst]
+        if version.lower() == "v5":
+            prep_cmd.extend(['--no-push', '--run-id', next_run_id])
+        else:
+            prep_cmd.append('--no-upload')
         with open(next_log_prep, 'w', encoding='utf-8') as f_log:
             prep_process = subprocess.Popen(prep_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
             for line in prep_process.stdout:
