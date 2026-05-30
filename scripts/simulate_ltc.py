@@ -216,9 +216,13 @@ def get_best_run_dir(workspace_path, run_id):
     runs_dir = os.path.join(workspace_path, "runs")
     if not os.path.exists(runs_dir):
         return None
-    target_dir = os.path.join(runs_dir, run_id)
-    if os.path.exists(target_dir):
-        return target_dir
+    if run_id:
+        target_dir = os.path.join(runs_dir, run_id)
+        if os.path.exists(target_dir):
+            return target_dir
+    dirs = [os.path.join(runs_dir, d) for d in os.listdir(runs_dir) if os.path.isdir(os.path.join(runs_dir, d))]
+    if dirs:
+        return sorted(dirs)[-1]
     return None
 
 def main():
@@ -230,7 +234,7 @@ def main():
     parser.add_argument("--notify", action="store_true", help="Gửi thông báo Telegram")
     args = parser.parse_args()
 
-    master_cfg_path = args.config if hasattr(args, 'config') and args.config else "bot_config_v6_ltc_asian.json"
+    master_cfg_path = args.config if hasattr(args, 'config') and args.config else f"bot_config_v6_ltc_{args.session}.json"
     if not os.path.exists(master_cfg_path):
         print(f"Không tìm thấy config: {master_cfg_path}")
         sys.exit(1)
