@@ -289,8 +289,8 @@ def main():
         log_callback=safe_log
     )
 
-    start_date = datetime(2026, 5, 4)
-    end_date = datetime(2026, 5, 18)
+    start_date = datetime(2026, 5, 1)
+    end_date = datetime(2026, 5, 30)
     
     all_deals = []
     
@@ -321,27 +321,14 @@ def main():
     safe_log(f"Total PnL: ${pnl:.2f}")
     safe_log("="*50)
     
-    # Notify Telegram
-    msg = f"Báo cáo Sếp Lê, tiến trình Simulator 14 ngày (V6 NY) đã tự động chạy lại xong hoàn tất!\n\nKết quả (04/05 - 18/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
+    # Notify Telegram using send_to_tele.py
+    msg = f"Báo cáo Sếp Lê, tiến trình Simulator (V6 NY) từ đầu tháng 5 đến nay đã chạy xong hoàn tất!\n\nKết quả (01/05 - 30/05):\n- Tổng lệnh: {total}\n- Số lệnh Win/Loss: {n_win}W / {n_loss}L\n- Win Rate: {wr:.2f}%\n- PnL: ${pnl:.2f}\n\nHệ thống đã sẵn sàng."
     try:
-        import json as _json, random as _rnd
-        from datetime import datetime as _dt
-        with open(".agent/tasks.json", "r", encoding="utf-8") as f:
-            tasks = _json.load(f)
-    except:
-        tasks = []
-    tasks.append({
-        "task_id": _rnd.randint(1000000, 9999999),
-        "status": "completed",
-        "prompt": "system_auto_report",
-        "chat_id": 1816854047,
-        "reply_message": msg,
-        "reply_status": "pending",
-        "timestamp": _dt.now().isoformat()
-    })
-    import json as _json2
-    with open(".agent/tasks.json", "w", encoding="utf-8") as f:
-        _json2.dump(tasks, f, indent=2, ensure_ascii=False)
+        import subprocess
+        subprocess.run([sys.executable, ".agent/send_to_tele.py", msg, "--channel", "1816854047"], check=True)
+        safe_log("✅ Đã gửi thông báo kết quả Simulator qua Telegram!")
+    except Exception as e:
+        safe_log(f"❌ Lỗi khi gửi thông báo Telegram: {e}")
 
 if __name__ == "__main__":
     main()
