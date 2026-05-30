@@ -221,8 +221,12 @@ def get_best_run_dir(workspace_path, run_id):
         if os.path.exists(target_dir):
             return target_dir
     dirs = [os.path.join(runs_dir, d) for d in os.listdir(runs_dir) if os.path.isdir(os.path.join(runs_dir, d))]
-    if dirs:
-        return sorted(dirs)[-1]
+    # Sort from newest to oldest and find the first one that has a .pth file in brains folder
+    for d in sorted(dirs, reverse=True):
+        brains_dir = os.path.join(d, "brains")
+        import glob
+        if os.path.exists(brains_dir) and glob.glob(os.path.join(brains_dir, "*.pth")):
+            return d
     return None
 
 def main():
