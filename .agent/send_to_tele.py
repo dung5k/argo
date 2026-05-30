@@ -46,7 +46,7 @@ def get_telegram_config(target_channels=None):
             with open(network_config_path, "r", encoding="utf-8") as f:
                 network_data = json.load(f)
                 
-        agent_identity = network_data.get("agent_identity", "Antigravity")
+        agent_identity = os.environ.get("COMPUTERNAME", network_data.get("agent_identity", "Antigravity"))
         channels_dict = network_data.get("channels", {})
         
         if target_channels is None:

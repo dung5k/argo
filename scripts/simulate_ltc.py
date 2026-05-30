@@ -241,6 +241,17 @@ def main():
     
     sim_window_size = 2000
     
+    import glob
+    model_dir = os.path.join(run_dir, "brains")
+    model_files = glob.glob(os.path.join(model_dir, "*.pth"))
+    if not model_files:
+        print("No models found!")
+        sys.exit(1)
+    
+    model_files.sort(key=os.path.getmtime)
+    best_model_path = model_files[-1]
+    scaler_path = os.path.join(run_dir, "brains", f"scaler_CFG_LTC_{args.session.upper()}_V6.pkl")
+    
     # Define multiple thresholds to test simultaneously
     thresholds = [0.60, 0.65, 0.70, 0.73, 0.75]
     simulators = {}
@@ -355,7 +366,8 @@ def main():
             msg += f"   - Win Rate: {wr:.2f}%\n"
             msg += f"   - Lợi nhuận (PnL): ${pnl:.2f}\n"
 
-        os.system(f'python .agent/send_to_tele.py "{msg}" --channel 1816854047')
+        import subprocess
+        subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
 
 if __name__ == "__main__":
     main()
