@@ -88,7 +88,7 @@ if os.path.join(_ROOT, 'huyen_thoai') not in sys.path:
 
 def load_crypto_parquets(raw_dir: str, target_sym: str, target_prefix: str):
     all_files = [f for f in os.listdir(raw_dir) if f.endswith(".parquet")]
-    sym_files = [f for f in all_files if target_sym.upper() in f.upper()]
+    sym_files = [f for f in all_files if target_prefix.upper() in f.upper()]
     
     dfs = []
     for fname in sorted(sym_files):
@@ -163,9 +163,11 @@ class SimulatorEvaluatorV6:
         self.n_thresholds = 4
         self.freq_min_N = freq_min_N
         self.freq_max_N = freq_max_N
+        self.val_days = 1.0
+
         
         # Load raw prices once
-        target_prefix = config.get("FEATURE_ENGINEERING", {}).get("TARGET_PREFIX", "")
+        target_prefix = config.get("TARGET_PREFIX", config.get("FEATURE_ENGINEERING", {}).get("TARGET_PREFIX", ""))
         if not target_prefix:
             target_prefix = target_sym.upper()
         self.target_prefix = target_prefix
@@ -213,7 +215,9 @@ class SimulatorEvaluatorV6:
         else:
             freq_factor = 1.0
             
-        score = max(0.0, expected_value * n_signals) * risk_factor * freq_factor * win_rate
+        trades_per_day = n_signals / max(1.0, self.val_days)
+            
+        score = max(0.0, expected_value * n_signals) * risk_factor * freq_factor * win_rate * trades_per_day
         
         return ThresholdMetricsV6(
             threshold=threshold,

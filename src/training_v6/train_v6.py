@@ -28,12 +28,12 @@ from huggingface_hub import hf_hub_download, HfApi
 try:
     from model_v6 import AAMT_MTF_Model
     from loss_v3 import AAMT_JointLoss
-    from evaluator_v3 import WinRateEvaluatorV3
+    from evaluator_v6 import SimulatorEvaluatorV6
     from plotter_v3 import plot_and_notify_v3
 except ImportError:
     from src.training_v6.model_v6 import AAMT_MTF_Model
     from src.training_v3.loss_v3 import AAMT_JointLoss
-    from src.training_v3.evaluator_v3 import WinRateEvaluatorV3
+    from src.training_v6.evaluator_v6 import SimulatorEvaluatorV6
     from src.training_v3.plotter_v3 import plot_and_notify_v3
 
 try:
@@ -109,7 +109,7 @@ def train_finetuning_phase(model, train_loader, criterion, optimizer, device):
     l = len(train_loader)
     return total_loss_val/l, total_recon/l, total_class/l
 
-def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_max_N=1000, hold_bars=20, samples_per_day=400.0):
+def evaluate_val_set(model, val_loader, criterion, device, T_val, evaluator):
     model.eval()
     total_loss_val = 0.0
     total_recon = 0.0
@@ -143,10 +143,8 @@ def evaluate_val_set(model, val_loader, criterion, device, freq_min_N=80, freq_m
     avg_class = total_class / max(1, l)
     
     cat_logits = torch.cat(all_logits, dim=0)
-    cat_labels = torch.cat(all_labels, dim=0)
     
-    evaluator = WinRateEvaluatorV3(freq_min_N=freq_min_N, freq_max_N=freq_max_N, hold_bars=hold_bars)
-    res = evaluator.evaluate(cat_logits, cat_labels, val_loss=avg_loss, val_mse=avg_recon, val_ce=avg_class, samples_per_day=samples_per_day)
+    res = evaluator.evaluate(cat_logits, T_val, val_loss=avg_loss, val_mse=avg_recon, val_ce=avg_class)
     return res
 
 def main():
@@ -206,6 +204,7 @@ def main():
     
     x_path = os.path.join(tensor_local_dir, f"X_tensor_{cfg_id}_tf0.npy")
     y_path = os.path.join(tensor_local_dir, f"Y_tensor_{cfg_id}.npy")
+    t_path = os.path.join(tensor_local_dir, f"T_tensor_{cfg_id}.npy")
     scaler_src = os.path.join(tensor_local_dir, f"scaler_{cfg_id}.pkl")
 
     import shutil
@@ -228,7 +227,7 @@ def main():
             print(f"☁️ Đang tải trực tiếp Tensor từ Dataset Repo: {target_repo}...", flush=True)
             try:
                 from huggingface_hub import hf_hub_download
-                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
+                for filename in [f"X_tensor_{cfg_id}.npy", f"Y_tensor_{cfg_id}.npy", f"T_tensor_{cfg_id}.npy", f"scaler_{cfg_id}.pkl"]:
                     remote_path = f"workspaces/{cfg_id}/runs/{run_id}/data/tensors/{filename}"
                     local_dl_path = hf_hub_download(
                         repo_id=target_repo,
@@ -257,6 +256,8 @@ def main():
                 print(f"Bản sao Tensor từ legacy_run sang {run_id}...", flush=True)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"X_tensor_{cfg_id}.npy"), x_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"Y_tensor_{cfg_id}.npy"), y_path)
+                if os.path.exists(os.path.join(legacy_tensor_dir, f"T_tensor_{cfg_id}.npy")):
+                    shutil.copy(os.path.join(legacy_tensor_dir, f"T_tensor_{cfg_id}.npy"), t_path)
                 shutil.copy(os.path.join(legacy_tensor_dir, f"scaler_{cfg_id}.pkl"), scaler_src)
             else:
                 raise FileNotFoundError(
@@ -273,7 +274,8 @@ def main():
     
     Xs = [np.load(f) for f in x_files]
     Y = np.load(y_path)
-    print(f"✅ Tải thành công! Y: {Y.shape}", flush=True)
+    T = np.load(t_path) if os.path.exists(t_path) else None
+    print(f"✅ Tải thành công! Y: {Y.shape}, T: {T.shape if T is not None else 'N/A'}", flush=True)
     for i, X in enumerate(Xs):
         print(f"   X_tf{i}: {X.shape}", flush=True)
     
@@ -316,6 +318,7 @@ def main():
         
         Xs_va = [X[val_mask] for X in Xs]
         Y_va = Y[val_mask]
+        T_val = T[val_mask] if T is not None else None
         
         print(f"[DATA CHECK] Train: {len(Y_tr)} mẫu | Val: {len(Y_va)} mẫu (Giữ nguyên thực tế, không downsample)", flush=True)
 
@@ -341,12 +344,16 @@ def main():
     # Wrap into TensorDataset. PyTorch TensorDataset có thể nhận nhiều tham số (*tensors)
     tensor_args_tr = [torch.tensor(X_tr, dtype=torch.float32) for X_tr in Xs_tr] + [torch.tensor(Y_tr, dtype=torch.long)]
     tensor_args_va = [torch.tensor(X_va, dtype=torch.float32) for X_va in Xs_va] + [torch.tensor(Y_va, dtype=torch.long)]
-
     train_loader = DataLoader(TensorDataset(*tensor_args_tr), batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(TensorDataset(*tensor_args_va), batch_size=batch_size, shuffle=False)
     
     device = torch.device("cuda")
     print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
+    
+    # 1.5 Init Evaluator
+    raw_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "raw")
+    target_sym = config.get("TARGET_SYMBOL", config.get("FEATURE_ENGINEERING", {}).get("TARGET_SYMBOL", "LTCUSDT"))
+    evaluator = SimulatorEvaluatorV6(raw_dir, target_sym, config)
     
     # 2. Sinh mạng neural AAMTV3
     d_model = train_cfg.get("D_MODEL", 128)
@@ -537,6 +544,12 @@ def main():
             approx_days = 0
             samples_per_day = 400.0
 
+        try:
+            val_days = approx_days * len(Xs_va[0]) / max(1.0, float(len(Xs[0])))
+            evaluator.val_days = max(0.1, val_days)
+        except:
+            evaluator.val_days = 1.0
+
         symbols_list = []
         for inp in mtf_inputs:
             sym = inp.get("SYMBOL", "?")
@@ -678,7 +691,7 @@ def main():
             epoch += 1
             current_optimizer = optimizer
             tr_loss, tr_recon, tr_class = train_finetuning_phase(model, train_loader, criterion, current_optimizer, device)
-            eval_res = evaluate_val_set(model, val_loader, criterion, device, freq_min_N=freq_min, freq_max_N=freq_max, hold_bars=hold_bars, samples_per_day=samples_per_day)
+            eval_res = evaluate_val_set(model, val_loader, criterion, device, T_val, evaluator)
     
             comp_score  = eval_res.composite_score()
             val_ce_loss = eval_res.val_ce   # Sử dụng trực tiếp CrossEntropy Loss từ evaluator
