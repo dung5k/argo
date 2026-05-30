@@ -53,7 +53,10 @@ class V6InferenceEngine:
                 layer_drop=0.0
             )
 
-            state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
+            try:
+                state_dict = torch.load(model_path, map_location=self.device, weights_only=True)
+            except TypeError:
+                state_dict = torch.load(model_path, map_location=self.device)
             self.model.load_state_dict(state_dict)
             self.model.to(self.device)
             self.model.eval()
