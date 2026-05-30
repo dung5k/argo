@@ -26,11 +26,25 @@ class V6HistoricalSimulator(HistoricalSimulator):
         mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
         input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
         seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
-        train_cfg = self.config.get("TRAIN", {})
+        train_cfg = self.config.get("TRAINING")
+        if not train_cfg:
+            train_cfg = self.config.get("TRAIN", {})
         d_model = train_cfg.get("D_MODEL", 128)
-        nhead = train_cfg.get("NHEAD", 8)
-        num_attn_layers = train_cfg.get("NUM_ATTN_LAYERS", 3)
-        ok = self._engine.load_weights(self.model_path, input_dims=input_dims, seq_lens=seq_lens, d_model=d_model, nhead=nhead, num_attn_layers=num_attn_layers)
+        nhead = train_cfg.get("N_HEADS", train_cfg.get("N_HEAD", train_cfg.get("NHEAD", 8)))
+        num_attn_layers = train_cfg.get("NUM_LAYERS", train_cfg.get("NUM_ATTN_LAYERS", 4))
+        pooling = train_cfg.get("POOLING", "mean")
+        cls_head = train_cfg.get("CLS_HEAD", "simple")
+        
+        ok = self._engine.load_weights(
+            self.model_path, 
+            input_dims=input_dims, 
+            seq_lens=seq_lens, 
+            d_model=d_model, 
+            nhead=nhead, 
+            num_attn_layers=num_attn_layers,
+            pooling=pooling,
+            cls_head=cls_head
+        )
         if not ok:
             raise RuntimeError("Cannot load V6 weights!")
         bot_cfg = self.config.get("LIVE_BOT", {})
@@ -208,16 +222,17 @@ def get_best_run_dir(workspace_path, run_id):
     return None
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--session", choices=["asian", "london", "ny"], required=True)
-    parser.add_argument("--start", default="2026-05-01")
-    parser.add_argument("--end", default="2026-05-26")
-    parser.add_argument("--notify", action="store_true", help="Send report to Telegram")
+    parser = argparse.ArgumentParser(description="Mô phỏng Historical LTC V6.")
+    parser.add_argument("--config", type=str, default="", help="Đường dẫn file bot_config.json")
+    parser.add_argument("--start", type=str, required=True, help="Ngày bắt đầu (YYYY-MM-DD)")
+    parser.add_argument("--end", type=str, required=True, help="Ngày kết thúc (YYYY-MM-DD)")
+    parser.add_argument("--session", type=str, default="asian", choices=["asian", "london", "ny"], help="Phiên giao dịch")
+    parser.add_argument("--notify", action="store_true", help="Gửi thông báo Telegram")
     args = parser.parse_args()
 
-    master_cfg_path = os.path.join(_ROOT, f"bot_config_v6_ltc_{args.session}.json")
+    master_cfg_path = args.config if hasattr(args, 'config') and args.config else "bot_config_v6_ltc_asian.json"
     if not os.path.exists(master_cfg_path):
-        print(f"[FATAL] Cannot find {master_cfg_path}")
+        print(f"Không tìm thấy config: {master_cfg_path}")
         sys.exit(1)
 
     with open(master_cfg_path, "r", encoding='utf-8') as f:
@@ -228,7 +243,7 @@ def main():
     
     run_dir = get_best_run_dir(workspace, run_id)
     if not run_dir:
-        print(f"[FATAL] Không tìm thấy thư mục Run: {run_id}")
+        print(f"Không tìm thấy model run (run_id={run_id}) trong {workspace}")
         sys.exit(1)
         
     config_path = os.path.join(run_dir, "config.json")
@@ -238,9 +253,7 @@ def main():
     # Ghi đè cấu hình thresh
     if "LIVE_BOT" in master_config and "MIN_PROBABILITY_THRESH" in master_config["LIVE_BOT"]:
         temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = master_config["LIVE_BOT"]["MIN_PROBABILITY_THRESH"]
-    
-    sim_window_size = 2000
-    
+
     import glob
     model_dir = os.path.join(run_dir, "brains")
     model_files = glob.glob(os.path.join(model_dir, "*.pth"))
@@ -250,9 +263,8 @@ def main():
     
     model_files.sort(key=os.path.getmtime)
     best_model_path = model_files[-1]
-    scaler_path = os.path.join(run_dir, "brains", f"scaler_CFG_LTC_{args.session.upper()}_V6.pkl")
+    scaler_path = os.path.join(run_dir, "brains", f"scaler_{os.path.basename(workspace)}.pkl")
     
-    # Define multiple thresholds to test simultaneously
     thresholds = [0.60, 0.65, 0.70, 0.73, 0.75]
     simulators = {}
     all_deals = {thr: [] for thr in thresholds}
@@ -268,18 +280,15 @@ def main():
     for thr in thresholds:
         temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = thr
         temp_cfg_path = os.path.join(_ROOT, f"temp_sim_config_ltc_{args.session}_{thr}.json")
-        try:
-            with open(temp_cfg_path, "w", encoding='utf-8') as f:
-                json.dump(temp_config, f)
-        except:
-            pass
+        with open(temp_cfg_path, "w", encoding='utf-8') as f:
+            json.dump(temp_config, f)
             
         safe_log(f"Loading simulator for threshold {thr}...")
         simulators[thr] = V6HistoricalSimulator(
             config_path=temp_cfg_path,
             model_path=best_model_path,
             scaler_path=scaler_path,
-            window_size=sim_window_size,
+            window_size=2000,
             log_callback=safe_log
         )
 
@@ -288,6 +297,10 @@ def main():
     
     current_date = start_date
     while current_date <= end_date:
+        if current_date.weekday() >= 5:  # 5=Sat, 6=Sun
+            current_date += timedelta(days=1)
+            continue
+            
         d_str = current_date.strftime("%Y-%m-%d")
         safe_log(f"\n---> RUNNING SIMULATION LTC V6 {args.session.upper()} FOR DATE: {d_str}")
         
@@ -318,10 +331,18 @@ def main():
                             msg += f"   - Lệnh ngày: 0\n"
                             msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"
                         else:
+                            max_win = max([d.get("profit", 0) for d in day_deals])
+                            max_loss = min([d.get("profit", 0) for d in day_deals])
+                            avg_win = sum(d.get("profit", 0) for d in day_deals if d.get("profit", 0) > 0) / day_n_win if day_n_win > 0 else 0
+                            avg_loss = sum(d.get("profit", 0) for d in day_deals if d.get("profit", 0) <= 0) / day_n_loss if day_n_loss > 0 else 0
                             msg += f"   - Lệnh ngày: {day_total} ({day_n_win}W / {day_n_loss}L) - WR: {day_wr:.2f}%\n"
                             msg += f"   - PnL ngày: ${day_pnl:.2f} | Tổng PnL: ${total_pnl:.2f}\n"
+                            msg += f"   - Thắng TB: ${avg_win:.2f} (Max: ${max_win:.2f})\n"
+                            msg += f"   - Thua TB: ${avg_loss:.2f} (Max: ${max_loss:.2f})\n"
             except Exception as e:
                 safe_log(f"Error on {d_str} thr {thr}: {e}")
+                import traceback
+                safe_log(traceback.format_exc())
                 
         if args.notify:
             import subprocess

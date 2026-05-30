@@ -38,7 +38,29 @@ class V6HistoricalSimulator(HistoricalSimulator):
         if self._engine is not None:
             return
         self._engine = V6InferenceEngine(log_callback=self.log)
-        ok = self._engine.load_weights(self.model_path, self.config)
+        mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+        input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
+        
+        train_cfg = self.config.get("TRAINING")
+        if not train_cfg:
+            train_cfg = self.config.get("TRAIN", {})
+        d_model = train_cfg.get("D_MODEL", 128)
+        nhead = train_cfg.get("N_HEADS", train_cfg.get("N_HEAD", train_cfg.get("NHEAD", 8)))
+        num_attn_layers = train_cfg.get("NUM_LAYERS", train_cfg.get("NUM_ATTN_LAYERS", 4))
+        pooling = train_cfg.get("POOLING", "mean")
+        cls_head = train_cfg.get("CLS_HEAD", "simple")
+        
+        ok = self._engine.load_weights(
+            self.model_path, 
+            input_dims=input_dims, 
+            seq_lens=seq_lens, 
+            d_model=d_model, 
+            nhead=nhead, 
+            num_attn_layers=num_attn_layers,
+            pooling=pooling,
+            cls_head=cls_head
+        )
         if not ok:
             raise RuntimeError("Cannot load V6 weights!")
         bot_cfg = self.config.get("LIVE_BOT", {})
@@ -284,6 +306,10 @@ def main():
     
     current_date = start_date
     while current_date <= end_date:
+        if current_date.weekday() >= 5:  # 5=Sat, 6=Sun
+            current_date += timedelta(days=1)
+            continue
+            
         d_str = current_date.strftime("%Y-%m-%d")
         safe_log(f"\n---> RUNNING SIMULATION NY FOR DATE: {d_str}")
         
@@ -314,10 +340,18 @@ def main():
                             msg += f"   - Lệnh ngày: 0\n"
                             msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"
                         else:
+                            max_win = max([d.get("profit", 0) for d in day_deals])
+                            max_loss = min([d.get("profit", 0) for d in day_deals])
+                            avg_win = sum(d.get("profit", 0) for d in day_deals if d.get("profit", 0) > 0) / day_n_win if day_n_win > 0 else 0
+                            avg_loss = sum(d.get("profit", 0) for d in day_deals if d.get("profit", 0) <= 0) / day_n_loss if day_n_loss > 0 else 0
                             msg += f"   - Lệnh ngày: {day_total} ({day_n_win}W / {day_n_loss}L) - WR: {day_wr:.2f}%\n"
                             msg += f"   - PnL ngày: ${day_pnl:.2f} | Tổng PnL: ${total_pnl:.2f}\n"
+                            msg += f"   - Thắng TB: ${avg_win:.2f} (Max: ${max_win:.2f})\n"
+                            msg += f"   - Thua TB: ${avg_loss:.2f} (Max: ${max_loss:.2f})\n"
             except Exception as e:
                 safe_log(f"Error on {d_str} thr {thr}: {e}")
+                import traceback
+                safe_log(traceback.format_exc())
                 
         if args.notify:
             import subprocess
