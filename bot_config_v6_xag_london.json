@@ -40,7 +40,7 @@
                 ]
             },
             {
-                "SYMBOL": "XAUUSDm",
+                "SYMBOL": "XAUUSD",
                 "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 20,
                 "FEATURES": [

@@ -39,7 +39,7 @@
                 ]
             },
             {
-                "SYMBOL": "XAUUSDm",
+                "SYMBOL": "XAUUSD",
                 "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 20,
                 "FEATURES": [
@@ -49,7 +49,7 @@
                 ]
             },
             {
-                "SYMBOL": "BTCUSDm",
+                "SYMBOL": "BTCUSD",
                 "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 20,
                 "FEATURES": [
@@ -59,7 +59,7 @@
                 ]
             },
             {
-                "SYMBOL": "ETHUSDm",
+                "SYMBOL": "ETHUSD",
                 "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 20,
                 "FEATURES": [
