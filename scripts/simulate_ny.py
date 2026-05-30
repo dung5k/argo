@@ -39,12 +39,24 @@ class V6HistoricalSimulator(HistoricalSimulator):
             return
         self._engine = V6InferenceEngine(log_callback=self.log)
         mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
-        input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+        import joblib
+        input_dims = []
+        if os.path.exists(self.scaler_path):
+            try:
+                bundle = joblib.load(self.scaler_path)
+                if isinstance(bundle, dict) and 'column_orders' in bundle:
+                    input_dims = [len(order) for order in bundle['column_orders']]
+            except Exception as e:
+                self.log(f"⚠️ Error loading scaler for input_dims: {e}")
+        
+        if not input_dims:
+            input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+            
         seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
-        train_cfg = self.config.get("TRAIN", {})
+        train_cfg = self.config.get("TRAINING", {})
         d_model = train_cfg.get("D_MODEL", 128)
-        nhead = train_cfg.get("NHEAD", 8)
-        num_attn_layers = train_cfg.get("NUM_ATTN_LAYERS", 3)
+        nhead = train_cfg.get("N_HEAD", 8)
+        num_attn_layers = train_cfg.get("NUM_LAYERS", 4)
         ok = self._engine.load_weights(self.model_path, input_dims=input_dims, seq_lens=seq_lens, d_model=d_model, nhead=nhead, num_attn_layers=num_attn_layers)
         if not ok:
             raise RuntimeError("Cannot load V6 weights!")

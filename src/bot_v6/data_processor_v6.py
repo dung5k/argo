@@ -105,7 +105,8 @@ class V6DataProcessor:
                     elif f'{sym}_{f_req}' in df_fe.columns:
                         final_cols.append(f'{sym}_{f_req}')
                     else:
-                        final_cols.append(f_req)
+                        # Skip features that are not in the processed columns
+                        pass
                         
                 df_selected = df_fe[final_cols]
                 
