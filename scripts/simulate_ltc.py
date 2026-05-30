@@ -240,24 +240,31 @@ def main():
         temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = master_config["LIVE_BOT"]["MIN_PROBABILITY_THRESH"]
     
     sim_window_size = 2000
-
-    temp_cfg_path = os.path.join(_ROOT, f"temp_sim_config_ltc_{args.session}.json")
-    try:
-        with open(temp_cfg_path, "w", encoding='utf-8') as f:
-            json.dump(temp_config, f)
-
-        import glob
-        model_dir = os.path.join(run_dir, "brains")
-        model_files = glob.glob(os.path.join(model_dir, "*.pth"))
-        if not model_files:
-            print("No models found!")
-            sys.exit(1)
+    
+    # Define multiple thresholds to test simultaneously
+    thresholds = [0.60, 0.65, 0.70, 0.73, 0.75]
+    simulators = {}
+    all_deals = {thr: [] for thr in thresholds}
+    
+    if args.notify:
+        msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP LTC V6 {args.session.upper()} (MULTI-THRESHOLDS)\n\n"
+        msg += f"🗓 Giai đoạn: {args.start} -> {args.end}\n"
+        msg += f"⚙️ Các ngưỡng đang test: {', '.join(map(str, thresholds))}\n"
+        msg += f"🤖 Model: {os.path.basename(best_model_path)}"
+        import subprocess
+        subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
         
-        model_files.sort(key=os.path.getmtime)
-        best_model_path = model_files[-1]
-        scaler_path = os.path.join(run_dir, "brains", f"scaler_CFG_LTC_{args.session.upper()}_V6.pkl")
-
-        sim = V6HistoricalSimulator(
+    for thr in thresholds:
+        temp_config.setdefault("LIVE_BOT", {})["MIN_PROBABILITY_THRESH"] = thr
+        temp_cfg_path = os.path.join(_ROOT, f"temp_sim_config_ltc_{args.session}_{thr}.json")
+        try:
+            with open(temp_cfg_path, "w", encoding='utf-8') as f:
+                json.dump(temp_config, f)
+        except:
+            pass
+            
+        safe_log(f"Loading simulator for threshold {thr}...")
+        simulators[thr] = V6HistoricalSimulator(
             config_path=temp_cfg_path,
             model_path=best_model_path,
             scaler_path=scaler_path,
@@ -265,94 +272,90 @@ def main():
             log_callback=safe_log
         )
 
-        start_date = datetime.strptime(args.start, "%Y-%m-%d")
-        end_date = datetime.strptime(args.end, "%Y-%m-%d")
+    start_date = datetime.strptime(args.start, "%Y-%m-%d")
+    end_date = datetime.strptime(args.end, "%Y-%m-%d")
+    
+    current_date = start_date
+    while current_date <= end_date:
+        d_str = current_date.strftime("%Y-%m-%d")
+        safe_log(f"\n---> RUNNING SIMULATION LTC V6 {args.session.upper()} FOR DATE: {d_str}")
         
         if args.notify:
-            thresh = temp_config.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.53)
-            msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP LTC V6 {args.session.upper()}\n\n"
-            msg += f"🗓 Giai đoạn: {args.start} -> {args.end}\n"
-            msg += f"⚙️ Ngưỡng (Threshold): {thresh}\n"
-            msg += f"🤖 Model: {os.path.basename(best_model_path)}"
-            import subprocess
-            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+            msg = f"⏳ TIẾN ĐỘ GIẢ LẬP LTC V6 {args.session.upper()} | NGÀY: {d_str}\n\n"
+            msg += f"📊 Kết quả các ngưỡng:\n"
+        else:
+            msg = ""
             
-        all_deals = []
-        
-        current_date = start_date
-        while current_date <= end_date:
-            d_str = current_date.strftime("%Y-%m-%d")
-            safe_log(f"\n---> RUNNING SIMULATION LTC V6 {args.session.upper()} FOR DATE: {d_str}")
+        for thr in thresholds:
+            sim = simulators[thr]
             try:
                 sim.run(d_str, session=args.session)
                 if hasattr(sim, 'last_deals'):
                     day_deals = sim.last_deals
-                    all_deals.extend(day_deals)
+                    all_deals[thr].extend(day_deals)
+                    
+                    day_n_win = sum(1 for d in day_deals if d.get("profit", 0) > 0)
+                    day_n_loss = sum(1 for d in day_deals if d.get("profit", 0) <= 0)
+                    day_total = day_n_win + day_n_loss
+                    day_wr = day_n_win / day_total * 100 if day_total > 0 else 0
+                    day_pnl = sum(d.get("profit", 0) for d in day_deals)
+                    total_pnl = sum(d.get("profit", 0) for d in all_deals[thr])
+                    
                     if args.notify:
-                        day_n_win = sum(1 for d in day_deals if d.get("profit", 0) > 0)
-                        day_n_loss = sum(1 for d in day_deals if d.get("profit", 0) <= 0)
-                        day_total = day_n_win + day_n_loss
-                        day_wr = day_n_win / day_total * 100 if day_total > 0 else 0
-                        day_pnl = sum(d.get("profit", 0) for d in day_deals)
-                        
-                        msg = f"⏳ TIẾN ĐỘ GIẢ LẬP LTC V6 {args.session.upper()} | NGÀY: {d_str}\n\n"
-                        msg += f"📊 Kết quả ngày:\n"
-                        msg += f"- Lệnh trong ngày: {day_total} ({day_n_win}W / {day_n_loss}L)\n"
+                        msg += f"🔹 Ngưỡng {thr}:\n"
                         if day_total == 0:
-                            msg += "- Không có lệnh nào thoả mãn điều kiện vào lệnh.\n"
+                            msg += f"   - Lệnh ngày: 0\n"
+                            msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"
                         else:
-                            msg += f"- Tỷ lệ thắng ngày: {day_wr:.2f}%\n"
-                            msg += f"- PnL ngày: ${day_pnl:.2f}\n"
-                        
-                        import subprocess
-                        subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+                            msg += f"   - Lệnh ngày: {day_total} ({day_n_win}W / {day_n_loss}L) - WR: {day_wr:.2f}%\n"
+                            msg += f"   - PnL ngày: ${day_pnl:.2f} | Tổng PnL: ${total_pnl:.2f}\n"
             except Exception as e:
-                safe_log(f"Error on {d_str}: {e}")
-            current_date += timedelta(days=1)
+                safe_log(f"Error on {d_str} thr {thr}: {e}")
+                
+        if args.notify:
+            import subprocess
+            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
             
-        n_win = sum(1 for d in all_deals if d.get("profit", 0) > 0)
-        n_loss = sum(1 for d in all_deals if d.get("profit", 0) <= 0)
+        current_date += timedelta(days=1)
+        
+    start_str = start_date.strftime("%d/%m")
+    end_str = end_date.strftime("%d/%m")
+    
+    safe_log("\n" + "="*50)
+    safe_log(f"FINAL SUMMARY ({start_str} to {end_str}) LTC V6 {args.session.upper()}:")
+    
+    for thr in thresholds:
+        n_win = sum(1 for d in all_deals[thr] if d.get("profit", 0) > 0)
+        n_loss = sum(1 for d in all_deals[thr] if d.get("profit", 0) <= 0)
         total = n_win + n_loss
         wr = n_win / total * 100 if total > 0 else 0
-        pnl = sum(d.get("profit", 0) for d in all_deals)
-        
-        start_str = start_date.strftime("%d/%m")
-        end_str = end_date.strftime("%d/%m")
-        
-        safe_log("\n" + "="*50)
-        safe_log(f"FINAL SUMMARY ({start_str} to {end_str}) LTC V6 {args.session.upper()}:")
+        pnl = sum(d.get("profit", 0) for d in all_deals[thr])
+        safe_log(f"--- THRESHOLD {thr} ---")
         safe_log(f"Total Deals: {total}")
         safe_log(f"Wins: {n_win}")
         safe_log(f"Losses: {n_loss}")
         safe_log(f"Win Rate: {wr:.2f}%")
         safe_log(f"Total PnL: ${pnl:.2f}")
-        safe_log("="*50)
-        
-        if args.notify:
-            msg = f"🔍 KIỂM ĐỊNH MÙ (OUT-OF-SAMPLE) LTC V6 | PHIÊN: {args.session.upper()}\n\n"
-            msg += f"🗓 Giai đoạn test: {start_str} - {end_str}\n"
-            msg += f"🧠 Run ID: {run_id}\n\n"
-            msg += f"📊 KẾT QUẢ THỰC CHIẾN MÔ PHỎNG:\n"
-            msg += f"- Tổng số lệnh đánh: {total}\n"
-            msg += f"- Số lệnh Thắng/Thua: {n_win}W / {n_loss}L\n"
-            msg += f"- Tỷ lệ thắng (Win Rate): {wr:.2f}%\n"
-            msg += f"- Lợi nhuận (PnL): ${pnl:.2f}\n\n"
-            if wr < 60:
-                msg += f"⚠️ BÁO ĐỘNG ĐỎ (DEGRADATION): Win Rate ở tập Out-of-sample quá thấp. Mô hình có dấu hiệu Overfitting nặng!"
-            elif wr >= 75:
-                msg += f"✅ ĐẠT CHUẨN: Mô hình chịu tải tốt ở dữ liệu tương lai, có thể tự tin đưa vào Paper Trading!"
-            else:
-                msg += f"⚠️ CHẤP NHẬN ĐƯỢC: Phong độ giảm nhẹ, cần theo dõi thêm khi Paper Trading."
-
-            import subprocess
-            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+    safe_log("="*50)
+    
+    if args.notify:
+        msg = f"🔍 KIỂM ĐỊNH MÙ LTC V6 | PHIÊN: {args.session.upper()}\n\n"
+        msg += f"🗓 Giai đoạn test: {start_str} - {end_str}\n"
+        msg += f"🧠 Run ID: {run_id}\n\n"
+        msg += f"📊 TỔNG KẾT CÁC NGƯỠNG:\n"
+        for thr in thresholds:
+            n_win = sum(1 for d in all_deals[thr] if d.get("profit", 0) > 0)
+            n_loss = sum(1 for d in all_deals[thr] if d.get("profit", 0) <= 0)
+            total = n_win + n_loss
+            wr = n_win / total * 100 if total > 0 else 0
+            pnl = sum(d.get("profit", 0) for d in all_deals[thr])
             
-    finally:
-        if os.path.exists(temp_cfg_path):
-            try:
-                os.remove(temp_cfg_path)
-            except Exception as e:
-                safe_log(f"Warning: Cannot remove temp config file: {e}")
+            msg += f"🔹 Ngưỡng {thr}:\n"
+            msg += f"   - Tổng lệnh: {total} ({n_win}W / {n_loss}L)\n"
+            msg += f"   - Win Rate: {wr:.2f}%\n"
+            msg += f"   - Lợi nhuận (PnL): ${pnl:.2f}\n"
+
+        os.system(f'python .agent/send_to_tele.py "{msg}" --channel 1816854047')
 
 if __name__ == "__main__":
     main()
