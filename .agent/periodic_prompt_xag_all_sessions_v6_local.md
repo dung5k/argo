@@ -1,4 +1,4 @@
-﻿# NHIỆM VỤ ĐỊNH KỲ (LOCAL): AUTO-TUNING XAG ALL SESSIONS BRAIN V6 MTF
+# NHIỆM VỤ ĐỊNH KỲ (LOCAL): AUTO-TUNING XAG ALL SESSIONS BRAIN V6 MTF
 
 > **🇻🇳 NGUYÊN TẮC GIAO TIẾP BẮT BUỘC:** Toàn bộ phân tích, báo cáo, thông báo Telegram và phản hồi người dùng **PHẢI ĐƯỢC VIẾT BẰNG TIẾNG VIỆT CÓ DẤU**. Không dùng tiếng Anh hay tiếng Việt không dấu trong bất kỳ output nào.
 
@@ -80,30 +80,12 @@ Bạn bắt buộc phải duyệt qua các State sau theo thứ tự và thực 
 > 
 > **LƯU Ý:** 
 > - Lấy dữ liệu từ Diary và các file `training_metrics_v3.json` của từng phiên để điền vào.
-> - Luôn gọi lệnh: `Để gửi báo cáo này cho Sếp Lê qua Telegram, BẮT BUỘC phải tạo một task mới và nối (append) vào mảng JSON trong file `d:\DungLA\client1\.agent\tasks.json`.
-Mẫu code Python:
-```python
-import json, random
-from datetime import datetime
-
-tasks_file = "d:\\DungLA\\client1\\.agent\\tasks.json"
-try:
-    with open(tasks_file, "r", encoding="utf-8") as f:
-        tasks = json.load(f)
-except:
-    tasks = []
-
-tasks.append({
-    "task_id": random.randint(1000000, 9999999),
-    "status": "completed",
-    "prompt": "system_auto_report",
-    "chat_id": 1816854047,
-    "reply_message": "<NỘI_DUNG_BÁO_CÁO_TIẾNG_VIỆT>",
-    "reply_status": "pending",
-    "timestamp": datetime.now().isoformat()
-})
-
-with open(tasks_file, "w", encoding="utf-8") as f:
-    json.dump(tasks, f, indent=2, ensure_ascii=False)
-```
-Tuyệt đối KHÔNG sử dụng `send_to_tele.py` hay gọi API Telegram trực tiếp.`
+> - **BẮT BUỘC** sử dụng file `send_to_tele.py` để gửi báo cáo trực tiếp vào Telegram bằng lệnh Python:
+>   ```powershell
+>   python .agent/send_to_tele.py "<NỘI_DUNG_BÁO_CÁO_TIẾNG_VIỆT>"
+>   ```
+> - Khi đã hoàn tất toàn bộ tiến trình huấn luyện và tối ưu hóa của State Machine, **BẮT BUỘC** chạy lệnh cuối cùng có cờ hiệu `--done` để thông báo cho hệ thống rảnh:
+>   ```powershell
+>   python .agent/send_to_tele.py "<Kết_quả_cuối_hoàn_tất>" --done
+>   ```
+> - Tuyệt đối không tự ý chèn hay sửa đổi file `tasks.json` cục bộ để nhắn tin nữa.
