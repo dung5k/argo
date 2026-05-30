@@ -32,10 +32,7 @@
                     "bb_width",
                     "rsi_14_scaled",
                     "hour_sin",
-                    "hour_cos",
-                    "volatility_index",
-                    "order_flow_imbalance",
-                    "atr_14_scaled"
+                    "hour_cos"
                 ]
             },
             {
@@ -43,9 +40,7 @@
                 "TIMEFRAME": "1m",
                 "WINDOW_SIZE": 20,
                 "FEATURES": [
-                    "log_return_close",
-                    "volatility_index",
-                    "order_flow_imbalance"
+                    "log_return_close"
                 ]
             }
         ],

@@ -193,4 +193,5 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
+    content = content.replace('\\n', '\n').replace(r'\n', '\n')
     send_to_telegram(content, is_done, target_channels, screenshot)
