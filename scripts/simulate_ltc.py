@@ -268,6 +268,15 @@ def main():
         start_date = datetime.strptime(args.start, "%Y-%m-%d")
         end_date = datetime.strptime(args.end, "%Y-%m-%d")
         
+        if args.notify:
+            thresh = temp_config.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.53)
+            msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP LTC V6 {args.session.upper()}\n\n"
+            msg += f"🗓 Giai đoạn: {args.start} -> {args.end}\n"
+            msg += f"⚙️ Ngưỡng (Threshold): {thresh}\n"
+            msg += f"🤖 Model: {os.path.basename(best_model_path)}"
+            import subprocess
+            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+            
         all_deals = []
         
         current_date = start_date

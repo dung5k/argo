@@ -259,6 +259,15 @@ def main():
     start_date = datetime(2026, 5, 4)
     end_date = datetime(2026, 5, 18)
     
+    if args.notify:
+        thresh = temp_config.get("LIVE_BOT", {}).get("MIN_PROBABILITY_THRESH", 0.53)
+        msg = f"🚀 BẮT ĐẦU CHẠY GIẢ LẬP XAG V6 NY\n\n"
+        msg += f"🗓 Giai đoạn: 04/05/2026 -> 18/05/2026\n"
+        msg += f"⚙️ Ngưỡng (Threshold): {thresh}\n"
+        msg += f"🤖 Model: {os.path.basename(best_model_path)}"
+        import subprocess
+        subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
+        
     all_deals = []
     
     current_date = start_date
