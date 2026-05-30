@@ -293,7 +293,8 @@ if __name__ == "__main__":
         mtf_windows=fe_cfg.get('MTF_WINDOWS', []),
         zero_noise_target=fe_cfg.get('ZERO_NOISE_TARGET', False),
         order_flow=fe_cfg.get('ORDER_FLOW', False),
-        vol_regime=fe_cfg.get('VOL_REGIME', False)
+        vol_regime=fe_cfg.get('VOL_REGIME', False),
+        indicators_cfg=fe_cfg.get('INDICATORS', {})
     )
     df_features = fe.process_features(df_raw)
 

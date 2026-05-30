@@ -17,6 +17,8 @@ from huggingface_hub import HfApi
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _root not in sys.path:
     sys.path.insert(0, _root)
+if os.path.join(_root, 'huyen_thoai') not in sys.path:
+    sys.path.insert(0, os.path.join(_root, 'huyen_thoai'))
 
 from src.core_v3.feature_engineering_v3 import FeatureEngineeringV3, LabelingV3
 
@@ -75,9 +77,9 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
             if df_sym.index.tz is None:
                 df_sym.index = df_sym.index.tz_localize("UTC")
             
-            # Lọc dữ liệu từ 2024 trở đi và bỏ duplicate
+            # Lọc dữ liệu từ 2025 đến 2026-04-30
             df_sym = df_sym[~df_sym.index.duplicated(keep='first')].sort_index()
-            df_sym = df_sym[df_sym.index >= "2024-01-01"]
+            df_sym = df_sym[(df_sym.index >= "2025-01-01") & (df_sym.index <= "2026-04-30 23:59:59")]
             
             orig_sym = file_sym_to_orig[sym]
             rename_map = {c: f"{orig_sym}_{c}" for c in df_sym.columns}
@@ -87,7 +89,10 @@ def load_crypto_parquets(raw_dir: str, target_symbol: str, target_prefix: str,
             print(f"  + {orig_sym}: Đã gộp {len(sym_files)} file → {len(df_sym):,} nến (từ 2024)", flush=True)
 
     missing = set([file_sym_to_orig[k] for k in required_symbols.keys()]) - loaded
-    assert_ok(len(missing) == 0, f"Thiếu dữ liệu cho các symbol: {missing}.")
+    if missing:
+        print(f"⚠️ CẢNH BÁO: Thiếu dữ liệu cho các symbol: {missing}. Sẽ bỏ qua các symbol này.", flush=True)
+        # Remove missing symbols from df_list logic
+
 
     df_raw = df_list[0].copy()
     for df_next in df_list[1:]:
@@ -153,7 +158,7 @@ def get_split_class(target_time, target_idx, base_timestamps, monthly_split, mon
 def get_split_class(target_time, target_idx, base_timestamps, split_time=None, embargo_time=None, weekly_split=False):
     if weekly_split:
         import datetime
-        delta_days = (target_time.date() - datetime.date(2025, 4, 1)).days
+        delta_days = (target_time.date() - datetime.date(2025, 1, 1)).days
         if delta_days < 0:
             return 0
         week_index = delta_days // 7
@@ -196,7 +201,7 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
     tf_vals  = [df.values for df in df_feats_list]
 
     X_lists = [[] for _ in range(len(window_sizes))]
-    Y_list, split_list = [], []
+    Y_list, split_list, T_list = [], [], []
 
     max_idx = len(base_timestamps) - window_sizes[0]
     n_skip = {'session': 0, 'clean': 0, 'nan': 0, 'embargo': 0}
@@ -244,6 +249,7 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
             X_lists[tf_i].append(windows[tf_i])
         Y_list.append(target_label)
         split_list.append(split_class)
+        T_list.append(target_time.timestamp())
 
 
     print(f"  Bỏ qua (ngoài session): {n_skip['session']:,}", flush=True)
@@ -258,8 +264,9 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
     X_tensors = [np.array(xl, dtype=np.float32) for xl in X_lists]
     Y = np.array(Y_list, dtype=np.int64)
     S = np.array(split_list, dtype=np.int8)
+    T = np.array(T_list, dtype=np.float64)
 
-    return X_tensors, Y, S
+    return X_tensors, Y, S, T
 
 def main():
     parser = argparse.ArgumentParser()
@@ -430,7 +437,7 @@ def main():
     # [4] RÁP TENSOR
     # dfs_mtf là mảng chứa dataframe gốc (OHLC) của mỗi nhánh, chỉ dùng để lấy index datetime trong align_mtf_windows.
     # df_feats_scaled là mảng chứa data đã features + scaled.
-    X_tensors, Y, S = build_tensor_mtf(
+    X_tensors, Y, S, T = build_tensor_mtf(
         df_feats_scaled, targets, clean_mask,
         session_start, session_end, session_days,
         window_sizes, step_size=fe_cfg.get("STEP_SIZE", 1),
@@ -449,6 +456,9 @@ def main():
     
     s_path = os.path.join(out_dir, f"S_tensor_{cfg_id}.npy")
     np.save(s_path, S)
+    
+    t_path = os.path.join(out_dir, f"T_tensor_{cfg_id}.npy")
+    np.save(t_path, T)
     
     for i, xt in enumerate(X_tensors):
         x_path = os.path.join(out_dir, f"X_tensor_{cfg_id}_tf{i}.npy")

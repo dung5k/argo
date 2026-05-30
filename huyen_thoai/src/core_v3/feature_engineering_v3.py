@@ -14,7 +14,7 @@ class FeatureEngineeringV3:
     """
     def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False,
                  mtf_windows=None, order_flow: bool = False, vol_regime: bool = False,
-                 zero_noise_target: bool = False):
+                 zero_noise_target: bool = False, indicators_cfg=None):
         self.target_prefix = target_prefix
         self.macro_features = macro_features if macro_features else {}
         self.crypto_mode = crypto_mode
@@ -22,6 +22,7 @@ class FeatureEngineeringV3:
         self.order_flow = order_flow
         self.vol_regime = vol_regime
         self.zero_noise_target = zero_noise_target
+        self.indicators_cfg = indicators_cfg or {}
         self.scaler = RobustScaler()
         self.is_fitted = False
         
@@ -54,7 +55,7 @@ class FeatureEngineeringV3:
         return features
         
     def calculate_microstructure(self, df, open_col, high_col, low_col, close_col,
-                                  volume_col=None, adx_period=10, vwap_period=20, taker_buy_col=None, taker_sell_col=None):
+                                  volume_col=None, adx_period=None, vwap_period=None, taker_buy_col=None, taker_sell_col=None):
         """
         [MỚI - P1/P2] Nhóm Vi cấu trúc thị trường:
         - body_pct   : Độ đặc của thân nến (Marubozu detection)
@@ -62,6 +63,9 @@ class FeatureEngineeringV3:
         - adx_norm   : Sức mạnh xu hướng ADX, chuẩn hóa [0, 1]
         - vwap_dist  : Khoảng cách giữa Close và VWAP xấp xỉ (Mean Reversion signal)
         """
+        adx_period = adx_period or self.indicators_cfg.get("ADX_PERIOD", 10)
+        vwap_period = vwap_period or self.indicators_cfg.get("VWAP_PERIOD", 20)
+        sma_vol_period = self.indicators_cfg.get("SMA_VOL_PERIOD", 60)
         features = pd.DataFrame(index=df.index)
         total_spread = df[high_col] - df[low_col] + 1e-6
         
@@ -135,7 +139,7 @@ class FeatureEngineeringV3:
             features['ny_low_dist'] = ((df[close_col] - ny_lows) / (ny_lows + 1e-6)).fillna(0.0)
             
             # -- [MỚI - London Session] Volume Surge Ratio
-            sma_vol_60 = vol.rolling(window=60, min_periods=1).mean()
+            sma_vol_60 = vol.rolling(window=sma_vol_period, min_periods=1).mean()
             features['vol_surge_ratio'] = vol / (sma_vol_60 + 1e-6)
             
             # -- [MỚI - NY Session] Exhaustion & Acceleration
@@ -205,7 +209,8 @@ class FeatureEngineeringV3:
                 'lc': (df[low_col] - prev_close).abs()
             }).max(axis=1)
             atr_w = tr.rolling(window=w, min_periods=1).mean()
-            atr_14 = tr.rolling(window=14, min_periods=1).mean()
+            atr_period = self.indicators_cfg.get("ATR_PERIOD", 14)
+            atr_14 = tr.rolling(window=atr_period, min_periods=1).mean()
             features[f'mtf_atr_ratio_{w}'] = atr_w / (atr_14 + 1e-6)
         return features
 
@@ -239,23 +244,27 @@ class FeatureEngineeringV3:
         - High vol (ATR >= P66)
         """
         features = pd.DataFrame(index=df.index)
+        vol_regime_window = self.indicators_cfg.get("VOL_REGIME_WINDOW", 200)
+        atr_period = self.indicators_cfg.get("ATR_PERIOD", 20)
         prev_close = df[close_col].shift(1).bfill()
         tr = pd.DataFrame({
             'hl': df[high_col] - df[low_col],
             'hc': (df[high_col] - prev_close).abs(),
             'lc': (df[low_col] - prev_close).abs()
         }).max(axis=1)
-        atr_20 = tr.rolling(window=20, min_periods=1).mean()
-        p33 = atr_20.rolling(window=200, min_periods=20).quantile(0.33)
-        p66 = atr_20.rolling(window=200, min_periods=20).quantile(0.66)
+        atr_20 = tr.rolling(window=atr_period, min_periods=1).mean()
+        p33 = atr_20.rolling(window=vol_regime_window, min_periods=20).quantile(0.33)
+        p66 = atr_20.rolling(window=vol_regime_window, min_periods=20).quantile(0.66)
         features['vol_regime_low'] = (atr_20 < p33).astype(float)
         features['vol_regime_high'] = (atr_20 >= p66).astype(float)
         return features
 
         
-    def calculate_volatility(self, df, high_col, low_col, close_col, bb_period=20, atr_period=14):
+    def calculate_volatility(self, df, high_col, low_col, close_col, bb_period=None, atr_period=None):
         """Tính toán nhóm Biến động: ATR chuẩn hóa và Bollinger Band Width"""
         features = pd.DataFrame(index=df.index)
+        bb_period = bb_period or self.indicators_cfg.get("BB_PERIOD", 20)
+        atr_period = atr_period or self.indicators_cfg.get("ATR_PERIOD", 14)
         
         # Tính True Range (TR)
         prev_close = df[close_col].shift(1).bfill()
@@ -284,17 +293,22 @@ class FeatureEngineeringV3:
         features['bb_zscore'] = (df[close_col] - sma) / (rstd + 1e-6)
         
         # [MỚI - NY Session] Choppiness Index (CHOP_14)
-        sum_atr = atr.rolling(window=14, min_periods=1).sum()
-        max_high = df[high_col].rolling(window=14, min_periods=1).max()
-        min_low = df[low_col].rolling(window=14, min_periods=1).min()
-        chop = 100 * np.log10(sum_atr / (max_high - min_low + 1e-6) + 1e-6) / np.log10(14)
-        features['chop_14'] = chop / 100.0  # normalize to [0,1]
+        sum_atr = atr.rolling(window=atr_period, min_periods=1).sum()
+        max_high = df[high_col].rolling(window=atr_period, min_periods=1).max()
+        min_low = df[low_col].rolling(window=atr_period, min_periods=1).min()
+        chop = 100 * np.log10(sum_atr / (max_high - min_low + 1e-6) + 1e-6) / np.log10(atr_period)
+        features[f'chop_{atr_period}'] = chop / 100.0  # normalize to [0,1]
         
         return features
         
-    def calculate_momentum(self, df, close_col, rsi_period=14, macd_fast=12, macd_slow=26, macd_signal=9):
+    def calculate_momentum(self, df, close_col, rsi_period=None, macd_fast=None, macd_slow=None, macd_signal=None):
         """Tính toán nhóm Động lượng: RSI và MACD Histogram"""
         features = pd.DataFrame(index=df.index)
+        rsi_period = rsi_period or self.indicators_cfg.get("RSI_PERIOD", 14)
+        rsi_fast = self.indicators_cfg.get("RSI_FAST", 5)
+        macd_fast = macd_fast or self.indicators_cfg.get("MACD_FAST", 12)
+        macd_slow = macd_slow or self.indicators_cfg.get("MACD_SLOW", 26)
+        macd_signal = macd_signal or self.indicators_cfg.get("MACD_SIGNAL", 9)
         
         # Tính RSI
         delta = df[close_col].diff()
@@ -304,14 +318,14 @@ class FeatureEngineeringV3:
         rs = gain / (loss + 1e-6)
         rsi = 100 - (100 / (1 + rs))
         # Chuẩn hóa RSI về [-1, 1] cho Neural Network dễ học
-        features['rsi_14_scaled'] = (rsi / 50.0) - 1.0
+        features[f'rsi_{rsi_period}_scaled'] = (rsi / 50.0) - 1.0
         
         # Thêm RSI siêu ngắn (RSI 5) để bắt Mean Reversion độ trễ thấp
-        gain_5 = (delta.where(delta > 0, 0)).rolling(window=5, min_periods=1).mean()
-        loss_5 = (-delta.where(delta < 0, 0)).rolling(window=5, min_periods=1).mean()
+        gain_5 = (delta.where(delta > 0, 0)).rolling(window=rsi_fast, min_periods=1).mean()
+        loss_5 = (-delta.where(delta < 0, 0)).rolling(window=rsi_fast, min_periods=1).mean()
         rs_5 = gain_5 / (loss_5 + 1e-6)
         rsi_5 = 100 - (100 / (1 + rs_5))
-        features['rsi_5_scaled'] = (rsi_5 / 50.0) - 1.0
+        features[f'rsi_{rsi_fast}_scaled'] = (rsi_5 / 50.0) - 1.0
         
         # Tính MACD
         ema_fast = df[close_col].ewm(span=macd_fast, adjust=False).mean()
@@ -376,6 +390,9 @@ class FeatureEngineeringV3:
 
     def process_features(self, df):
         """Hành trình nhào nặn gộp toàn bộ 4 nhánh tín hiệu"""
+        rsi_period = self.indicators_cfg.get("RSI_PERIOD", 14)
+        rsi_fast = self.indicators_cfg.get("RSI_FAST", 5)
+        atr_period = self.indicators_cfg.get("ATR_PERIOD", 14)
         # Xác định cột dựa trên target_prefix, dự phòng tên viết thường
         prefix = self.target_prefix.lower() if self.target_prefix.lower() + "_close" in map(str.lower, df.columns) else self.target_prefix
         
@@ -510,15 +527,15 @@ class FeatureEngineeringV3:
                             if "bb_zscore" in req_features:
                                 f_macro[f"{sym}_bb_zscore"] = vol_macro['bb_zscore']
                             if "chop_14" in req_features:
-                                f_macro[f"{sym}_chop_14"] = vol_macro['chop_14']
+                                f_macro[f"{sym}_chop_14"] = vol_macro[f'chop_{atr_period}']
 
                         # [MỚI V5] Thêm Momentum cho Macro
                         if any(f in req_features for f in ["rsi_14", "rsi_5", "macd_hist", "momentum_10"]) and m_close:
                             mom_macro = self.calculate_momentum(df, m_close)
                             if "rsi_14" in req_features:
-                                f_macro[f"{sym}_rsi_14"] = mom_macro['rsi_14_scaled']
+                                f_macro[f"{sym}_rsi_14"] = mom_macro[f'rsi_{rsi_period}_scaled']
                             if "rsi_5" in req_features:
-                                f_macro[f"{sym}_rsi_5"] = mom_macro['rsi_5_scaled']
+                                f_macro[f"{sym}_rsi_5"] = mom_macro[f'rsi_{rsi_fast}_scaled']
                             if "macd_hist" in req_features:
                                 f_macro[f"{sym}_macd_hist"] = mom_macro['macd_hist']
                             if "momentum_10" in req_features:
@@ -551,16 +568,19 @@ class FeatureEngineeringV3:
         final_features = pd.concat(feature_blocks, axis=1)
         
         # Xoá các giá trị NaN phát sinh do độ trễ rolling window
-        final_features = final_features.bfill()
+        # final_features = final_features.bfill() # FIXED: DO NOT bfill, keep NaNs to drop later
         
         return final_features
         
     def fit_scaler(self, features_df):
         """Chỉ tìm và lưu thông số Scaler (Median, IQR) từ dữ liệu truyền vào (thường là Train Set)"""
+        rsi_period = self.indicators_cfg.get("RSI_PERIOD", 14)
+        rsi_fast = self.indicators_cfg.get("RSI_FAST", 5)
+        atr_period = self.indicators_cfg.get("ATR_PERIOD", 14)
         def _no_scale(col):
             return (
-                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
+                col.startswith(('hour_', 'minute_', 'is_', f'rsi_{rsi_period}_scaled', f'rsi_{rsi_fast}_scaled'))
+                or col in ('body_pct', 'adx_normalized', f'chop_{atr_period}', 'streak_count', 'order_flow_imbalance')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
@@ -570,6 +590,9 @@ class FeatureEngineeringV3:
             
     def fit_transform_scaler(self, features_df):
         """Scale data trong lúc Training"""
+        rsi_period = self.indicators_cfg.get("RSI_PERIOD", 14)
+        rsi_fast = self.indicators_cfg.get("RSI_FAST", 5)
+        atr_period = self.indicators_cfg.get("ATR_PERIOD", 14)
         # Tránh scale các cột đã nằm trong biên [-1, 1] hoặc [0, 1]:
         # - hour_ / minute_ / is_*: Time Context
         # - rsi_*_scaled: đã chuẩn hóa thủ công về [-1, 1]
@@ -577,8 +600,8 @@ class FeatureEngineeringV3:
         # - *_target_corr_60: Pearson correlation đã in [-1, 1] — dùng suffix match để bắt mọi symbol
         def _no_scale(col):
             return (
-                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
+                col.startswith(('hour_', 'minute_', 'is_', f'rsi_{rsi_period}_scaled', f'rsi_{rsi_fast}_scaled'))
+                or col in ('body_pct', 'adx_normalized', f'chop_{atr_period}', 'streak_count', 'order_flow_imbalance')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]
@@ -596,13 +619,16 @@ class FeatureEngineeringV3:
         
     def transform_scaler(self, features_df):
         """Scale data trong lúc Live Inference — trả lại TẤT CẢ cột (cả scaled lẫn passthrough)."""
+        rsi_period = self.indicators_cfg.get("RSI_PERIOD", 14)
+        rsi_fast = self.indicators_cfg.get("RSI_FAST", 5)
+        atr_period = self.indicators_cfg.get("ATR_PERIOD", 14)
         if not self.is_fitted:
             raise ValueError("Scaler chưa được fit. Vui lòng gọi fit_transform trước.")
         
         def _no_scale(col):
             return (
-                col.startswith(('hour_', 'minute_', 'is_', 'rsi_14_scaled', 'rsi_5_scaled'))
-                or col in ('body_pct', 'adx_normalized', 'chop_14', 'streak_count', 'order_flow_imbalance')
+                col.startswith(('hour_', 'minute_', 'is_', f'rsi_{rsi_period}_scaled', f'rsi_{rsi_fast}_scaled'))
+                or col in ('body_pct', 'adx_normalized', f'chop_{atr_period}', 'streak_count', 'order_flow_imbalance')
                 or col.endswith('_target_corr_60')
             )
         cols_to_scale = [c for c in features_df.columns if not _no_scale(c)]

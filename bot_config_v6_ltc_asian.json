@@ -97,6 +97,9 @@
         "START": "23:00",
         "END": "07:00"
     },
-    "RUN_ID": "run_20260525_144527_v6_asian",
-    "STATE": "IDLE_READY"
+    "RUN_ID": "run_20260530_151157_v6_asian",
+    "STATE": "IDLE_READY",
+    "TRAIN": {
+        "LR_INIT": 0.0001
+    }
 }

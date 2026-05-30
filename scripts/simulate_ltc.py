@@ -23,7 +23,14 @@ class V6HistoricalSimulator(HistoricalSimulator):
         if self._engine is not None:
             return
         self._engine = V6InferenceEngine(log_callback=self.log)
-        ok = self._engine.load_weights(self.model_path, self.config)
+        mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+        input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
+        train_cfg = self.config.get("TRAIN", {})
+        d_model = train_cfg.get("D_MODEL", 128)
+        nhead = train_cfg.get("NHEAD", 8)
+        num_attn_layers = train_cfg.get("NUM_ATTN_LAYERS", 3)
+        ok = self._engine.load_weights(self.model_path, input_dims=input_dims, seq_lens=seq_lens, d_model=d_model, nhead=nhead, num_attn_layers=num_attn_layers)
         if not ok:
             raise RuntimeError("Cannot load V6 weights!")
         bot_cfg = self.config.get("LIVE_BOT", {})
@@ -39,7 +46,6 @@ class V6HistoricalSimulator(HistoricalSimulator):
             return
         self._processor = V6DataProcessor(
             scaler_path=self.scaler_path,
-            inference_feats=inference_feats,
             config=self.config,
             log_callback=self.log
         )
@@ -125,7 +131,9 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
                 
             try:
-                X_list, p_err = self._processor.process(w_df)
+                ok, X_list = self._processor.process_online([w_df] * len(self._processor.tf_configs))
+                if not ok:
+                    X_list = None
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Pipeline lỗi: {e}")
@@ -136,7 +144,16 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
 
             try:
-                result_dict = self._engine.predict(X_list)
+                probs = self._engine.predict_probs(X_list)
+                if probs is None:
+                    continue
+                p_sell, p_hold, p_buy = probs
+                action_code = 1
+                if p_buy >= getattr(self._engine, 'prob_threshold', 0.55):
+                    action_code = 2
+                elif p_sell >= getattr(self._engine, 'prob_threshold', 0.55):
+                    action_code = 0
+                result_dict = {"action": action_code, "mse": 0.0, "raw": [p_sell, p_hold, p_buy]}
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Inference lỗi: {e}")
@@ -299,7 +316,8 @@ def main():
             else:
                 msg += f"⚠️ CHẤP NHẬN ĐƯỢC: Phong độ giảm nhẹ, cần theo dõi thêm khi Paper Trading."
 
-            os.system(f'python .agent/send_to_tele.py "{msg}" --channel 1816854047')
+            import subprocess
+            subprocess.run(['python', '.agent/send_to_tele.py', msg, '--channel', '1816854047'])
             
     finally:
         if os.path.exists(temp_cfg_path):

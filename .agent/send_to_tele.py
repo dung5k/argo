@@ -46,17 +46,7 @@ def get_telegram_config(target_channels=None):
             with open(network_config_path, "r", encoding="utf-8") as f:
                 network_data = json.load(f)
                 
-        agent_identity = os.environ.get("ARGO_CLIENT_ID")
-        if not agent_identity:
-            import socket
-            hostname = socket.gethostname().upper()
-            if "N67BHMU" in hostname:
-                agent_identity = "ARGO1"
-            elif "4C05378" in hostname:
-                agent_identity = "ARGO2"
-            else:
-                agent_identity = network_data.get("agent_identity", "Antigravity")
-            
+        agent_identity = network_data.get("agent_identity", "Antigravity")
         channels_dict = network_data.get("channels", {})
         
         if target_channels is None:
@@ -132,11 +122,9 @@ def send_via_telegram_api(content, is_done=False, target_channels=None, screensh
             screenshot_path = None
 
     import requests
-
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
         if not chat_id: continue
-        
         try:
             if screenshot_path and os.path.exists(screenshot_path):
                 url = f'https://api.telegram.org/bot{token}/sendPhoto'
@@ -144,11 +132,15 @@ def send_via_telegram_api(content, is_done=False, target_channels=None, screensh
                     response = requests.post(url, data={'chat_id': chat_id, 'caption': text}, files={'photo': photo}, timeout=20, verify=False)
                 if response.status_code == 200:
                     success = True
+                else:
+                    print(f"Telegram API Error: {response.status_code} - {response.text}", file=sys.stderr)
             else:
                 url = f'https://api.telegram.org/bot{token}/sendMessage'
                 response = requests.post(url, json={'chat_id': chat_id, 'text': text}, timeout=10, verify=False)
                 if response.status_code == 200:
                     success = True
+                else:
+                    print(f"Telegram API Error: {response.status_code} - {response.text}", file=sys.stderr)
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
             
@@ -166,7 +158,7 @@ def send_via_telegram_api(content, is_done=False, target_channels=None, screensh
 def send_to_telegram(content, is_done=False, target_channels=None, screenshot=False):
     if not content and not screenshot: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
-    # If using screenshot, force API mode because bridge might not support binary photos easily
+    # Nếu có chụp ảnh, ép dùng API vì bridge chưa chắc xử lý được file binary
     if screenshot:
         send_via_telegram_api(content, is_done, target_channels, screenshot=True)
         return
