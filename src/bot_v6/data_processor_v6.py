@@ -67,6 +67,33 @@ class V6DataProcessor:
             self.log(f'[DataProcessorV6] ❌ Lỗi khởi tạo: {e}')
             return False
 
+    def resample_dataframe(self, df_raw: pd.DataFrame, freq: str) -> pd.DataFrame:
+        if not freq or freq in ['1m', '1T', 'M1']:
+            return df_raw.copy()
+        
+        agg_dict = {}
+        for col in df_raw.columns:
+            if col.endswith('_open'):
+                agg_dict[col] = 'first'
+            elif col.endswith('_high'):
+                agg_dict[col] = 'max'
+            elif col.endswith('_low'):
+                agg_dict[col] = 'min'
+            elif col.endswith('_close'):
+                agg_dict[col] = 'last'
+            elif col.endswith('_volume') or col.endswith('_tick_volume'):
+                agg_dict[col] = 'sum'
+            else:
+                agg_dict[col] = 'last'
+                
+        df_resampled = df_raw.resample(freq).agg(agg_dict).dropna()
+        
+        # Shift index to the end of the candle to prevent lookahead bias
+        offset = pd.Timedelta(freq) - pd.Timedelta(minutes=1)
+        df_resampled.index = df_resampled.index + offset
+        
+        return df_resampled
+
     def process_online(self, df_raw: List[pd.DataFrame]) -> Tuple[bool, List[np.ndarray]]:
         """
         df_raw: List của các DataFrame (M1, H1, H4...) đã được resample từ bên ngoài hoặc Simulator.
@@ -133,4 +160,68 @@ class V6DataProcessor:
             return True, X_tensors
         except Exception as e:
             self.log(f'[DataProcessorV6] ❌ Lỗi xử lý online: {e}')
+            return False, None
+
+    def process_vectorized(self, df_raw: pd.DataFrame) -> Tuple[bool, List[pd.DataFrame]]:
+        """
+        Chạy Feature Engineering và Scaling 1 lần duy nhất cho toàn bộ dataset.
+        df_raw: DataFrame 1m (chứa đầy đủ nến của toàn bộ giai đoạn test).
+        Trả về list các DataFrame đã scaled (có index trùng với df_raw).
+        """
+        if not self._init_engines():
+            return False, None
+            
+        scaled_dfs = []
+        try:
+            for i, (fe, tf_cfg) in enumerate(self.fe_engines):
+                self.log(f'[DataProcessorV6] Vectorized FE cho TF{i} ({tf_cfg.get("SYMBOL", "Unknown")}) ...')
+                
+                sym = tf_cfg['SYMBOL']
+                features_req = tf_cfg.get('FEATURES', [])
+                win_size = tf_cfg.get('WINDOW_SIZE', 60)
+                freq = tf_cfg.get('TIMEFRAME', '1m')
+                
+                sym_lower = sym.lower()
+                mapping = {
+                    'open': f'{sym_lower}_open',
+                    'high': f'{sym_lower}_high',
+                    'low': f'{sym_lower}_low',
+                    'close': f'{sym_lower}_close',
+                    'volume': f'{sym_lower}_volume',
+                    'tick_volume': f'{sym_lower}_tick_volume',
+                    'spread': f'{sym_lower}_spread'
+                }
+                df_tf = df_raw.rename(columns=mapping)
+                df_tf = self.resample_dataframe(df_tf, freq)
+                    
+                df_fe = fe.process_features(df_tf)
+                # Dùng ffill() thay vì fillna(method='ffill') để không bị cảnh báo DeprecationWarning
+                df_fe = df_fe.replace([np.inf, -np.inf], np.nan).ffill().fillna(0)
+                
+                final_cols = []
+                for f_req in features_req:
+                    if f_req in df_fe.columns:
+                        final_cols.append(f_req)
+                    elif f'{sym}_{f_req}' in df_fe.columns:
+                        final_cols.append(f'{sym}_{f_req}')
+                        
+                df_selected = df_fe[final_cols].copy()
+                
+                fe.scaler = self.scalers[i]
+                fe.is_fitted = True
+                col_order = self.column_orders[i]
+                for c in col_order:
+                    if c not in df_selected.columns:
+                        df_selected[c] = 0.0
+                
+                df_scaled = fe.transform_scaler(df_selected)
+                df_scaled = df_scaled[col_order]
+                
+                scaled_dfs.append(df_scaled)
+                
+            return True, scaled_dfs
+        except Exception as e:
+            self.log(f'[DataProcessorV6] ❌ Lỗi xử lý vectorized: {e}')
+            import traceback
+            self.log(traceback.format_exc())
             return False, None

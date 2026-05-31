@@ -124,6 +124,13 @@ def resample_dataframe(df_raw, freq):
             agg_dict[col] = 'last'
             
     df_resampled = df_raw.resample(freq).agg(agg_dict).dropna()
+    
+    # Dời index về phút cuối cùng của nến để tránh lookahead bias.
+    # Ví dụ: nến 5m '13:00' (chứa data 13:00-13:04:59) -> dời thành '13:04'.
+    # Để khi pad ở phút 13:01, 13:02, 13:03 sẽ không bị ăn data tương lai.
+    offset = pd.Timedelta(freq) - pd.Timedelta(minutes=1)
+    df_resampled.index = df_resampled.index + offset
+    
     return df_resampled
 
 def align_mtf_windows(target_time, i, target_idx, tf_times, tf_vals, window_sizes):
@@ -368,6 +375,19 @@ def main():
     column_orders = []
     window_sizes = []
     dfs_mtf = []
+
+    valid_mtf_inputs = []
+    for inp in mtf_inputs:
+        sym = inp["SYMBOL"]
+        sym_cols = [c for c in df_raw_1m.columns if c.startswith(sym.upper() + "_")]
+        if len(sym_cols) == 0:
+            print(f"⚠️ CẢNH BÁO: Bỏ qua nhánh MTF {sym} vì không có dữ liệu trong raw data!", flush=True)
+            continue
+        valid_mtf_inputs.append(inp)
+    
+    # Cập nhật lại config để truyền vào model
+    fe_cfg["MTF_INPUTS"] = valid_mtf_inputs
+    mtf_inputs = valid_mtf_inputs
 
     for i, inp in enumerate(mtf_inputs):
         sym = inp["SYMBOL"]

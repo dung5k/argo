@@ -145,9 +145,27 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
                 
             try:
-                ok, X_list = self._processor.process_online([w_df] * len(self._processor.tf_configs))
-                if not ok:
-                    X_list = None
+                if not hasattr(self, '_vectorized_features_done') or not self._vectorized_features_done:
+                    # Tính toàn bộ Feature Vectorized TỪ TRƯỚC
+                    ok, scaled_dfs = self._processor.process_vectorized(self._merged_full)
+                    if not ok:
+                        self.log("⚠️ process_vectorized failed!")
+                        return pd.DataFrame()
+                    self._scaled_dfs = scaled_dfs
+                    self._vectorized_features_done = True
+                
+                # Lấy dữ liệu đã pre-computed
+                X_list = []
+                for i, tf_cfg in enumerate(self._processor.tf_configs):
+                    win_size = tf_cfg.get('WINDOW_SIZE', 60)
+                    df_tf = self._scaled_dfs[i]
+                    idx_array = df_tf.index.get_indexer([candle_time], method='pad')
+                    if len(idx_array) == 0 or idx_array[0] == -1 or idx_array[0] < win_size - 1:
+                        X_list = None
+                        break
+                    idx = idx_array[0]
+                    X_list.append(df_tf.iloc[idx - win_size + 1 : idx + 1].values)
+                    
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Pipeline lỗi: {e}")
