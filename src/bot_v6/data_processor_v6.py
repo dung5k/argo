@@ -191,7 +191,12 @@ class V6DataProcessor:
                     'tick_volume': f'{sym_lower}_tick_volume',
                     'spread': f'{sym_lower}_spread'
                 }
-                df_tf = df_raw.rename(columns=mapping)
+                # Only rename unprefixed columns if the prefixed ones do not already exist
+                rename_map = {}
+                for k, v in mapping.items():
+                    if k in df_raw.columns and v not in df_raw.columns:
+                        rename_map[k] = v
+                df_tf = df_raw.rename(columns=rename_map)
                 df_tf = self.resample_dataframe(df_tf, freq)
                     
                 df_fe = fe.process_features(df_tf)

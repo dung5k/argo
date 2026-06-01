@@ -133,30 +133,28 @@ def run_simulation(start_date: str, end_date: str, config_path: str, model_path:
         print("[SIMULATOR V6] Lỗi load model")
         return
         
-    # 2. Init Virtual Trade Managers
-    sim_symbol = f"SIM_{config['TARGET_SYMBOL']}"
-    vtms = {th: BacktestVirtualTradeManager(sim_symbol, config=config) for th in thresholds_to_test}
-    for vtm in vtms.values():
-        vtm.virtual_balance = 10000.0
-    
+    # 2. Delete existing virtual state files first to prevent state leakage
     import glob
-    state_pattern = os.path.join(_ROOT, 'huyen_thoai', 'data', f"virtual_state_*.json")
+    state_pattern = os.path.join(_ROOT, 'huyen_thoai', 'data', "virtual_state_*.json")
     for state_f in glob.glob(state_pattern):
         try:
             os.remove(state_f)
         except:
             pass
-            
-    vtm = BacktestVirtualTradeManager(target_symbol=sim_symbol, config=config)
-    vtm.virtual_balance = 10000.0
+
+    # 3. Init Virtual Trade Managers
+    sim_symbol = f"SIM_{config['TARGET_SYMBOL']}"
+    vtms = {th: BacktestVirtualTradeManager(sim_symbol, config=config) for th in thresholds_to_test}
+    for vtm in vtms.values():
+        vtm.virtual_balance = 10000.0
+        vtm.active_trade_loggers = {}
+        vtm.history_deals = []
+        vtm.last_close_time = 0
     
-    # 3. Load Datasets
+    # 4. Load Datasets
     raw_dir = os.path.join(_ROOT, config['DATA_SOURCE']['RAW_LOCAL_DIR'])
-    
     target_symbol = config['TARGET_SYMBOL']
     print("[SIMULATOR V6] Loading datasets...")
-    
-    tf_dataframes = []
     
     df_target_1m = _load_parquet(os.path.join(raw_dir, f"{target_symbol.replace('USDT', 'USDT')}_BINANCE_1M_2026.parquet"))
     target_prefix_lower = config.get('TARGET_PREFIX', target_symbol).lower()
@@ -169,28 +167,30 @@ def run_simulation(start_date: str, end_date: str, config_path: str, model_path:
     valid_tf_count = len(dp.scalers)
     print(f"[SIMULATOR V6] Sử dụng {valid_tf_count} TFs hợp lệ.")
     
+    # Build aligned df_raw_all containing all prefixed datasets for vectorized FE
+    df_raw_all = df_target_1m.copy()
+    
     for tf_cfg in dp.tf_configs:
         sym = tf_cfg['SYMBOL']
-        freq = tf_cfg['TIMEFRAME']
-        if freq == '5min': freq = '5T'
-        
+        if sym == target_symbol:
+            continue
         pq_path = os.path.join(raw_dir, f"{sym}_BINANCE_1M_2026.parquet")
         if os.path.exists(pq_path):
-            df_1m = _load_parquet(pq_path)
-            print(f"  Loaded {sym} ({freq}) -> {len(df_1m)} rows")
-        else:
-            print(f"  [Warning] Missing data for {sym}. Creating dummy frame.")
-            # Load target to get the index shape
-            df_1m = pd.DataFrame(index=df_target_1m.index, columns=['open', 'high', 'low', 'close', 'tick_volume', 'volume', 'spread'])
-            df_1m.fillna(0.0, inplace=True)
+            df_sym = _load_parquet(pq_path)
+            rename_map = {c: f"{sym.lower()}_{c}" for c in df_sym.columns}
+            df_sym = df_sym.rename(columns=rename_map)
+            # Align by left join
+            df_raw_all = df_raw_all.join(df_sym[~df_sym.index.duplicated(keep='last')], how='left', rsuffix='_dup')
+            print(f"  Joined {sym} into df_raw_all")
             
-        if sym != target_symbol:
-            df_1m[f'{target_prefix_lower}_close'] = df_target_1m['close']
-            df_1m[f'{target_prefix_lower}_open'] = df_target_1m['open']
-            
-        df_res = resample_dataframe(df_1m, freq)
-        tf_dataframes.append(df_res)
-    
+    # Process vectorized feature engineering once
+    print("[SIMULATOR V6] Running vectorized feature engineering...")
+    ok, scaled_dfs = dp.process_vectorized(df_raw_all)
+    if not ok or not scaled_dfs:
+        print("[SIMULATOR V6] Lỗi vectorized feature engineering")
+        return
+    print("[SIMULATOR V6] Vectorized feature engineering done!")
+
     # Filter Date Range
     start_dt = pd.to_datetime(start_date)
     end_dt = pd.to_datetime(end_date)
@@ -275,25 +275,19 @@ def run_simulation(start_date: str, end_date: str, config_path: str, model_path:
             if t.minute != 0:
                 continue
             
-        # Prepare buffers
-        slice_dfs = []
+        # Prepare window tensors from pre-calculated scaled_dfs
+        x_tensors = []
         skip = False
-        for tf_cfg, df_tf in zip(dp.tf_configs, tf_dataframes):
-            win_size = tf_cfg.get('WINDOW_SIZE', 60)
-            max_lookback = config.get('FEATURE_ENGINEERING', {}).get('INDICATORS', {}).get('MAX_LOOKBACK', 200)
-            req_size = max_lookback + win_size
-            df_slice = df_tf[df_tf.index <= t]
-            if len(df_slice) < req_size:
+        for i, df_scaled in enumerate(scaled_dfs):
+            win_size = dp.tf_configs[i].get('WINDOW_SIZE', 60)
+            df_slice = df_scaled.loc[:t]
+            if len(df_slice) < win_size:
                 skip = True
                 break
-            slice_dfs.append(df_slice.iloc[-req_size:])
+            window = df_slice.iloc[-win_size:].values
+            x_tensors.append(np.expand_dims(window, axis=0))
             
         if skip:
-            continue
-            
-        # Process Online
-        ok, x_tensors = dp.process_online(slice_dfs)
-        if not ok or x_tensors is None:
             continue
             
         # Predict Probs
