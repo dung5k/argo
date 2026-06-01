@@ -142,22 +142,15 @@ def take_screenshot(save_path):
     import subprocess
     # Script powershell chụp toàn bộ màn hình (DPI-Aware & VirtualScreen cho đa màn hình)
     ps_cmd = (
-        "Add-Type -TypeDefinition '@\"\n"
-        "using System;\n"
-        "using System.Runtime.InteropServices;\n"
-        "public class DPI {\n"
-        "    [DllImport(\"user32.dll\")]\n"
-        "    public static extern bool SetProcessDPIAware();\n"
-        "}\n"
-        "\"@;\n"
-        "[DPI]::SetProcessDPIAware() | Out-Null;\n"
-        "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null;\n"
-        "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null;\n"
-        "$bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen;\n"
-        "$bmp = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height);\n"
-        "$graphics = [System.Drawing.Graphics]::FromImage($bmp);\n"
-        "$graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size);\n"
-        f"$bmp.Save('{save_path}', [System.Drawing.Imaging.ImageFormat]::Png);\n"
+        "[void](Add-Type -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool SetProcessDPIAware();' -Name 'DPI' -Namespace 'Win32' -PassThru); "
+        "[Win32.DPI]::SetProcessDPIAware() | Out-Null; "
+        "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; "
+        "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; "
+        "$bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen; "
+        "$bmp = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height); "
+        "$graphics = [System.Drawing.Graphics]::FromImage($bmp); "
+        "$graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size); "
+        f"$bmp.Save('{save_path}', [System.Drawing.Imaging.ImageFormat]::Png); "
         "$graphics.Dispose(); $bmp.Dispose();"
     )
     try:
