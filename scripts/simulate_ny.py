@@ -22,7 +22,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
     def _ensure_engine(self):
         if self._engine is not None:
             return
-        self._engine = V6InferenceEngine(log_callback=self.log)
+        self._engine = V6InferenceEngine(log_callback=self.log, force_cpu=True)
         mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
         input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
         seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
@@ -273,7 +273,7 @@ def main():
     best_model_path = model_files[-1]
     scaler_path = os.path.join(run_dir, "brains", f"scaler_{os.path.basename(workspace)}.pkl")
     
-    thresholds = [0.60, 0.65, 0.70, 0.73, 0.75]
+    thresholds = [0.55, 0.60, 0.65, 0.70, 0.73, 0.75, 0.80]
     simulators = {}
     all_deals = {thr: [] for thr in thresholds}
     

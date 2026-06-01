@@ -291,7 +291,7 @@ def main():
     best_model_path = model_files[-1]
     scaler_path = os.path.join(run_dir, "brains", f"scaler_{os.path.basename(workspace)}.pkl")
     
-    thresholds = [0.60, 0.65, 0.70, 0.73, 0.75]
+    thresholds = [0.55, 0.60, 0.65, 0.70, 0.73, 0.75, 0.80]
     simulators = {}
     all_deals = {thr: [] for thr in thresholds}
     
