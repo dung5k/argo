@@ -97,7 +97,7 @@ def load_crypto_parquets(raw_dir: str, target_sym: str, target_prefix: str):
         df.index = df.index.tz_localize("UTC")
         
     df = df[~df.index.duplicated(keep='first')].sort_index()
-    rename_map = {c: f"{target_sym.upper()}_{c}" for c in df.columns}
+    rename_map = {c: f"{target_prefix}_{c}" for c in df.columns}
     df = df.rename(columns=rename_map)
     return df
 
@@ -243,6 +243,19 @@ class SimulatorEvaluatorV6:
         prob_sell = probs[:, 0].cpu().numpy()
         prob_buy = probs[:, 2].cpu().numpy() # In V6, 0=Sell, 1=Hold, 2=Buy
         
+        if T_val is None:
+            print("⚠️ CẢNH BÁO: T_val is None! Không thể chạy Simulator. Trả về dummy result.")
+            return EpochEvalResultV6(
+                val_ce_loss=val_ce,
+                win_rate=0.0,
+                pnl=0.0,
+                max_dd=0.0,
+                num_trades=0,
+                score=0.0,
+                val_mse_loss=val_mse,
+                trade_logs=pd.DataFrame()
+            )
+
         # Reconstruct timeseries
         # T_val is array of Unix timestamps in seconds
         val_times = pd.to_datetime(T_val, unit='s', utc=True)

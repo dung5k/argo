@@ -1,5 +1,5 @@
 {
-    "agent_identity": "Argo2",
+    "agent_identity": "Argo1",
     "mqtt_broker": "mqtt://broker.emqx.io:1883",
     "mqtt_base_topic": "argo/network/v1/agents",
     "channels": {
@@ -14,7 +14,7 @@
             "description": "Kênh giao tiếp trực tiếp giữa Sếp và Agent 2"
         },
         "agent1_agent2": {
-            "name": "Agent 1 ↔ Agent 2 (ARGO1-ARGO2)",
+            "name": "Agent 1 ↔ Agent 2 (ARGO1-ARGO1)",
             "chat_id": "-5144257068",
             "description": "Kênh nội bộ để Agent 1 và Agent 2 trao đổi (đồng bộ model, config)"
         }

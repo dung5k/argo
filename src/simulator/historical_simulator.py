@@ -113,7 +113,9 @@ class HistoricalSimulator:
         scaler_path: Optional[str] = None,
         window_size: int = 1500,
         log_callback=None,
+        force_cpu: bool = False
     ):
+        self.force_cpu = force_cpu
         self.log = log_callback or (lambda msg: print(f"[SIM] {msg}"))
         self.window_size = window_size
 
@@ -172,7 +174,7 @@ class HistoricalSimulator:
         
         if self.config.get("LIVE_BOT", {}).get("MODEL_TYPE", "") == "V6":
             from src.bot_v6.inference_engine_v6 import V6InferenceEngine
-            self._engine = V6InferenceEngine(log_callback=self.log)
+            self._engine = V6InferenceEngine(log_callback=self.log, force_cpu=self.force_cpu)
         else:
             from src.bot_v3.inference_engine_v3 import V3InferenceEngine
             self._engine = V3InferenceEngine(log_callback=self.log)
@@ -250,10 +252,14 @@ class HistoricalSimulator:
         self.log(f"Merged: {len(merged):,} rows × {len(merged.columns)} cols")
 
     def fetch_history_for_candle(self, candle_time: pd.Timestamp) -> Optional[pd.DataFrame]:
-        subset = self._merged_full[self._merged_full.index <= candle_time]
-        if len(subset) < self.seq_len + 10:
+        idx_array = self._merged_full.index.get_indexer([candle_time], method='pad')
+        if len(idx_array) == 0 or idx_array[0] == -1:
             return None
-        return subset.tail(self.window_size)
+        idx = idx_array[0]
+        if idx + 1 < self.seq_len + 10:
+            return None
+        start_idx = max(0, idx + 1 - self.window_size)
+        return self._merged_full.iloc[start_idx : idx + 1]
 
     # ── main run ─────────────────────────────────────────
 
@@ -450,6 +456,47 @@ class HistoricalSimulator:
         self.log(f"║  P&L ($)              : {pnl:+.4f}")
         self.log(f"║  Balance cuối ($)     : {virtual_tm.virtual_balance:.2f}")
         self.log("╠══════════════════════════════════════════╣")
+        
+        import os
+        import json
+        log_file = "simulator_daily_results.csv"
+        write_header = not os.path.exists(log_file)
+        with open(log_file, "a", encoding="utf-8") as f:
+            if write_header:
+                f.write("Date,Session,Total_Signals,BUY_Signals,SELL_Signals,Total_Deals,Win,Loss,WinRate_%,PnL,End_Balance\n")
+            f.write(f"{date_str},{session.upper()},{n_buy+n_sell},{n_buy},{n_sell},{total},{n_win},{n_loss},{wr:.1f},{pnl:.4f},{virtual_tm.virtual_balance:.2f}\n")
+
+        # ThÃªm kÃªt quáº£ vÃ o metric cá»§a bá»™ nÃ£o
+        if hasattr(self, 'model_path') and self.model_path:
+            try:
+                run_dir = os.path.dirname(os.path.dirname(self.model_path))
+                metrics_path = os.path.join(run_dir, "results", "training_metrics_v3.json")
+                if os.path.exists(metrics_path):
+                    with open(metrics_path, "r", encoding="utf-8") as f:
+                        metrics_data = json.load(f)
+                    
+                    if "simulator_results" not in metrics_data:
+                        metrics_data["simulator_results"] = []
+                        
+                    metrics_data["simulator_results"].append({
+                        "date": date_str,
+                        "session": session.upper(),
+                        "total_signals": n_buy + n_sell,
+                        "buy": n_buy,
+                        "sell": n_sell,
+                        "deals": total,
+                        "win": n_win,
+                        "loss": n_loss,
+                        "win_rate": wr,
+                        "pnl": pnl,
+                        "balance": virtual_tm.virtual_balance
+                    })
+                    
+                    with open(metrics_path, "w", encoding="utf-8") as f:
+                        json.dump(metrics_data, f, indent=4)
+            except Exception as e:
+                self.log(f"Lá»—i ghi metric vÃ o bÃ£o: {e}")
+
         if deals:
             self.log("║  CHI TIẾT LỆNH:")
             for d in deals:

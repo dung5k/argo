@@ -17,7 +17,7 @@ class V6InferenceEngine:
     Màng lọc Prob.
     """
 
-    def __init__(self, model_path: str = None, config: dict = None, log_callback=None):
+    def __init__(self, model_path: str = None, config: dict = None, log_callback=None, force_cpu: bool = False):
         """
         Khởi tạo V6InferenceEngine.
         Nếu truyền model_path thì sẽ gọi luôn load_weights().
@@ -29,7 +29,10 @@ class V6InferenceEngine:
         self.scaler = None
         
         # Sửa thành tự động nhận diện CUDA
-        self.device = torch.device('cuda' if torch and torch.cuda.is_available() else 'cpu')
+        if force_cpu:
+            self.device = torch.device('cpu')
+        else:
+            self.device = torch.device('cuda' if torch and torch.cuda.is_available() else 'cpu')
         device_str = getattr(self.device, 'type', 'mock').upper()
         if device_str == 'CUDA':
             device_str += f" ({torch.cuda.get_device_name(0)})"
@@ -51,6 +54,20 @@ class V6InferenceEngine:
             return False
 
         try:
+            state_dict = torch.load(model_path, map_location=self.device)
+            # DYNAMICALLY CHECK NUMBER OF ENCODERS
+            encoder_keys = [k for k in state_dict.keys() if k.startswith("encoders.")]
+            if encoder_keys:
+                import re
+                encoder_indices = set(int(re.search(r"encoders\.(\d+)", k).group(1)) for k in encoder_keys)
+                num_encoders_in_model = max(encoder_indices) + 1
+                if len(input_dims) > num_encoders_in_model:
+                    self.log_callback(f"[InferenceEngineV6] WARNING: Config có {len(input_dims)} inputs, nhưng model chỉ có {num_encoders_in_model} encoders. Đang cắt bớt cấu hình đầu vào!")
+                    input_dims = input_dims[:num_encoders_in_model]
+                    seq_lens = seq_lens[:num_encoders_in_model]
+                    if "FEATURE_ENGINEERING" in self.config and "MTF_INPUTS" in self.config["FEATURE_ENGINEERING"]:
+                        self.config["FEATURE_ENGINEERING"]["MTF_INPUTS"] = self.config["FEATURE_ENGINEERING"]["MTF_INPUTS"][:num_encoders_in_model]
+            
             self.model = AAMT_MTF_Model(
                 input_dims=input_dims,
                 seq_lens=seq_lens,
@@ -63,7 +80,6 @@ class V6InferenceEngine:
                 layer_drop=0.0
             )
 
-            state_dict = torch.load(model_path, map_location=self.device)
             self.model.load_state_dict(state_dict)
             self.model.to(self.device)
             self.model.eval()
@@ -89,9 +105,15 @@ class V6InferenceEngine:
                 x_tensors_pt = []
                 for x in x_tensors:
                     if isinstance(x, np.ndarray):
-                        x_tensors_pt.append(torch.tensor(x, dtype=torch.float32).to(self.device))
+                        t = torch.tensor(x, dtype=torch.float32)
+                        if t.dim() == 2:
+                            t = t.unsqueeze(0)
+                        x_tensors_pt.append(t.to(self.device))
                     else:
-                        x_tensors_pt.append(x.to(self.device))
+                        t = x.clone() if isinstance(x, torch.Tensor) else torch.tensor(x)
+                        if t.dim() == 2:
+                            t = t.unsqueeze(0)
+                        x_tensors_pt.append(t.to(self.device))
                 
                 _, logits, _ = self.model(x_tensors_pt)
                 
@@ -125,9 +147,15 @@ class V6InferenceEngine:
                 x_tensors_pt = []
                 for x in x_tensors:
                     if isinstance(x, np.ndarray):
-                        x_tensors_pt.append(torch.tensor(x, dtype=torch.float32).to(self.device))
+                        t = torch.tensor(x, dtype=torch.float32)
+                        if t.dim() == 2:
+                            t = t.unsqueeze(0)
+                        x_tensors_pt.append(t.to(self.device))
                     else:
-                        x_tensors_pt.append(x.to(self.device))
+                        t = x.clone() if isinstance(x, torch.Tensor) else torch.tensor(x)
+                        if t.dim() == 2:
+                            t = t.unsqueeze(0)
+                        x_tensors_pt.append(t.to(self.device))
                 
                 _, logits, _ = self.model(x_tensors_pt)
                 probs = F.softmax(logits, dim=-1) # [1, 3]

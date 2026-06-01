@@ -8,6 +8,22 @@ from datetime import datetime
 import json
 import importlib.util
 import argparse
+import platform
+import requests
+
+def run_and_tee(cmd, log_path, env):
+    with open(log_path, 'wb') as f_log:
+        process = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        while True:
+            chunk = process.stdout.read1(1024) if hasattr(process.stdout, 'read1') else process.stdout.read(1)
+            if not chunk:
+                break
+            f_log.write(chunk)
+            f_log.flush()
+            sys.stdout.buffer.write(chunk)
+            sys.stdout.buffer.flush()
+        process.wait()
+        return process.returncode
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
@@ -123,75 +139,32 @@ def get_ai_decision(prompt_path, symbol):
         
     try:
         decision = json.loads(match.group(1))
+        # Luu lich su quyet dinh
+        import datetime
+        history_file = os.path.join("workspaces", f"ai_decision_history_{symbol}.json")
+        history = []
+        if os.path.exists(history_file):
+            try:
+                with open(history_file, "r", encoding="utf-8") as f:
+                    history = json.load(f)
+            except:
+                pass
+        
+        decision_record = {
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "decision": decision
+        }
+        history.append(decision_record)
+        # Giu lai toi da 10 quyet dinh gan nhat de prompt khong qua dai
+        history = history[-10:]
+        
+        with open(history_file, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=4, ensure_ascii=False)
+            
         return decision
     except json.JSONDecodeError as e:
         print("Lỗi parse JSON:", e)
         return None
-
-def cleanup_old_runs(symbol, version, exclude_runs=None, keep_top_n=2):
-    """Dọn dẹp các run cũ, chỉ giữ lại top N run tốt nhất cho mỗi phiên."""
-    if exclude_runs is None:
-        exclude_runs = []
-    
-    sessions = ["asian", "london", "ny", "weekend"]
-    total_deleted = 0
-    
-    for session in sessions:
-        workspace = f"workspaces/CFG_{symbol}_{session.upper()}_{version}"
-        runs_dir = os.path.join(workspace, "runs")
-        if not os.path.exists(runs_dir):
-            continue
-        
-        # Thu thập metrics của tất cả các run
-        scored_runs = []
-        unscored_runs = []
-        
-        for run_name in os.listdir(runs_dir):
-            if run_name in exclude_runs:
-                continue
-            run_path = os.path.join(runs_dir, run_name)
-            if not os.path.isdir(run_path):
-                continue
-            
-            metrics_path = os.path.join(run_path, "results", "training_metrics_v3.json")
-            if os.path.exists(metrics_path):
-                try:
-                    with open(metrics_path, "r", encoding="utf-8") as f:
-                        m = json.load(f)
-                    best_score = 0
-                    for sess_data in m.get("sessions", {}).values():
-                        best = sess_data.get("BEST_VLOSS", {})
-                        score = best.get("composite_score", 0)
-                        if score > best_score:
-                            best_score = score
-                    scored_runs.append((run_name, best_score))
-                except Exception:
-                    unscored_runs.append(run_name)
-            else:
-                unscored_runs.append(run_name)
-        
-        # Sắp xếp theo score giảm dần
-        scored_runs.sort(key=lambda x: x[1], reverse=True)
-        
-        # Giữ lại top N run có score
-        runs_to_keep = set(r[0] for r in scored_runs[:keep_top_n])
-        runs_to_delete = [r[0] for r in scored_runs[keep_top_n:]] + unscored_runs
-        
-        for run_name in runs_to_delete:
-            run_path = os.path.join(runs_dir, run_name)
-            try:
-                shutil.rmtree(run_path)
-                total_deleted += 1
-                print(f"  🗑️ Đã xóa: {run_path}")
-            except Exception as e:
-                print(f"  ⚠️ Lỗi xóa {run_path}: {e}")
-        
-        if runs_to_keep:
-            print(f"  ✅ {session.upper()}: Giữ lại {len(runs_to_keep)} run tốt nhất, xóa {len(runs_to_delete)} run cũ.")
-    
-    if total_deleted > 0:
-        print(f"\n🧹 TỔNG DỌN DẸP: Đã xóa {total_deleted} run cũ.")
-    return total_deleted
 
 def update_config(session_name, updates, symbol, version, start_date, end_date, custom_params_dict):
     # Support both root config format (v6) and data/ format (v5)
@@ -303,12 +276,12 @@ def run_training_loop(args):
     if version.lower() == "v5":
         prep_args.extend(['--no-push', '--run-id', run_id])
     else:
-        prep_args.append('--no-upload')
-    with open(log_prep, 'w', encoding='utf-8') as f_log:
-        subprocess.run(
-            prep_args,
-            env=env, stdout=f_log, stderr=subprocess.STDOUT
-        )
+        prep_args.extend(['--no-upload', '--weekly-split'])
+    ret_prep = run_and_tee(prep_args, log_prep, env)
+    if ret_prep != 0:
+        err_msg = f"❌ **LỖI NGHIÊM TRỌNG** ❌\n- Mã giao dịch: {symbol}\n- Quá trình chuẩn bị dữ liệu (Prepare Dataset) thất bại. Bot tạm dừng để kiểm tra!"
+        subprocess.run([sys.executable, ".agent/send_to_tele.py", err_msg], check=False)
+        sys.exit(ret_prep)
 
     while True:
         print(f"\n--- [6] ĐÀO TẠO (TRAIN_{version}): {target_session.upper()} ---")
@@ -325,24 +298,23 @@ def run_training_loop(args):
             train_script = "src/training_v3/train_v3.py"
             
         train_cmd = [sys.executable, '-u', train_script, config_dst, '--run-id', run_id, '--scratch', '--session', target_session]
-        with open(log_train, 'w', encoding='utf-8') as f_log:
-            train_process = subprocess.Popen(train_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
-            for line in train_process.stdout:
-                f_log.write(line)
-                if "Epoch" in line or "[Warm-up]" in line or "[Best]" in line or "composite_score" in line:
-                    print(f"  -> [Train Monitor] {line.strip()}")
-            train_process.wait()
+        ret_train = run_and_tee(train_cmd, log_train, env)
+        if ret_train != 0:
+            err_msg = f"❌ **LỖI NGHIÊM TRỌNG** ❌\n- Mã giao dịch: {symbol}\n- Quá trình huấn luyện (Train) thất bại. Bot tạm dừng để kiểm tra!"
+            subprocess.run([sys.executable, ".agent/send_to_tele.py", err_msg], check=False)
+            sys.exit(ret_train)
 
         print(f"\n--- [EVALUATE & SIMULATE] KIỂM TRA NGƯỠNG CHO {target_session.upper()} ---")
         try:
             eval_cmd = [
-                sys.executable, "scripts/evaluate_and_simulate.py",
-                "--run-dir", new_run_dir,
-                "--session", target_session,
+                sys.executable, f"scripts/simulate_{symbol.lower()}.py",
+                "--config", config_dst,
                 "--symbol", symbol,
-                "--version", version
+                "--force-cpu",
+                "--run-id", run_id
             ]
-            subprocess.run(eval_cmd, env=env, check=False)
+            log_eval = os.path.join(new_run_dir, 'evaluate.log')
+            run_and_tee(eval_cmd, log_eval, env)
         except Exception as e:
             print(f"Lỗi khi chạy Evaluate & Simulate: {e}")
 
@@ -382,18 +354,16 @@ def run_training_loop(args):
         prep_script = f"scripts/prepare_{version.lower()}_dataset.py"
         if not os.path.exists(prep_script) and version.lower() == "v5":
             prep_script = "scripts/upload_v3_dataset.py"
-        prep_cmd = [sys.executable, prep_script, '--config', next_config_dst]
+        prep_args = [sys.executable, prep_script, '--config', next_config_dst]
         if version.lower() == "v5":
-            prep_cmd.extend(['--no-push', '--run-id', next_run_id])
+            prep_args.extend(['--no-push', '--run-id', f"{run_id}_next"])
         else:
-            prep_cmd.append('--no-upload')
-        with open(next_log_prep, 'w', encoding='utf-8') as f_log:
-            prep_process = subprocess.Popen(prep_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8')
-            for line in prep_process.stdout:
-                f_log.write(line)
-                if "Ráp Tensor" in line or "100%" in line:
-                    print(f"  -> [Prep Monitor] {line.strip()}")
-            prep_process.wait()
+            prep_args.extend(['--no-upload', '--weekly-split'])
+        ret_next_prep = run_and_tee(prep_args, next_log_prep, env)
+        if ret_next_prep != 0:
+            err_msg = f"❌ **LỖI NGHIÊM TRỌNG** ❌\n- Mã giao dịch: {symbol}\n- Quá trình chuẩn bị dữ liệu (Pre-fetch) thất bại. Bot tạm dừng để kiểm tra!"
+            subprocess.run([sys.executable, ".agent/send_to_tele.py", err_msg], check=False)
+            sys.exit(ret_next_prep)
         
         print("--- [PRE-FETCH] CHUẨN BỊ XONG. TIẾP TỤC VÒNG LẶP ---")
         
@@ -401,7 +371,8 @@ def run_training_loop(args):
         subprocess.run([sys.executable, ".agent/notify_done.py", f"{symbol.lower()}_{version.lower()}_training_done"], env=env)
         
         print(f"\n--- [8] DỌN DẸP CÁC RUN CŨ ---")
-        cleanup_old_runs(symbol, version, exclude_runs=[run_id, next_run_id], keep_top_n=2)
+        # cleanup_old_runs(symbol, version, exclude_runs=[run_id, next_run_id], keep_top_n=2)
+        print("Đã tắt dọn dẹp theo yêu cầu để giữ lại toàn bộ tiến trình đào tạo.")
         
         target_session = next_target_session
         updates = next_updates
