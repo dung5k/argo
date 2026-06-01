@@ -140,22 +140,31 @@ def signal_done_to_extension():
 
 def take_screenshot(save_path):
     import subprocess
-    # Script powershell chụp toàn bộ màn hình của Primary Screen
+    # Script powershell chụp toàn bộ màn hình (DPI-Aware & VirtualScreen cho đa màn hình)
     ps_cmd = (
-        "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; "
-        "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; "
-        "$bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; "
-        "$bmp = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height); "
-        "$graphics = [System.Drawing.Graphics]::FromImage($bmp); "
-        "$graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size); "
-        f"$bmp.Save('{save_path}', [System.Drawing.Imaging.ImageFormat]::Png); "
+        "Add-Type -TypeDefinition '@\"\n"
+        "using System;\n"
+        "using System.Runtime.InteropServices;\n"
+        "public class DPI {\n"
+        "    [DllImport(\"user32.dll\")]\n"
+        "    public static extern bool SetProcessDPIAware();\n"
+        "}\n"
+        "\"@;\n"
+        "[DPI]::SetProcessDPIAware() | Out-Null;\n"
+        "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null;\n"
+        "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null;\n"
+        "$bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen;\n"
+        "$bmp = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height);\n"
+        "$graphics = [System.Drawing.Graphics]::FromImage($bmp);\n"
+        "$graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size);\n"
+        f"$bmp.Save('{save_path}', [System.Drawing.Imaging.ImageFormat]::Png);\n"
         "$graphics.Dispose(); $bmp.Dispose();"
     )
     try:
         subprocess.run(["powershell", "-Command", ps_cmd], shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return os.path.exists(save_path)
     except Exception as e:
-        print(f"Lỗi chụp màn hình qua PowerShell: {e}", file=sys.stderr)
+        print(f"Loi chup man hinh: {e}", file=sys.stderr)
         return False
 
 def send_via_telegram_api(content, is_done=False, target_channels=None, screenshot=False):
