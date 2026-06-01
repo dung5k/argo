@@ -2,7 +2,9 @@
     "data": {
         "leader_symbol": "BTCUSD",
         "follower_symbol": "LTCUSD",
-        "timeframe": "M15"
+        "timeframe": "M15",
+        "spread_pct": 0.0003,
+        "slippage_pct": 0.0001
     },
     "window": {
         "initial_train_size_days": 10,

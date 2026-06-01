@@ -177,7 +177,9 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
             "MAX_HOLD_BARS": ai_config.get("max_hold_bars", 30),
             "MAX_LAG_STEPS": ai_config.get("max_lag_steps", 10),
             "CORRELATION_THRESHOLD": ai_config.get("correlation_threshold", 0.20),
-            "TIMEFRAME": mcfg.get("data", {}).get("timeframe", "M15")
+            "TIMEFRAME": mcfg.get("data", {}).get("timeframe", "M15"),
+            "SPREAD_PCT": mcfg.get("data", {}).get("spread_pct", 0.0),
+            "SLIPPAGE_PCT": mcfg.get("data", {}).get("slippage_pct", 0.0)
         },
         "TRAINING": {
             "LEARNING_RATE_BASE": mcfg.get("train", {}).get("learning_rate_base", 1e-3),

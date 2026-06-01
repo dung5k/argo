@@ -237,9 +237,10 @@ def estimate_dynamic_lag(df_segment, max_lag_steps, correlation_threshold):
 # =====================================================================
 # FEATURE ENGINEERING & LABELLING
 # =====================================================================
-def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_bars, seq_len=30):
+def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_bars, seq_len=30, spread_pct=0.0, slippage_pct=0.0):
     """
-    Xây dựng vector đặc trưng kết hợp Follower và Leader dịch trễ, và tạo nhãn BUY(1)/SELL(2)/HOLD(0).
+    Xây dựng vector đặc trưng kết hợp Follower và Leader dịch trễ, và tạo nhãn BUY(1)/SELL(2)/HOLD(0)
+    có tính tới chi phí ma sát spread & slippage và duyệt theo trình tự thời gian nến tương lai.
     """
     df = df_segment.copy()
     
@@ -269,6 +270,8 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
     closes = df['follower_close'].values
     labels = []
     
+    friction_loss = spread_pct + 2.0 * slippage_pct
+    
     for i in range(len(df)):
         if i + max_hold_bars >= len(df):
             labels.append(0)  # Mặc định HOLD ở cuối tập dữ liệu
@@ -277,18 +280,36 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
         current_price = closes[i]
         future_prices = closes[i+1 : i+1+max_hold_bars]
         
-        # Tính tỷ suất sinh lời tối đa up/down
-        max_up = (future_prices.max() - current_price) / current_price
-        max_down = (future_prices.min() - current_price) / current_price
-        
-        # BUY (1): Đạt TP trước khi chạm SL
-        if max_up >= tp_pct and abs(max_down) < sl_pct:
-            labels.append(1)
-        # SELL (2): Đạt SL/cắt xuống trước khi chạm TP
-        elif max_down <= -tp_pct and max_up < sl_pct:
-            labels.append(2)
+        is_long_tp = False
+        is_long_sl = False
+        for price in future_prices:
+            raw_change = (price - current_price) / current_price
+            real_change = raw_change - friction_loss
+            if real_change >= tp_pct:
+                is_long_tp = True
+                break
+            elif real_change <= -sl_pct:
+                is_long_sl = True
+                break
+                
+        is_short_tp = False
+        is_short_sl = False
+        for price in future_prices:
+            raw_change = (current_price - price) / current_price
+            real_change = raw_change - friction_loss
+            if real_change >= tp_pct:
+                is_short_tp = True
+                break
+            elif real_change <= -sl_pct:
+                is_short_sl = True
+                break
+                
+        if is_long_tp and not is_long_sl:
+            labels.append(1)  # BUY
+        elif is_short_tp and not is_short_sl:
+            labels.append(2)  # SELL
         else:
-            labels.append(0) # HOLD
+            labels.append(0)  # HOLD
             
     df['label'] = labels
     
@@ -322,9 +343,10 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
 # =====================================================================
 # BACKTEST ENGINE (SIMULATOR)
 # =====================================================================
-def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pct, sl_pct):
+def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pct, sl_pct, max_hold_bars=30, spread_pct=0.0, slippage_pct=0.0):
     """
     Module 3 Backtest: Chạy giả lập mô hình trên tập dữ liệu và tính các chỉ số PnL, WinRate, Profit Factor.
+    Có áp dụng chi phí ma sát spread & slippage, và giới hạn số nến nắm giữ tối đa max_hold_bars.
     """
     model.eval()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -347,6 +369,8 @@ def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pc
     profit_sum = 0.0
     loss_sum = 0.0
     
+    friction_loss = spread_pct + 2.0 * slippage_pct
+    
     # Mô phỏng giao dịch chênh lệch pha
     for i in range(len(preds)):
         signal = preds[i]
@@ -363,28 +387,50 @@ def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pc
             continue
             
         current_price = df_close.iloc[idx]
-        future_prices = df_close.iloc[idx+1:]
+        future_prices = df_close.iloc[idx+1 : idx+1+max_hold_bars]
         
         trade_pnl = 0.0
-        # Mô phỏng đóng lệnh theo TP/SL thực tế
-        for price in future_prices:
-            change = (price - current_price) / current_price
+        has_closed = False
+        
+        # Mô phỏng đóng lệnh theo TP/SL thực tế và nến cuối
+        for k, price in enumerate(future_prices):
+            is_last_bar = (k == len(future_prices) - 1)
+            
             if signal == 1: # LONG
-                if change >= tp_pct:
+                raw_change = (price - current_price) / current_price
+                real_change = raw_change - friction_loss
+                
+                if real_change >= tp_pct:
                     trade_pnl = tp_pct
+                    has_closed = True
                     break
-                elif change <= -sl_pct:
+                elif real_change <= -sl_pct:
                     trade_pnl = -sl_pct
+                    has_closed = True
                     break
-            elif signal == 2: # SHORT
-                if change <= -tp_pct:
-                    trade_pnl = tp_pct
-                    break
-                elif change >= sl_pct:
-                    trade_pnl = -sl_pct
+                elif is_last_bar:
+                    trade_pnl = real_change
+                    has_closed = True
                     break
                     
-        if trade_pnl != 0.0:
+            elif signal == 2: # SHORT
+                raw_change = (current_price - price) / current_price
+                real_change = raw_change - friction_loss
+                
+                if real_change >= tp_pct:
+                    trade_pnl = tp_pct
+                    has_closed = True
+                    break
+                elif real_change <= -sl_pct:
+                    trade_pnl = -sl_pct
+                    has_closed = True
+                    break
+                elif is_last_bar:
+                    trade_pnl = real_change
+                    has_closed = True
+                    break
+                    
+        if has_closed:
             trades += 1
             pnl += trade_pnl
             if trade_pnl > 0:
@@ -475,6 +521,44 @@ def get_ai_feedback(model_name, api_key, result_summary, current_config):
     except Exception as e:
         print(f"[AI-Feedback] Failed to call Gemini API feedback: {e}. Keeping current config.")
         return current_config
+
+# =====================================================================
+# SESSION FILTERING HELPER
+# =====================================================================
+def filter_by_session(X, Y, times, session_name, session_utc):
+    """
+    Lọc các mẫu học (X, Y, times) theo giờ giao dịch của phiên (SESSION_UTC).
+    Điều này giúp tính toán Features/Labels liên tục mà không đứt gãy chuỗi thời gian,
+    nhưng chỉ huấn luyện và kiểm thử trên các nến thuộc phiên chỉ định.
+    """
+    if not session_utc or session_name.lower() == "all":
+        return X, Y, times
+        
+    start_time_str = session_utc.get("START", "00:00")
+    end_time_str = session_utc.get("END", "23:59")
+    
+    sh, sm = map(int, start_time_str.split(":"))
+    eh, em = map(int, end_time_str.split(":"))
+    
+    start_val = sh * 60 + sm
+    end_val = eh * 60 + em
+    
+    filtered_indices = []
+    for idx, t in enumerate(times):
+        # t là Timestamp
+        t_min = t.hour * 60 + t.minute
+        if start_val <= end_val:
+            if start_val <= t_min <= end_val:
+                filtered_indices.append(idx)
+        else:
+            if t_min >= start_val or t_min <= end_val:
+                filtered_indices.append(idx)
+                
+    if not filtered_indices:
+        # Trả về mảng rỗng tương thích hình dáng
+        return np.empty((0, X.shape[1], X.shape[2]), dtype=np.float32), np.empty((0,), dtype=np.int64), []
+        
+    return X[filtered_indices], Y[filtered_indices], [times[i] for i in filtered_indices]
 
 # =====================================================================
 # CORE WALK-FORWARD ENGINE
@@ -571,36 +655,17 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     end_date = cfg["WALK_FORWARD"]["END_DATE"]
     df_all = get_synced_data(leader, follower, timeframe, start_date, end_date, mt5_path)
     
-    # Thực hiện lọc theo phiên thị trường nếu cấu hình có SESSION_UTC giống V6
-    session_name = cfg.get("SESSION", "all").lower()
-    session_utc = cfg.get("SESSION_UTC", {})
-    if session_utc and session_name != "all":
-        start_time_str = session_utc.get("START", "00:00")
-        end_time_str = session_utc.get("END", "23:59")
-        
-        print(f"[Walk-Forward] Filtering data for session: {session_name} ({start_time_str} - {end_time_str})")
-        
-        sh, sm = map(int, start_time_str.split(":"))
-        eh, em = map(int, end_time_str.split(":"))
-        
-        start_val = sh * 60 + sm
-        end_val = eh * 60 + em
-        
-        time_mins = df_all.index.hour * 60 + df_all.index.minute
-        if start_val <= end_val:
-            mask = (time_mins >= start_val) & (time_mins <= end_val)
-        else:
-            mask = (time_mins >= start_val) | (time_mins <= end_val)
-            
-        df_all = df_all[mask]
-        print(f"[Walk-Forward] Data filtered. Remaining candles for session: {len(df_all):,}")
-    
     # Đọc tham số huấn luyện ban đầu
     tp_pct = cfg["FEATURE_ENGINEERING"]["TP_PCT"]
     sl_pct = cfg["FEATURE_ENGINEERING"]["SL_PCT"]
     max_hold_bars = cfg["FEATURE_ENGINEERING"]["MAX_HOLD_BARS"]
     max_lag = cfg["FEATURE_ENGINEERING"]["MAX_LAG_STEPS"]
     corr_thresh = cfg["FEATURE_ENGINEERING"]["CORRELATION_THRESHOLD"]
+    spread_pct = cfg["FEATURE_ENGINEERING"].get("SPREAD_PCT", 0.0)
+    slippage_pct = cfg["FEATURE_ENGINEERING"].get("SLIPPAGE_PCT", 0.0)
+    
+    session_name = cfg.get("SESSION", "all").lower()
+    session_utc = cfg.get("SESSION_UTC", {})
     
     lr_base = cfg["TRAINING"]["LEARNING_RATE_BASE"]
     lr_finetune = cfg["TRAINING"]["LEARNING_RATE_FINETUNE"]
@@ -633,8 +698,10 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     
     # Xây dựng features & labels
     X_tr, Y_tr, tr_times = build_features_and_labels(
-        df_found_train, found_lag, tp_pct, sl_pct, max_hold_bars
+        df_found_train, found_lag, tp_pct, sl_pct, max_hold_bars, seq_len=30,
+        spread_pct=spread_pct, slippage_pct=slippage_pct
     )
+    X_tr, Y_tr, tr_times = filter_by_session(X_tr, Y_tr, tr_times, session_name, session_utc)
     
     # Khởi tạo Cross-Asset Transformer Model
     num_features = X_tr.shape[2]
@@ -683,11 +750,16 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     
     # Xây dựng features & labels cho validation
     X_va, Y_va, va_times = build_features_and_labels(
-        df_val, found_lag, tp_pct, sl_pct, max_hold_bars
+        df_val, found_lag, tp_pct, sl_pct, max_hold_bars, seq_len=30,
+        spread_pct=spread_pct, slippage_pct=slippage_pct
     )
+    X_va, Y_va, va_times = filter_by_session(X_va, Y_va, va_times, session_name, session_utc)
     
     # Chạy giả lập Backtest
-    backtest_res = run_backtest_simulation(model, X_va, va_times, df_val, tp_pct, sl_pct)
+    backtest_res = run_backtest_simulation(
+        model, X_va, va_times, df_val, tp_pct, sl_pct, max_hold_bars,
+        spread_pct=spread_pct, slippage_pct=slippage_pct
+    )
     
     wr = backtest_res["win_rate"]
     pf = backtest_res["profit_factor"]
@@ -776,17 +848,21 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         )
         
         # Xây dựng data train/test chặng mới
-        X_tr_step, Y_tr_step, _ = build_features_and_labels(
+        X_tr_step, Y_tr_step, tr_step_times = build_features_and_labels(
             df_tr_step, step_lag, 
             current_ai_config["tp_pct"], current_ai_config["sl_pct"], 
-            current_ai_config["max_hold_bars"]
+            current_ai_config["max_hold_bars"], seq_len=30,
+            spread_pct=spread_pct, slippage_pct=slippage_pct
         )
+        X_tr_step, Y_tr_step, tr_step_times = filter_by_session(X_tr_step, Y_tr_step, tr_step_times, session_name, session_utc)
         
         X_va_step, Y_va_step, va_step_times = build_features_and_labels(
             df_va_step, step_lag, 
             current_ai_config["tp_pct"], current_ai_config["sl_pct"], 
-            current_ai_config["max_hold_bars"]
+            current_ai_config["max_hold_bars"], seq_len=30,
+            spread_pct=spread_pct, slippage_pct=slippage_pct
         )
+        X_va_step, Y_va_step, va_step_times = filter_by_session(X_va_step, Y_va_step, va_step_times, session_name, session_utc)
         
         # Load weights tốt nhất từ chặng trước (hoặc foundation ở bước đầu)
         weight_to_load = found_weight_path if step_idx == 1 else os.path.join(brains_dir, f"aamt_v7_step_{step_idx-1}.pth")
@@ -802,7 +878,9 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         # Backtest
         step_bt = run_backtest_simulation(
             model, X_va_step, va_step_times, df_va_step, 
-            current_ai_config["tp_pct"], current_ai_config["sl_pct"]
+            current_ai_config["tp_pct"], current_ai_config["sl_pct"],
+            current_ai_config["max_hold_bars"],
+            spread_pct=spread_pct, slippage_pct=slippage_pct
         )
         
         cumulative_pnl += step_bt["pnl"]
