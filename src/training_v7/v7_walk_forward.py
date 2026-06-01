@@ -396,8 +396,13 @@ def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pc
     win_rate = wins / trades if trades > 0 else 0.0
     profit_factor = profit_sum / loss_sum if loss_sum > 0 else (profit_sum if profit_sum > 0 else 1.0)
     
+    # Giả lập với số vốn ban đầu 10,000 USD, mỗi lệnh đặt 1 khối lượng trị giá 10,000 USD
+    initial_balance = 10000.0
+    pnl_usd = pnl * initial_balance
+    
     return {
         "pnl": pnl,
+        "pnl_usd": pnl_usd,
         "trades": trades,
         "win_rate": win_rate,
         "profit_factor": profit_factor
@@ -689,10 +694,11 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     pnl = backtest_res["pnl"]
     trades = backtest_res["trades"]
     
+    pnl_usd = backtest_res["pnl_usd"]
     # Gửi tin kết quả Backtest
     report_val_msg = (
         f"📊 <b>Báo cáo Đánh giá Sơ bộ tập Validation:</b>\n"
-        f"• PnL: <code>{pnl*100:.2f}%</code> | Lệnh: <code>{trades}</code>\n"
+        f"• PnL: <code>{pnl*100:.2f}%</code> (<b>${pnl_usd:.2f}</b>) | Lệnh: <code>{trades}</code>\n"
         f"• Win Rate: <code>{wr*100:.1f}%</code> (Yêu cầu: {min_wr*100:.1f}%)\n"
         f"• Profit Factor: <code>{pf:.2f}</code> (Yêu cầu: {min_pf:.2f})"
     )
@@ -801,14 +807,16 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         
         cumulative_pnl += step_bt["pnl"]
         
+        step_pnl_usd = step_bt["pnl_usd"]
+        cumulative_pnl_usd = cumulative_pnl * 10000.0
         # Báo cáo kết quả Backtest chặng
         report_step_msg = (
             f"📊 <b>Báo cáo chặng bước trượt #{step_idx} (Tập Test):</b>\n"
             f"• Thời gian: <code>{val_start_str}</code> -> <code>{val_end_str}</code>\n"
-            f"• PnL chặng: <code>{step_bt['pnl']*100:.2f}%</code> | Lệnh: <code>{step_bt['trades']}</code>\n"
+            f"• PnL chặng: <code>{step_bt['pnl']*100:.2f}%</code> (<b>${step_pnl_usd:.2f}</b>) | Lệnh: <code>{step_bt['trades']}</code>\n"
             f"• Win Rate: <code>{step_bt['win_rate']*100:.1f}%</code>\n"
             f"• Profit Factor: <code>{step_bt['profit_factor']:.2f}</code>\n"
-            f"• Cumulative PnL: <code>{cumulative_pnl*100:.2f}%</code>"
+            f"• Cumulative PnL: <code>{cumulative_pnl*100:.2f}%</code> (<b>${cumulative_pnl_usd:.2f}</b>)"
         )
         send_telegram_alert(tbot, chat_id, report_step_msg)
         
@@ -846,10 +854,12 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
             "lag_steps": step_lag,
             "correlation": float(step_corr),
             "pnl": float(step_bt["pnl"]),
+            "pnl_usd": float(step_pnl_usd),
             "trades": int(step_bt["trades"]),
             "win_rate": float(step_bt["win_rate"]),
             "profit_factor": float(step_bt["profit_factor"]),
-            "cumulative_pnl": float(cumulative_pnl)
+            "cumulative_pnl": float(cumulative_pnl),
+            "cumulative_pnl_usd": float(cumulative_pnl_usd)
         }
         
         results_file = os.path.join(results_dir, f"step_{step_idx}_results.json")
@@ -870,7 +880,9 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
             "target": follower.lower(),
             "version": "Transformer_V7",
             "config_id": config_id,
+            "initial_balance_usd": 10000.0,
             "cumulative_pnl": float(cumulative_pnl),
+            "cumulative_pnl_usd": float(cumulative_pnl * 10000.0),
             "steps": all_steps_metrics
         }, fm, indent=4)
         
@@ -880,12 +892,13 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     # =====================================================================
     # FINALIZATION: BÁO CÁO TỔNG KẾT
     # =====================================================================
+    cumulative_pnl_usd = cumulative_pnl * 10000.0
     final_report = (
         f"🏆 <b>TỔNG KẾT TOÀN CHÚ KỲ WALK-FORWARD V7</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"🎯 <b>Leader - Follower:</b> <code>{leader} - {follower}</code>\n"
         f"📊 <b>Kết quả cuối khóa:</b>\n"
-        f"• Cumulative PnL: <b>{cumulative_pnl*100:.2f}%</b>\n"
+        f"• Cumulative PnL: <b>{cumulative_pnl*100:.2f}%</b> (<b>${cumulative_pnl_usd:.2f}</b>)\n"
         f"• Tổng số bước trượt: <code>{step_idx - 1} steps</code>\n"
         f"• Workspace bộ não: <code>workspaces/{config_id}/runs/{run_id}/</code>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
