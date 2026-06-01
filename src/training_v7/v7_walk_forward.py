@@ -24,8 +24,14 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+# Add huyen_thoai to path for bot_v3 dependency
+_HT = os.path.join(_ROOT, "huyen_thoai")
+if _HT not in sys.path:
+    sys.path.insert(0, _HT)
+
 from src.training_v7.v7_transformer import CrossAssetTransformerModel
 from src.orchestration.tg_helper import TelegramBot
+from src.simulator.backtest_vtm import BacktestVirtualTradeManager
 
 # Try to import MetaTrader5, fallback if not available
 try:
@@ -345,8 +351,9 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
 # =====================================================================
 def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pct, sl_pct, max_hold_bars=30, spread_pct=0.0, slippage_pct=0.0):
     """
-    Module 3 Backtest: Chạy giả lập mô hình trên tập dữ liệu và tính các chỉ số PnL, WinRate, Profit Factor.
-    Có áp dụng chi phí ma sát spread & slippage, và giới hạn số nến nắm giữ tối đa max_hold_bars.
+    Module 3 Backtest: Chạy giả lập khớp lệnh thực tế sử dụng BacktestVirtualTradeManager.
+    Áp dụng trượt giá (Slippage Penalty), chênh lệch bid/ask, quét SL/TP theo râu nến (High/Low)
+    và tự động dời SL (Trailing Stop) theo thời gian.
     """
     model.eval()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -360,91 +367,155 @@ def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pc
         preds = torch.argmax(probs, dim=1).cpu().numpy()
         probs = probs.cpu().numpy()
         
-    # Ánh xạ kết quả dự đoán với chuỗi đóng cửa của Follower
-    df_close = df_segment['follower_close']
+    # Xác định point động dựa trên giá tài sản
+    follower_sym = "LTCUSD"
+    if "follower_close" in df_segment.columns:
+        avg_price = df_segment["follower_close"].mean()
+        if avg_price > 20000:
+            pip_size = 1.0  # BTCUSD
+        elif avg_price > 1000:
+            pip_size = 0.1  # ETHUSD
+        elif avg_price > 50:
+            pip_size = 0.01 # LTCUSD
+        else:
+            pip_size = 0.01
+    else:
+        pip_size = 0.01
+    point = pip_size / 10.0
     
-    pnl = 0.0
-    trades = 0
-    wins = 0
-    profit_sum = 0.0
-    loss_sum = 0.0
+    # Khởi tạo BacktestVirtualTradeManager
+    sim_symbol = f"SIM_{follower_sym}"
+    vtm_config = {
+        "FEATURE_ENGINEERING": {
+            "lot_size": 0.1,
+            "sl_pips": int(sl_pct * 10000), # Giá trị mặc định
+            "min_sl_pips": int(sl_pct * 10000 / 3),
+            "SL_PIPS": int(sl_pct * 10000),
+            "TP_PIPS": int(tp_pct * 10000),
+            "MAX_HOLD_BARS": max_hold_bars
+        }
+    }
     
-    friction_loss = spread_pct + 2.0 * slippage_pct
+    vtm = BacktestVirtualTradeManager(
+        target_symbol=sim_symbol,
+        config=vtm_config,
+        log_callback=lambda x: None,  # Tắt log để tránh in quá nhiều
+        tg_notify_callback=lambda x: None
+    )
     
-    # Mô phỏng giao dịch chênh lệch pha
+    vtm.active_trade_loggers = {}
+    vtm.history_deals = []
+    vtm.virtual_balance = 10000.0
+    vtm.last_close_time = 0
+    vtm.pending_orders = []
+    
+    # Tìm cột OHLC cho follower
+    col_open = "follower_open" if "follower_open" in df_segment.columns else "follower_close"
+    col_high = "follower_high" if "follower_high" in df_segment.columns else "follower_close"
+    col_low = "follower_low" if "follower_low" in df_segment.columns else "follower_close"
+    col_close = "follower_close"
+    
+    timeframe_seconds = 900  # Khung thời gian mặc định 15 phút (M15)
+    max_hold_seconds = max_hold_bars * timeframe_seconds
+    
     for i in range(len(preds)):
-        signal = preds[i]
-        if signal == 0:
-            continue
-            
         time_t = df_segment_times[i]
-        if time_t not in df_close.index:
+        if time_t not in df_segment.index:
             continue
             
-        # Tìm vị trí hiện tại trong DataFrame gốc để tính PnL thực tế
-        idx = df_close.index.get_loc(time_t)
-        if idx + 1 >= len(df_close):
-            continue
-            
-        current_price = df_close.iloc[idx]
-        future_prices = df_close.iloc[idx+1 : idx+1+max_hold_bars]
+        row = df_segment.loc[time_t]
+        open_p = row[col_open]
+        high_p = row[col_high]
+        low_p = row[col_low]
+        close_p = row[col_close]
         
-        trade_pnl = 0.0
-        has_closed = False
+        # 1. Cập nhật Virtual Trade Manager với OHLC của nến mới
+        sim_clock = time_t.timestamp()
+        vtm.sim_clock = sim_clock
         
-        # Mô phỏng đóng lệnh theo TP/SL thực tế và nến cuối
-        for k, price in enumerate(future_prices):
-            is_last_bar = (k == len(future_prices) - 1)
+        # Quy đổi spread_pct & slippage_pct thành pips động tại giá đóng nến trước (hoặc open nến này)
+        spread_pips = (spread_pct * open_p) / (point * 10.0)
+        slippage_pips = (slippage_pct * open_p) / (point * 10.0)
+        
+        # Đảm bảo spread và slippage tối thiểu nếu có cấu hình
+        if spread_pct > 0 and spread_pips == 0:
+            spread_pips = 1.0
+        if slippage_pct > 0 and slippage_pips == 0:
+            slippage_pips = 0.5
             
-            if signal == 1: # LONG
-                raw_change = (price - current_price) / current_price
-                real_change = raw_change - friction_loss
+        vtm.update_virtual_positions_ohlc(
+            open_p=open_p,
+            high_p=high_p,
+            low_p=low_p,
+            close_p=close_p,
+            point=point,
+            spread_pips=spread_pips,
+            slippage_pips=slippage_pips
+        )
+        
+        # 2. Tự đóng lệnh nếu vượt quá MAX_HOLD_BARS nến
+        closed_tickets = []
+        for ticket, pos in list(vtm.active_trade_loggers.items()):
+            if (sim_clock - pos["entry_time"]) > max_hold_seconds:
+                close_px = close_p
+                vtm._close_position_internal(ticket, close_px, f"Giu lenh qua {max_hold_bars} nen")
+                closed_tickets.append(ticket)
+        for t in closed_tickets:
+            vtm.active_trade_loggers.pop(t, None)
+            
+        # 3. Xử lý đảo chiều lệnh và mở vị thế mới theo tín hiệu Transformer
+        signal = preds[i]
+        if signal != 0:
+            # Đảo chiều vị thế nếu tín hiệu ngược chiều lệnh đang mở
+            closed_tickets = []
+            for ticket, pos in list(vtm.active_trade_loggers.items()):
+                if pos["order_type"] == "MUA" and signal == 2:
+                    vtm._close_position_internal(ticket, close_p, "Dao chieu sang SELL")
+                    closed_tickets.append(ticket)
+                elif pos["order_type"] == "BÁN" and signal == 1:
+                    vtm._close_position_internal(ticket, close_p, "Dao chieu sang BUY")
+                    closed_tickets.append(ticket)
+            for t in closed_tickets:
+                vtm.active_trade_loggers.pop(t, None)
                 
-                if real_change >= tp_pct:
-                    trade_pnl = tp_pct
-                    has_closed = True
-                    break
-                elif real_change <= -sl_pct:
-                    trade_pnl = -sl_pct
-                    has_closed = True
-                    break
-                elif is_last_bar:
-                    trade_pnl = real_change
-                    has_closed = True
-                    break
-                    
-            elif signal == 2: # SHORT
-                raw_change = (current_price - price) / current_price
-                real_change = raw_change - friction_loss
+            # Mở lệnh mới nếu hiện tại không có vị thế nào mở
+            if len(vtm.active_trade_loggers) == 0:
+                # Quy đổi động % sang pips tương ứng tại thời điểm mở lệnh
+                tp_pips = (tp_pct * close_p) / (point * 10.0)
+                sl_pips = (sl_pct * close_p) / (point * 10.0)
                 
-                if real_change >= tp_pct:
-                    trade_pnl = tp_pct
-                    has_closed = True
-                    break
-                elif real_change <= -sl_pct:
-                    trade_pnl = -sl_pct
-                    has_closed = True
-                    break
-                elif is_last_bar:
-                    trade_pnl = real_change
-                    has_closed = True
-                    break
-                    
-        if has_closed:
-            trades += 1
-            pnl += trade_pnl
-            if trade_pnl > 0:
-                wins += 1
-                profit_sum += trade_pnl
-            else:
-                loss_sum += abs(trade_pnl)
+                # Cập nhật sl_pips động vào cấu hình để trailing stop hoạt động đúng
+                vtm.config["FEATURE_ENGINEERING"]["sl_pips"] = sl_pips
+                vtm.config["FEATURE_ENGINEERING"]["min_sl_pips"] = sl_pips / 3.0
                 
+                order_type_str = "BUY" if signal == 1 else "SELL"
+                preds_info = f"B:{probs[i,1]:.2f} S:{probs[i,2]:.2f}"
+                
+                vtm.open_new_mt5_trade(
+                    symbol=follower_sym,
+                    order_type_str=order_type_str,
+                    lot_size=0.1,  # 1 lot standard
+                    sl_pips=sl_pips,
+                    tp_pips=tp_pips,
+                    preds_info=preds_info,
+                    current_bid=close_p,
+                    current_ask=close_p,
+                    point=point
+                )
+                
+    # Tính toán kết quả tổng hợp sau Backtest chặng
+    trades = len(vtm.history_deals)
+    wins = sum(1 for d in vtm.history_deals if d["profit"] > 0)
     win_rate = wins / trades if trades > 0 else 0.0
+    
+    profit_sum = sum(d["profit"] for d in vtm.history_deals if d["profit"] > 0)
+    loss_sum = sum(abs(d["profit"]) for d in vtm.history_deals if d["profit"] < 0)
     profit_factor = profit_sum / loss_sum if loss_sum > 0 else (profit_sum if profit_sum > 0 else 1.0)
     
-    # Giả lập với số vốn ban đầu 10,000 USD, mỗi lệnh đặt 1 khối lượng trị giá 10,000 USD
+    # Tính toán PnL tương đối dựa trên số dư khởi điểm 10,000 USD
     initial_balance = 10000.0
-    pnl_usd = pnl * initial_balance
+    pnl = (vtm.virtual_balance - initial_balance) / initial_balance
+    pnl_usd = vtm.virtual_balance - initial_balance
     
     return {
         "pnl": pnl,
