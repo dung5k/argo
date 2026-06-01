@@ -15,28 +15,51 @@ def get_bridge_port():
     return None
 
 def get_telegram_config(target_channels=None):
-    token = ""
-    default_chat_id = ""
-    try:
+    # 1. Cố gắng lấy Telegram credentials từ Environment Variables trước (Ưu tiên số 1)
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    
+    # 2. Đọc từ cấu hình của Extension VSCode (.vscode/settings.json) nếu env vars bị thiếu
+    if not token or not default_chat_id:
+        try:
+            agent_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(agent_dir)
+            settings_path = os.path.join(project_root, '.vscode', 'settings.json')
+            if os.path.exists(settings_path):
+                import re
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                if not token:
+                    m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+                    if m: token = m.group(1)
+                if not default_chat_id:
+                    m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                    if m: default_chat_id = m.group(1)
+        except Exception:
+            pass
+
+    # 3. Đọc từ các file cấu hình cục bộ của hệ thống (tg_config.json hoặc telegram_bot_info.json) nếu vẫn thiếu
+    if not token or not default_chat_id:
         agent_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(agent_dir)
-        settings_path = os.path.join(project_root, '.vscode', 'settings.json')
-        if os.path.exists(settings_path):
-            import re
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
-            if m: token = m.group(1)
-            m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
-            if m: default_chat_id = m.group(1)
-    except Exception:
-        pass
-        
-    if not token:
-        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    if not default_chat_id:
-        default_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
-        
+        tg_config_candidates = [
+            os.path.join(agent_dir, "telegram_bot_info.json"),
+            os.path.join(project_root, "tg_config.json"),
+        ]
+        for tg_config_path in tg_config_candidates:
+            if os.path.exists(tg_config_path):
+                try:
+                    with open(tg_config_path, "r", encoding="utf-8") as f:
+                        tcfg = json.load(f)
+                    if not token:
+                        token = tcfg.get("bot_token", "")
+                    if not default_chat_id:
+                        tg_chat_id = tcfg.get("allowed_chat_ids", [None])[0]
+                        if tg_chat_id: default_chat_id = str(tg_chat_id)
+                    break
+                except Exception:
+                    pass
+
     chat_ids = []
     try:
         agent_dir = os.path.dirname(os.path.abspath(__file__))
@@ -46,7 +69,23 @@ def get_telegram_config(target_channels=None):
             with open(network_config_path, "r", encoding="utf-8") as f:
                 network_data = json.load(f)
                 
-        agent_identity = network_data.get("agent_identity", "Antigravity")
+        # Phân giải agent_identity động theo hostname/env để tránh bị overwrite bởi git pull của máy khác
+        agent_identity = os.environ.get("ARGO_CLIENT_ID", "")
+        if not agent_identity or agent_identity == "UnknownClient":
+            import socket
+            hostname = socket.gethostname().upper()
+            if "N67BHMU" in hostname:
+                agent_identity = "Argo1"
+            elif "4C05378" in hostname:
+                agent_identity = "Argo2"
+            else:
+                agent_identity = network_data.get("agent_identity", "Antigravity")
+        else:
+            if agent_identity.upper() == "ARGO1":
+                agent_identity = "Argo1"
+            elif agent_identity.upper() == "ARGO2":
+                agent_identity = "Argo2"
+
         channels_dict = network_data.get("channels", {})
         
         if target_channels is None:
