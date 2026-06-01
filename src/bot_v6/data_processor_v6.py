@@ -123,7 +123,7 @@ class V6DataProcessor:
                 df_tf = df_tf.rename(columns=mapping)
                     
                 df_fe = fe.process_features(df_tf)
-                df_fe = df_fe.replace([np.inf, -np.inf], np.nan).fillna(method='ffill').fillna(0)
+                df_fe = df_fe.replace([np.inf, -np.inf], np.nan).ffill().fillna(0)
                 
                 final_cols = []
                 for f_req in features_req:

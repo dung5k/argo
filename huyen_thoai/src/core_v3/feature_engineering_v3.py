@@ -14,7 +14,7 @@ class FeatureEngineeringV3:
     """
     def __init__(self, target_prefix="XAUUSDm", macro_features=None, crypto_mode: bool = False,
                  mtf_windows=None, order_flow: bool = False, vol_regime: bool = False,
-                 zero_noise_target: bool = False, indicators_cfg=None):
+                 zero_noise_target: bool = False, indicators_cfg=None, verbose: bool = False):
         self.target_prefix = target_prefix
         self.macro_features = macro_features if macro_features else {}
         self.crypto_mode = crypto_mode
@@ -25,6 +25,7 @@ class FeatureEngineeringV3:
         self.indicators_cfg = indicators_cfg or {}
         self.scaler = RobustScaler()
         self.is_fitted = False
+        self.verbose = verbose
         
     def calculate_price_action(self, df, open_col, high_col, low_col, close_col):
         """Tính toán nhóm Hình thái giá: Log Returns và Bóng nến"""
@@ -398,7 +399,8 @@ class FeatureEngineeringV3:
         
         # Lấy tên chính xác từ DF cho XAU
         cols = {c.lower(): c for c in df.columns}
-        print(f"[DEBUG FE] target_prefix={self.target_prefix}, cols={list(cols.keys())}")
+        if self.verbose:
+            print(f"[DEBUG FE] target_prefix={self.target_prefix}, cols={list(cols.keys())}")
         try:
             open_col = cols[f"{prefix}_open".lower()]
             high_col = cols[f"{prefix}_high".lower()]
@@ -421,7 +423,8 @@ class FeatureEngineeringV3:
         f_micro = self.calculate_microstructure(df, open_col, high_col, low_col, close_col, volume_col=volume_col, taker_buy_col=taker_buy_col, taker_sell_col=taker_sell_col)
         
         if getattr(self, 'zero_noise_target', False):
-            print("[FE] CẢNH BÁO: Kích hoạt ZERO_NOISE_TARGET! Loại bỏ toàn bộ TA rác của Target Symbol (chỉ giữ log_ret, spread, volume, time).")
+            if self.verbose:
+                print("[FE] CẢNH BÁO: Kích hoạt ZERO_NOISE_TARGET! Loại bỏ toàn bộ TA rác của Target Symbol (chỉ giữ log_ret, spread, volume, time).")
             # Chỉ giữ log_ret từ f_pa
             f_pa = f_pa[['log_ret']] if 'log_ret' in f_pa.columns else pd.DataFrame(index=df.index)
             # Giữ lại bb_width và atr_normalized nếu có, không giữ chop_14, bb_zscore
@@ -455,20 +458,23 @@ class FeatureEngineeringV3:
         if self.mtf_windows:
             f_mtf = self.calculate_multi_timeframe(df, close_col, high_col, low_col)
             feature_blocks.append(f_mtf)
-            print(f"[FE] Multi-Timeframe features added: windows={self.mtf_windows}, cols={list(f_mtf.columns)}")
+            if self.verbose:
+                print(f"[FE] Multi-Timeframe features added: windows={self.mtf_windows}, cols={list(f_mtf.columns)}")
         
         # [MỚI V2] Order Flow Proxy
         if self.order_flow:
             f_of = self.calculate_order_flow(df, open_col, close_col, volume_col)
             if not f_of.empty:
                 feature_blocks.append(f_of)
-                print(f"[FE] Order Flow features added: {list(f_of.columns)}")
+                if self.verbose:
+                    print(f"[FE] Order Flow features added: {list(f_of.columns)}")
         
         # [MỚI V2] Volatility Regime
         if self.vol_regime:
             f_vr = self.calculate_vol_regime(df, high_col, low_col, close_col)
             feature_blocks.append(f_vr)
-            print(f"[FE] Volatility Regime features added: {list(f_vr.columns)}")
+            if self.verbose:
+                print(f"[FE] Volatility Regime features added: {list(f_vr.columns)}")
         
         # Xử lý các mã Kinh tế Vĩ Mô (Macro)
         if self.macro_features:
@@ -478,15 +484,16 @@ class FeatureEngineeringV3:
                 # Tìm cột close và high, low của Macro
                 try:
                     sym_clean = sym_lower.removesuffix('m')
-                    print(f"DEBUG: sym={sym}, sym_lower={sym_lower}, cols keys matching: {[k for k in cols.keys() if sym_lower in k]}")
-
+                    if self.verbose:
+                        print(f"DEBUG: sym={sym}, sym_lower={sym_lower}, cols keys matching: {[k for k in cols.keys() if sym_lower in k]}")
                     
                     m_close = cols.get(f"{sym_lower}_close".lower()) or cols.get(f"{sym_lower}_usd_close".lower()) or cols.get(f"{sym_clean}_close".lower())
                     m_high = cols.get(f"{sym_lower}_high".lower()) or cols.get(f"{sym_lower}_usd_high".lower()) or cols.get(f"{sym_clean}_high".lower())
                     m_low = cols.get(f"{sym_lower}_low".lower()) or cols.get(f"{sym_lower}_usd_low".lower()) or cols.get(f"{sym_clean}_low".lower())
                     m_open = cols.get(f"{sym_lower}_open".lower()) or cols.get(f"{sym_lower}_usd_open".lower()) or cols.get(f"{sym_clean}_open".lower())
                     
-                    print(f'sym={sym}, m_close={m_close}, m_open={m_open}')
+                    if self.verbose:
+                        print(f'sym={sym}, m_close={m_close}, m_open={m_open}')
                     if m_close and m_open:
                         f_macro = pd.DataFrame(index=df.index)
                         
