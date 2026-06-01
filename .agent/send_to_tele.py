@@ -138,7 +138,27 @@ def signal_done_to_extension():
     except:
         pass
 
-def send_via_telegram_api(content, is_done=False, target_channels=None):
+def take_screenshot(save_path):
+    import subprocess
+    # Script powershell chụp toàn bộ màn hình của Primary Screen
+    ps_cmd = (
+        "[Reflection.Assembly]::LoadWithPartialName('System.Drawing') | Out-Null; "
+        "[Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; "
+        "$bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds; "
+        "$bmp = New-Object System.Drawing.Bitmap($bounds.Width, $bounds.Height); "
+        "$graphics = [System.Drawing.Graphics]::FromImage($bmp); "
+        "$graphics.CopyFromScreen($bounds.X, $bounds.Y, 0, 0, $bounds.Size); "
+        f"$bmp.Save('{save_path}', [System.Drawing.Imaging.ImageFormat]::Png); "
+        "$graphics.Dispose(); $bmp.Dispose();"
+    )
+    try:
+        subprocess.run(["powershell", "-Command", ps_cmd], shell=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return os.path.exists(save_path)
+    except Exception as e:
+        print(f"Lỗi chụp màn hình qua PowerShell: {e}", file=sys.stderr)
+        return False
+
+def send_via_telegram_api(content, is_done=False, target_channels=None, screenshot=False):
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if not token or not chat_ids:
         print("Không tìm thấy TELEGRAM_BOT_TOKEN hoặc TELEGRAM_CHAT_ID", file=sys.stderr)
@@ -146,31 +166,96 @@ def send_via_telegram_api(content, is_done=False, target_channels=None):
     
     text = f"🤖 {agent_identity}:\n\n{content}"
     success = False
+    
+    screenshot_path = None
+    if screenshot:
+        import tempfile
+        fd, screenshot_path = tempfile.mkstemp(suffix=".png")
+        os.close(fd)
+        if not take_screenshot(screenshot_path):
+            screenshot_path = None
+
+    import ssl
+    ssl_context = ssl._create_unverified_context()
+
     for chat_id in chat_ids.split(","):
         chat_id = chat_id.strip()
         if not chat_id: continue
-        url = f'https://api.telegram.org/bot{token}/sendMessage'
-        data = json.dumps({'chat_id': chat_id, 'text': text}).encode('utf-8')
-        headers = {'Content-Type': 'application/json'}
-        req = urllib.request.Request(url, data=data, headers=headers)
+        
         try:
-            import ssl
-            ssl_context = ssl._create_unverified_context()
-            with urllib.request.urlopen(req, context=ssl_context, timeout=10) as response:
+            if screenshot_path and os.path.exists(screenshot_path):
+                url = f'https://api.telegram.org/bot{token}/sendPhoto'
+                boundary = '----WebKitFormBoundaryAntigravityScreenshot'
+                
+                parts = []
+                parts.append(f'--{boundary}')
+                parts.append('Content-Disposition: form-data; name="chat_id"')
+                parts.append('')
+                parts.append(str(chat_id))
+                
+                parts.append(f'--{boundary}')
+                parts.append('Content-Disposition: form-data; name="caption"')
+                parts.append('')
+                parts.append(text)
+                
+                parts.append(f'--{boundary}')
+                parts.append('Content-Disposition: form-data; name="photo"; filename="screenshot.png"')
+                parts.append('Content-Type: image/png')
+                parts.append('')
+                
+                with open(screenshot_path, 'rb') as f:
+                    file_content = f.read()
+                    
+                body_parts = []
+                for p in parts:
+                    body_parts.append(p.encode('utf-8'))
+                body_parts.append(file_content)
+                body_parts.append(f'--{boundary}--'.encode('utf-8'))
+                
+                body = b'\r\n'.join(body_parts[0:-2]) + b'\r\n' + body_parts[-2] + b'\r\n' + body_parts[-1] + b'\r\n'
+                
+                req = urllib.request.Request(
+                    url,
+                    data=body,
+                    headers={
+                        'Content-Type': f'multipart/form-data; boundary={boundary}',
+                        'Content-Length': str(len(body))
+                    }
+                )
+            else:
+                url = f'https://api.telegram.org/bot{token}/sendMessage'
+                data = json.dumps({'chat_id': chat_id, 'text': text}).encode('utf-8')
+                req = urllib.request.Request(
+                    url,
+                    data=data,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+            with urllib.request.urlopen(req, context=ssl_context, timeout=15) as response:
                 success = True
         except Exception as e:
             print(f"Lỗi gửi Telegram API cho chat {chat_id}: {e}", file=sys.stderr)
-    
+            
+    if screenshot_path and os.path.exists(screenshot_path):
+        try:
+            os.remove(screenshot_path)
+        except:
+            pass
+            
     if is_done:
         signal_done_to_extension()
-    
+        
     return success
 
-def send_to_telegram(content, is_done=False, target_channels=None):
-    if not content: return
+def send_to_telegram(content, is_done=False, target_channels=None, screenshot=False):
+    if not content and not screenshot: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
+    if screenshot:
+        send_via_telegram_api(content, is_done, target_channels, screenshot=True)
+        return
+        
     if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
-    send_via_telegram_api(content, is_done, target_channels)
+    send_via_telegram_api(content, is_done, target_channels, screenshot=False)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
@@ -178,6 +263,10 @@ if __name__ == '__main__':
     is_done = '--done' in sys.argv
     if is_done:
         sys.argv.remove('--done')
+        
+    screenshot = '--screenshot' in sys.argv
+    if screenshot:
+        sys.argv.remove('--screenshot')
         
     target_channels = None
     if '--channel' in sys.argv:
@@ -195,4 +284,4 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
-    send_to_telegram(content, is_done, target_channels)
+    send_to_telegram(content, is_done, target_channels, screenshot)

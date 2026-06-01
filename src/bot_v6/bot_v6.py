@@ -18,7 +18,82 @@ safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspat
 if safe_script_dir not in sys.path:
     sys.path.insert(0, safe_script_dir)
 
-from src.bot_v3.cloud_manager_v3 import V3CloudManager
+class LocalBrainManager:
+    """Quản lý nạp Model AAMT và Scaler V3 trực tiếp từ ổ đĩa local (Offline)."""
+    def __init__(self, target_symbol: str, target_prefix: str, hf_token: str, config: dict, log_callback=None):
+        self.target_symbol = target_symbol.lower()
+        self.target_prefix = target_prefix.upper()
+        self.config = config
+        self.log_callback = log_callback or print
+        
+        self.safe_script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.data_dir = os.path.join(self.safe_script_dir, "data")
+        os.makedirs(self.data_dir, exist_ok=True)
+        self.log_callback("[LocalBrainManager] Khởi tạo chế độ Offline (Local Only)")
+
+    def sync_session_model(self, config_id: str) -> tuple:
+        run_id = self.config.get("HF_RUN_ID")
+        if not run_id:
+            raise ValueError("[LocalBrainManager] Cấu hình không có HF_RUN_ID")
+            
+        cfg_id_pure = config_id.replace('_INDICATOR', '')
+        self.log_callback(f"[LocalBrainManager] ▶ Bắt đầu nạp model local | run={run_id} | cfg={cfg_id_pure}")
+        
+        # 1. Tìm model path local
+        model_path = os.path.join(self.safe_script_dir, "workspaces", config_id, "runs", run_id, "brains", f"aamt_v3_{cfg_id_pure}_final.pth")
+        if not os.path.exists(model_path):
+            model_path = os.path.join(self.safe_script_dir, "workspaces", config_id, "runs", run_id, "brains", f"aamt_v3_{cfg_id_pure}_best_val_loss.pth")
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"[LocalBrainManager] Không tìm thấy model weights tại: {model_path}")
+            
+        # 2. Tìm scaler path local
+        scaler_cloud_path = os.path.join(self.safe_script_dir, "workspaces", config_id, "runs", run_id, "brains", f"scaler_{cfg_id_pure}.pkl")
+        if not os.path.exists(scaler_cloud_path):
+            scaler_cloud_path = os.path.join(self.safe_script_dir, "workspaces", config_id, "data", "tensors", f"scaler_{cfg_id_pure}.pkl")
+        if not os.path.exists(scaler_cloud_path):
+            raise FileNotFoundError(f"[LocalBrainManager] Không tìm thấy scaler tại: {scaler_cloud_path}")
+            
+        dest = os.path.join(self.data_dir, f"scaler_{cfg_id_pure}.pkl")
+        import shutil
+        shutil.copy(scaler_cloud_path, dest)
+        local_scaler_path = dest
+        
+        # 3. Đọc scaler_feats
+        import joblib
+        scaler_feats = []
+        try:
+            import subprocess
+            py39_path = r"C:\Users\GiggaMan\AppData\Local\Programs\Python\Python39\python.exe"
+            script_path = os.path.join(self.safe_script_dir, "fix_scalers.py")
+            if os.path.exists(py39_path) and os.path.exists(script_path):
+                subprocess.run([py39_path, script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+            json_path = local_scaler_path.replace(".pkl", ".json")
+            if os.path.exists(json_path):
+                with open(json_path, "r") as f:
+                    scaler_data = json.load(f)
+                scaler_obj = scaler_data.get("scaler", {})
+                if "feature_names_in_" in scaler_obj:
+                    scaler_feats = list(scaler_obj["feature_names_in_"])
+                elif "column_order" in scaler_data and scaler_data["column_order"]:
+                    scaler_feats = list(scaler_data["column_order"])
+            else:
+                scaler_obj = joblib.load(local_scaler_path)
+                if hasattr(scaler_obj, "feature_names_in_"):
+                    scaler_feats = list(scaler_obj.feature_names_in_)
+                elif isinstance(scaler_obj, dict):
+                    if "feature_names" in scaler_obj:
+                        scaler_feats = list(scaler_obj["feature_names"])
+                    elif "column_order" in scaler_obj:
+                        scaler_feats = list(scaler_obj["column_order"])
+        except Exception as e:
+            self.log_callback(f"[LocalBrainManager] ❌ Lỗi đọc Scaler: {e}")
+            raise
+
+        self.log_callback("[LocalBrainManager] ✅ Nạp model local thành công!")
+        return model_path, local_scaler_path, scaler_feats, len(scaler_feats)
+
+V3CloudManager = LocalBrainManager
 from src.bot_v6.data_processor_v6 import V6DataProcessor
 from src.bot_v6.inference_engine_v6 import V6InferenceEngine
 from src.bot_v3.trade_manager_v3 import V3TradeManager
