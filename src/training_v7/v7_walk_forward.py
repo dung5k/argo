@@ -853,12 +853,12 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     found_lags_str = ", ".join([f"{k}: {v}" for k, v in found_lags.items()])
     found_corrs_str = ", ".join([f"{k}: {v:.4f}" for k, v in found_corrs.items()])
     
-    send_to_telegram(
+    send_telegram_alert(tbot, chat_id, (
         f"✅ <b>[QTS-V7] HOÀN THÀNH FOUNDATION {session_name.upper()}</b>\n"
         f"• Dữ liệu: <code>{start_date}</code> -> <code>{foundation_end_str}</code>\n"
         f"• Độ trễ Dynamic Lag quét được: <code>{found_lags_str} steps</code>\n"
         f"• Tương quan chéo (Pearson): <code>{found_corrs_str}</code>"
-    )
+    ))
     
     # Train
     model = train_model(model, X_tr, Y_tr, lr_base, epochs_base, batch_size)
