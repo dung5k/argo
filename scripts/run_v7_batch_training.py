@@ -29,41 +29,41 @@ def run_batch_training(loop_count=1):
         "v7_configs/v7_master_config_ny.json"
     ]
     
-    print(f"🚀 [QTS-V7 Batch Training] Bắt đầu huấn luyện tuần tự với {loop_count} vòng lặp...")
+    print(f"[START] [QTS-V7 Batch Training] Bat dau huan luyen tuan tu voi {loop_count} vong lap...")
     
     for loop_idx in range(1, loop_count + 1):
-        print(f"\n🔄 ==================== VÒNG LẶP HUẤN LUYỆN #{loop_idx} ====================")
+        print(f"\n[LOOP] ==================== VONG LAP HUAN LUYEN #{loop_idx} ====================")
         
         for cfg_path in configs:
             session_name = cfg_path.split("_")[-1].replace(".json", "").upper()
-            print(f"\n🔥 [SESSION {session_name}] Đang khởi động đào tạo phiên {session_name}...")
+            print(f"\n[RUN] [SESSION {session_name}] Dang khoi dong dao tao phien {session_name}...")
             
             try:
                 # 1. Khởi tạo cấu hình bot từ master config của phiên tương ứng
-                print(f"   • Đang chạy AI-Initialization với {cfg_path}...")
+                print(f"   • Dang chay AI-Initialization voi {cfg_path}...")
                 run_ai_initialization(master_config_path=cfg_path)
                 
                 # Cooldown ngắn tránh xung đột api
                 time.sleep(2)
                 
                 # 2. Huấn luyện phiên tương ứng
-                print(f"   • Đang khởi động Walk-Forward Learning Loop...")
+                print(f"   • Dang khoi dong Walk-Forward Learning Loop...")
                 workspace_dir = run_walk_forward_learning(bot_config_path="bot_config_v7.json")
                 
-                print(f"✅ [SUCCESS] Hoàn tất đào tạo phiên {session_name}! Brains & Results saved at:\n   {workspace_dir}")
+                print(f"[OK] [SUCCESS] Hoan tat dao tao phien {session_name}! Brains & Results saved at:\n   {workspace_dir}")
                 
             except Exception as e:
-                print(f"❌ [ERROR] Lỗi xảy ra trong quá trình huấn luyện phiên {session_name}: {e}")
+                print(f"[FAIL] [ERROR] Loi xay ra trong qua trinh huan luyen phien {session_name}: {e}")
                 traceback.print_exc()
                 
             # Nghỉ ngắn giữa các phiên để hạ nhiệt hệ thống
             time.sleep(5)
             
-    print("\n🏆 [BATCH DONE] Hoàn thành toàn bộ tiến trình huấn luyện batch V7!")
+    print("\n[SUCCESS] [BATCH DONE] Hoan thanh toan bo tien trinh huan luyen batch V7!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="QTS-V7 Batch Training Runner")
-    parser.add_argument("--loops", type=int, default=1, help="Số lần lặp lại chu kỳ đào tạo cả 3 phiên")
+    parser.add_argument("--loops", type=int, default=1, help="So lan lap lai chu ky dao tao ca 3 phien")
     args = parser.parse_args()
     
     run_batch_training(loop_count=args.loops)
