@@ -250,14 +250,14 @@ def send_via_telegram_api(content, is_done=False, target_channels=None, screensh
     return success
 
 def send_to_telegram(content, is_done=False, target_channels=None, screenshot=False):
-    if not content and not screenshot: return
+    if not content: return
     token, chat_ids, agent_identity = get_telegram_config(target_channels)
     if screenshot:
         send_via_telegram_api(content, is_done, target_channels, screenshot=True)
         return
         
     if send_via_bridge(content, is_done, token, chat_ids, agent_identity): return
-    send_via_telegram_api(content, is_done, target_channels, screenshot=False)
+    send_via_telegram_api(content, is_done, target_channels, screenshot)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2: sys.exit(1)
