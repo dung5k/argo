@@ -28,6 +28,8 @@ let busyTimeout = null;
 let heartbeatInterval = null;
 
 let mqttClient = null;
+let lastKnownToken = '';
+let lastKnownChatIds = '';
 
 function getLatestLogFile() {
     try {
@@ -267,16 +269,17 @@ function setupMQTT() {
 }
 
 async function checkAndPromptEnvVars() {
-    let token = process.env.TELEGRAM_BOT_TOKEN;
-    let chatId = process.env.TELEGRAM_CHAT_ID;
+    const config = vscode.workspace.getConfiguration('antigravityBridge');
+    let token = config.get('teleBotToken') || process.env.TELEGRAM_BOT_TOKEN;
+    let chatId = config.get('whitelistChatIds') || process.env.TELEGRAM_CHAT_ID;
     
     let missing = false;
     if (!token) {
         token = await vscode.window.showInputBox({ prompt: "Please enter your TELEGRAM_BOT_TOKEN for Antigravity Bridge", password: true });
         if (token) {
             process.env.TELEGRAM_BOT_TOKEN = token;
-            require('child_process').exec(`setx TELEGRAM_BOT_TOKEN "${token}"`);
-            vscode.window.showInformationMessage("TELEGRAM_BOT_TOKEN saved to system environment variables.");
+            await config.update('teleBotToken', token, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage("TELEGRAM_BOT_TOKEN saved to settings.");
         } else {
             missing = true;
         }
@@ -286,8 +289,8 @@ async function checkAndPromptEnvVars() {
         chatId = await vscode.window.showInputBox({ prompt: "Please enter your TELEGRAM_CHAT_ID (or multiple IDs separated by comma)" });
         if (chatId) {
             process.env.TELEGRAM_CHAT_ID = chatId;
-            require('child_process').exec(`setx TELEGRAM_CHAT_ID "${chatId}"`);
-            vscode.window.showInformationMessage("TELEGRAM_CHAT_ID saved to system environment variables.");
+            await config.update('whitelistChatIds', chatId, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage("TELEGRAM_CHAT_ID saved to settings.");
         } else {
             missing = true;
         }
@@ -309,8 +312,8 @@ function getConfig() {
         tasksConfig = path.join(root, tasksConfig);
     }
     
-    const token = process.env.TELEGRAM_BOT_TOKEN || '';
-    const chatId = process.env.TELEGRAM_CHAT_ID || '';
+    const token = config.get('teleBotToken') || process.env.TELEGRAM_BOT_TOKEN || '';
+    const chatId = config.get('whitelistChatIds') || process.env.TELEGRAM_CHAT_ID || '';
 
     return {
         botActive: config.get('botActive') ?? true,
@@ -1061,6 +1064,11 @@ async function activate(context) {
     setupDoneFileWatcher();
     setupMQTT();
 
+    // Lưu trạng thái cấu hình ban đầu
+    const initConfig = getConfig();
+    lastKnownToken = initConfig.teleBotToken;
+    lastKnownChatIds = initConfig.whitelistChatIds;
+
     let cmdRestart = vscode.commands.registerCommand('auto-click-bridge.restart', function () {
         isAgentBusy = false;
         activeTypingChats.clear();
@@ -1088,12 +1096,40 @@ async function activate(context) {
     // Listen to configuration change
     vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('antigravityBridge')) {
+            const newConfig = getConfig();
+            let changed = [];
+            if (newConfig.teleBotToken !== lastKnownToken) {
+                changed.push('Token');
+                lastKnownToken = newConfig.teleBotToken;
+            }
+            if (newConfig.whitelistChatIds !== lastKnownChatIds) {
+                changed.push('Chat ID');
+                lastKnownChatIds = newConfig.whitelistChatIds;
+            }
+            
             setupPeriodicExecution();
             setupTypingIndicator();
             setupMQTT();
+            
+            if (changed.length > 0) {
+                const identity = getAgentIdentity();
+                const activeChats = getActiveChatIds();
+                activeChats.forEach(c => {
+                    sendTelegramMessage(c, `⚙️ [CONFIG UPDATE] Phát hiện thay đổi cấu hình tham số (${changed.join(', ')}) trên máy ${identity}! Hệ thống đã nạp và áp dụng tự động thành công.`);
+                });
+            }
             vscode.window.showInformationMessage('Antigravity Bridge configuration updated. No reload needed.');
         }
     });
+
+    // Gửi tin nhắn khởi động thành công
+    if (initConfig.botActive) {
+        const identity = getAgentIdentity();
+        const activeChats = getActiveChatIds();
+        activeChats.forEach(c => {
+            sendTelegramMessage(c, `🚀 [BRIDGE START] Antigravity Bridge Bot đã khởi động thành công trên máy ${identity}!`);
+        });
+    }
 }
 
 function deactivate() {
