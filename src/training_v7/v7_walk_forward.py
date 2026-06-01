@@ -351,8 +351,12 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
         Y_list.append(labels_np[i+seq_len])
         times.append(time_index[i+seq_len])
         
-    X = np.array(X_list, dtype=np.float32)
-    Y = np.array(Y_list, dtype=np.int64)
+    if len(X_list) == 0:
+        X = np.empty((0, seq_len, len(feature_cols)), dtype=np.float32)
+        Y = np.empty((0,), dtype=np.int64)
+    else:
+        X = np.array(X_list, dtype=np.float32)
+        Y = np.array(Y_list, dtype=np.int64)
     
     return X, Y, times
 
@@ -789,9 +793,11 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     foundation_end_str = dt_foundation_end.strftime("%Y-%m-%d")
     print(f"[WF] Foundation train window: {start_date} to {foundation_end_str}")
     
-    # Cắt dữ liệu nến cho Foundation Train
-    df_found_train = df_all[df_all.index < pd.to_datetime(foundation_end_str)]
-    
+    if len(df_found_train) < 100:
+        err_msg = f"[ERROR] Khong du du lieu de train Foundation Window ({start_date} to {foundation_end_str}). Du lieu som nhat tu MT5: {df_all.index[0] if len(df_all)>0 else 'N/A'}. Do timeframe la M1, ban can tang 'Max Bars in chart' trong MT5 hoac doi start_date/timeframe trong config."
+        print(err_msg)
+        raise ValueError(err_msg)
+        
     # Tính Dynamic Lag của chặng nền tảng
     found_lag, found_corr = estimate_dynamic_lag(df_found_train, max_lag, corr_thresh)
     
