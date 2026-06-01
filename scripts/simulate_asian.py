@@ -179,6 +179,7 @@ class V6HistoricalSimulator(HistoricalSimulator):
                         break
                     idx = idx_array[0]
                     # Reshape to (1, win_size, num_features) to match model expectations
+                    import numpy as np
                     window = df_tf.iloc[idx - win_size + 1 : idx + 1].values
                     X_list.append(np.expand_dims(window, axis=0))
             except Exception as e:
