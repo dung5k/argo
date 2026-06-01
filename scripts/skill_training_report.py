@@ -15,6 +15,70 @@ try:
 except Exception:
     pass
 
+def safe_print(msg):
+    try:
+        print(msg)
+    except Exception:
+        try:
+            print(msg.encode('ascii', errors='replace').decode('ascii'))
+        except:
+            print("[Encoding Error] Cannot print message")
+
+def send_telegram_direct(text, channel_id=None):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = channel_id or os.environ.get("TELEGRAM_CHAT_ID")
+    
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if not token or not chat_id:
+        settings_path = os.path.join(base_dir, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            try:
+                import re
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                m = re.search(r'"antigravityBridge\.teleBotToken"\s*:\s*"([^"]+)"', content)
+                if m: token = m.group(1)
+                m = re.search(r'"antigravityBridge\.whitelistChatIds"\s*:\s*"([^"]+)"', content)
+                if m: chat_id = m.group(1)
+            except:
+                pass
+                
+    if not token or not chat_id:
+        tg_cfg_path = os.path.join(base_dir, "tg_config.json")
+        if os.path.exists(tg_cfg_path):
+            try:
+                with open(tg_cfg_path, 'r', encoding='utf-8') as f:
+                    cfg = json.load(f)
+                token = cfg.get("telegram_bot_token") or cfg.get("token")
+                chat_id = cfg.get("telegram_chat_id") or cfg.get("chat_id")
+            except:
+                pass
+
+    if not token or not chat_id:
+        return False
+        
+    import urllib.request
+    import ssl
+    
+    success = False
+    for cid in chat_id.split(','):
+        cid = cid.strip()
+        if not cid: continue
+        url = f'https://api.telegram.org/bot{token}/sendMessage'
+        payload = json.dumps({'chat_id': cid, 'text': text}).encode('utf-8')
+        req = urllib.request.Request(
+            url, 
+            data=payload, 
+            headers={'Content-Type': 'application/json'}
+        )
+        try:
+            context = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, context=context, timeout=10) as response:
+                success = True
+        except Exception as e:
+            print(f"Direct Send Error for {cid}: {e}")
+    return success
+
 def scan_workspace(workspace_dir):
     """Quet toan bo runs trong workspace, tra ve danh sach ket qua."""
     results = []
@@ -287,20 +351,15 @@ def main():
         if idx + 1 < len(sys.argv):
             channel = sys.argv[idx + 1]
     
-    # Gui qua Telegram bang send_to_tele.py de ho tro headless server
-    send_script = os.path.join(base_dir, ".agent", "send_to_tele.py")
-    if os.path.exists(send_script):
-        cmd = [sys.executable, send_script, report]
-        if channel:
-            cmd.extend(["--channel", str(channel)])
-        try:
-            subprocess.run(cmd, check=False)
-            print("Bao cao da gui qua send_to_tele.py!")
-            print(report)
-        except Exception as e:
-            print(f"Loi khi goi send_to_tele.py: {e}")
+    # Gửi qua Telegram trực tiếp bằng HTTP request
+    if send_telegram_direct(report, channel):
+        safe_print("Bao cao da duoc gui truc tiep qua Telegram thanh cong!")
     else:
-        print(report)
+        safe_print("Khong the gui bao cao qua Telegram (thieu cau hinh).")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
