@@ -233,8 +233,8 @@ class V6HistoricalSimulator(HistoricalSimulator):
 
             results.append({
                 "time": candle_time, "close": close_price, "action": action_str, 
-                "gui_action": virtual_tm.gui_action, "buy_prob": probs_dict.get("buy", 0), 
-                "sell_prob": probs_dict.get("sell", 0), "mse": mse,
+                "gui_action": virtual_tm.gui_action, "buy_prob": raw[2], 
+                "sell_prob": raw[0], "mse": mse,
             })
 
             if action_str in ("BUY", "SELL"):
@@ -367,8 +367,14 @@ def main():
                     day_pnl = sum(d.get("profit", 0) for d in day_deals)
                     total_pnl = sum(d.get("profit", 0) for d in all_deals[thr])
                     
+                    day_max_buy = getattr(sim, 'last_max_buy', 0.0)
+                    day_min_buy = getattr(sim, 'last_min_buy', 0.0)
+                    day_max_sell = getattr(sim, 'last_max_sell', 0.0)
+                    day_min_sell = getattr(sim, 'last_min_sell', 0.0)
+                    
                     if args.notify:
                         msg += f"🔹 Ngưỡng {thr}:\n"
+                        msg += f"   - Output bộ não: BUY Max={day_max_buy:.3f}/Min={day_min_buy:.3f} | SELL Max={day_max_sell:.3f}/Min={day_min_sell:.3f}\n"
                         if day_total == 0:
                             msg += f"   - Lệnh ngày: 0\n"
                             msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"

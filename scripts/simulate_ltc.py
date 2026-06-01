@@ -23,9 +23,23 @@ class V6HistoricalSimulator(HistoricalSimulator):
         if self._engine is not None:
             return
         self._engine = V6InferenceEngine(log_callback=self.log)
+        # Load input dims directly from scaler.pkl if available to avoid dimension mismatch with config.json
+        import joblib
+        if os.path.exists(self.scaler_path):
+            try:
+                bundle = joblib.load(self.scaler_path)
+                input_dims = [len(cols) for cols in bundle.get('column_orders', [])]
+                self.log(f"Loaded input_dims from scaler: {input_dims}")
+            except Exception as e:
+                self.log(f"Warning: Failed to load input_dims from scaler: {e}")
+                mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+                input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+        else:
+            mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+            input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+            
         mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
-        input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
-        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
+        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs][:len(input_dims)]
         train_cfg = self.config.get("TRAINING")
         if not train_cfg:
             train_cfg = self.config.get("TRAIN", {})
@@ -217,8 +231,8 @@ class V6HistoricalSimulator(HistoricalSimulator):
 
             results.append({
                 "time": candle_time, "close": close_price, "action": action_str, 
-                "gui_action": virtual_tm.gui_action, "buy_prob": probs_dict.get("buy", 0), 
-                "sell_prob": probs_dict.get("sell", 0), "mse": mse,
+                "gui_action": virtual_tm.gui_action, "buy_prob": raw[2], 
+                "sell_prob": raw[0], "mse": mse,
             })
 
             if action_str in ("BUY", "SELL"):
@@ -351,8 +365,14 @@ def main():
                     day_pnl = sum(d.get("profit", 0) for d in day_deals)
                     total_pnl = sum(d.get("profit", 0) for d in all_deals[thr])
                     
+                    day_max_buy = getattr(sim, 'last_max_buy', 0.0)
+                    day_min_buy = getattr(sim, 'last_min_buy', 0.0)
+                    day_max_sell = getattr(sim, 'last_max_sell', 0.0)
+                    day_min_sell = getattr(sim, 'last_min_sell', 0.0)
+                    
                     if args.notify:
                         msg += f"🔹 Ngưỡng {thr}:\n"
+                        msg += f"   - Output bộ não: BUY Max={day_max_buy:.3f}/Min={day_min_buy:.3f} | SELL Max={day_max_sell:.3f}/Min={day_min_sell:.3f}\n"
                         if day_total == 0:
                             msg += f"   - Lệnh ngày: 0\n"
                             msg += f"   - Tổng PnL hiện tại: ${total_pnl:.2f}\n"

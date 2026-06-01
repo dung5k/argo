@@ -446,16 +446,30 @@ class HistoricalSimulator:
         n_buy  = len(result_df[result_df["action"] == "BUY"])  if not result_df.empty else 0
         n_sell = len(result_df[result_df["action"] == "SELL"]) if not result_df.empty else 0
 
+        # Tính toán max/min prediction probability của model trong ngày
+        max_buy  = result_df["buy_prob"].max() if not result_df.empty and "buy_prob" in result_df.columns else 0.0
+        min_buy  = result_df["buy_prob"].min() if not result_df.empty and "buy_prob" in result_df.columns else 0.0
+        max_sell = result_df["sell_prob"].max() if not result_df.empty and "sell_prob" in result_df.columns else 0.0
+        min_sell = result_df["sell_prob"].min() if not result_df.empty and "sell_prob" in result_df.columns else 0.0
+
+        # Lưu lại làm thuộc tính để script simulator có thể truy cập
+        self.last_max_buy = max_buy
+        self.last_min_buy = min_buy
+        self.last_max_sell = max_sell
+        self.last_min_sell = min_sell
+
         self.log("")
         self.log("╔══════════════════════════════════════════╗")
         self.log(f"║  KẾT QUẢ: {session.upper()} {date_str}")
         self.log("╠══════════════════════════════════════════╣")
         self.log(f"║  Tín hiệu BUY / SELL  : {n_buy} / {n_sell}")
+        self.log(f"║  Model Output BUY (Max/Min): {max_buy:.4f} / {min_buy:.4f}")
+        self.log(f"║  Model Output SELL (Max/Min): {max_sell:.4f} / {min_sell:.4f}")
         self.log(f"║  Lệnh đóng (W/L)      : {total} ({n_win}W/{n_loss}L)")
         self.log(f"║  Win Rate             : {wr:.1f}%")
         self.log(f"║  P&L ($)              : {pnl:+.4f}")
         self.log(f"║  Balance cuối ($)     : {virtual_tm.virtual_balance:.2f}")
-        self.log("╠══════════════════════════════════════════╣")
+        self.log("╚══════════════════════════════════════════╝")
         
         import os
         import json
@@ -463,10 +477,10 @@ class HistoricalSimulator:
         write_header = not os.path.exists(log_file)
         with open(log_file, "a", encoding="utf-8") as f:
             if write_header:
-                f.write("Date,Session,Total_Signals,BUY_Signals,SELL_Signals,Total_Deals,Win,Loss,WinRate_%,PnL,End_Balance\n")
-            f.write(f"{date_str},{session.upper()},{n_buy+n_sell},{n_buy},{n_sell},{total},{n_win},{n_loss},{wr:.1f},{pnl:.4f},{virtual_tm.virtual_balance:.2f}\n")
+                f.write("Date,Session,Total_Signals,BUY_Signals,SELL_Signals,Total_Deals,Win,Loss,WinRate_%,PnL,End_Balance,Max_Buy_Prob,Max_Sell_Prob\n")
+            f.write(f"{date_str},{session.upper()},{n_buy+n_sell},{n_buy},{n_sell},{total},{n_win},{n_loss},{wr:.1f},{pnl:.4f},{virtual_tm.virtual_balance:.2f},{max_buy:.4f},{max_sell:.4f}\n")
 
-        # ThÃªm kÃªt quáº£ vÃ o metric cá»§a bá»™ nÃ£o
+        # Thêm kết quả vào metric của bộ não
         if hasattr(self, 'model_path') and self.model_path:
             try:
                 run_dir = os.path.dirname(os.path.dirname(self.model_path))
@@ -489,13 +503,15 @@ class HistoricalSimulator:
                         "loss": n_loss,
                         "win_rate": wr,
                         "pnl": pnl,
-                        "balance": virtual_tm.virtual_balance
+                        "balance": virtual_tm.virtual_balance,
+                        "max_buy_prob": max_buy,
+                        "max_sell_prob": max_sell
                     })
                     
                     with open(metrics_path, "w", encoding="utf-8") as f:
                         json.dump(metrics_data, f, indent=4)
             except Exception as e:
-                self.log(f"Lá»—i ghi metric vÃ o bÃ£o: {e}")
+                self.log(f"Lỗi ghi metric vào bão: {e}")
 
         if deals:
             self.log("║  CHI TIẾT LỆNH:")
