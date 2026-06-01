@@ -635,7 +635,7 @@ def filter_by_session(X, Y, times, session_name, session_utc):
 # CORE WALK-FORWARD ENGINE
 # =====================================================================
 def train_model(model, X, Y, lr, epochs, batch_size):
-    """Hàm huấn luyện CrossAssetTransformerModel."""
+    """Hàm huấn luyện CrossAssetTransformerModel tích hợp Early Stopping dựa trên sự hội tụ của Loss."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     
@@ -652,6 +652,12 @@ def train_model(model, X, Y, lr, epochs, batch_size):
     tensor_dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.long))
     loader = DataLoader(tensor_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     
+    # Thiết lập tham số Early Stopping
+    patience = 15
+    min_delta = 1e-4
+    best_loss = float('inf')
+    patience_counter = 0
+    
     model.train()
     for epoch in range(epochs):
         total_loss = 0.0
@@ -664,8 +670,20 @@ def train_model(model, X, Y, lr, epochs, batch_size):
             optimizer.step()
             total_loss += loss.item()
             
-        print(f"  [Train] Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(loader):.4f}")
+        epoch_loss = total_loss / len(loader)
+        print(f"  [Train] Epoch {epoch+1}/{epochs} | Loss: {epoch_loss:.4f}")
         
+        # Kiểm tra sự hội tụ của loss (Early Stopping)
+        if epoch_loss < best_loss - min_delta:
+            best_loss = epoch_loss
+            patience_counter = 0
+        else:
+            patience_counter += 1
+            
+        if patience_counter >= patience:
+            print(f"  [Train] Early Stopping: Loss converged and did not improve for {patience} epochs. Stopping at epoch {epoch+1}.")
+            break
+            
     return model
 
 def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
