@@ -6,11 +6,11 @@
         "asian": {
             "start": "23:00",
             "end": "07:00",
-            "run_id": "run_20260524_230028_v6_asian",
+            "run_id": "run_20260601_000139_v6_asian",
             "config_id": "CFG_LTC_ASIAN_V6",
             "dataset_repo": "dung5k/argo_workspaces",
             "trading_config": {
-                "min_prob_thresh": 0.69,
+                "min_prob_thresh": 0.65,
                 "mse_thresh_perc": 70.0
             },
             "training": {
