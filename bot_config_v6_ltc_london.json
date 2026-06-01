@@ -13,8 +13,8 @@
     },
     "FEATURE_ENGINEERING": {
         "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
-        "TP_PCT": 0.004,
-        "SL_PCT": 0.002,
+        "TP_PCT": 0.0076,
+        "SL_PCT": 0.0034,
         "MAX_HOLD_BARS": 45,
         "LABEL_MODE": "pct",
         "PIP_SIZE": 0.01,
