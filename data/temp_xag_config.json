@@ -1,0 +1,95 @@
+{
+    "CONFIG_ID": "CFG_XAG_LONDON_V5",
+    "VERSION": "5.0",
+    "SESSION": "london",
+    "TARGET_SYMBOL": "XAGUSDm",
+    "TARGET_PREFIX": "XAGUSD",
+    "SESSION_UTC": {
+        "START": "07:00",
+        "END": "15:00",
+        "DESCRIPTION": "London session - XAG (07:00-15:00 UTC) | V5 Regime-Aware Sniper"
+    },
+    "MT5_PATH": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe",
+    "HF_RUN_ID": "",
+    "HF_CLOUD": {
+        "DATASET_REPO": "dung5k/argo_workspaces",
+        "MODEL_REPO": "dung5k/argo_workspaces",
+        "SYNC_CHUNKS": true
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PIPS": 35,
+        "SL_PIPS": 35,
+        "MAX_HOLD_BARS": 20,
+        "PIP_SIZE": 0.001,
+        "WINDOW_SIZE": 20,
+        "STEP_SIZE": 1,
+        "ORDER_FLOW": true,
+        "VOL_REGIME": true,
+        "ZERO_NOISE_TARGET": false,
+        "CLEAN_DATA_DIET": true,
+        "FAST_HIT_BARS": 7,
+        "MACRO_FEATURES": {
+            "XAUUSDm": [
+                "log_ret",
+                "volume",
+                "bb_width"
+            ],
+            "DXYm": [
+                "log_ret",
+                "volume"
+            ],
+            "BTCUSDm": [
+                "log_ret",
+                "volume"
+            ]
+        },
+        "LABEL_MODE": "pct",
+        "TP_PCT": 0.0035,
+        "SL_PCT": 0.0035
+    },
+    "TRAINING": {
+        "D_MODEL": 64,
+        "N_HEAD": 16,
+        "NUM_LAYERS": 3,
+        "BATCH_SIZE": 64,
+        "LEARNING_RATE": 8e-06,
+        "WEIGHT_DECAY": 0.0001,
+        "DROPOUT": 0.3,
+        "LAYER_DROP": 0.4,
+        "POOLING": "attention",
+        "CLS_HEAD": "residual",
+        "FOCAL_GAMMA": 5.0,
+        "LABEL_SMOOTHING": 0.2,
+        "RECON_LOSS_WEIGHT": 0.05,
+        "WARMUP_EPOCHS": 40,
+        "EPOCHS_PHASE_1": 10,
+        "FREQ_MIN_N": 40,
+        "FREQ_MAX_N": 400,
+        "ES_PATIENCE": 25,
+        "LR_SCHEDULER": "cosine_warm",
+        "PATIENCE": 15,
+        "TELEGRAM_REPORT_INTERVAL_MINUTES": 15,
+        "MSE_GATE_PERCENTILE": 0.05,
+        "TRAIN_START": "2025-01-01",
+        "VAL_END": "2026-04-30"
+    },
+    "DATA_SOURCE": {
+        "RAW_LOCAL_DIR": "workspaces/CFG_XAG_LONDON_V5/data/raw",
+        "DATASET_SUFFIX": "2026",
+        "TIMEFRAME": "M1",
+        "BROKERS": {
+            "EXNESS": "D:\\mt5\\MetaTrader 5 EXNESS\\terminal64.exe"
+        },
+        "ROUTING": {
+            "XAGUSDm": "EXNESS",
+            "XAUUSDm": "EXNESS",
+            "DXYm": "EXNESS",
+            "BTCUSDm": "EXNESS"
+        }
+    },
+    "LIVE_BOT": {
+        "MAX_ABSOLUTE_MSE": 1.0,
+        "MIN_PROBABILITY_THRESH": 0.53
+    },
+    "RUN_ID": ""
+}

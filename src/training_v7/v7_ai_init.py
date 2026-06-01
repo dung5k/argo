@@ -70,21 +70,20 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
         mcfg = json.load(f)
         
     tbot, chat_id = get_telegram_client(mcfg)
-    leader = mcfg.get("data", {}).get("leader_symbol", "BTCUSD")
+    candidate_leaders = mcfg.get("data", {}).get("candidate_leaders", ["BTCUSD"])
     follower = mcfg.get("data", {}).get("follower_symbol", "LTCUSD")
     model_name = mcfg.get("ai", {}).get("llm_model", "gemini-1.5-flash")
     
     # Thông báo bắt đầu qua Telegram
-    start_msg = f"⚙️ Khởi tạo cấu hình cho cặp <b>{leader}</b> (Leader) -> <b>{follower}</b> (Follower)..."
+    start_msg = f"⚙️ Khởi tạo cấu hình cho <b>Multi-Leader</b> -> <b>{follower}</b> (Follower)..."
     send_telegram_alert(tbot, chat_id, start_msg)
     
-    # Cấu hình mặc định để fallback khi LLM lỗi hoặc để cấu hình thủ công
-    fallback_config = {
         "max_lag_steps": mcfg.get("ai", {}).get("max_lag_steps", 10),
         "correlation_threshold": mcfg.get("ai", {}).get("correlation_threshold", 0.20),
         "tp_pct": mcfg.get("ai", {}).get("fallback_tp_pct", 0.008),
         "sl_pct": mcfg.get("ai", {}).get("fallback_sl_pct", 0.004),
-        "max_hold_bars": mcfg.get("ai", {}).get("fallback_max_hold_bars", 30)
+        "max_hold_bars": mcfg.get("ai", {}).get("fallback_max_hold_bars", 30),
+        "selected_leaders": candidate_leaders[:2] if len(candidate_leaders) > 1 else candidate_leaders
     }
     
     ai_config = None
@@ -102,9 +101,10 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
         print(f"[AI-Init] Dang goi Gemini API ({model_name})...")
         prompt = (
             f"Bạn là chuyên gia định lượng cấp cao. Hãy phân tích mối quan hệ dẫn dắt và đi theo (Lead-Lag relationship) "
-            f"giữa tài sản Dẫn dắt (Leader): {leader} và tài sản Đi theo (Follower): {follower}.\n"
-            f"Hãy sinh cấu hình tối ưu ban đầu cho bot giao dịch chênh lệch pha (Lead-Lag arbitrage bot).\n"
+            f"giữa danh sách các tài sản Dẫn dắt tiềm năng (Candidate Leaders): {candidate_leaders} và tài sản Đi theo (Follower): {follower}.\n"
+            f"Hãy chọn ra một hoặc nhiều Leader tốt nhất từ danh sách ứng viên trên, và sinh cấu hình tối ưu ban đầu cho bot giao dịch chênh lệch pha.\n"
             f"Yêu cầu trả về chính xác định dạng JSON với các tham số sau:\n"
+            f"- selected_leaders (array of string): Mảng chứa tên các mã Leader được chọn từ danh sách ứng viên.\n"
             f"- max_lag_steps (int): Số bước trễ tối đa tìm kiếm độ tương quan (ví dụ: từ 5 đến 20).\n"
             f"- correlation_threshold (float): Ngưỡng tương quan chéo tối thiểu (ví dụ: từ 0.15 đến 0.35).\n"
             f"- tp_pct (float): Mục tiêu chốt lời (Take Profit) tính theo tỷ lệ phần trăm (ví dụ: 0.005 đến 0.015).\n"
@@ -131,13 +131,17 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
                 "responseSchema": {
                     "type": "OBJECT",
                     "properties": {
+                        "selected_leaders": {
+                            "type": "ARRAY",
+                            "items": {"type": "STRING"}
+                        },
                         "max_lag_steps": {"type": "INTEGER"},
                         "correlation_threshold": {"type": "NUMBER"},
                         "tp_pct": {"type": "NUMBER"},
                         "sl_pct": {"type": "NUMBER"},
                         "max_hold_bars": {"type": "INTEGER"}
                     },
-                    "required": ["max_lag_steps", "correlation_threshold", "tp_pct", "sl_pct", "max_hold_bars"]
+                    "required": ["selected_leaders", "max_lag_steps", "correlation_threshold", "tp_pct", "sl_pct", "max_hold_bars"]
                 }
             }
         }
@@ -170,8 +174,8 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
     
     bot_config_v7 = {
         "TARGET_SYMBOL": follower,
-        "LEADER_SYMBOL": leader,
-        "CONFIG_ID": f"CFG_V7_{leader}_{follower}_{mcfg.get('data', {}).get('timeframe', 'M15')}",
+        "LEADER_SYMBOLS": ai_config.get("selected_leaders", candidate_leaders[:1]),
+        "CONFIG_ID": f"CFG_V7_MULTI_{follower}_{mcfg.get('data', {}).get('timeframe', 'M15')}",
         "VERSION": "7.0",
         "MASTER_CONFIG": master_config_path,
         "SESSION": session_name,
@@ -211,8 +215,8 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
     success_msg = (
         f"🏆 <b>KHỞI TẠO CẤU HÌNH SIÊU THAM SỐ V7 THÀNH CÔNG</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🎯 <b>Leader:</b> <code>{leader}</code>\n"
         f"🎯 <b>Follower:</b> <code>{follower}</code>\n"
+        f"👑 <b>Selected Leaders:</b> <code>{', '.join(bot_config_v7['LEADER_SYMBOLS'])}</code>\n"
         f"📅 <b>Timeframe:</b> <code>{bot_config_v7['FEATURE_ENGINEERING']['TIMEFRAME']}</code>\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"🚀 <b>Thông số tối ưu từ AI:</b>\n"

@@ -1,11 +1,15 @@
 {
     "data": {
-        "leader_symbol": "BTCUSD",
         "follower_symbol": "LTCUSD",
         "timeframe": "M1",
         "spread_pct": 0.0003,
         "slippage_pct": 0.0001,
-        "session": "asian"
+        "session": "asian",
+        "candidate_leaders": [
+            "BTCUSD",
+            "ETHUSD",
+            "BNBUSD"
+        ]
     },
     "sessions": {
         "asian": {
@@ -38,7 +42,7 @@
     },
     "train": {
         "learning_rate_base": 0.0005,
-        "learning_rate_finetune": 0.00005,
+        "learning_rate_finetune": 5e-05,
         "min_win_rate_threshold": 0.53,
         "min_profit_factor": 1.15,
         "epochs_base": 300,

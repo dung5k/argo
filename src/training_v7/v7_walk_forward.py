@@ -203,33 +203,26 @@ def generate_synthetic_data(symbol, timeframe_str, start_date, end_date):
     
     return df
 
-def get_synced_data(leader_sym, follower_sym, timeframe, start_date, end_date, mt5_path):
+def get_synced_data(leader_syms, follower_sym, timeframe, start_date, end_date, mt5_path):
     """
-    Fetch dữ liệu Leader và Follower, thực hiện merge và Forward Fill đồng bộ index thời gian.
-    Xử lý triệt để việc missing data theo yêu cầu kỹ thuật V7.
+    Fetch dữ liệu danh sách Leader và Follower, thực hiện merge và Forward Fill đồng bộ index thời gian.
     """
-    # Thử fetch (Binance cho crypto, MT5 cho forex/metals)
-    df_l = fetch_symbol_data(leader_sym, timeframe, start_date, end_date, mt5_path)
+    print(f"[DATA] Syncing multi-leaders: {leader_syms} and follower: {follower_sym}...")
     df_f = fetch_symbol_data(follower_sym, timeframe, start_date, end_date, mt5_path)
-    
-    # Nếu MT5 lỗi, tự động fallback sang Synthetic Data
-    if df_l is None or df_l.empty:
-        df_l = generate_synthetic_data(leader_sym, timeframe, start_date, end_date)
     if df_f is None or df_f.empty:
         df_f = generate_synthetic_data(follower_sym, timeframe, start_date, end_date)
-        
-    # Đồng bộ hóa dữ liệu (Merge & Forward Fill)
-    print(f"[DATA] Syncing leader and follower data...")
-    # Thêm hậu tố để phân biệt
-    df_l = df_l.add_prefix("leader_")
     df_f = df_f.add_prefix("follower_")
     
-    # Merge trên Time Index
-    merged = pd.merge(df_f, df_l, left_index=True, right_index=True, how='outer')
-    
-    # Áp dụng cơ chế Forward Fill để xử lý lệch nến
+    merged = df_f
+    for leader_sym in leader_syms:
+        df_l = fetch_symbol_data(leader_sym, timeframe, start_date, end_date, mt5_path)
+        if df_l is None or df_l.empty:
+            df_l = generate_synthetic_data(leader_sym, timeframe, start_date, end_date)
+        df_l = df_l.add_prefix(f"{leader_sym}_")
+        merged = pd.merge(merged, df_l, left_index=True, right_index=True, how='outer')
+        
     merged.ffill(inplace=True)
-    merged.bfill(inplace=True)  # Backward fill cho các nến đầu tiên nếu có NaN
+    merged.bfill(inplace=True)
     
     print(f"[DATA] Sync completed. Total synchronized candles: {len(merged):,}")
     return merged
@@ -237,46 +230,48 @@ def get_synced_data(leader_sym, follower_sym, timeframe, start_date, end_date, m
 # =====================================================================
 # DYNAMIC LAG ESTIMATOR
 # =====================================================================
-def estimate_dynamic_lag(df_segment, max_lag_steps, correlation_threshold):
+def estimate_dynamic_lag(df_segment, leader_syms, max_lag_steps, correlation_threshold):
     """
-    Module 2: Tự động tìm ra độ trễ động (Dynamic Lag) qua tương quan chéo (Cross-Correlation).
-    Tính Pearson Correlation chéo giữa Follower log return và Leader log return dịch trễ.
+    Module 2: Tự động tìm ra độ trễ động (Dynamic Lag) qua tương quan chéo (Cross-Correlation) cho đa dẫn dắt.
     """
-    # Tính log return
     df_segment = df_segment.copy()
     df_segment['follower_ret'] = np.log(df_segment['follower_close'] / df_segment['follower_close'].shift(1))
-    df_segment['leader_ret'] = np.log(df_segment['leader_close'] / df_segment['leader_close'].shift(1))
-    df_segment.dropna(inplace=True)
     
-    best_lag = 1
-    best_corr = 0.0
+    best_lags = {}
+    best_corrs = {}
     
-    # Quét độ trễ từ 1 đến max_lag_steps
-    for lag in range(1, max_lag_steps + 1):
-        # Dịch trễ Leader đi 'lag' nến để so sánh với Follower tại thời điểm hiện tại
-        leader_lagged = df_segment['leader_ret'].shift(lag)
-        corr = df_segment['follower_ret'].corr(leader_lagged)
+    for leader_sym in leader_syms:
+        leader_col = f"{leader_sym}_close"
+        df_segment[f'{leader_sym}_ret'] = np.log(df_segment[leader_col] / df_segment[leader_col].shift(1))
         
-        if not np.isnan(corr) and abs(corr) > abs(best_corr):
-            best_corr = corr
-            best_lag = lag
+        temp_df = df_segment[['follower_ret', f'{leader_sym}_ret']].dropna()
+        best_lag = 1
+        best_corr = 0.0
+        
+        for lag in range(1, max_lag_steps + 1):
+            leader_lagged = temp_df[f'{leader_sym}_ret'].shift(lag)
+            corr = temp_df['follower_ret'].corr(leader_lagged)
             
-    print(f"[DYNAMIC-LAG] Best Lag: {best_lag} steps | Correlation: {best_corr:.4f}")
-    
-    # Kiểm tra ngưỡng tương quan chéo
-    if abs(best_corr) < correlation_threshold:
-        print(f"[DYNAMIC-LAG] WARNING: Best Correlation ({best_corr:.4f}) is below threshold ({correlation_threshold}). Fallback to Lag=1")
-        return 1, best_corr
+            if not np.isnan(corr) and abs(corr) > abs(best_corr):
+                best_corr = corr
+                best_lag = lag
+                
+        print(f"[DYNAMIC-LAG] {leader_sym} Best Lag: {best_lag} steps | Correlation: {best_corr:.4f}")
+        if abs(best_corr) < correlation_threshold:
+            print(f"[DYNAMIC-LAG] WARNING: {leader_sym} Correlation ({best_corr:.4f}) < {correlation_threshold}. Fallback to Lag=1")
+            best_lag = 1
+            
+        best_lags[leader_sym] = best_lag
+        best_corrs[leader_sym] = best_corr
         
-    return best_lag, best_corr
+    return best_lags, best_corrs
 
 # =====================================================================
 # FEATURE ENGINEERING & LABELLING
 # =====================================================================
-def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_bars, seq_len=30, spread_pct=0.0, slippage_pct=0.0):
+def build_features_and_labels(df_segment, leader_syms, lag_steps_dict, tp_pct, sl_pct, max_hold_bars, seq_len=30, spread_pct=0.0, slippage_pct=0.0):
     """
-    Xây dựng vector đặc trưng kết hợp Follower và Leader dịch trễ, và tạo nhãn BUY(1)/SELL(2)/HOLD(0)
-    có tính tới chi phí ma sát spread & slippage và duyệt theo trình tự thời gian nến tương lai.
+    Xây dựng vector đặc trưng kết hợp Follower và nhiều Leader dịch trễ.
     """
     df = df_segment.copy()
     
@@ -296,11 +291,20 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
     rs = ema_up / ema_down.replace(0, 1e-5)
     df['follower_rsi'] = 100 - (100 / (1 + rs))
     
-    # 2. Tính toán đặc trưng cho Leader dịch trễ theo Dynamic Lag
-    df['leader_ret_lagged'] = np.log(df['leader_close'] / df['leader_close'].shift(1)).shift(lag_steps)
-    df['leader_vol_ratio'] = (df['leader_volume'] / df['leader_volume'].rolling(20).mean()).shift(lag_steps)
+    feature_cols = ['follower_ret', 'follower_bb_width', 'follower_rsi']
     
-    df.dropna(inplace=True)
+    # 2. Tính toán đặc trưng cho TỪNG Leader dịch trễ theo Dynamic Lag riêng
+    for leader_sym in leader_syms:
+        lag_steps = lag_steps_dict.get(leader_sym, 1)
+        ret_col = f'{leader_sym}_ret_lagged'
+        vol_col = f'{leader_sym}_vol_ratio'
+        
+        df[ret_col] = np.log(df[f'{leader_sym}_close'] / df[f'{leader_sym}_close'].shift(1)).shift(lag_steps)
+        df[vol_col] = (df[f'{leader_sym}_volume'] / df[f'{leader_sym}_volume'].rolling(20).mean()).shift(lag_steps)
+        
+        feature_cols.extend([ret_col, vol_col])
+        
+    df.dropna(subset=feature_cols, inplace=True)
     
     # 3. Tạo nhãn (Labels) dựa trên tương lai TP/SL trong max_hold_bars nến
     closes = df['follower_close'].values
@@ -358,8 +362,8 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
             
     df['label'] = labels
     
+    # feature_cols đã được xây dựng động ở vòng lặp trên
     # Chuẩn hóa đặc trưng (Khắc phục lỗi Data Leakage)
-    feature_cols = ['follower_ret', 'follower_bb_width', 'follower_rsi', 'leader_ret_lagged', 'leader_vol_ratio']
     # Sử dụng Rolling Z-score (window gấp 3 lần seq_len) để không rò rỉ tương lai
     rolling_window = seq_len * 3 if seq_len else 90
     for col in feature_cols:
@@ -751,7 +755,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     tbot, chat_id = get_telegram_client(mcfg)
     
     # Khai báo các tham số
-    leader = cfg["LEADER_SYMBOL"]
+    leaders = cfg.get("LEADER_SYMBOLS", [cfg.get("LEADER_SYMBOL")])
     follower = cfg["TARGET_SYMBOL"]
     timeframe = cfg["FEATURE_ENGINEERING"]["TIMEFRAME"]
     mt5_path = mcfg.get("brokers", {}).get("DEFAULT", "")
@@ -786,7 +790,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     # Tải dữ liệu lịch sử đồng bộ Leader-Follower
     start_date = cfg["WALK_FORWARD"]["START_DATE"]
     end_date = cfg["WALK_FORWARD"]["END_DATE"]
-    df_all = get_synced_data(leader, follower, timeframe, start_date, end_date, mt5_path)
+    df_all = get_synced_data(leaders, follower, timeframe, start_date, end_date, mt5_path)
     
     # Đọc tham số huấn luyện ban đầu
     tp_pct = cfg["FEATURE_ENGINEERING"]["TP_PCT"]
@@ -829,11 +833,11 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         raise ValueError(err_msg)
         
     # Tính Dynamic Lag của chặng nền tảng
-    found_lag, found_corr = estimate_dynamic_lag(df_found_train, max_lag, corr_thresh)
+    found_lags, found_corrs = estimate_dynamic_lag(df_found_train, leaders, max_lag, corr_thresh)
     
     # Xây dựng features & labels
     X_tr, Y_tr, tr_times = build_features_and_labels(
-        df_found_train, found_lag, tp_pct, sl_pct, max_hold_bars, seq_len=30,
+        df_found_train, leaders, found_lags, tp_pct, sl_pct, max_hold_bars, seq_len=30,
         spread_pct=spread_pct, slippage_pct=slippage_pct
     )
     X_tr, Y_tr, tr_times = filter_by_session(X_tr, Y_tr, tr_times, session_name, session_utc)
@@ -885,7 +889,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     
     # Xây dựng features & labels cho validation
     X_va, Y_va, va_times = build_features_and_labels(
-        df_val, found_lag, tp_pct, sl_pct, max_hold_bars, seq_len=30,
+        df_val, leaders, found_lags, tp_pct, sl_pct, max_hold_bars, seq_len=30,
         spread_pct=spread_pct, slippage_pct=slippage_pct
     )
     X_va, Y_va, va_times = filter_by_session(X_va, Y_va, va_times, session_name, session_utc)
