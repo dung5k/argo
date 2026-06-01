@@ -509,8 +509,8 @@ def bot_background_loop():
                 # Đồng bộ feature list với model weights
                 dp_feats = i_feats  # Mặc định dùng feature list từ scaler
                 
-                processor = V6DataProcessor(s_path, dp_feats, config=CONFIG, log_callback=print)
-                processor._init_fe() # MUST CALL THIS to load column_orders
+                processor = V6DataProcessor(s_path, config=CONFIG, log_callback=print)
+                processor._init_engines() # MUST CALL THIS to load column_orders
                 # V6 MT5 manager needs ALL features across all MTF
                 all_feats = []
                 for co in processor.column_orders:
@@ -534,7 +534,12 @@ def bot_background_loop():
                 # Tải training metrics cho tooltip toàn diện
                 gui_brain_tooltip = _get_all_brains_report()
                 _, best_thr = _load_brain_metrics(target_run_id, cfg_id, True)
-                if best_thr > 0:
+                
+                # Ưu tiên sử dụng ngưỡng được cấu hình thủ công trong LIVE_BOT hoặc Schedule
+                manual_thr = bot_cfg.get("MIN_PROBABILITY_THRESH")
+                if manual_thr is not None:
+                    engine.prob_threshold = manual_thr
+                elif best_thr > 0:
                     engine.prob_threshold = best_thr
                 print(f"[BOT V6] Đã cài đặt prob_threshold = {engine.prob_threshold}")
                 
