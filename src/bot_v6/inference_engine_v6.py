@@ -119,7 +119,8 @@ class V6InferenceEngine:
                 
                 probs = F.softmax(logits, dim=-1) # [1, 3]
                 
-                p_sell = probs[0, 0].item()
+                # C0: HOLD, C1: LONG/BUY, C2: SHORT/SELL
+                p_sell = probs[0, 2].item()
                 p_buy  = probs[0, 1].item()
                 
                 if p_buy >= self.prob_threshold:
@@ -160,8 +161,9 @@ class V6InferenceEngine:
                 _, logits, _ = self.model(x_tensors_pt)
                 probs = F.softmax(logits, dim=-1) # [1, 3]
                 
-                p_sell = probs[0, 0].item()
-                p_hold = probs[0, 2].item()
+                # C0: HOLD, C1: LONG/BUY, C2: SHORT/SELL
+                p_sell = probs[0, 2].item()
+                p_hold = probs[0, 0].item()
                 p_buy  = probs[0, 1].item()
                 
                 return p_sell, p_hold, p_buy
