@@ -43,7 +43,7 @@ class TestV7WalkForwardEngine(unittest.TestCase):
                 "end_date": "2026-05-20"
             },
             "ai": {
-                "llm_model": "gemini-1.5-flash",
+                "llm_model": "gemini-2.5-flash",
                 "correlation_threshold": 0.01,  # Ngưỡng thấp để luôn pass
                 "max_lag_steps": 3
             },

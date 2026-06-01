@@ -1,0 +1,31 @@
+{
+    "data": {
+        "leader_symbol": "BTCUSD",
+        "follower_symbol": "LTCUSD",
+        "timeframe": "M15"
+    },
+    "window": {
+        "initial_train_size_days": 10,
+        "validation_size_days": 3,
+        "slide_step_days": 3,
+        "start_date": "2026-05-01",
+        "end_date": "2026-05-20"
+    },
+    "ai": {
+        "llm_model": "gemini-2.5-flash",
+        "correlation_threshold": 0.01,
+        "max_lag_steps": 3
+    },
+    "train": {
+        "learning_rate_base": 0.001,
+        "learning_rate_finetune": 0.0001,
+        "min_win_rate_threshold": 0.0,
+        "min_profit_factor": 0.0,
+        "epochs_base": 1,
+        "epochs_finetune": 1,
+        "batch_size": 16
+    },
+    "telegram": {
+        "channel_id": "1816854047"
+    }
+}

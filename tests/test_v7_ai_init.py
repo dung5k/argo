@@ -35,7 +35,7 @@ class TestV7AIInitialization(unittest.TestCase):
                 "end_date": "2026-06-01"
             },
             "ai": {
-                "llm_model": "gemini-1.5-flash",
+                "llm_model": "gemini-2.5-flash",
                 "correlation_threshold": 0.25,
                 "max_lag_steps": 12
             },
