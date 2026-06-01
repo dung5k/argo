@@ -1,22 +1,23 @@
 {
     "TARGET_SYMBOL": "LTCUSD",
     "LEADER_SYMBOLS": [
-        "BTCUSD"
+        "BTCUSD",
+        "ETHUSD"
     ],
     "CONFIG_ID": "CFG_V7_MULTI_LTCUSD_M1",
     "VERSION": "7.0",
-    "MASTER_CONFIG": "v7_configs/v7_master_config_ny.json",
-    "SESSION": "newyork",
+    "MASTER_CONFIG": "v7_configs/v7_master_config_london.json",
+    "SESSION": "london",
     "SESSION_UTC": {
-        "START": "12:00",
-        "END": "21:00"
+        "START": "07:00",
+        "END": "16:00"
     },
     "FEATURE_ENGINEERING": {
         "TP_PCT": 0.01,
-        "SL_PCT": 0.004,
+        "SL_PCT": 0.0045,
         "MAX_HOLD_BARS": 30,
         "MAX_LAG_STEPS": 15,
-        "CORRELATION_THRESHOLD": 0.25,
+        "CORRELATION_THRESHOLD": 0.28,
         "TIMEFRAME": "M1",
         "SPREAD_PCT": 0.0003,
         "SLIPPAGE_PCT": 0.0001

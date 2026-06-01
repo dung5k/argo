@@ -680,6 +680,28 @@ def filter_by_session(X, Y, times, session_name, session_utc):
     return X[filtered_indices], Y[filtered_indices], [times[i] for i in filtered_indices]
 
 # =====================================================================
+# FOCAL LOSS FOR CLASS IMBALANCE
+# =====================================================================
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None, gamma=2.0, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.weight = weight
+        self.gamma = gamma
+        self.reduction = reduction
+        self.ce = nn.CrossEntropyLoss(weight=weight, reduction='none')
+        
+    def forward(self, inputs, targets):
+        ce_loss = self.ce(inputs, targets)
+        pt = torch.exp(-ce_loss)
+        focal_loss = ((1 - pt) ** self.gamma) * ce_loss
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        elif self.reduction == 'sum':
+            return focal_loss.sum()
+        else:
+            return focal_loss
+
+# =====================================================================
 # CORE WALK-FORWARD ENGINE
 # =====================================================================
 def train_model(model, X, Y, lr, epochs, batch_size):
@@ -694,8 +716,10 @@ def train_model(model, X, Y, lr, epochs, batch_size):
         class_weights[c] = len(Y) / (3 * cnt)
         
     class_weights_tensor = torch.tensor(class_weights).to(device)
-    criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    # Sử dụng Focal Loss thay cho CrossEntropyLoss để tập trung học các mẫu lệnh khó đoán
+    criterion = FocalLoss(weight=class_weights_tensor, gamma=2.0)
+    # Tăng cường weight_decay để chống Overfitting (L2 Regularization)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-3)
     
     tensor_dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.long))
     loader = DataLoader(tensor_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
