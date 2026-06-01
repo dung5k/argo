@@ -827,6 +827,9 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     foundation_end_str = dt_foundation_end.strftime("%Y-%m-%d")
     print(f"[WF] Foundation train window: {start_date} to {foundation_end_str}")
     
+    # Cắt tập dữ liệu đào tạo nền tảng
+    df_found_train = df_all[(df_all.index >= pd.to_datetime(start_date)) & (df_all.index < pd.to_datetime(foundation_end_str))]
+    
     if len(df_found_train) < 100:
         err_msg = f"[ERROR] Khong du du lieu de train Foundation Window ({start_date} to {foundation_end_str}). Du lieu som nhat tu MT5: {df_all.index[0] if len(df_all)>0 else 'N/A'}. Do timeframe la M1, ban can tang 'Max Bars in chart' trong MT5 hoac doi start_date/timeframe trong config."
         print(err_msg)
