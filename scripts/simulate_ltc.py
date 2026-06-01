@@ -370,6 +370,19 @@ def main():
                     day_max_sell = getattr(sim, 'last_max_sell', 0.0)
                     day_min_sell = getattr(sim, 'last_min_sell', 0.0)
                     
+                    if day_max_buy == 0.0 and day_min_buy == 0.0 and day_max_sell == 0.0 and day_min_sell == 0.0:
+                        err_msg = (
+                            f"❌ CRITICAL ERROR: Bộ não V6 trả ra output bằng 0 tuyệt đối cho tất cả các chiều (BUY/SELL Max/Min = 0) vào ngày {d_str}!\n"
+                            f"⚠️ Bộ não (RUN_ID: {sim.config.get('RUN_ID', 'N/A')}) có nguy cơ bị lệch nhãn hoặc chưa được huấn luyện đúng.\n"
+                            f"🛑 Simulator sẽ dừng lập tức để bạn điều chỉnh!"
+                        )
+                        safe_log(err_msg)
+                        if args.notify:
+                            import subprocess
+                            subprocess.run(['python', '.agent/send_to_tele.py', err_msg, '--channel', '1816854047'])
+                        import sys
+                        sys.exit(1)
+                    
                     if args.notify:
                         msg += f"🔹 Ngưỡng {thr}:\n"
                         msg += f"   - Output bộ não: BUY Max={day_max_buy:.3f}/Min={day_min_buy:.3f} | SELL Max={day_max_sell:.3f}/Min={day_min_sell:.3f}\n"
