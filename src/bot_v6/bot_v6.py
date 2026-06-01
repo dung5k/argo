@@ -662,18 +662,47 @@ def bot_background_loop():
         gui_market_data = sorted(sym_data, key=lambda x: x[0])
         gui_status = "Chạy Pipeline Giải thuật V6..."
         
-        X_list, latest_time = processor.process(merged_df)
-        if X_list is None:
+        try:
+            ok, X_list = processor.process_online([merged_df] * len(processor.tf_configs))
+            if not ok or X_list is None:
+                gui_status = f"Pipeline Từ Chối Dữ Liệu"
+                time.sleep(2)
+                continue
+        except Exception as pe:
+            print(f"[BOT V6] ❌ Lỗi chạy pipeline V6: {pe}")
             gui_status = f"Pipeline Từ Chối Dữ Liệu"
             time.sleep(2)
             continue
             
         gui_status = "Đang Trích Xuất Không Gian V6 MTF..."
-        prediction = engine.predict(X_list)
-        
+        try:
+            probs_tuple = engine.predict_probs(X_list)
+            if probs_tuple is None:
+                gui_status = "Động Cơ AI Sập"
+                time.sleep(2)
+                continue
+            p_sell, p_hold, p_buy = probs_tuple
+            
+            action = 1
+            if p_buy >= engine.prob_threshold:
+                action = 2
+            elif p_sell >= engine.prob_threshold:
+                action = 0
+                
+            prediction = {
+                'action': action,
+                'mse': 0.0,
+                'raw': [p_sell, p_hold, p_buy]
+            }
+        except Exception as pe:
+            print(f"[BOT V6] ❌ Lỗi dự báo AI: {pe}")
+            gui_status = "Động Cơ AI Sập"
+            time.sleep(2)
+            continue
+            
         action = prediction['action']
         mse = prediction['mse']
-        probs = {'buy': prediction['raw'][1], 'sell': prediction['raw'][0], 'loss': mse}
+        probs = {'buy': prediction['raw'][2], 'sell': prediction['raw'][0], 'loss': mse}
         
         if action is None:
             gui_status = "Động Cơ AI Sập"

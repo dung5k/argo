@@ -101,7 +101,10 @@ class MT5DataManager:
                 self.adapters[path] = MT5Adapter(executable_path=path, log_callback=self.log_message)
             elif path_alias == "LOCAL" or path == "LOCAL":
                 script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                self.adapters[path] = LocalAdapter(data_dir=os.path.join(script_dir, "data"), log_callback=self.log_message)
+                raw_dir = self.config.get("DATA_SOURCE", {}).get("RAW_LOCAL_DIR", "data")
+                if not os.path.isabs(raw_dir):
+                    raw_dir = os.path.join(script_dir, raw_dir)
+                self.adapters[path] = LocalAdapter(data_dir=raw_dir, log_callback=self.log_message)
             elif path_alias == "BINANCE" or path == "BINANCE":
                 self.adapters[path] = BinanceAdapter(log_callback=self.log_message)
                 

@@ -27,7 +27,7 @@ class LocalAdapter(BaseDataAdapter):
                 
                 # Đảm bảo có cột time theo chuẩn
                 if df.index.name == 'datetime' or isinstance(df.index, pd.DatetimeIndex):
-                    df['time'] = df.index.astype(int) / 10**9 # Convert to unix
+                    df['time'] = df.index.astype('int64') / 10**9 # Convert to unix
                 df['datetime'] = pd.to_datetime(df['time'], unit='s')
                 df.set_index('datetime', inplace=True)
                 
@@ -51,7 +51,7 @@ class LocalAdapter(BaseDataAdapter):
             try:
                 df = pd.read_parquet(pq_path)
                 if df.index.name == 'datetime' or isinstance(df.index, pd.DatetimeIndex):
-                    df['time'] = df.index.astype(int) / 10**9
+                    df['time'] = df.index.astype('int64') / 10**9
                 df['datetime'] = pd.to_datetime(df['time'], unit='s')
                 df.set_index('datetime', inplace=True)
                 if df.index.tz is None: df.index = df.index.tz_localize('UTC')
