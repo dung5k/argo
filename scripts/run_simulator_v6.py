@@ -100,7 +100,7 @@ def run_simulation(start_date: str, end_date: str, config_path: str, model_path:
             print(f"[SIMULATOR V6] Lỗi đọc metrics: {e}")
             
     # Use predict_probs instead of prob_threshold
-    thresholds_to_test = [0.50, 0.52, 0.53, 0.54, 0.55, 0.56, 0.60]
+    thresholds_to_test = [0.55, 0.60, 0.65, 0.70, 0.75]
     # ---------------------------------------------------------
     
     # We must load dummy scalers to get the exact input dims for model loading
@@ -144,7 +144,7 @@ def run_simulation(start_date: str, end_date: str, config_path: str, model_path:
 
     # 3. Init Virtual Trade Managers
     sim_symbol = f"SIM_{config['TARGET_SYMBOL']}"
-    vtms = {th: BacktestVirtualTradeManager(sim_symbol, config=config) for th in thresholds_to_test}
+    vtms = {th: BacktestVirtualTradeManager(sim_symbol, config=config, log_callback=lambda x: None) for th in thresholds_to_test}
     for vtm in vtms.values():
         vtm.virtual_balance = 10000.0
         vtm.active_trade_loggers = {}
