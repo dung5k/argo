@@ -23,9 +23,23 @@ class V6HistoricalSimulator(HistoricalSimulator):
         if self._engine is not None:
             return
         self._engine = V6InferenceEngine(log_callback=self.log, force_cpu=True)
+        # Load input dims directly from scaler.pkl if available to avoid dimension mismatch with config.json
+        import joblib
+        if os.path.exists(self.scaler_path):
+            try:
+                bundle = joblib.load(self.scaler_path)
+                input_dims = [len(cols) for cols in bundle.get('column_orders', [])]
+                self.log(f"Loaded input_dims from scaler: {input_dims}")
+            except Exception as e:
+                self.log(f"Warning: Failed to load input_dims from scaler: {e}")
+                mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+                input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+        else:
+            mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
+            input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
+            
         mtf_configs = self.config.get("FEATURE_ENGINEERING", {}).get("MTF_INPUTS", [])
-        input_dims = [len(tf.get("FEATURES", [])) for tf in mtf_configs]
-        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs]
+        seq_lens = [tf.get("WINDOW_SIZE", 60) for tf in mtf_configs][:len(input_dims)]
         train_cfg = self.config.get("TRAINING")
         if not train_cfg:
             train_cfg = self.config.get("TRAIN", {})
@@ -145,9 +159,28 @@ class V6HistoricalSimulator(HistoricalSimulator):
                 continue
                 
             try:
-                ok, X_list = self._processor.process_online([w_df] * len(self._processor.tf_configs))
-                if not ok:
-                    X_list = None
+                if not hasattr(self, '_vectorized_features_done') or not self._vectorized_features_done:
+                    # Tính toàn bộ Feature Vectorized TỪ TRƯỚC
+                    ok, scaled_dfs = self._processor.process_vectorized(self._merged_full)
+                    if not ok:
+                        self.log("⚠️ process_vectorized failed!")
+                        return pd.DataFrame()
+                    self._scaled_dfs = scaled_dfs
+                    self._vectorized_features_done = True
+                
+                # Lấy dữ liệu đã pre-computed
+                X_list = []
+                for i, tf_cfg in enumerate(self._processor.tf_configs):
+                    win_size = tf_cfg.get('WINDOW_SIZE', 60)
+                    df_tf = self._scaled_dfs[i]
+                    idx_array = df_tf.index.get_indexer([candle_time], method='pad')
+                    if len(idx_array) == 0 or idx_array[0] == -1 or idx_array[0] < win_size - 1:
+                        X_list = None
+                        break
+                    idx = idx_array[0]
+                    # Reshape to (1, win_size, num_features) to match model expectations
+                    window = df_tf.iloc[idx - win_size + 1 : idx + 1].values
+                    X_list.append(np.expand_dims(window, axis=0))
             except Exception as e:
                 import traceback
                 self.log(f"⚠️ [{candle_time.strftime('%H:%M')}] Pipeline lỗi: {e}")
