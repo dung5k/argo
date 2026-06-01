@@ -5,7 +5,7 @@
         "timeframe": "M15",
         "spread_pct": 0.0003,
         "slippage_pct": 0.0001,
-        "session": "all"
+        "session": "newyork"
     },
     "sessions": {
         "asian": {
@@ -22,27 +22,27 @@
         }
     },
     "window": {
-        "initial_train_size_days": 10,
-        "validation_size_days": 3,
-        "slide_step_days": 3,
-        "start_date": "2026-05-01",
-        "end_date": "2026-05-20"
+        "initial_train_size_days": 120,
+        "validation_size_days": 30,
+        "slide_step_days": 7,
+        "start_date": "2025-01-01",
+        "end_date": "2026-06-01"
     },
     "ai": {
         "llm_model": "gemini-2.5-flash",
-        "correlation_threshold": 0.01,
-        "max_lag_steps": 3,
-        "fallback_tp_pct": 0.008,
+        "correlation_threshold": 0.03,
+        "max_lag_steps": 12,
+        "fallback_tp_pct": 0.009,
         "fallback_sl_pct": 0.004,
         "fallback_max_hold_bars": 30
     },
     "train": {
-        "learning_rate_base": 0.001,
-        "learning_rate_finetune": 0.0001,
-        "min_win_rate_threshold": 0.0,
-        "min_profit_factor": 0.0,
-        "epochs_base": 1,
-        "epochs_finetune": 1,
-        "batch_size": 16
+        "learning_rate_base": 0.0005,
+        "learning_rate_finetune": 0.00005,
+        "min_win_rate_threshold": 0.52,
+        "min_profit_factor": 1.20,
+        "epochs_base": 50,
+        "epochs_finetune": 10,
+        "batch_size": 128
     }
 }
