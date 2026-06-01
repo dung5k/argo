@@ -9,6 +9,7 @@ except ImportError:
     torch = None
 
 from src.training_v6.model_v6 import AAMT_MTF_Model
+from src.core.constants import TradingAction
 
 class V6InferenceEngine:
     """Động Cơ AI phi tuyến V6 (AAMT_MTF_Model) hỗ trợ Multi-Timeframe.
@@ -119,16 +120,16 @@ class V6InferenceEngine:
                 
                 probs = F.softmax(logits, dim=-1) # [1, 3]
                 
-                # C0: HOLD, C1: LONG/BUY, C2: SHORT/SELL
-                p_sell = probs[0, 2].item()
-                p_buy  = probs[0, 1].item()
+                # Sử dụng TradingAction Enum thống nhất cấu trúc nhãn
+                p_sell = probs[0, TradingAction.SELL.value].item()
+                p_buy  = probs[0, TradingAction.BUY.value].item()
                 
                 if p_buy >= self.prob_threshold:
-                    return 2 # BUY
+                    return TradingAction.to_bot_action(TradingAction.BUY.value)
                 elif p_sell >= self.prob_threshold:
-                    return 0 # SELL
+                    return TradingAction.to_bot_action(TradingAction.SELL.value)
                 else:
-                    return 1 # HOLD
+                    return TradingAction.to_bot_action(TradingAction.HOLD.value)
                     
         except Exception as e:
             self.log_callback(f"[InferenceEngineV6] Lỗi predict: {e}")
@@ -161,10 +162,10 @@ class V6InferenceEngine:
                 _, logits, _ = self.model(x_tensors_pt)
                 probs = F.softmax(logits, dim=-1) # [1, 3]
                 
-                # C0: HOLD, C1: LONG/BUY, C2: SHORT/SELL
-                p_sell = probs[0, 2].item()
-                p_hold = probs[0, 0].item()
-                p_buy  = probs[0, 1].item()
+                # Sử dụng TradingAction Enum thống nhất cấu trúc nhãn
+                p_sell = probs[0, TradingAction.SELL.value].item()
+                p_hold = probs[0, TradingAction.HOLD.value].item()
+                p_buy  = probs[0, TradingAction.BUY.value].item()
                 
                 return p_sell, p_hold, p_buy
                 
