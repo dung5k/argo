@@ -55,9 +55,6 @@ class TestV7WalkForwardEngine(unittest.TestCase):
                 "epochs_base": 1,
                 "epochs_finetune": 1,
                 "batch_size": 16
-            },
-            "telegram": {
-                "channel_id": "1816854047"
             }
         }
         with open(self.master_config_path, "w", encoding="utf-8") as f:

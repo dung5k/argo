@@ -14,7 +14,10 @@
     "ai": {
         "llm_model": "gemini-2.5-flash",
         "correlation_threshold": 0.01,
-        "max_lag_steps": 3
+        "max_lag_steps": 3,
+        "fallback_tp_pct": 0.008,
+        "fallback_sl_pct": 0.004,
+        "fallback_max_hold_bars": 30
     },
     "train": {
         "learning_rate_base": 0.001,
@@ -24,8 +27,5 @@
         "epochs_base": 1,
         "epochs_finetune": 1,
         "batch_size": 16
-    },
-    "telegram": {
-        "channel_id": "1816854047"
     }
 }

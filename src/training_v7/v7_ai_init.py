@@ -78,13 +78,13 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
     start_msg = f"⚙️ Khởi tạo cấu hình cho cặp <b>{leader}</b> (Leader) -> <b>{follower}</b> (Follower)..."
     send_telegram_alert(tbot, chat_id, start_msg)
     
-    # Cấu hình mặc định để fallback khi LLM lỗi
+    # Cấu hình mặc định để fallback khi LLM lỗi hoặc để cấu hình thủ công
     fallback_config = {
-        "max_lag_steps": 10,
-        "correlation_threshold": 0.20,
-        "tp_pct": 0.008,
-        "sl_pct": 0.004,
-        "max_hold_bars": 30
+        "max_lag_steps": mcfg.get("ai", {}).get("max_lag_steps", 10),
+        "correlation_threshold": mcfg.get("ai", {}).get("correlation_threshold", 0.20),
+        "tp_pct": mcfg.get("ai", {}).get("fallback_tp_pct", 0.008),
+        "sl_pct": mcfg.get("ai", {}).get("fallback_sl_pct", 0.004),
+        "max_hold_bars": mcfg.get("ai", {}).get("fallback_max_hold_bars", 30)
     }
     
     ai_config = None
