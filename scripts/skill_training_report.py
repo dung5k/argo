@@ -125,10 +125,10 @@ def main():
         {"dir": "CFG_LTC_LONDON_V6", "name": "PHIEN LONDON (LTC LONDON V6)", "emoji": "🇬🇧", "sniper": 60},
         {"dir": "CFG_LTC_NY_V6", "name": "PHIEN NEW YORK (LTC NY V6)", "emoji": "🇺🇸", "sniper": 60},
         {"dir": "CFG_LTC_WEEKEND_V6", "name": "PHIEN WEEKEND (LTC WEEKEND V6)", "emoji": "🏖️", "sniper": 60},
-        # XAG V5
-        {"dir": "CFG_XAG_ASIAN_V5", "name": "PHIEN CHAU A (XAG ASIAN V5)", "emoji": "🌏", "sniper": 80},
-        {"dir": "CFG_XAG_LONDON_V5", "name": "PHIEN LONDON (XAG LONDON V5)", "emoji": "🇬🇧", "sniper": 80},
-        {"dir": "CFG_XAG_NY_V5", "name": "PHIEN NEW YORK (XAG NY V5)", "emoji": "🇺🇸", "sniper": 80},
+        # XAG V6
+        {"dir": "CFG_XAG_ASIAN_V6", "name": "PHIEN CHAU A (XAG ASIAN V6)", "emoji": "🌏", "sniper": 80},
+        {"dir": "CFG_XAG_LONDON_V6", "name": "PHIEN LONDON (XAG LONDON V6)", "emoji": "🇬🇧", "sniper": 80},
+        {"dir": "CFG_XAG_NY_V6", "name": "PHIEN NEW YORK (XAG NY V6)", "emoji": "🇺🇸", "sniper": 80},
     ]
 
     workspace_configs = []
@@ -225,8 +225,32 @@ def main():
                 prompt_template = "Bạn là AI Điều Phối Toàn Cục V6 (Argo2). Dựa vào báo cáo hiệu suất đào tạo sau, hãy phân tích cực kỳ ngắn gọn (chỉ 2-3 câu) và đưa ra '🎯 QUYẾT ĐỊNH ĐÀO TẠO TIẾP THEO: [TÊN PHIÊN]' là nên tập trung đào tạo tiếp cho phiên nào ({sessions}) và vì sao. Đặc biệt chú ý tối ưu hóa cho mã {symbol}.\n\nBáo cáo:\n{report}"
             
             sessions = "Asian, London, hay NY"
-            prompt_text = prompt_template.replace("{symbol}", symbol).replace("{sessions}", sessions).replace("{report}", report)
             
+            # Load AI decision history
+            history_text = ""
+            history_file = os.path.join(base_dir, "workspaces", f"ai_decision_history_{symbol}.json")
+            if os.path.exists(history_file):
+                try:
+                    with open(history_file, "r", encoding="utf-8") as hf:
+                        history_data = json.load(hf)
+                    if history_data:
+                        history_text = "\n\n--- LỊCH SỬ CÁC QUYẾT ĐỊNH TRƯỚC ĐÓ CỦA BẠN ---\n"
+                        for record in history_data:
+                            history_text += f"- Thời gian: {record.get('timestamp')}\n"
+                            decision = record.get('decision', {})
+                            history_text += f"  + Chọn phiên: {decision.get('target_session')}\n"
+                            history_text += f"  + Lý do: {decision.get('reason')}\n"
+                            history_text += f"  + Config updates: {json.dumps(decision.get('config_updates', {}))}\n"
+                        history_text += "----------------------------------------------\n"
+                except Exception as e:
+                    print(f"Lỗi đọc history: {e}")
+            
+            prompt_text = prompt_template.replace("{symbol}", symbol).replace("{sessions}", sessions)
+            if "{report}" in prompt_text:
+                prompt_text = prompt_text.replace("{report}", history_text + "\nBÁO CÁO CẬP NHẬT:\n" + report)
+            else:
+                prompt_text += history_text + "\n\nBáo cáo:\n" + report
+                
             import requests, time
             payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
             
