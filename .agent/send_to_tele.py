@@ -284,4 +284,17 @@ if __name__ == '__main__':
         sys.argv.pop(idx)
         
     content = sys.argv[1] if len(sys.argv) > 1 else ""
+    if content.startswith('@file:'):
+        file_path = content[6:].strip()
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                os.remove(file_path) # Clean up temporary file
+            except Exception as e:
+                print(f"Error reading message file: {e}", file=sys.stderr)
+    else:
+        # Sửa lỗi ký tự xuống dòng bị cắt/báo lỗi trên terminal
+        content = content.replace('\\n', '\n').replace('\\t', '\t')
+        
     send_to_telegram(content, is_done, target_channels, screenshot)
