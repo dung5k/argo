@@ -43,8 +43,8 @@
     "train": {
         "learning_rate_base": 0.0005,
         "learning_rate_finetune": 5e-05,
-        "min_win_rate_threshold": 0.52,
-        "min_profit_factor": 1.2,
+        "min_win_rate_threshold": 0.50,
+        "min_profit_factor": 1.03,
         "epochs_base": 300,
         "epochs_finetune": 20,
         "batch_size": 128

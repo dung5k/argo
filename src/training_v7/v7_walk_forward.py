@@ -298,11 +298,16 @@ def build_features_and_labels(df_segment, leader_syms, lag_steps_dict, tp_pct, s
         lag_steps = lag_steps_dict.get(leader_sym, 1)
         ret_col = f'{leader_sym}_ret_lagged'
         vol_col = f'{leader_sym}_vol_ratio'
+        trend_col = f'{leader_sym}_trend_momentum'
         
         df[ret_col] = np.log(df[f'{leader_sym}_close'] / df[f'{leader_sym}_close'].shift(1)).shift(lag_steps)
         df[vol_col] = (df[f'{leader_sym}_volume'] / df[f'{leader_sym}_volume'].rolling(20).mean()).shift(lag_steps)
         
-        feature_cols.extend([ret_col, vol_col])
+        # Bổ sung Leader Trend Momentum (Đà tăng giảm trong 3 nến trước đó để không bị nhiễu 1 nến)
+        # Tại thời điểm t, sử dụng giá ở t - lag_steps so với t - lag_steps - 3
+        df[trend_col] = (df[f'{leader_sym}_close'].shift(lag_steps) / df[f'{leader_sym}_close'].shift(lag_steps + 3)) - 1.0
+        
+        feature_cols.extend([ret_col, vol_col, trend_col])
         
     df.dropna(subset=feature_cols, inplace=True)
     
@@ -412,7 +417,19 @@ def run_backtest_simulation(model, X_tensor, df_segment_times, df_segment, tp_pc
     with torch.no_grad():
         logits = model(X_torch)
         probs = torch.softmax(logits, dim=1)
-        preds = torch.argmax(probs, dim=1).cpu().numpy()
+        preds_tensor = torch.zeros(probs.shape[0], dtype=torch.long, device=device)
+        
+        prob_buy = probs[:, 1]
+        prob_sell = probs[:, 2]
+        
+        # Cập nhật ngưỡng kích hoạt lệnh từ argmax (50%) xuống 40% để đánh tần suất cao (Scalping)
+        buy_mask = (prob_buy > prob_sell) & (prob_buy > 0.40)
+        sell_mask = (prob_sell > prob_buy) & (prob_sell > 0.40)
+        
+        preds_tensor[buy_mask] = 1
+        preds_tensor[sell_mask] = 2
+        
+        preds = preds_tensor.cpu().numpy()
         probs = probs.cpu().numpy()
         
     # Xác định point động dựa trên giá tài sản
