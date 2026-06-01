@@ -553,12 +553,42 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     with open(os.path.join(config_dir, "bot_config_v7.json"), "w", encoding="utf-8") as fc:
         json.dump(cfg, fc, indent=4, ensure_ascii=False)
         
+    # Lưu config.json trực tiếp vào thư mục run root và thư mục results/ giống V6
+    with open(os.path.join(workspace_dir, "config.json"), "w", encoding="utf-8") as f_run_cfg:
+        json.dump(cfg, f_run_cfg, indent=4, ensure_ascii=False)
+    with open(os.path.join(results_dir, "config.json"), "w", encoding="utf-8") as f_res_cfg:
+        json.dump(cfg, f_res_cfg, indent=4, ensure_ascii=False)
+        
     print(f"[Walk-Forward] Workspace directories created successfully at:\n  {workspace_dir}")
     
     # Tải dữ liệu lịch sử đồng bộ Leader-Follower
     start_date = cfg["WALK_FORWARD"]["START_DATE"]
     end_date = cfg["WALK_FORWARD"]["END_DATE"]
     df_all = get_synced_data(leader, follower, timeframe, start_date, end_date, mt5_path)
+    
+    # Thực hiện lọc theo phiên thị trường nếu cấu hình có SESSION_UTC giống V6
+    session_name = cfg.get("SESSION", "all").lower()
+    session_utc = cfg.get("SESSION_UTC", {})
+    if session_utc and session_name != "all":
+        start_time_str = session_utc.get("START", "00:00")
+        end_time_str = session_utc.get("END", "23:59")
+        
+        print(f"[Walk-Forward] Filtering data for session: {session_name} ({start_time_str} - {end_time_str})")
+        
+        sh, sm = map(int, start_time_str.split(":"))
+        eh, em = map(int, end_time_str.split(":"))
+        
+        start_val = sh * 60 + sm
+        end_val = eh * 60 + em
+        
+        time_mins = df_all.index.hour * 60 + df_all.index.minute
+        if start_val <= end_val:
+            mask = (time_mins >= start_val) & (time_mins <= end_val)
+        else:
+            mask = (time_mins >= start_val) | (time_mins <= end_val)
+            
+        df_all = df_all[mask]
+        print(f"[Walk-Forward] Data filtered. Remaining candles for session: {len(df_all):,}")
     
     # Đọc tham số huấn luyện ban đầu
     tp_pct = cfg["FEATURE_ENGINEERING"]["TP_PCT"]
@@ -619,12 +649,17 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     # Lưu weights nền tảng
     found_weight_path = os.path.join(brains_dir, "aamt_v7_foundation.pth")
     torch.save(model.state_dict(), found_weight_path)
-    print(f"[WF] Foundation weights saved to {found_weight_path}")
+    
+    # Lưu thêm tên file theo format V6
+    v6_style_found_weight_path = os.path.join(brains_dir, f"aamt_v7_{config_id}_foundation.pth")
+    torch.save(model.state_dict(), v6_style_found_weight_path)
+    
+    print(f"[WF] Foundation weights saved to {found_weight_path} and {v6_style_found_weight_path}")
     
     # Báo cáo Telegram kết thúc Đào tạo Nền tảng
     send_telegram_alert(tbot, chat_id, (
         f"✅ <b>Đào tạo Nền tảng Hoàn tất!</b>\n"
-        f"• Đã lưu weights vào: <code>brains/aamt_v7_foundation.pth</code>"
+        f"• Đã lưu weights vào: <code>brains/aamt_v7_{config_id}_foundation.pth</code>"
     ))
     
     # =====================================================================
@@ -680,6 +715,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     current_train_start = dt_start
     step_idx = 1
     cumulative_pnl = pnl
+    all_steps_metrics = {}
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -820,7 +856,26 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         with open(results_file, "w", encoding="utf-8") as fr:
             json.dump(step_result, fr, indent=4)
             
+        all_steps_metrics[f"step_{step_idx}"] = step_result
         step_idx += 1
+        
+    # Save final weights like V6 final
+    final_weight_path = os.path.join(brains_dir, f"aamt_v7_{config_id}_final.pth")
+    torch.save(model.state_dict(), final_weight_path)
+    
+    # Save unified training_metrics_v7.json under results/
+    metrics_path = os.path.join(results_dir, "training_metrics_v7.json")
+    with open(metrics_path, "w", encoding="utf-8") as fm:
+        json.dump({
+            "target": follower.lower(),
+            "version": "Transformer_V7",
+            "config_id": config_id,
+            "cumulative_pnl": float(cumulative_pnl),
+            "steps": all_steps_metrics
+        }, fm, indent=4)
+        
+    print(f"[WF] Final weights saved to {final_weight_path}")
+    print(f"[WF] Training metrics saved to {metrics_path}")
         
     # =====================================================================
     # FINALIZATION: BÁO CÁO TỔNG KẾT

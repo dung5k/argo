@@ -169,5 +169,63 @@ class TestV7WalkForwardEngine(unittest.TestCase):
                 try: shutil.rmtree(workspace_test_dir)
                 except: pass
 
+    def test_session_filtering(self):
+        """Kiểm tra tính năng lọc dữ liệu theo phiên giao dịch."""
+        test_bot_cfg = {
+            "TARGET_SYMBOL": "LTCUSD",
+            "LEADER_SYMBOL": "BTCUSD",
+            "CONFIG_ID": "CFG_V7_TEST_SESSION",
+            "VERSION": "7.0",
+            "MASTER_CONFIG": "v7_master_config.json",
+            "SESSION": "london",
+            "SESSION_UTC": {
+                "START": "07:00",
+                "END": "16:00"
+            },
+            "FEATURE_ENGINEERING": {
+                "TP_PCT": 0.008,
+                "SL_PCT": 0.004,
+                "MAX_HOLD_BARS": 10,
+                "MAX_LAG_STEPS": 3,
+                "CORRELATION_THRESHOLD": 0.01,
+                "TIMEFRAME": "M15"
+            },
+            "TRAINING": {
+                "LEARNING_RATE_BASE": 0.001,
+                "LEARNING_RATE_FINETUNE": 0.0001,
+                "BATCH_SIZE": 16,
+                "EPOCHS_BASE": 1,
+                "EPOCHS_FINETUNE": 1
+            },
+            "WALK_FORWARD": {
+                "INITIAL_TRAIN_SIZE_DAYS": 10,
+                "VALIDATION_SIZE_DAYS": 3,
+                "SLIDE_STEP_DAYS": 3,
+                "START_DATE": "2026-05-01",
+                "END_DATE": "2026-05-20"
+            }
+        }
+        
+        with open(self.bot_config_path, "w", encoding="utf-8") as f:
+            json.dump(test_bot_cfg, f, indent=4)
+            
+        workspace_test_dir = os.path.join(_ROOT, "workspaces", "CFG_V7_TEST_SESSION")
+        if os.path.exists(workspace_test_dir):
+            try: shutil.rmtree(workspace_test_dir)
+            except: pass
+            
+        try:
+            workspace_dir = run_walk_forward_learning("bot_config_v7.json")
+            self.assertTrue(os.path.exists(workspace_dir))
+            
+            # Đọc config đã lưu để kiểm tra
+            with open(os.path.join(workspace_dir, "config.json"), "r", encoding="utf-8") as f:
+                saved_cfg = json.load(f)
+            self.assertEqual(saved_cfg.get("SESSION"), "london")
+        finally:
+            if os.path.exists(workspace_test_dir):
+                try: shutil.rmtree(workspace_test_dir)
+                except: pass
+
 if __name__ == "__main__":
     unittest.main()
