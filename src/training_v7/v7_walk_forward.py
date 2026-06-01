@@ -141,6 +141,36 @@ def fetch_mt5_symbol_data(symbol, timeframe_str, start_date, end_date, mt5_path)
     df.rename(columns={'tick_volume': 'volume'}, inplace=True)
     return df
 
+def fetch_binance_symbol_data(symbol, timeframe_str, start_date, end_date):
+    """Cào dữ liệu nến từ Binance thông qua BinanceAdapter."""
+    try:
+        from src.core.data_adapters.binance_adapter import BinanceAdapter
+        adapter = BinanceAdapter(log_callback=lambda msg: print(msg.encode('ascii', 'ignore').decode('ascii')))
+        df = adapter.fetch_historical_data(symbol, timeframe_str, start_date, end_date)
+        if df is None or df.empty:
+            print(f"[DATA] Binance returned no data for {symbol}.")
+            return None
+            
+        df.index = df.index.tz_localize(None)
+        df.index.name = 'time'
+        df = df[['open', 'high', 'low', 'close', 'volume']]
+        return df
+    except Exception as e:
+        print(f"[DATA] Binance fetch failed for {symbol}: {e}")
+        return None
+
+def fetch_symbol_data(symbol, timeframe_str, start_date, end_date, mt5_path):
+    """Route data fetching to Binance (Crypto) or MT5 (Forex/Metals)."""
+    if "LTC" in symbol.upper() or "BTC" in symbol.upper() or "ETH" in symbol.upper():
+        print(f"[DATA] Routing {symbol} to Binance...")
+        df = fetch_binance_symbol_data(symbol, timeframe_str, start_date, end_date)
+        if df is not None and not df.empty:
+            return df
+        print(f"[DATA] Binance returned empty, fallback to MT5 for {symbol}...")
+        
+    print(f"[DATA] Routing {symbol} to MT5...")
+    return fetch_mt5_symbol_data(symbol, timeframe_str, start_date, end_date, mt5_path)
+
 def generate_synthetic_data(symbol, timeframe_str, start_date, end_date):
     """Sinh dữ liệu giả lập chất lượng cao để Unit Test chạy 100% thành công."""
     print(f"[DATA] Generating synthetic data for {symbol} ({timeframe_str}) from {start_date} to {end_date}...")
@@ -178,9 +208,9 @@ def get_synced_data(leader_sym, follower_sym, timeframe, start_date, end_date, m
     Fetch dữ liệu Leader và Follower, thực hiện merge và Forward Fill đồng bộ index thời gian.
     Xử lý triệt để việc missing data theo yêu cầu kỹ thuật V7.
     """
-    # Thử fetch MT5 trước
-    df_l = fetch_mt5_symbol_data(leader_sym, timeframe, start_date, end_date, mt5_path)
-    df_f = fetch_mt5_symbol_data(follower_sym, timeframe, start_date, end_date, mt5_path)
+    # Thử fetch (Binance cho crypto, MT5 cho forex/metals)
+    df_l = fetch_symbol_data(leader_sym, timeframe, start_date, end_date, mt5_path)
+    df_f = fetch_symbol_data(follower_sym, timeframe, start_date, end_date, mt5_path)
     
     # Nếu MT5 lỗi, tự động fallback sang Synthetic Data
     if df_l is None or df_l.empty:
