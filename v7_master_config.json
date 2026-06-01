@@ -4,7 +4,22 @@
         "follower_symbol": "LTCUSD",
         "timeframe": "M15",
         "spread_pct": 0.0003,
-        "slippage_pct": 0.0001
+        "slippage_pct": 0.0001,
+        "session": "all"
+    },
+    "sessions": {
+        "asian": {
+            "START": "22:00",
+            "END": "06:00"
+        },
+        "london": {
+            "START": "07:00",
+            "END": "16:00"
+        },
+        "newyork": {
+            "START": "12:00",
+            "END": "21:00"
+        }
     },
     "window": {
         "initial_train_size_days": 10,

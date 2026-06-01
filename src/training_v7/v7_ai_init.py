@@ -165,12 +165,17 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
             ai_config = fallback_config
             
     # 2. Xây dựng cấu hình bot_config_v7.json hoàn chỉnh
+    session_name = mcfg.get("data", {}).get("session", "all").lower()
+    session_utc = mcfg.get("sessions", {}).get(session_name, {})
+    
     bot_config_v7 = {
         "TARGET_SYMBOL": follower,
         "LEADER_SYMBOL": leader,
         "CONFIG_ID": f"CFG_V7_{leader}_{follower}_{mcfg.get('data', {}).get('timeframe', 'M15')}",
         "VERSION": "7.0",
         "MASTER_CONFIG": master_config_path,
+        "SESSION": session_name,
+        "SESSION_UTC": session_utc,
         "FEATURE_ENGINEERING": {
             "TP_PCT": ai_config.get("tp_pct", 0.008),
             "SL_PCT": ai_config.get("sl_pct", 0.004),
