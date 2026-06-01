@@ -14,6 +14,14 @@ class BacktestVirtualTradeManager(V3VirtualTradeManager):
         super().__init__(target_symbol, config, log_callback, tg_notify_callback)
         self.pending_orders = []
 
+    def _save_state(self):
+        """OVERRIDE: Không lưu state ra file trong quá trình Backtest để tránh xung đột chéo giữa các threshold"""
+        pass
+
+    def _load_state(self):
+        """OVERRIDE: Không load state từ file trong quá trình Backtest để tránh xung đột chéo giữa các threshold"""
+        pass
+
     def open_new_mt5_trade(self, symbol: str, order_type_str: str, lot_size: float, sl_pips: float, tp_pips: float, preds_info: str, current_bid: float, current_ask: float, point: float):
         """OVERRIDE: Không mở lệnh ngay, nhốt vào pending queue chờ nến T+1"""
         self.log_callback(f"[Backtest VTM] 🛑 Đánh chặn lệnh {order_type_str} - Đưa vào hàng đợi T+1.")
@@ -113,3 +121,9 @@ class BacktestVirtualTradeManager(V3VirtualTradeManager):
             self.active_trade_loggers.pop(t, None)
         if closed_tickets:
             self._save_state()
+
+    def _close_position_internal(self, ticket, close_price, reason):
+        super()._close_position_internal(ticket, close_price, reason)
+        if self.history_deals and self.sim_clock:
+            from datetime import datetime, timezone
+            self.history_deals[-1]["close_time"] = datetime.fromtimestamp(self.sim_clock, tz=timezone.utc)
