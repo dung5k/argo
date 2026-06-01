@@ -241,7 +241,7 @@ class SimulatorEvaluatorV6:
     def evaluate(self, logits: torch.Tensor, T_val: np.ndarray, val_loss: float, val_mse: float, val_ce: float = float("inf")) -> EpochEvalResultV6:
         probs = torch.softmax(logits, dim=1)
         prob_sell = probs[:, 0].cpu().numpy()
-        prob_buy = probs[:, 2].cpu().numpy() # In V6, 0=Sell, 1=Hold, 2=Buy
+        prob_buy = probs[:, 1].cpu().numpy() # In V6: 0=Sell, 1=Buy, 2=Hold
         
         if T_val is None:
             print("⚠️ CẢNH BÁO: T_val is None! Không thể chạy Simulator. Trả về dummy result.")
