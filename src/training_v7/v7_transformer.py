@@ -67,9 +67,10 @@ class CrossAssetTransformerModel(nn.Module):
         out = self.pos_enc(out)
         out = self.transformer(out)
         
-        # Lấy đặc trưng của nến cuối cùng làm tín hiệu quyết định
-        last_step_out = out[:, -1, :]
-        last_step_out = self.ln(last_step_out)
+        # Lấy Global Average Pooling của tất cả các nến thay vì chỉ lấy nến cuối cùng
+        # Điều này giúp mô hình tổng hợp thông tin tốt hơn theo góp ý của chuyên gia
+        gap_out = torch.mean(out, dim=1)
+        gap_out = self.ln(gap_out)
         
-        logits = self.fc(last_step_out)
+        logits = self.fc(gap_out)
         return logits

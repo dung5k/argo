@@ -274,6 +274,8 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
     
     # 3. Tạo nhãn (Labels) dựa trên tương lai TP/SL trong max_hold_bars nến
     closes = df['follower_close'].values
+    highs = df['follower_high'].values
+    lows = df['follower_low'].values
     labels = []
     
     friction_loss = spread_pct + 2.0 * slippage_pct
@@ -284,30 +286,37 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
             continue
             
         current_price = closes[i]
-        future_prices = closes[i+1 : i+1+max_hold_bars]
+        future_highs = highs[i+1 : i+1+max_hold_bars]
+        future_lows = lows[i+1 : i+1+max_hold_bars]
         
         is_long_tp = False
         is_long_sl = False
-        for price in future_prices:
-            raw_change = (price - current_price) / current_price
-            real_change = raw_change - friction_loss
-            if real_change >= tp_pct:
-                is_long_tp = True
-                break
-            elif real_change <= -sl_pct:
+        for j in range(len(future_highs)):
+            high_change = (future_highs[j] - current_price) / current_price - friction_loss
+            low_change = (future_lows[j] - current_price) / current_price - friction_loss
+            
+            if low_change <= -sl_pct:
                 is_long_sl = True
+            
+            if high_change >= tp_pct:
+                is_long_tp = True
+                
+            if is_long_sl or is_long_tp:
                 break
                 
         is_short_tp = False
         is_short_sl = False
-        for price in future_prices:
-            raw_change = (current_price - price) / current_price
-            real_change = raw_change - friction_loss
-            if real_change >= tp_pct:
-                is_short_tp = True
-                break
-            elif real_change <= -sl_pct:
+        for j in range(len(future_highs)):
+            high_change = (current_price - future_highs[j]) / current_price - friction_loss
+            low_change = (current_price - future_lows[j]) / current_price - friction_loss
+            
+            if high_change <= -sl_pct:
                 is_short_sl = True
+                
+            if low_change >= tp_pct:
+                is_short_tp = True
+                
+            if is_short_sl or is_short_tp:
                 break
                 
         if is_long_tp and not is_long_sl:
@@ -319,12 +328,13 @@ def build_features_and_labels(df_segment, lag_steps, tp_pct, sl_pct, max_hold_ba
             
     df['label'] = labels
     
-    # Chuẩn hóa đặc trưng
+    # Chuẩn hóa đặc trưng (Khắc phục lỗi Data Leakage)
     feature_cols = ['follower_ret', 'follower_bb_width', 'follower_rsi', 'leader_ret_lagged', 'leader_vol_ratio']
-    # Scale đơn giản (Z-score)
+    # Sử dụng Rolling Z-score (window gấp 3 lần seq_len) để không rò rỉ tương lai
+    rolling_window = seq_len * 3 if seq_len else 90
     for col in feature_cols:
-        mean = df[col].mean()
-        std = df[col].std() + 1e-8
+        mean = df[col].rolling(window=rolling_window, min_periods=1).mean()
+        std = df[col].rolling(window=rolling_window, min_periods=1).std() + 1e-8
         df[col] = (df[col] - mean) / std
         
     # Tạo chuỗi thời gian (Sequence Dataset) cho Transformer

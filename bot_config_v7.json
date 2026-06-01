@@ -1,0 +1,36 @@
+{
+    "TARGET_SYMBOL": "LTCUSD",
+    "LEADER_SYMBOL": "BTCUSD",
+    "CONFIG_ID": "CFG_V7_BTCUSD_LTCUSD_M15",
+    "VERSION": "7.0",
+    "MASTER_CONFIG": "v7_configs/v7_master_config_ny.json",
+    "SESSION": "newyork",
+    "SESSION_UTC": {
+        "START": "12:00",
+        "END": "21:00"
+    },
+    "FEATURE_ENGINEERING": {
+        "TP_PCT": 0.01,
+        "SL_PCT": 0.004,
+        "MAX_HOLD_BARS": 30,
+        "MAX_LAG_STEPS": 12,
+        "CORRELATION_THRESHOLD": 0.28,
+        "TIMEFRAME": "M1",
+        "SPREAD_PCT": 0.0003,
+        "SLIPPAGE_PCT": 0.0001
+    },
+    "TRAINING": {
+        "LEARNING_RATE_BASE": 0.0005,
+        "LEARNING_RATE_FINETUNE": 5e-05,
+        "BATCH_SIZE": 128,
+        "EPOCHS_BASE": 300,
+        "EPOCHS_FINETUNE": 20
+    },
+    "WALK_FORWARD": {
+        "INITIAL_TRAIN_SIZE_DAYS": 120,
+        "VALIDATION_SIZE_DAYS": 30,
+        "SLIDE_STEP_DAYS": 7,
+        "START_DATE": "2025-01-01",
+        "END_DATE": "2026-06-01"
+    }
+}

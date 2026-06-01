@@ -2,7 +2,7 @@
     "data": {
         "leader_symbol": "BTCUSD",
         "follower_symbol": "LTCUSD",
-        "timeframe": "M15",
+        "timeframe": "M1",
         "spread_pct": 0.0003,
         "slippage_pct": 0.0001,
         "session": "asian"
@@ -41,7 +41,7 @@
         "learning_rate_finetune": 0.00005,
         "min_win_rate_threshold": 0.53,
         "min_profit_factor": 1.15,
-        "epochs_base": 100,
+        "epochs_base": 300,
         "epochs_finetune": 20,
         "batch_size": 128
     }
