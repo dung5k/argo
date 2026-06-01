@@ -38,7 +38,7 @@
         "max_lag_steps": 12,
         "fallback_tp_pct": 0.0076,
         "fallback_sl_pct": 0.0034,
-        "fallback_max_hold_bars": 96
+        "fallback_max_hold_bars": 45
     },
     "train": {
         "learning_rate_base": 0.0005,

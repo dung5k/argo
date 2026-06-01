@@ -110,7 +110,7 @@ def run_ai_initialization(master_config_path="v7_master_config.json"):
             f"- correlation_threshold (float): Ngưỡng tương quan chéo tối thiểu (ví dụ: từ 0.15 đến 0.35).\n"
             f"- tp_pct (float): Mục tiêu chốt lời (Take Profit) tính theo tỷ lệ phần trăm (ví dụ: 0.005 đến 0.015).\n"
             f"- sl_pct (float): Ngưỡng cắt lỗ (Stop Loss) tính theo tỷ lệ phần trăm (ví dụ: 0.002 đến 0.008).\n"
-            f"- max_hold_bars (int): Số nến tối đa giữ vị thế (ví dụ: từ 30 đến 96 nến).\n\n"
+            f"- max_hold_bars (int): Số nến tối đa giữ vị thế (ví dụ: từ 15 đến 60 nến).\n\n"
             f"Chú ý: Chỉ trả về JSON thuần túy, không kèm Markdown hay giải thích."
         )
         
