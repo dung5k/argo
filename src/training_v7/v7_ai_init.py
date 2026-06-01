@@ -1,0 +1,225 @@
+# -*- coding: utf-8 -*-
+"""
+v7_ai_init.py - Module 1: AI-Driven Initialization (QTS-V7)
+Khởi tạo cấu hình siêu tham số ban đầu bằng AI (Gemini) dựa trên bối cảnh thị trường.
+"""
+import os
+import sys
+import json
+import urllib.request
+import urllib.error
+import traceback
+
+# Add project root to path
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from src.orchestration.tg_helper import TelegramBot
+
+def get_telegram_client(master_config):
+    """Khởi tạo Telegram Bot từ env hoặc master config."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    
+    # Đọc fallback từ master_config
+    if not token or not chat_id:
+        chat_id = master_config.get("telegram", {}).get("channel_id", "1816854047")
+        # Thử đọc token từ settings hoặc các file config
+        settings_path = os.path.join(_ROOT, '.vscode', 'settings.json')
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    vsc_cfg = json.load(f)
+                token = vsc_cfg.get("antigravityBridge.teleBotToken")
+            except:
+                pass
+        if not token:
+            # Fallback hardcode token nếu có sẵn từ tg_config.json
+            tg_config_path = os.path.join(_ROOT, "tg_config.json")
+            if os.path.exists(tg_config_path):
+                try:
+                    with open(tg_config_path, "r", encoding="utf-8") as f:
+                        tcfg = json.load(f)
+                    token = tcfg.get("bot_token")
+                except:
+                    pass
+    
+    if token and chat_id:
+        return TelegramBot(token), int(chat_id)
+    return None, 1816854047
+
+def send_telegram_alert(tbot, chat_id, message):
+    """Gửi thông báo Telegram an toàn, không làm sập luồng chính."""
+    if tbot:
+        try:
+            tbot.send_message(chat_id, f"🤖 <b>[QTS-V7] AI-Init</b>\n━━━━━━━━━━━━━━━━━━━━━\n{message}")
+        except Exception as e:
+            print(f"[TG ERROR] Không thể gửi tin nhắn Telegram: {e}")
+
+def run_ai_initialization(master_config_path="v7_master_config.json"):
+    """Thực thi Module 1: AI-Driven Initialization"""
+    print("[AI-Init] Dang khoi dong Module 1...")
+    
+    # 1. Đọc file cấu hình master
+    master_path = os.path.join(_ROOT, master_config_path)
+    if not os.path.exists(master_path):
+        raise FileNotFoundError(f"[AI-Init] Khong tim thay file master config tai {master_path}")
+        
+    with open(master_path, "r", encoding="utf-8") as f:
+        mcfg = json.load(f)
+        
+    tbot, chat_id = get_telegram_client(mcfg)
+    leader = mcfg.get("data", {}).get("leader_symbol", "BTCUSD")
+    follower = mcfg.get("data", {}).get("follower_symbol", "LTCUSD")
+    model_name = mcfg.get("ai", {}).get("llm_model", "gemini-1.5-flash")
+    
+    # Thông báo bắt đầu qua Telegram
+    start_msg = f"⚙️ Khởi tạo cấu hình cho cặp <b>{leader}</b> (Leader) -> <b>{follower}</b> (Follower)..."
+    send_telegram_alert(tbot, chat_id, start_msg)
+    
+    # Cấu hình mặc định để fallback khi LLM lỗi
+    fallback_config = {
+        "max_lag_steps": 10,
+        "correlation_threshold": 0.20,
+        "tp_pct": 0.008,
+        "sl_pct": 0.004,
+        "max_hold_bars": 30
+    }
+    
+    ai_config = None
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        api_key = "AIzaSyAJlG9q3BVsHLC3XhQWoWTlPNfN3djxro0"
+    
+    if not api_key:
+        warn_msg = "[AI-Init] WARNING: Khong tim thay GEMINI_API_KEY trong moi truong. Su dung cau hinh Fallback!"
+        print(warn_msg)
+        send_telegram_alert(tbot, chat_id, "⚠️ [AI-Init] Không tìm thấy GEMINI_API_KEY trong môi trường. Sử dụng cấu hình Fallback!\n❌ API Key missing.")
+        ai_config = fallback_config
+    else:
+        # Gọi Gemini REST API
+        print(f"[AI-Init] Dang goi Gemini API ({model_name})...")
+        prompt = (
+            f"Bạn là chuyên gia định lượng cấp cao. Hãy phân tích mối quan hệ dẫn dắt và đi theo (Lead-Lag relationship) "
+            f"giữa tài sản Dẫn dắt (Leader): {leader} và tài sản Đi theo (Follower): {follower}.\n"
+            f"Hãy sinh cấu hình tối ưu ban đầu cho bot giao dịch chênh lệch pha (Lead-Lag arbitrage bot).\n"
+            f"Yêu cầu trả về chính xác định dạng JSON với các tham số sau:\n"
+            f"- max_lag_steps (int): Số bước trễ tối đa tìm kiếm độ tương quan (ví dụ: từ 5 đến 20).\n"
+            f"- correlation_threshold (float): Ngưỡng tương quan chéo tối thiểu (ví dụ: từ 0.15 đến 0.35).\n"
+            f"- tp_pct (float): Mục tiêu chốt lời (Take Profit) tính theo tỷ lệ phần trăm (ví dụ: 0.005 đến 0.015).\n"
+            f"- sl_pct (float): Ngưỡng cắt lỗ (Stop Loss) tính theo tỷ lệ phần trăm (ví dụ: 0.002 đến 0.008).\n"
+            f"- max_hold_bars (int): Số nến tối đa giữ vị thế (ví dụ: từ 15 đến 60 nến).\n\n"
+            f"Chú ý: Chỉ trả về JSON thuần túy, không kèm Markdown hay giải thích."
+        )
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        
+        # Sử dụng API Schema để Gemini trả về JSON chuẩn xác 100%
+        req_body = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "max_lag_steps": {"type": "INTEGER"},
+                        "correlation_threshold": {"type": "NUMBER"},
+                        "tp_pct": {"type": "NUMBER"},
+                        "sl_pct": {"type": "NUMBER"},
+                        "max_hold_bars": {"type": "INTEGER"}
+                    },
+                    "required": ["max_lag_steps", "correlation_threshold", "tp_pct", "sl_pct", "max_hold_bars"]
+                }
+            }
+        }
+        
+        try:
+            data_bytes = json.dumps(req_body).encode("utf-8")
+            req = urllib.request.Request(
+                url, data=data_bytes,
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                resp_data = json.loads(resp.read().decode("utf-8"))
+                
+                # Trích xuất văn bản phản hồi
+                text_response = resp_data["candidates"][0]["content"]["parts"][0]["text"]
+                print(f"[AI-Init] Phan hoi tu Gemini:\n{text_response}")
+                ai_config = json.loads(text_response.strip())
+                print("[AI-Init] SUCCESS: Parse JSON thanh cong tu Gemini!")
+        except Exception as e:
+            tb = traceback.format_exc()
+            err_msg_tele = f"❌ [AI-Init] Lỗi gọi Gemini API: {e}\nTự động Fallback sang cấu hình mặc định.\n\nTraceback:\n<code>{tb[-300:]}</code>"
+            print(f"[AI-Init] ERROR: Loi goi Gemini API: {e}. Su dung fallback.")
+            send_telegram_alert(tbot, chat_id, err_msg_tele)
+            ai_config = fallback_config
+            
+    # 2. Xây dựng cấu hình bot_config_v7.json hoàn chỉnh
+    bot_config_v7 = {
+        "TARGET_SYMBOL": follower,
+        "LEADER_SYMBOL": leader,
+        "CONFIG_ID": f"CFG_V7_{leader}_{follower}_{mcfg.get('data', {}).get('timeframe', 'M15')}",
+        "VERSION": "7.0",
+        "MASTER_CONFIG": master_config_path,
+        "FEATURE_ENGINEERING": {
+            "TP_PCT": ai_config.get("tp_pct", 0.008),
+            "SL_PCT": ai_config.get("sl_pct", 0.004),
+            "MAX_HOLD_BARS": ai_config.get("max_hold_bars", 30),
+            "MAX_LAG_STEPS": ai_config.get("max_lag_steps", 10),
+            "CORRELATION_THRESHOLD": ai_config.get("correlation_threshold", 0.20),
+            "TIMEFRAME": mcfg.get("data", {}).get("timeframe", "M15")
+        },
+        "TRAINING": {
+            "LEARNING_RATE_BASE": mcfg.get("train", {}).get("learning_rate_base", 1e-3),
+            "LEARNING_RATE_FINETUNE": mcfg.get("train", {}).get("learning_rate_finetune", 1e-4),
+            "BATCH_SIZE": mcfg.get("train", {}).get("batch_size", 64),
+            "EPOCHS_BASE": mcfg.get("train", {}).get("epochs_base", 20),
+            "EPOCHS_FINETUNE": mcfg.get("train", {}).get("epochs_finetune", 5)
+        },
+        "WALK_FORWARD": {
+            "INITIAL_TRAIN_SIZE_DAYS": mcfg.get("window", {}).get("initial_train_size_days", 180),
+            "VALIDATION_SIZE_DAYS": mcfg.get("window", {}).get("validation_size_days", 30),
+            "SLIDE_STEP_DAYS": mcfg.get("window", {}).get("slide_step_days", 30),
+            "START_DATE": mcfg.get("window", {}).get("start_date", "2025-06-01"),
+            "END_DATE": mcfg.get("window", {}).get("end_date", "2026-06-01")
+        }
+    }
+    
+    out_path = os.path.join(_ROOT, "bot_config_v7.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(bot_config_v7, f, indent=4, ensure_ascii=False)
+    print(f"[AI-Init] SUCCESS: Da luu cau hinh sieu tham so vao {out_path}")
+    
+    # Báo cáo kết quả cấu hình siêu tham số lên Telegram sếp Lê
+    success_msg = (
+        f"🏆 <b>KHỞI TẠO CẤU HÌNH SIÊU THAM SỐ V7 THÀNH CÔNG</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🎯 <b>Leader:</b> <code>{leader}</code>\n"
+        f"🎯 <b>Follower:</b> <code>{follower}</code>\n"
+        f"📅 <b>Timeframe:</b> <code>{bot_config_v7['FEATURE_ENGINEERING']['TIMEFRAME']}</code>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🚀 <b>Thông số tối ưu từ AI:</b>\n"
+        f"• Độ trễ quét tối đa (Lag): <code>{bot_config_v7['FEATURE_ENGINEERING']['MAX_LAG_STEPS']} steps</code>\n"
+        f"• Ngưỡng tương quan (Corr): <code>{bot_config_v7['FEATURE_ENGINEERING']['CORRELATION_THRESHOLD']:.2f}</code>\n"
+        f"• Chốt lời (TP): <code>{bot_config_v7['FEATURE_ENGINEERING']['TP_PCT']*100:.3f}%</code>\n"
+        f"• Cắt lỗ (SL): <code>{bot_config_v7['FEATURE_ENGINEERING']['SL_PCT']*100:.3f}%</code>\n"
+        f"• Giữ vị thế tối đa: <code>{bot_config_v7['FEATURE_ENGINEERING']['MAX_HOLD_BARS']} nến</code>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━\n"
+        f"💾 Đã lưu cấu hình vào <code>bot_config_v7.json</code>"
+    )
+    send_telegram_alert(tbot, chat_id, success_msg)
+    
+    return bot_config_v7
+
+if __name__ == "__main__":
+    run_ai_initialization()
