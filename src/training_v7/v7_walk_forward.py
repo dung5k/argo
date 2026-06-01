@@ -850,12 +850,15 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
     model = CrossAssetTransformerModel(num_features=num_features)
     
     # Thông báo bắt đầu nền tảng Telegram
-    send_telegram_alert(tbot, chat_id, (
-        f"⚙️ <b>Bắt đầu Đào tạo Nền tảng:</b>\n"
+    found_lags_str = ", ".join([f"{k}: {v}" for k, v in found_lags.items()])
+    found_corrs_str = ", ".join([f"{k}: {v:.4f}" for k, v in found_corrs.items()])
+    
+    send_to_telegram(
+        f"✅ <b>[QTS-V7] HOÀN THÀNH FOUNDATION {session_name.upper()}</b>\n"
         f"• Dữ liệu: <code>{start_date}</code> -> <code>{foundation_end_str}</code>\n"
-        f"• Độ trễ Dynamic Lag quét được: <code>{found_lag} steps</code>\n"
-        f"• Tương quan chéo (Pearson): <code>{found_corr:.4f}</code>"
-    ))
+        f"• Độ trễ Dynamic Lag quét được: <code>{found_lags_str} steps</code>\n"
+        f"• Tương quan chéo (Pearson): <code>{found_corrs_str}</code>"
+    )
     
     # Train
     model = train_model(model, X_tr, Y_tr, lr_base, epochs_base, batch_size)
@@ -983,15 +986,16 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         df_va_step = df_all[(df_all.index >= pd.to_datetime(val_start_str)) & (df_all.index < pd.to_datetime(val_end_str))]
         
         # Tính Dynamic Lag mới
-        step_lag, step_corr = estimate_dynamic_lag(
+        step_lags, step_corrs = estimate_dynamic_lag(
             df_tr_step, 
+            leaders,
             current_ai_config["max_lag_steps"], 
             current_ai_config["correlation_threshold"]
         )
         
         # Xây dựng data train/test chặng mới
         X_tr_step, Y_tr_step, tr_step_times = build_features_and_labels(
-            df_tr_step, step_lag, 
+            df_tr_step, leaders, step_lags, 
             current_ai_config["tp_pct"], current_ai_config["sl_pct"], 
             current_ai_config["max_hold_bars"], seq_len=30,
             spread_pct=spread_pct, slippage_pct=slippage_pct
@@ -999,7 +1003,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
         X_tr_step, Y_tr_step, tr_step_times = filter_by_session(X_tr_step, Y_tr_step, tr_step_times, session_name, session_utc)
         
         X_va_step, Y_va_step, va_step_times = build_features_and_labels(
-            df_va_step, step_lag, 
+            df_va_step, leaders, step_lags, 
             current_ai_config["tp_pct"], current_ai_config["sl_pct"], 
             current_ai_config["max_hold_bars"], seq_len=30,
             spread_pct=spread_pct, slippage_pct=slippage_pct
@@ -1051,7 +1055,7 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
                 f"• Nhận thấy độ trễ & biến động thay đổi, điều chỉnh siêu tham số:\n"
                 f"• Lag quét tối đa: <code>{current_ai_config['max_lag_steps']} steps</code>\n"
                 f"• Chốt lời (TP): <code>{current_ai_config['tp_pct']*100:.3f}%</code>\n"
-                f"• Cắt lỗ (SL): <code>{current_ai_config['sl_pct']*100:.3f}%</code>\n"
+                f"• Cắt lỗ (SL): <code>{current_sl_pct*100:.3f}%</code>\n"
                 f"• Giữ nến tối đa: <code>{current_ai_config['max_hold_bars']} nến</code>"
             )
             send_telegram_alert(tbot, chat_id, ai_advice)
@@ -1071,8 +1075,8 @@ def run_walk_forward_learning(bot_config_path="bot_config_v7.json"):
             "step": step_idx,
             "val_start": val_start_str,
             "val_end": val_end_str,
-            "lag_steps": step_lag,
-            "correlation": float(step_corr),
+            "lag_steps": step_lags,
+            "correlation": {k: float(v) for k, v in step_corrs.items()},
             "pnl": float(step_bt["pnl"]),
             "pnl_usd": float(step_pnl_usd),
             "trades": int(step_bt["trades"]),

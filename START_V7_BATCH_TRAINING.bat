@@ -8,4 +8,4 @@ echo   QTS-V7 PRODUCTION BATCH TRAINING RUNNER
 echo ====================================================
 echo.
 python scripts/monitor_v7.py
-pause
+timeout /t 5

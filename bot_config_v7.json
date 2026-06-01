@@ -13,11 +13,11 @@
         "END": "16:00"
     },
     "FEATURE_ENGINEERING": {
-        "TP_PCT": 0.01,
-        "SL_PCT": 0.0045,
+        "TP_PCT": 0.012,
+        "SL_PCT": 0.005,
         "MAX_HOLD_BARS": 30,
         "MAX_LAG_STEPS": 15,
-        "CORRELATION_THRESHOLD": 0.28,
+        "CORRELATION_THRESHOLD": 0.3,
         "TIMEFRAME": "M1",
         "SPREAD_PCT": 0.0003,
         "SLIPPAGE_PCT": 0.0001
