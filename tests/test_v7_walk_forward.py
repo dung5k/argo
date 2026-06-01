@@ -18,8 +18,8 @@ from src.training_v7.v7_transformer import CrossAssetTransformerModel
 
 class TestV7WalkForwardEngine(unittest.TestCase):
     def setUp(self):
-        self.master_config_path = os.path.join(_ROOT, "v7_master_config.json")
-        self.master_config_backup = os.path.join(_ROOT, "v7_master_config_backup_wf.json")
+        self.master_config_path = os.path.join(_ROOT, "v7_configs", "v7_master_config.json")
+        self.master_config_backup = os.path.join(_ROOT, "v7_configs", "v7_master_config_backup_wf.json")
         if os.path.exists(self.master_config_path):
             shutil.copy(self.master_config_path, self.master_config_backup)
             
@@ -112,7 +112,7 @@ class TestV7WalkForwardEngine(unittest.TestCase):
             "LEADER_SYMBOL": "BTCUSD",
             "CONFIG_ID": "CFG_V7_TEST_WF_FLOW", # CONFIG_ID riêng biệt để tránh đụng độ tài nguyên!
             "VERSION": "7.0",
-            "MASTER_CONFIG": "v7_master_config.json",
+            "MASTER_CONFIG": "v7_configs/v7_master_config.json",
             "FEATURE_ENGINEERING": {
                 "TP_PCT": 0.008,
                 "SL_PCT": 0.004,
@@ -173,7 +173,7 @@ class TestV7WalkForwardEngine(unittest.TestCase):
             "LEADER_SYMBOL": "BTCUSD",
             "CONFIG_ID": "CFG_V7_TEST_SESSION",
             "VERSION": "7.0",
-            "MASTER_CONFIG": "v7_master_config.json",
+            "MASTER_CONFIG": "v7_configs/v7_master_config.json",
             "SESSION": "london",
             "SESSION_UTC": {
                 "START": "07:00",
