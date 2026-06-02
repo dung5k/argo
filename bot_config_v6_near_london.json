@@ -61,6 +61,7 @@
         "N_HEAD": 8,
         "NUM_LAYERS": 4,
         "BATCH_SIZE": 16,
+        "DEVICE": "cpu",
         "WARMUP_EPOCHS": 10,
         "FINETUNE_EPOCHS": 80,
         "LEARNING_RATE": 1e-05,
