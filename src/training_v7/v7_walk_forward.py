@@ -309,6 +309,7 @@ def build_features_and_labels(df_segment, leader_syms, lag_steps_dict, tp_pct, s
         
         feature_cols.extend([ret_col, vol_col, trend_col])
         
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.dropna(subset=feature_cols, inplace=True)
     
     # 3. Tạo nhãn (Labels) dựa trên tương lai TP/SL trong max_hold_bars nến
