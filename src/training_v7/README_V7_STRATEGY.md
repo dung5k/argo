@@ -19,6 +19,11 @@ Hệ thống liên tục tịnh tiến cửa sổ thời gian (Sliding Window), 
 - Tích hợp mô hình Ngôn ngữ Lớn (LLM - Gemini) vào thẳng vòng lặp Backtest. 
 - Sau mỗi chặng đánh giá, hệ thống gửi báo cáo (Win Rate, Profit Factor, PnL) cho AI. AI sẽ đóng vai trò như một chuyên gia tài chính để đề xuất điều chỉnh siêu tham số (TP, SL, Max Hold Bars) cho chặng tiếp theo.
 
+### 2.4. Định Hướng Giao Dịch Theo Sóng (Wave-Based Trading Orientation)
+Hệ thống V7 không giao dịch mù quáng mọi lúc mọi nơi mà tập trung khai thác các **Sóng Thị Trường** và **Sóng Phiên**:
+- **Sóng Phiên (Session Volatility Waves)**: Việc lọc dữ liệu và huấn luyện được chia tách độc lập theo từng phiên giao dịch lớn (Asian, London, New York). Mỗi phiên mang một đặc tính biến động và thanh khoản riêng. V7 sẽ chỉ đánh thức "bộ não" chuyên biệt của phiên đó để bắt sóng dòng tiền cục bộ.
+- **Sóng Xu Hướng (Macro Trend Waves)**: Thông qua đặc trưng `Leader Trend Momentum`, AI không chỉ nhìn vào sự chênh lệch giá tức thời của các cây nến 1 phút (M1) mà còn cảm nhận được đà tăng/giảm của toàn bộ con sóng trước đó (3-5 nến) từ các tài sản dẫn dắt. Điều này giúp V7 "nương theo" sóng lớn thay vì bị cuốn vào các bẫy nhiễu nhặt (whipsaw).
+
 ## 3. Triết Lý Chống Quá Khớp (Anti-Overfitting Philosophy)
 Dữ liệu tài chính, đặc biệt là nến M1, chứa 99% là nhiễu (Noise). Nếu ép mô hình Machine Learning học quá sâu, nó sẽ thuộc lòng nhiễu và phá sản khi ra thực tế. 
 Phiên bản V7 áp dụng các biện pháp phẫu thuật thuật toán khắt khe nhất:
