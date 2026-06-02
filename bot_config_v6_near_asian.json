@@ -60,7 +60,7 @@
         "D_MODEL": 128,
         "N_HEAD": 8,
         "NUM_LAYERS": 3,
-        "BATCH_SIZE": 64,
+        "BATCH_SIZE": 32,
         "WARMUP_EPOCHS": 15,
         "FINETUNE_EPOCHS": 80,
         "LEARNING_RATE": 1e-05,
