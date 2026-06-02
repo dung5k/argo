@@ -347,8 +347,11 @@ def main():
     train_loader = DataLoader(TensorDataset(*tensor_args_tr), batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(TensorDataset(*tensor_args_va), batch_size=batch_size, shuffle=False)
     
-    device = torch.device("cuda")
-    print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
+    device_name = config.get("TRAINING", {}).get("DEVICE", "cuda")
+    if device_name == "cuda" and not torch.cuda.is_available():
+        device_name = "cpu"
+    device = torch.device(device_name)
+    print(f"💻 Đang Train trên nền tảng: {device}", flush=True)
     
     # 1.5 Init Evaluator
     raw_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "raw")
