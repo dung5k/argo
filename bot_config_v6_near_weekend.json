@@ -12,7 +12,7 @@
         "SYNC_CHUNKS": true
     },
     "FEATURE_ENGINEERING": {
-        "⚠️_STRICT_WARNING_⚠️": "TẤT CẢ MODULE MACRO_FEATURES LÀ BẮT BUỘC.",
+        "\u26a0\ufe0f_STRICT_WARNING_\u26a0\ufe0f": "T\u1ea4T C\u1ea2 MODULE MACRO_FEATURES L\u00c0 B\u1eaeT BU\u1ed8C.",
         "TP_PCT": 0.005,
         "SL_PCT": 0.003,
         "MAX_HOLD_BARS": 180,
@@ -45,8 +45,8 @@
         "D_MODEL": 128,
         "N_HEAD": 8,
         "NUM_LAYERS": 4,
-        "BATCH_SIZE": 16,
-        "DEVICE": "cpu",
+        "BATCH_SIZE": 128,
+        "DEVICE": "cuda",
         "WARMUP_EPOCHS": 15,
         "FINETUNE_EPOCHS": 60,
         "LEARNING_RATE": 5e-05,
