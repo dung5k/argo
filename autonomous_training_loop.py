@@ -11,6 +11,11 @@ import argparse
 import platform
 import requests
 
+# Đảm bảo thư mục làm việc hiện tại luôn là thư mục của script này
+script_dir = os.path.dirname(os.path.abspath(__file__))
+if script_dir:
+    os.chdir(script_dir)
+
 def run_and_tee(cmd, log_path, env):
     with open(log_path, 'wb') as f_log:
         process = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -237,7 +242,7 @@ def run_training_loop(args):
     env = dict(os.environ,
         PYTHONIOENCODING="utf-8",
         PYTHONUTF8="1",
-        PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:32"
+        PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:256"
     )
     
     decision = get_ai_decision(prompt_path, symbol)

@@ -133,9 +133,9 @@ def resample_dataframe(df_raw, freq):
     
     return df_resampled
 
-def align_mtf_windows(target_time, i, target_idx, tf_times, tf_vals, window_sizes):
+def align_mtf_windows(target_time, loc_pointers, tf_times, tf_vals, window_sizes):
     """
-    Trích xuất list các window tensor cho target_time.
+    Trích xuất list các window tensor cho target_time sử dụng thuật toán Two-Pointers tối ưu.
     Trả về (windows_list, has_nan).
     """
     windows = []
@@ -144,11 +144,21 @@ def align_mtf_windows(target_time, i, target_idx, tf_times, tf_vals, window_size
     for tf_i in range(len(window_sizes)):
         win_size = window_sizes[tf_i]
         
-        # TÌm nến gần nhất tính đến target_time cho mọi TF
-        loc = tf_times[tf_i].get_indexer([target_time], method='pad')[0]
-        if loc < win_size - 1:
+        # Sử dụng Two-Pointers để tìm nến gần nhất có timestamp <= target_time
+        ptr = loc_pointers[tf_i]
+        times_i = tf_times[tf_i]
+        length_i = len(times_i)
+        
+        while ptr + 1 < length_i and times_i[ptr + 1] <= target_time:
+            ptr += 1
+            
+        loc_pointers[tf_i] = ptr
+        loc = ptr
+        
+        if times_i[loc] > target_time or loc < win_size - 1:
             has_nan = True
             break
+            
         win = tf_vals[tf_i][loc - win_size + 1 : loc + 1]
             
         if len(win) != win_size or np.isnan(win).any():
@@ -214,6 +224,9 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
     n_skip = {'session': 0, 'clean': 0, 'nan': 0, 'embargo': 0}
     print(f"[DEBUG] max_idx (số lượng nến Base có thể dùng): {max_idx}")
 
+    # Khởi tạo danh sách các con trỏ cho thuật toán Two-Pointers
+    loc_pointers = [0] * len(window_sizes)
+
     for i in tqdm(range(0, max_idx, step_size), desc="Ráp Tensor MTF"):
         target_idx  = i + window_sizes[0] - 1
         target_time = base_timestamps[target_idx]
@@ -238,7 +251,7 @@ def build_tensor_mtf(df_feats_list, labels_series, clean_mask, session_start, se
         if np.isnan(target_label):
             n_skip['nan'] += 1; continue
             
-        windows, has_nan = align_mtf_windows(target_time, i, target_idx, tf_times, tf_vals, window_sizes)
+        windows, has_nan = align_mtf_windows(target_time, loc_pointers, tf_times, tf_vals, window_sizes)
             
         if has_nan:
             n_skip['nan'] += 1; continue

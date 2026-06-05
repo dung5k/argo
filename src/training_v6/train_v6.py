@@ -351,8 +351,11 @@ def main():
     train_loader = DataLoader(TensorDataset(*tensor_args_tr), batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(TensorDataset(*tensor_args_va), batch_size=batch_size, shuffle=False)
     
-    device = torch.device("cuda")
-    print(f"\U0001f4bb Đang Train trên nền tảng: {device}", flush=True)
+    device_name = config.get("TRAINING", {}).get("DEVICE", "cuda")
+    if device_name == "cuda" and not torch.cuda.is_available():
+        device_name = "cpu"
+    device = torch.device(device_name)
+    print(f"💻 Đang Train trên nền tảng: {device}", flush=True)
     
     # 1.5 Init Evaluator
     raw_dir = os.path.join(_ROOT, "workspaces", cfg_id, "data", "raw")
@@ -591,55 +594,93 @@ def main():
     except Exception as e:
         print(f"⚠️ [TELEGRAM] Lỗi gửi thông báo khởi động: {e}", flush=True)
     
-    model.to(device)
-    
-    class_weights_tensor = torch.tensor(cw_array, dtype=torch.float32).to(device)
-    focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
-    mse_gate = train_cfg.get("MSE_GATE_PERCENTILE", 0.0)
-    recon_weight = train_cfg.get("RECON_LOSS_WEIGHT", 1.0)
-    label_smoothing = train_cfg.get("LABEL_SMOOTHING", 0.15)
-    print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | lambda_recon = {recon_weight} | label_smoothing = {label_smoothing}", flush=True)
-    criterion = AAMT_JointLoss(
-        class_weights=class_weights_tensor, 
-        focal_gamma=focal_gamma, 
-        mse_gate_percentile=mse_gate,
-        lambda_recon=recon_weight,
-        label_smoothing=label_smoothing
-    )
-    weight_decay = train_cfg.get("WEIGHT_DECAY", 1e-4)
-    # Tách Parameter Groups: log_vars của criterion không được dùng weight_decay để tránh bị ép về 0
-    optimizer_grouped_parameters = [
-        {"params": model.parameters(), "weight_decay": weight_decay},
-        {"params": criterion.parameters(), "weight_decay": 0.0, "lr": lr * 0.1}
-    ]
-    optimizer = optim.AdamW(optimizer_grouped_parameters, lr=lr)
-    phoenix = None  # Đã tắt Auto Healing
+    try:
+        model.to(device)
+        class_weights_tensor = torch.tensor(cw_array, dtype=torch.float32).to(device)
+        focal_gamma = train_cfg.get("FOCAL_GAMMA", 0.0)
+        mse_gate = train_cfg.get("MSE_GATE_PERCENTILE", 0.0)
+        recon_weight = train_cfg.get("RECON_LOSS_WEIGHT", 1.0)
+        label_smoothing = train_cfg.get("LABEL_SMOOTHING", 0.15)
+        print(f"[LOSS] Khởi tạo AAMT_JointLoss với focal_gamma = {focal_gamma} | mse_gate = {mse_gate} | lambda_recon = {recon_weight} | label_smoothing = {label_smoothing}", flush=True)
+        criterion = AAMT_JointLoss(
+            class_weights=class_weights_tensor, 
+            focal_gamma=focal_gamma, 
+            mse_gate_percentile=mse_gate,
+            lambda_recon=recon_weight,
+            label_smoothing=label_smoothing
+        )
+        weight_decay = train_cfg.get("WEIGHT_DECAY", 1e-4)
+        # Tách Parameter Groups: log_vars của criterion không được dùng weight_decay để tránh bị ép về 0
+        optimizer_grouped_parameters = [
+            {"params": model.parameters(), "weight_decay": weight_decay},
+            {"params": criterion.parameters(), "weight_decay": 0.0, "lr": lr * 0.1}
+        ]
+        optimizer = optim.AdamW(optimizer_grouped_parameters, lr=lr)
+        phoenix = None  # Đã tắt Auto Healing
 
-    # [V2] Chọn Learning Rate Scheduler theo config
-    lr_scheduler_type = train_cfg.get("LR_SCHEDULER", "plateau")  # 'plateau' hoặc 'cosine_warm'
-    if lr_scheduler_type == "cosine_warm":
-        # Cosine Annealing with Warm Restarts — khám phá tốt hơn cho data khó
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer, T_0=15, T_mult=2, eta_min=1e-6
-        )
-        print(f"[SCHEDULER] CosineAnnealingWarmRestarts (T_0=15, T_mult=2)", flush=True)
-    else:
-        # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau X epoch không cải thiện CE Loss val
-        # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
-        patience_val = train_cfg.get("PATIENCE", 10)
-        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=patience_val,
-            min_lr=1e-6
-        )
-        print(f"[SCHEDULER] ReduceLROnPlateau (patience={patience_val}, factor=0.5)", flush=True)
-    # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp X epoch
-    # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
-    _ES_PATIENCE     = train_cfg.get("ES_PATIENCE", 20)   # Số epoch chịu đựng CE tăng
-    _es_streak       = 0    # Biến đếm streak tăng hiện tại
-    _es_best_ce_val  = float('inf')  # CE val tốt nhất từ trước đến nay
-    
-    # 3. PHASE 1 WARM-UP (Chỉ chạy 1 lần)
-    model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
+        # [V2] Chọn Learning Rate Scheduler theo config
+        lr_scheduler_type = train_cfg.get("LR_SCHEDULER", "plateau")  # 'plateau' hoặc 'cosine_warm'
+        if lr_scheduler_type == "cosine_warm":
+            # Cosine Annealing with Warm Restarts — khám phá tốt hơn cho data khó
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                optimizer, T_0=15, T_mult=2, eta_min=1e-6
+            )
+            print(f"[SCHEDULER] CosineAnnealingWarmRestarts (T_0=15, T_mult=2)", flush=True)
+        else:
+            # [PHÁC ĐỒ 2] Learning Rate Decay — Giảm LR 50% sau X epoch không cải thiện CE Loss val
+            # Ngăn optimizer đạp vỡ vùng tối ưu sau khi đạt đỉnh (như Epoch 19 → 308)
+            patience_val = train_cfg.get("PATIENCE", 10)
+            lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, mode='min', factor=0.5, patience=patience_val,
+                min_lr=1e-6
+            )
+            print(f"[SCHEDULER] ReduceLROnPlateau (patience={patience_val}, factor=0.5)", flush=True)
+        # [PHÁC ĐỒ 3] Early Stopping — Dừng nếu CE Loss val tăng liên tiếp X epoch
+        # Ngăn mạng "ngu đi" khi đang tự huỷ hoại phân bố Softmax
+        _ES_PATIENCE     = train_cfg.get("ES_PATIENCE", 20)   # Số epoch chịu đựng CE tăng
+        _es_streak       = 0    # Biến đếm streak tăng hiện tại
+        _es_best_ce_val  = float('inf')  # CE val tốt nhất từ trước đến nay
+        
+        # 3. PHASE 1 WARM-UP (Chỉ chạy 1 lần)
+        model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
+    except RuntimeError as e:
+        if "out of memory" in str(e).lower() and device.type == "cuda":
+            print(f"\n[DEVICE FALLBACK] ⚠️ CUDA OOM detected during initialization! Falling back to CPU for training to prevent crash.", flush=True)
+            device = torch.device("cpu")
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            
+            # Re-initialize on CPU
+            model.to(device)
+            class_weights_tensor = torch.tensor(cw_array, dtype=torch.float32).to(device)
+            criterion = AAMT_JointLoss(
+                class_weights=class_weights_tensor, 
+                focal_gamma=focal_gamma, 
+                mse_gate_percentile=mse_gate,
+                lambda_recon=recon_weight,
+                label_smoothing=label_smoothing
+            )
+            optimizer_grouped_parameters = [
+                {"params": model.parameters(), "weight_decay": weight_decay},
+                {"params": criterion.parameters(), "weight_decay": 0.0, "lr": lr * 0.1}
+            ]
+            optimizer = optim.AdamW(optimizer_grouped_parameters, lr=lr)
+            if lr_scheduler_type == "cosine_warm":
+                lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                    optimizer, T_0=15, T_mult=2, eta_min=1e-6
+                )
+            else:
+                lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    optimizer, mode='min', factor=0.5, patience=patience_val,
+                    min_lr=1e-6
+                )
+            _ES_PATIENCE     = train_cfg.get("ES_PATIENCE", 20)
+            _es_streak       = 0
+            _es_best_ce_val  = float('inf')
+            
+            model = train_warmup_phase(model, train_loader, criterion, optimizer, device, epochs=epochs_warmup)
+        else:
+            raise e
     
     # Tự động tối ưu CUDNN nếu dùng GPU
     if torch.cuda.is_available():
