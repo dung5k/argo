@@ -148,6 +148,10 @@ def evaluate_val_set(model, val_loader, criterion, device, T_val, evaluator):
     return res
 
 def main():
+    print("===================================================", flush=True)
+    print(" 🚀 DEBUG LOG: KHỞI ĐỘNG TIẾN TRÌNH ĐÀO TẠO V6! ", flush=True)
+    print(f"  > Tham số truyền vào: {sys.argv}", flush=True)
+    print("===================================================", flush=True)
     parser = argparse.ArgumentParser()
     parser.add_argument("config", nargs="?", help="Path to config file")
     parser.add_argument("--scratch", action="store_true", help="Bỏ qua kế thừa, train lại từ đầu")
