@@ -71,10 +71,12 @@ class BinanceAdapter(BaseDataAdapter):
         if binance_sym == "/BTC": binance_sym = "LTC/BTC" # Fallback an toàn cho LTCBTC nếu cần
         
         # Xử lý timeframe (MT5 gọi M1, CCXT gọi 1m)
-        if timeframe == 'M1': 
-            tf_ccxt = '1m'
-        elif timeframe == 'H1':
-            tf_ccxt = '1h'
+        if timeframe.upper().startswith('M'):
+            tf_ccxt = timeframe[1:] + 'm'
+        elif timeframe.upper().startswith('H'):
+            tf_ccxt = timeframe[1:] + 'h'
+        elif timeframe.upper().startswith('D'):
+            tf_ccxt = timeframe[1:] + 'd'
         else:
             tf_ccxt = timeframe.lower()
             
@@ -162,7 +164,14 @@ class BinanceAdapter(BaseDataAdapter):
             self.log_message(f"Lỗi format ngày tháng Binance: {e}")
             return pd.DataFrame()
             
-        tf_ccxt = '1m' if timeframe.upper() == 'M1' else timeframe.lower()
+        if timeframe.upper().startswith('M'):
+            tf_ccxt = timeframe[1:] + 'm'
+        elif timeframe.upper().startswith('H'):
+            tf_ccxt = timeframe[1:] + 'h'
+        elif timeframe.upper().startswith('D'):
+            tf_ccxt = timeframe[1:] + 'd'
+        else:
+            tf_ccxt = timeframe.lower()
         now_ts = self.exchange.milliseconds()
         if end_ts > now_ts: end_ts = now_ts
 

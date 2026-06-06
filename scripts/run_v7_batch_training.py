@@ -55,6 +55,9 @@ def run_batch_training(loop_count=1):
             except Exception as e:
                 print(f"[FAIL] [ERROR] Loi xay ra trong qua trinh huan luyen phien {session_name}: {e}")
                 traceback.print_exc()
+                if "AI_FEEDBACK_REQUIRED" in str(e):
+                    print("[FATAL] Thoat khoi Batch Training de Antigravity AI phan tich!")
+                    sys.exit(1)
                 
             # Nghỉ ngắn giữa các phiên để hạ nhiệt hệ thống
             time.sleep(5)

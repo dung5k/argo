@@ -49,8 +49,8 @@ def save_to_parquet(df, filename):
         pass
 
 def main():
-    base_path = r"C:\Users\Le Anh Dung\OneDrive\Apps\ck\forex_predictor"
-    data_path = os.path.join(base_path, "data")
+    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    data_path = os.path.join(base_path, "workspaces", "CFG_XAG_ASIAN_V6", "data", "raw")
     os.makedirs(data_path, exist_ok=True)
     os.chdir(data_path)
     

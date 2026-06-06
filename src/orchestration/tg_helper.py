@@ -24,22 +24,28 @@ class TelegramBot:
 
     def _call(self, method: str, payload: dict = None, timeout: int = 10) -> Optional[dict]:
         url = self.BASE.format(token=self.token, method=method)
-        try:
-            data = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
-            req = urllib.request.Request(
-                url, data=data,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=timeout, context=self.ssl_ctx) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            body = e.read().decode("utf-8", errors="replace")
-            print(f"[TG] HTTP {e.code}: {body[:200]}")
-            return None
-        except Exception as e:
-            print(f"[TG] Lỗi gọi API {method}: {e}")
-            return None
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                data = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
+                req = urllib.request.Request(
+                    url, data=data,
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=timeout, context=self.ssl_ctx) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                body = e.read().decode("utf-8", errors="replace")
+                print(f"[TG] HTTP {e.code}: {body[:200]}")
+                return None # HTTP Error (vd: token sai, chat_id sai) -> khong retry
+            except Exception as e:
+                print(f"[TG] Lỗi gọi API {method} (Lần {attempt+1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2) # Nghi 2 giay roi thu lai
+                else:
+                    return None
 
     def send_message(self, chat_id: int, text: str, parse_mode: str = "HTML") -> bool:
         """Gửi tin nhắn text."""

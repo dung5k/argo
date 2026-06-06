@@ -52,6 +52,10 @@ def run_and_monitor():
         with open("v7_crash.log", "w", encoding="utf-8") as f:
             f.writelines(crash_lines[-50:]) # Luu 50 dong loi cuoi cung
             f.write(f"\n[MONITOR] Process exited with code {process.returncode}\n")
+    else:
+        print(f"\n[MONITOR] Huan luyen thanh cong toan bo! Bắn tín hiệu gọi AI Agent vao danh gia (dung chung file crash.log de trigger).")
+        with open("v7_crash.log", "w", encoding="utf-8") as f:
+            f.write(f"[SUCCESS] AI_EVALUATION_REQUIRED: Hoàn tất quá trình đào tạo. Yêu cầu AI Antigravity vào tổng hợp kết quả và báo cáo!\n")
 
 if __name__ == "__main__":
     run_and_monitor()

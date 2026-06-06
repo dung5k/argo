@@ -1,0 +1,13 @@
+Timeframe,Seq_Len,TP_SL_Mode,Trades,WinRate,ProfitFactor,PnL
+M5,30,fixed_tight,0,0.0,1.0,0.0
+M5,30,fixed_wide,2,1.0,37.47599999999949,0.3747599999999875
+M5,30,dynamic_atr,4,1.0,84.88250000000193,0.8488250000000154
+M5,60,fixed_tight,0,0.0,1.0,0.0
+M5,60,fixed_wide,33,0.7575757575757576,2.0425053078556217,2.209589999999989
+M5,60,dynamic_atr,0,0.0,1.0,0.0
+M15,30,fixed_tight,0,0.0,1.0,0.0
+M15,30,fixed_wide,0,0.0,1.0,0.0
+M15,30,dynamic_atr,0,0.0,1.0,0.0
+M15,60,fixed_tight,0,0.0,1.0,0.0
+M15,60,fixed_wide,0,0.0,1.0,0.0
+M15,60,dynamic_atr,0,0.0,1.0,0.0

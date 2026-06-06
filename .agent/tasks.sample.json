@@ -2,6 +2,7 @@
   "tasks": [
     {
       "id": "cleanup_storage",
+<<<<<<< Updated upstream:.agent/tasks.sample.json
       "enabled": true,
       "command": "python scripts/cleanup_host_storage.py",
       "intervalMinutes": 60
@@ -17,6 +18,18 @@
       "enabled": false,
       "promptFile": ".agent/periodic_prompt_xag_all_sessions_v5_local.md",
       "intervalMinutes": 60
+=======
+      "enabled": false,
+      "command": "python scripts/cleanup_host_storage.py",
+      "nextRunTime": 1779804784954,
+      "intervalMinutes": 60
+    },
+    {
+      "id": "argo2_health_check",
+      "enabled": false,
+      "promptFile": ".agent/periodic_health_check_argo2.md",
+      "intervalMinutes": 30
+>>>>>>> Stashed changes:.agent/tasks.json
     }
   ]
 }

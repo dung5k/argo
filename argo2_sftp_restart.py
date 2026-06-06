@@ -56,6 +56,12 @@ client.exec_command('powershell -Command "Remove-Item -Path D:\\DungLA\\Argo\\ai
 client.exec_command('powershell -Command "Remove-Item -Path D:\\DungLA\\Argo\\.agent\\strategy_prompt_XAG.md -Force -ErrorAction SilentlyContinue"')
 client.exec_command('powershell -Command "Remove-Item -Path D:\\DungLA\\Argo\\autonomous_training_xag.lockdir -Recurse -Force -ErrorAction SilentlyContinue"')
 
+print("3.5 Recreating raw data directories to prevent FileNotFoundError...")
+client.exec_command('powershell -Command "New-Item -ItemType Directory -Force -Path D:\\DungLA\\Argo\\workspaces\\CFG_XAG_ASIAN_V6\\data\\raw"')
+client.exec_command('powershell -Command "New-Item -ItemType Directory -Force -Path D:\\DungLA\\Argo\\workspaces\\CFG_XAG_LONDON_V6\\data\\raw"')
+client.exec_command('powershell -Command "New-Item -ItemType Directory -Force -Path D:\\DungLA\\Argo\\workspaces\\CFG_XAG_NY_V6\\data\\raw"')
+client.exec_command('powershell -Command "New-Item -ItemType Directory -Force -Path D:\\DungLA\\Argo\\workspaces\\CFG_XAG_WEEKEND_V6\\data\\raw"')
+
 print("4. Updating XAG configs to 1m timeframe...")
 script_fix_configs = """import glob, json
 for f in glob.glob('D:/DungLA/Argo/bot_config_v6_xag_*.json'):

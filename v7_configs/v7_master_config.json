@@ -1,14 +1,14 @@
 {
     "data": {
         "follower_symbol": "LTCUSD",
-        "timeframe": "M1",
+        "TIMEFRAME": "M1",
         "spread_pct": 0.0003,
         "slippage_pct": 0.0001,
         "session": "all",
         "candidate_leaders": [
             "BTCUSD",
             "ETHUSD",
-            "BNBUSD"
+            "SOLUSD"
         ]
     },
     "sessions": {
@@ -26,7 +26,7 @@
         }
     },
     "window": {
-        "initial_train_size_days": 10,
+        "initial_train_size_days": 90,
         "validation_size_days": 3,
         "slide_step_days": 3,
         "start_date": "2026-05-01",
@@ -34,8 +34,6 @@
     },
     "ai": {
         "llm_model": "gemini-2.5-flash",
-        "correlation_threshold": 0.01,
-        "max_lag_steps": 3,
         "fallback_tp_pct": 0.008,
         "fallback_sl_pct": 0.004,
         "fallback_max_hold_bars": 30
