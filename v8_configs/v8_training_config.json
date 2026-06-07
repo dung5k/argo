@@ -1,0 +1,44 @@
+{
+  "system": {
+    "version": "v8.0.0",
+    "strict_no_repaint": true,
+    "log_level": "DEBUG"
+  },
+  "data": {
+    "symbol": "LTCUSD",
+    "timeframes": ["M15", "H1", "H4"],
+    "train_data_path": "data/LTCUSD_M15.csv",
+    "test_data_path": "temp/test_data_m15.csv"
+  },
+  "fractal_params": {
+    "window_size": 5,
+    "latency_candles": 2,
+    "volume_multiplier_threshold": 1.2,
+    "ma_volume_period": 20
+  },
+  "nlp_tokenizer_params": {
+    "max_sequence_length": 50,
+    "vocabulary": [
+      "HH", "HL", "LH", "LL", 
+      "BOS_UP", "BOS_DN", 
+      "CHOCH_UP", "CHOCH_DN", 
+      "FAKE_BOS"
+    ],
+    "pad_token": "<PAD>"
+  },
+  "transformer_params": {
+    "embedding_dim": 64,
+    "num_heads": 4,
+    "num_layers": 3,
+    "dropout": 0.1,
+    "context_dim": 128,
+    "num_classes": 3
+  },
+  "training_loop": {
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "epochs": 100,
+    "optimizer": "AdamW",
+    "loss_function": "CrossEntropy"
+  }
+}

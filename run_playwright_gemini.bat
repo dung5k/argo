@@ -1,6 +1,0 @@
-@echo off
-cd /d "%~dp0"
-echo Kich hoat moi truong Python...
-call C:\argo\venv\Scripts\activate.bat
-echo Dang chay kich ban tu dong hoa Playwright...
-python scripts\gemini_expert_playwright.py

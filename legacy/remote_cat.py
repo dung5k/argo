@@ -1,1 +1,0 @@
-import sys; log=open(r'C:\argo\logs\client1_unified.log', encoding='utf-8', errors='ignore').read(); print('\n'.join([l for l in log.splitlines() if '!!!' in l or 'Loading config' in l][-20:]))
