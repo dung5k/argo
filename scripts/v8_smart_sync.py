@@ -12,7 +12,7 @@ sys.stderr.reconfigure(encoding='utf-8')
 # --- Cấu hình ---
 SYNC_STATE_FILE = "data/sync_state.json"
 PROJECT_ROOT = "D:/DungLA/client1"
-IGNORE_DIRS = [".git", "temp", "logs", "data", "__pycache__", ".vscode", "v8_training"]
+IGNORE_DIRS = [".git", "temp", "logs", "data", "__pycache__", ".vscode", "v8_training", "workspaces", "tools"]
 TARGET_NODES = [
     {"id": "ARGO2", "ip": "192.168.1.18", "user": "dungla", "path": "D:/DungLA/Argo"},
     {"id": "ARGO3", "ip": "192.168.1.16", "user": "dungla", "path": "D:/DungLA/Argo"}
@@ -90,9 +90,10 @@ def sync_to_node(node, modified_files):
             try:
                 sftp.stat(remote_dir)
             except FileNotFoundError:
-                # Tạo thư mục (Hơi phức tạp qua sftp nếu tạo đệ quy, ở đây giả sử dùng lệnh cmd)
-                win_dir = remote_dir.replace("/", "\\\\")
-                client.exec_command(f'cmd /c mkdir "{win_dir}" >nul 2>&1')
+                # Tạo thư mục (dùng powershell -Force để tạo thư mục lồng nhau)
+                win_dir = remote_dir.replace("/", "\\")
+                _, stdout, _ = client.exec_command(f'powershell -Command "New-Item -ItemType Directory -Force -Path \'{win_dir}\'"')
+                stdout.channel.recv_exit_status() # Đợi lệnh thực thi xong trước khi put file
                 
             print(f"  -> Uploading: {rel_path}")
             sftp.put(local_path, remote_path)

@@ -27,11 +27,13 @@ def get_args():
     parser.add_argument("--epochs", type=int, default=10, help="Epochs per split")
     parser.add_argument("--batch_size", type=int, default=0, help="Batch size (0 = use config default)")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
+    parser.add_argument("--opt_id", type=str, default="", help="AutoML Option ID for logging")
     return parser.parse_args()
 
 def main():
     args = get_args()
-    log_file = os.path.join("logs", f"v8_train_{args.node_id}.log")
+    log_suffix = f"_{args.opt_id}" if args.opt_id else ""
+    log_file = os.path.join("logs", f"v8_train_{args.node_id}{log_suffix}.log")
     os.makedirs("logs", exist_ok=True)
     
     def log(msg):
@@ -43,7 +45,10 @@ def main():
             f.write(msg + "\n")
             
     if not args.resume and os.path.exists(log_file):
-        os.remove(log_file)
+        try:
+            os.remove(log_file)
+        except PermissionError:
+            pass # Ignore if file is locked
             
     mode_str = "RESUMING" if args.resume else "STARTING FRESH"
     log(f"=== {mode_str} V8 TRAINING ON {args.node_id} ===")
@@ -237,37 +242,12 @@ def main():
             for x_m15, x_h1, x_h4, cont_x, y in train_loader:
                 x_m15, x_h1, x_h4, cont_x, y = x_m15.to(device), x_h1.to(device), x_h4.to(device), cont_x.to(device), y.to(device)
                 
-                success = False
-                mb_splits = 1
-                while not success:
-                    try:
-                        optimizer.zero_grad()
-                        loss_sum = 0
-                        mb_size = max(1, y.size(0) // mb_splits)
-                        for i in range(0, y.size(0), mb_size):
-                            mb_x_m15 = x_m15[i:i+mb_size]
-                            mb_x_h1 = x_h1[i:i+mb_size]
-                            mb_x_h4 = x_h4[i:i+mb_size]
-                            mb_cont_x = cont_x[i:i+mb_size]
-                            mb_y = y[i:i+mb_size]
-                            out = model(mb_x_m15, mb_x_h1, mb_x_h4, mb_cont_x)
-                            loss = criterion(out, mb_y)
-                            loss = loss * (mb_y.size(0) / y.size(0))
-                            loss.backward()
-                            loss_sum += loss.item()
-                        optimizer.step()
-                        total_loss += loss_sum
-                        success = True
-                    except RuntimeError as e:
-                        if "out of memory" in str(e):
-                            torch.cuda.empty_cache()
-                            if mb_size == 1:
-                                log("[ERROR] OOM ngay ca voi batch_size=1!")
-                                raise e
-                            mb_splits *= 2
-                            log(f"[WARNING] OOM (Train)! Tu dong chia thanh {mb_splits} micro-batches.")
-                        else:
-                            raise e
+                optimizer.zero_grad()
+                out = model(x_m15, x_h1, x_h4, cont_x)
+                loss = criterion(out, y)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
                 
             model.eval()
             val_loss = 0
@@ -277,40 +257,14 @@ def main():
                 for x_m15, x_h1, x_h4, cont_x, y in test_loader:
                     x_m15, x_h1, x_h4, cont_x, y = x_m15.to(device), x_h1.to(device), x_h4.to(device), cont_x.to(device), y.to(device)
                     
-                    success = False
-                    mb_splits = 1
-                    while not success:
-                        try:
-                            mb_size = max(1, y.size(0) // mb_splits)
-                            preds_list = []
-                            loss_sum = 0
-                            for i in range(0, y.size(0), mb_size):
-                                mb_x_m15 = x_m15[i:i+mb_size]
-                                mb_x_h1 = x_h1[i:i+mb_size]
-                                mb_x_h4 = x_h4[i:i+mb_size]
-                                mb_cont_x = cont_x[i:i+mb_size]
-                                mb_y = y[i:i+mb_size]
-                                out = model(mb_x_m15, mb_x_h1, mb_x_h4, mb_cont_x)
-                                v_loss = criterion(out, mb_y)
-                                loss_sum += v_loss.item() * (mb_y.size(0) / y.size(0))
-                                preds_list.append(torch.argmax(out, dim=1))
-                                
-                            val_loss += loss_sum
-                            preds = torch.cat(preds_list)
-                            signal_mask = preds > 0
-                            total_signal += signal_mask.sum().item()
-                            correct_signal += ((preds == y) & signal_mask).sum().item()
-                            success = True
-                        except RuntimeError as e:
-                            if "out of memory" in str(e):
-                                torch.cuda.empty_cache()
-                                if mb_size == 1:
-                                    log("[ERROR] OOM Eval ngay ca voi batch_size=1!")
-                                    raise e
-                                mb_splits *= 2
-                                log(f"[WARNING] OOM (Eval)! Tu dong chia thanh {mb_splits} micro-batches.")
-                            else:
-                                raise e
+                    out = model(x_m15, x_h1, x_h4, cont_x)
+                    v_loss = criterion(out, y)
+                    val_loss += v_loss.item()
+                    preds = torch.argmax(out, dim=1)
+                    
+                    signal_mask = preds > 0
+                    total_signal += signal_mask.sum().item()
+                    correct_signal += ((preds == y) & signal_mask).sum().item()
                     
             train_avg = total_loss/len(train_loader) if len(train_loader) > 0 else 0
             val_avg = val_loss/len(test_loader) if len(test_loader) > 0 else 0

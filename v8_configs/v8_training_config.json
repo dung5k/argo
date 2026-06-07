@@ -19,10 +19,15 @@
   "nlp_tokenizer_params": {
     "max_sequence_length": 50,
     "vocabulary": [
-      "HH", "HL", "LH", "LL", 
-      "BOS_UP", "BOS_DN", 
-      "CHOCH_UP", "CHOCH_DN", 
-      "FAKE_BOS"
+      "HH_FAST", "HH_NORMAL", "HH_SLOW",
+      "HL_FAST", "HL_NORMAL", "HL_SLOW",
+      "LH_FAST", "LH_NORMAL", "LH_SLOW",
+      "LL_FAST", "LL_NORMAL", "LL_SLOW",
+      "BOS_UP_FAST", "BOS_UP_NORMAL", "BOS_UP_SLOW",
+      "BOS_DN_FAST", "BOS_DN_NORMAL", "BOS_DN_SLOW",
+      "CHOCH_UP_FAST", "CHOCH_UP_NORMAL", "CHOCH_UP_SLOW",
+      "CHOCH_DN_FAST", "CHOCH_DN_NORMAL", "CHOCH_DN_SLOW",
+      "FAKE_BOS_FAST", "FAKE_BOS_NORMAL", "FAKE_BOS_SLOW"
     ],
     "pad_token": "<PAD>"
   },

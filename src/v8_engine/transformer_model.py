@@ -37,7 +37,9 @@ class V8TransformerModel(nn.Module):
         
         # Share embedding across all timeframes
         self.embedding = nn.Embedding(self.vocab_size, self.d_model)
-        self.pos_encoder = V8PositionalEncoding(self.d_model, self.dropout)
+        # Timeframe Embedding to avoid Positional Collision (0: H4, 1: H1, 2: M15)
+        self.tf_embedding = nn.Embedding(3, self.d_model)
+        self.pos_encoder = V8PositionalEncoding(self.d_model, self.dropout, max_len=5000)
         
         encoder_layers = nn.TransformerEncoderLayer(
             d_model=self.d_model, 
@@ -66,14 +68,23 @@ class V8TransformerModel(nn.Module):
         x_m15, x_h1, x_h4: [batch, seq_len]
         cont_x: [batch, 9]
         """
-        # Embed từng TF độc lập để áp dụng đúng Positional Encoding từ 0 -> seq_len
-        emb_m15 = self.pos_encoder(self.embedding(x_m15) * math.sqrt(self.d_model))
-        emb_h1 = self.pos_encoder(self.embedding(x_h1) * math.sqrt(self.d_model))
-        emb_h4 = self.pos_encoder(self.embedding(x_h4) * math.sqrt(self.d_model))
+        # Lấy Timeframe ID cho từng frame: 0=H4, 1=H1, 2=M15
+        device = x_m15.device
+        tf_h4 = torch.tensor(0, device=device)
+        tf_h1 = torch.tensor(1, device=device)
+        tf_m15 = torch.tensor(2, device=device)
+        
+        # Embed từng TF độc lập và cộng với Timeframe Embedding
+        emb_h4 = self.embedding(x_h4) * math.sqrt(self.d_model) + self.tf_embedding(tf_h4)
+        emb_h1 = self.embedding(x_h1) * math.sqrt(self.d_model) + self.tf_embedding(tf_h1)
+        emb_m15 = self.embedding(x_m15) * math.sqrt(self.d_model) + self.tf_embedding(tf_m15)
         
         # Nối lại: [batch, 3 * seq_len, d_model]
         # H4 đứng đầu để cung cấp context dài hạn nhất, H1 ở giữa, M15 ở cuối
         emb_concat = torch.cat([emb_h4, emb_h1, emb_m15], dim=1)
+        
+        # Đưa toàn bộ chuỗi concat qua Positional Encoding một lần duy nhất
+        emb_concat = self.pos_encoder(emb_concat)
         
         out = self.transformer_encoder(emb_concat)
         

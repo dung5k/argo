@@ -40,17 +40,20 @@ class NLPTokenizer:
         last_fl = np.inf
         prev_fh = -np.inf
         prev_fl = np.inf
+        last_event_idx = 0
 
-        for idx, row in df_out.iterrows():
+        # We need an integer index for delta calculation
+        for i, (idx, row) in enumerate(df_out.iterrows()):
             token = None
+            base_token = None
             
             # Xử lý Fractal High
             if row.get('is_fh_confirmed', False) and not pd.isna(row.get('fractal_high_val')):
                 current_fh = row['fractal_high_val']
                 if current_fh > last_fh:
-                    token = "HH"
+                    base_token = "HH"
                 else:
-                    token = "LH"
+                    base_token = "LH"
                 prev_fh = last_fh
                 last_fh = current_fh
                 
@@ -58,9 +61,9 @@ class NLPTokenizer:
             elif row.get('is_fl_confirmed', False) and not pd.isna(row.get('fractal_low_val')):
                 current_fl = row['fractal_low_val']
                 if current_fl > last_fl:
-                    token = "HL"
+                    base_token = "HL"
                 else:
-                    token = "LL"
+                    base_token = "LL"
                 prev_fl = last_fl
                 last_fl = current_fl
             
@@ -68,24 +71,36 @@ class NLPTokenizer:
             elif last_fh != -np.inf and row['close'] > last_fh:
                 if row['is_vol_spike']:
                     if last_fl < prev_fl: # Trước đó tạo LL -> Giờ phá đỉnh -> CHOCH_UP
-                        token = "CHOCH_UP"
+                        base_token = "CHOCH_UP"
                     else:
-                        token = "BOS_UP"
+                        base_token = "BOS_UP"
                 else:
-                    token = "FAKE_BOS"
+                    base_token = "FAKE_BOS"
                 last_fh = np.inf # Xóa cản
                 
             # Xử lý Breakout Down
             elif last_fl != np.inf and row['close'] < last_fl:
                 if row['is_vol_spike']:
                     if last_fh > prev_fh: # Trước đó tạo HH -> Giờ phá đáy -> CHOCH_DN
-                        token = "CHOCH_DN"
+                        base_token = "CHOCH_DN"
                     else:
-                        token = "BOS_DN"
+                        base_token = "BOS_DN"
                 else:
-                    token = "FAKE_BOS"
+                    base_token = "FAKE_BOS"
                 last_fl = -np.inf # Xóa cản
             
+            if base_token is not None:
+                delta = i - last_event_idx
+                if delta < 5:
+                    speed = "_FAST"
+                elif delta <= 20:
+                    speed = "_NORMAL"
+                else:
+                    speed = "_SLOW"
+                
+                token = f"{base_token}{speed}"
+                last_event_idx = i
+
             tokens.append(token)
             
         df_out['market_structure_token'] = tokens

@@ -1,5 +1,5 @@
 {
-    "target_shift": -2,
+    "target_shift": -4,
     "loss_function": "CrossEntropyLoss",
     "learning_rate_base": 0.0005,
     "enable_fvg_features": false,
