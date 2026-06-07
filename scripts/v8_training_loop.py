@@ -69,7 +69,7 @@ def main():
     
     # === DYNAMIC BATCH SIZE: Tu dong dieu chinh theo VRAM con trong ===
     def calculate_batch_size():
-        """Tinh batch_size dua tren VRAM con trong. Uu tien chia se GPU voi game/app khac."""
+        """Tinh batch_size dua tren VRAM con trong. Toi uu hoa toan bo GPU cho training."""
         if args.batch_size > 0:
             return args.batch_size  # CLI override, khong tu dong
         
@@ -89,16 +89,20 @@ def main():
         except Exception:
             free_mb = 2048  # Fallback: gia dinh 2GB
 
-        # Quy tac: du tru 500MB cho he thong, con lai chia cho training
-        usable_mb = max(free_mb - 500, 256)
+        # Quy tac: du tru 200MB cho he thong (khong con game/app nang)
+        usable_mb = max(free_mb - 200, 256)
         
-        if usable_mb >= 4000:
+        if usable_mb >= 5000:
+            bs = 64
+        elif usable_mb >= 3500:
+            bs = 48
+        elif usable_mb >= 2500:
             bs = 32
-        elif usable_mb >= 2000:
+        elif usable_mb >= 1500:
             bs = 16
-        elif usable_mb >= 1000:
+        elif usable_mb >= 800:
             bs = 8
-        elif usable_mb >= 500:
+        elif usable_mb >= 400:
             bs = 4
         else:
             bs = 2
