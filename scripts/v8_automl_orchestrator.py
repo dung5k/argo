@@ -13,6 +13,10 @@ import time
 import subprocess
 import paramiko
 import re
+import random
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 
 TELEGRAM_BOT = ".agent/send_to_tele.py"
 CHANNEL_ID = "1816854047"
@@ -42,7 +46,7 @@ def check_node_running(node):
     if node == "ARGO1":
         try:
             res = subprocess.run(
-                ["powershell", "-Command", "Get-WmiObject Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -match 'v8_training_loop' } | Select-Object ProcessId"],
+                ["powershell", "-Command", "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -match 'v8_training_loop' } | Select-Object ProcessId"],
                 capture_output=True, text=True, timeout=5
             )
             return "ProcessId" in res.stdout
@@ -55,7 +59,7 @@ def check_node_running(node):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
-            stdin, stdout, stderr = client.exec_command('powershell -Command "Get-WmiObject Win32_Process -Filter \\"Name=\'python.exe\'\\" | Where-Object { $_.CommandLine -match \'v8_training_loop\' } | Select-Object ProcessId"')
+            stdin, stdout, stderr = client.exec_command('powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'python.exe\'\\" | Where-Object { $_.CommandLine -match \'v8_training_loop\' } | Select-Object ProcessId"')
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             client.close()
             return "ProcessId" in out
@@ -154,13 +158,18 @@ def parse_log(node, opt_id):
     
     # Tìm tất cả Edge của các split
     edges = []
-    # Match pattern: [GOOD] Split 100 CO Edge (Best: 0.7%) OR [BAD] Split 100 khong co Edge (Best: -5.5%)
-    # Or just parse the line: Split 100 | Ep 10 | Loss... | WR... | Edge: +0.7%
+    is_ep10 = False
     for line in raw.split('\n'):
-        m = re.search(r'Edge:\s*([+\-]?[\d.]+)%', line)
-        if m and "Ep 10" in line: # Lấy kết quả cuối epoch 10 của mỗi split
-            edges.append(float(m.group(1)))
-            
+        if "Ep 10" in line:
+            is_ep10 = True
+        
+        # Chỉ lấy Edge của Threshold 0.35 ở Epoch 10
+        if is_ep10 and "Threshold 0.35" in line:
+            m = re.search(r'Edge:\s*([+\-]?[\d.]+)%', line)
+            if m:
+                edges.append(float(m.group(1)))
+                is_ep10 = False # reset cho split tiếp theo
+                
     if not edges:
         return is_done, 0, 0.0
         
@@ -210,6 +219,33 @@ def main():
                         task["status"] = "FAILED_EARLY"
                         task["reason"] = f"Early stop: Edge {avg_edge:+.2f}% after {splits} splits"
                         
+            # --- TỰ ĐỘNG BƠM THÊM NHIỆM VỤ NẾU CẠN KIỆT ---
+            if len(pending_tasks) == 0 and len(running_tasks) == 0:
+                report.append("⚠️ Hàng đợi trống! Đang tự động sinh thêm 10 cấu hình mới...")
+                last_id = 0
+                if q:
+                    last_task = q[-1]["id"]
+                    if last_task.startswith("OPT-"):
+                        try:
+                            last_id = int(last_task.split("-")[1])
+                        except:
+                            pass
+                
+                for i in range(1, 11):
+                    new_opt = {
+                        "id": f"OPT-{last_id + i}",
+                        "layers": random.randint(2, 6),
+                        "lr": round(random.uniform(0.0001, 0.001), 5),
+                        "status": "PENDING",
+                        "assigned_node": None,
+                        "score": None,
+                        "reason": None
+                    }
+                    q.append(new_opt)
+                    pending_tasks.append(new_opt)
+                save_queue(q)
+                report.append(f"✅ Đã nạp thành công 10 cấu hình tiếp theo (OPT-{last_id+1} đến OPT-{last_id+10}).")
+
             # --- PHÂN BỔ VIỆC CHO MÁY RẢNH ---
             active_nodes = [t["assigned_node"] for t in q if t["status"] == "RUNNING"]
             for node in NODES.keys():
@@ -236,9 +272,13 @@ def main():
             send_tele('\n'.join(report))
             
         except Exception as e:
-            print(f"Lỗi Orchestrator: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"Lỗi Orchestrator: {e}\n{error_trace}")
+            with open("logs/orchestrator_crash.log", "a", encoding="utf-8") as f:
+                f.write(f"{time.ctime()} - Lỗi Orchestrator: {e}\n{error_trace}\n")
             
-        time.sleep(300) # Lặp lại mỗi 5 phút
+        time.sleep(60) # Lặp lại mỗi 1 phút thay vì 5 phút
 
 if __name__ == "__main__":
     main()

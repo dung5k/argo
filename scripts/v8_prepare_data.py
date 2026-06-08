@@ -47,10 +47,10 @@ def prepare_v8_data():
     current_start = min_date
     split_id = 1
     
-    print("Generating 4-week Train / 1-week Test splits...")
-    while current_start + timedelta(weeks=5) <= max_date:
-        train_end = current_start + timedelta(weeks=4)
-        test_end = train_end + timedelta(weeks=1)
+    print("Generating 48-week Train / 12-week Test splits...")
+    while current_start + timedelta(weeks=60) <= max_date:
+        train_end = current_start + timedelta(weeks=48)
+        test_end = train_end + timedelta(weeks=12)
         
         train_df = df_session[(df_session.index >= current_start) & (df_session.index < train_end)]
         test_df = df_session[(df_session.index >= train_end) & (df_session.index < test_end)]
@@ -59,7 +59,7 @@ def prepare_v8_data():
             train_df.to_parquet(os.path.join(out_dir, f"split_{split_id}_train.parquet"))
             test_df.to_parquet(os.path.join(out_dir, f"split_{split_id}_test.parquet"))
             
-        current_start += timedelta(weeks=1) # Walk-forward cuộn lên 1 tuần
+        current_start += timedelta(weeks=12) # Walk-forward cuộn lên 12 tuần
         split_id += 1
         
     print(f"Generated {split_id-1} splits successfully in {out_dir}")

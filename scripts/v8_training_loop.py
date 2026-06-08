@@ -9,6 +9,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 # Force UTF-8 encoding for stdout/stderr to prevent crash on ARGO2
@@ -18,6 +19,7 @@ sys.stderr.reconfigure(encoding='utf-8')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.v8_engine.transformer_model import V8TransformerModel
 from src.v8_engine.dataset_builder import V8DatasetBuilder
+
 
 def get_args():
     parser = argparse.ArgumentParser(description="V8 Training Loop")
@@ -148,15 +150,8 @@ def main():
         except Exception as e:
             log(f"Lỗi đọc strategy_config.json: {e}")
             
-    weights = torch.tensor([0.1, 1.0, 1.0], dtype=torch.float).to(device)
-    if loss_fn_name == "ProfitWeightedLoss":
-        # Giả lập ProfitWeightedLoss bằng cách tăng gấp đôi trọng số phạt cho Buy/Sell sai
-        weights = torch.tensor([0.1, 2.0, 2.0], dtype=torch.float).to(device)
-        criterion = nn.CrossEntropyLoss(weight=weights)
-        log("Using ProfitWeightedLoss (Heavy penalty for wrong direction)")
-    else:
-        criterion = nn.CrossEntropyLoss(weight=weights)
-        log("Using CrossEntropyLoss")
+    criterion = nn.CrossEntropyLoss()
+    log("Using Standard CrossEntropyLoss (5 Balanced Classes: 20% each)")
         
     optimizer = optim.AdamW(model.parameters(), lr=strat_lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
@@ -232,6 +227,17 @@ def main():
         # Let's keep it global or per split. Usually per split is better for dynamic. But let's reset it per split for saving best model of that split
         if start_epoch == 0:
             best_loss = float('inf')
+            # Soft Restarts: Không reset LR về mức tối đa để tránh Catastrophic Forgetting
+            if split_idx > 0:
+                soft_lr = strat_lr / 5.0
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = soft_lr
+                log(f"--- [Soft Restarts] Phục hồi nhẹ Learning Rate về {soft_lr} cho Split {split_id} ---")
+            else:
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] = strat_lr
+
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
         
         split_best_edge = -100.0
         torch.cuda.empty_cache()
@@ -239,12 +245,15 @@ def main():
         for epoch in range(start_epoch, args.epochs):
             model.train()
             total_loss = 0
+            
             for x_m15, x_h1, x_h4, cont_x, y in train_loader:
                 x_m15, x_h1, x_h4, cont_x, y = x_m15.to(device), x_h1.to(device), x_h4.to(device), cont_x.to(device), y.to(device)
                 
                 optimizer.zero_grad()
                 out = model(x_m15, x_h1, x_h4, cont_x)
+                
                 loss = criterion(out, y)
+                
                 loss.backward()
                 optimizer.step()
                 total_loss += loss.item()
@@ -253,6 +262,10 @@ def main():
             val_loss = 0
             correct_signal = 0
             total_signal = 0
+            
+            all_probs = []
+            all_targets = []
+            
             with torch.no_grad():
                 for x_m15, x_h1, x_h4, cont_x, y in test_loader:
                     x_m15, x_h1, x_h4, cont_x, y = x_m15.to(device), x_h1.to(device), x_h4.to(device), cont_x.to(device), y.to(device)
@@ -260,29 +273,55 @@ def main():
                     out = model(x_m15, x_h1, x_h4, cont_x)
                     v_loss = criterion(out, y)
                     val_loss += v_loss.item()
-                    preds = torch.argmax(out, dim=1)
                     
-                    signal_mask = preds > 0
-                    total_signal += signal_mask.sum().item()
-                    correct_signal += ((preds == y) & signal_mask).sum().item()
+                    probs = torch.softmax(out, dim=1)
+                    all_probs.append(probs)
+                    all_targets.append(y)
                     
-            train_avg = total_loss/len(train_loader) if len(train_loader) > 0 else 0
-            val_avg = val_loss/len(test_loader) if len(test_loader) > 0 else 0
-            signal_acc = correct_signal/total_signal if total_signal > 0 else 0
+            # Gom toàn bộ Validation Data
+            all_probs = torch.cat(all_probs, dim=0)
+            all_targets = torch.cat(all_targets, dim=0)
+            
+            # Lấy min/max để in log
+            max_probs = all_probs.max(dim=0)[0]
+            min_probs = all_probs.min(dim=0)[0]
             
             total_samples = len(test_dataset)
             total_days = total_samples / 60.0  # 60 candles per session day
-            trades_per_day = total_signal / total_days if total_days > 0 else 0
-            win_rate = signal_acc * 100
-            be_wr = 51.5 # Break-even WR for M15 1:1 RR + Spread
-            edge = win_rate - be_wr
+            
+            # Trade dua tren nhan Manh (Strong Buy = 4, Strong Sell = 0)
+            prob_s2 = all_probs[:, 0]
+            prob_b2 = all_probs[:, 4]
+            max_trade_probs, trade_dirs = torch.max(torch.stack([prob_s2, prob_b2], dim=1), dim=1)
+            # trade_dirs: 0 = Sell2, 1 = Buy2
+            trade_dirs = torch.where(trade_dirs == 0, torch.tensor(0).to(device), torch.tensor(4).to(device))
+            
+            train_avg = total_loss/len(train_loader) if len(train_loader) > 0 else 0
+            val_avg = val_loss/len(test_loader) if len(test_loader) > 0 else 0
             
             current_lr = optimizer.param_groups[0]['lr']
-            log(f"Split {split_id} | Ep {epoch+1} | "
-            f"Loss(T/V): {train_avg:.3f}/{val_avg:.3f} | "
-            f"WR: {win_rate:.1f}% (Hoa: 51.5%) | "
-            f"Edge: {edge:+.1f}% | "
-            f"Signals: {total_signal} ({trades_per_day:.1f}/day) | LR: {current_lr:.1e}")
+            log(f"Split {split_id} | Ep {epoch+1} | Loss(T/V): {train_avg:.3f}/{val_avg:.3f} | LR: {current_lr:.1e}")
+            log(f"  -> Prob [S2]: {min_probs[0]:.4f}~{max_probs[0]:.4f} | [S1]: {min_probs[1]:.4f}~{max_probs[1]:.4f} | [H]: {min_probs[2]:.4f}~{max_probs[2]:.4f} | [B1]: {min_probs[3]:.4f}~{max_probs[3]:.4f} | [B2]: {min_probs[4]:.4f}~{max_probs[4]:.4f}")
+            
+            be_wr = 51.5
+            edge = -100.0
+            
+            for threshold in [0.3, 0.35, 0.4]:
+                signal_mask = max_trade_probs >= threshold
+                predicted_actions = torch.where(signal_mask, trade_dirs, torch.zeros_like(trade_dirs))
+                
+                total_signal = signal_mask.sum().item()
+                correct_signal = ((predicted_actions == all_targets) & signal_mask).sum().item()
+                
+                signal_acc = correct_signal/total_signal if total_signal > 0 else 0
+                trades_per_day = total_signal / total_days if total_days > 0 else 0
+                win_rate = signal_acc * 100
+                current_edge = win_rate - be_wr
+                
+                if threshold == 0.35:
+                    edge = current_edge
+                    
+                log(f"  -> [Threshold {threshold}] WR: {win_rate:.1f}% | Edge: {current_edge:+.1f}% | Signals: {total_signal} ({trades_per_day:.1f}/day)")
             
             scheduler.step(val_avg)
             
@@ -302,6 +341,11 @@ def main():
                 'scheduler_state': scheduler.state_dict(),
                 'best_loss': best_loss
             }, checkpoint_path)
+            
+        # Kết thúc 1 Split, Load lại bộ não tốt nhất của Split này (tránh Overfitting vào epoch cuối)
+        if os.path.exists(best_model_path):
+            log(f"--- [Walk-Forward] Load lai Model tot nhat (Loss: {best_loss:.4f}) de mang sang Split tiep theo ---")
+            model.load_state_dict(torch.load(best_model_path, map_location=device))
             
         # Kiểm tra Early Stopping theo Split (Sau khi kết thúc toàn bộ epochs của split)
         if split_best_edge < 0:

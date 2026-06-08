@@ -37,7 +37,7 @@
     "num_layers": 3,
     "dropout": 0.1,
     "context_dim": 128,
-    "num_classes": 3
+    "num_classes": 5
   },
   "training_loop": {
     "batch_size": 32,

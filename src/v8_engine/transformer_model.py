@@ -49,7 +49,7 @@ class V8TransformerModel(nn.Module):
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, self.num_layers)
         
-        self.num_classes = params.get('num_classes', 3)
+        self.num_classes = params.get('num_classes', 5)
         
         # Continuous features shape: 9 (OB features from M15, H1, H4)
         self.cont_dim = 9
@@ -61,7 +61,11 @@ class V8TransformerModel(nn.Module):
             nn.Dropout(self.dropout)
         )
         
-        self.fc_out = nn.Linear(self.d_model, self.num_classes) 
+        # Thêm LayerNorm ép trung bình (mean) = 0 để chống lách luật tăng Bias toàn cục
+        self.layer_norm = nn.LayerNorm(self.d_model)
+        
+        # Tắt Bias ở lớp Output để triệt tiêu năng lực lười biếng của AI
+        self.fc_out = nn.Linear(self.d_model, self.num_classes, bias=False) 
         
     def forward(self, x_m15, x_h1, x_h4, cont_x):
         """
@@ -94,6 +98,9 @@ class V8TransformerModel(nn.Module):
         # Nối với Continuous Features (Order Block)
         combined = torch.cat([last_token_out, cont_x], dim=1)
         features = self.fc_combine(combined)
+        
+        # Ép qua LayerNorm
+        features = self.layer_norm(features)
         
         logits = self.fc_out(features)
         return logits

@@ -74,10 +74,29 @@ class V8DatasetBuilder(Dataset):
             except Exception as e:
                 print(f"Lỗi đọc strategy_config.json: {e}")
 
-        # Target: 0 (Hold), 1 (Buy/Lên), 2 (Sell/Xuống).
-        # ACTION: Đọc Target động từ Auto-ML Config
+        # Target: 5 classes (Balanced 20% each)
+        # 0: Strong Sell (Sell 2), 1: Weak Sell (Sell 1), 2: Hold, 3: Weak Buy (Buy 1), 4: Strong Buy (Buy 2)
         diff = self.df['close'].shift(target_shift) - self.df['close']
-        self.df['target'] = np.where(diff > 0, 1, np.where(diff < 0, 2, 0))
+        
+        valid_diff = diff.dropna()
+        if len(valid_diff) > 0:
+            p20 = np.percentile(valid_diff, 20.0)
+            p40 = np.percentile(valid_diff, 40.0)
+            p60 = np.percentile(valid_diff, 60.0)
+            p80 = np.percentile(valid_diff, 80.0)
+        else:
+            p20, p40, p60, p80 = 0, 0, 0, 0
+            
+        conditions = [
+            diff < p20,
+            (diff >= p20) & (diff < p40),
+            (diff >= p40) & (diff < p60),
+            (diff >= p60) & (diff < p80),
+            diff >= p80
+        ]
+        choices = [0, 1, 2, 3, 4]
+        
+        self.df['target'] = np.select(conditions, choices, default=2)
         
         self.valid_df = self.df.dropna(subset=['target']).copy()
         
