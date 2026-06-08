@@ -154,7 +154,7 @@ class V8DatasetBuilder(Dataset):
         x_h4 = self._get_seq(row_time, self.h4_hist, self.h4_idx, self.h4_pos)
         
         # Lấy continuous features (Order Blocks + Indicators + PA + Time)
-        # 9 OB features + 4 Time features + (9 indicators * 3 TFs) = 9 + 4 + 27 = 40 features
+        # 9 OB features + 4 Time features + (7 indicators * 3 TFs) = 34 features
         ob_features = [
             row.get('in_ob_up', 0.0), row.get('in_ob_dn', 0.0), row.get('ob_strength', 0.0),
             row.get('in_ob_up_h1', 0.0), row.get('in_ob_dn_h1', 0.0), row.get('ob_strength_h1', 0.0),

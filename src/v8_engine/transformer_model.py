@@ -51,8 +51,8 @@ class V8TransformerModel(nn.Module):
         
         self.num_classes = params.get('num_classes', 5)
         
-        # Continuous features shape: 40 (9 OB + 4 Time + 27 Indicators/PA)
-        self.cont_dim = 40
+        # Continuous features shape: 34 (9 OB + 4 Time + 7 indicators * 3 TFs = 34)
+        self.cont_dim = 34
         
         # Layer gộp Token Feature và Continuous Feature
         self.fc_combine = nn.Sequential(
