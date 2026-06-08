@@ -319,18 +319,29 @@ def main():
             for threshold in [0.18, 0.22, 0.28]:
                 signal_mask = max_trade_probs >= threshold
                 
-                total_signal = signal_mask.sum().item()
-                correct_signal = ((trade_dirs == target_dir) & signal_mask).sum().item()
+                # CHI tinh WR tren cac sample co target KHONG PHAI Hold (class 2)
+                # Ly do: Khi model signal Buy/Sell nhung thi truong di ngang (Hold),
+                # do KHONG PHAI la loss - do la scratch trade (hoa von)
+                non_hold_mask = target_dir != 2
+                eval_mask = signal_mask & non_hold_mask
                 
-                signal_acc = correct_signal/total_signal if total_signal > 0 else 0
+                total_signal = signal_mask.sum().item()
+                total_eval = eval_mask.sum().item()
+                correct_signal = ((trade_dirs == target_dir) & eval_mask).sum().item()
+                
+                signal_acc = correct_signal/total_eval if total_eval > 0 else 0
                 trades_per_day = total_signal / total_days if total_days > 0 else 0
                 win_rate = signal_acc * 100
                 current_edge = win_rate - be_wr
                 
+                # Tinh % signal roi vao vung Hold (scratch rate)
+                hold_signals = (signal_mask & ~non_hold_mask).sum().item()
+                scratch_pct = hold_signals / total_signal * 100 if total_signal > 0 else 0
+                
                 if threshold == 0.22:
                     edge = current_edge
                     
-                log(f"  -> [Threshold {threshold}] WR: {win_rate:.1f}% | Edge: {current_edge:+.1f}% | Signals: {total_signal} ({trades_per_day:.1f}/day)")
+                log(f"  -> [Threshold {threshold}] WR: {win_rate:.1f}% | Edge: {current_edge:+.1f}% | Signals: {total_signal} ({trades_per_day:.1f}/day) | Scratch: {scratch_pct:.0f}%")
             
             scheduler.step(val_avg)
             
