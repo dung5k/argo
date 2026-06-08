@@ -156,26 +156,32 @@ def parse_log(node, opt_id):
         
     is_done = "DA HOAN THANH" in raw
     
-    # Tìm tất cả Edge của các split
-    edges = []
-    is_ep10 = False
+    # Tim tong so splits
+    total_splits = 17  # default
+    m_total = re.search(r'Found (\d+) walk-forward splits', raw)
+    if m_total:
+        total_splits = int(m_total.group(1))
+    
+    # Tim tat ca PnL cua cac split (epoch cuoi = Ep 3)
+    pnl_values = []
+    is_last_ep = False
     for line in raw.split('\n'):
         if "Ep 3" in line:
-            is_ep10 = True
+            is_last_ep = True
         
-        # Chỉ lấy Edge của Threshold 0.22 ở Epoch 10
-        if is_ep10 and "Threshold 0.22" in line:
-            m = re.search(r'Edge:\s*([+\-]?[\d.]+)%', line)
+        # Lay PnL o epoch cuoi cua moi split
+        if is_last_ep and "[PnL] PnL:" in line:
+            m = re.search(r'PnL:([+\-]?[\d.]+)pip', line)
             if m:
-                edges.append(float(m.group(1)))
-                is_ep10 = False # reset cho split tiếp theo
+                pnl_values.append(float(m.group(1)))
+                is_last_ep = False
                 
-    if not edges:
-        return is_done, 0, 0.0
+    if not pnl_values:
+        return is_done, 0, total_splits, 0.0
         
-    splits_done = len(edges)
-    avg_edge = sum(edges) / len(edges)
-    return is_done, splits_done, avg_edge
+    splits_done = len(pnl_values)
+    avg_pnl = sum(pnl_values) / len(pnl_values)
+    return is_done, splits_done, total_splits, avg_pnl
 
 def main():
     print("Khởi động AutoML Orchestrator...")
@@ -199,21 +205,21 @@ def main():
                 node = task["assigned_node"]
                 opt_id = task["id"]
                 is_alive = check_node_running(node)
-                is_done, splits, avg_edge = parse_log(node, opt_id)
+                is_done, splits, total_splits, avg_pnl = parse_log(node, opt_id)
                 
                 if not is_alive and not is_done:
                     # Chết bất đắc kỳ tử
                     task["status"] = "FAILED"
                     task["reason"] = "Crash/Killed unexpectedly"
-                    report.append(f"❌ {opt_id} trên {node} bị CRASH.")
+                    report.append(f"❌ {opt_id} trên {node} bị CRASH. [L={task['layers']}, LR={task['lr']}]")
                 elif is_done:
                     task["status"] = "COMPLETED"
-                    task["score"] = avg_edge
-                    report.append(f"✅ {opt_id} trên {node} ĐÃ HOÀN THÀNH. Edge tổng: {avg_edge:+.2f}%")
+                    task["score"] = avg_pnl
+                    report.append(f"✅ {opt_id} trên {node} XONG ({splits}/{total_splits} splits). PnL TB: {avg_pnl:+.1f}pip [L={task['layers']}, LR={task['lr']}]")
                 else:
                     # Đang chạy, check early stopping
-                    report.append(f"▶️ {node} đang cày {opt_id} (Đã xong {splits} splits, Edge TB: {avg_edge:+.2f}%)")
-                    if splits >= 5 and avg_edge < -2.0:
+                    report.append(f"▶️ {node} đang cày {opt_id} ({splits}/{total_splits} splits, PnL TB: {avg_pnl:+.1f}pip) [L={task['layers']}, LR={task['lr']}]")
+                    if splits >= 5 and avg_pnl < -5.0:
                         report.append(f"  👉 CẢNH BÁO: Option này rác! Kích hoạt EARLY STOPPING.")
                         kill_node(node)
                         task["status"] = "FAILED_EARLY"

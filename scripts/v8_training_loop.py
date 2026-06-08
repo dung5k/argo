@@ -312,136 +312,150 @@ def main():
             log(f"Split {split_id} | Ep {epoch+1} | Loss(T/V): {train_avg:.3f}/{val_avg:.3f} | LR: {current_lr:.1e}")
             log(f"  -> Prob [S2]: {min_probs[0]:.4f}~{max_probs[0]:.4f} | [S1]: {min_probs[1]:.4f}~{max_probs[1]:.4f} | [H]: {min_probs[2]:.4f}~{max_probs[2]:.4f} | [B1]: {min_probs[3]:.4f}~{max_probs[3]:.4f} | [B2]: {min_probs[4]:.4f}~{max_probs[4]:.4f}")
             
-            be_wr = 51.5
-            edge = -100.0
+            # === PnL SIMULATION (Triple-Barrier + ATR) - THUOC DO DUY NHAT ===
+            threshold_sim = 0.22
+            spread = 2.0       # pip spread XAUUSD
+            tp_mult = 1.0      # TP = 1.0 x ATR
+            sl_mult = 0.5      # SL = 0.5 x ATR
+            max_hold = 4       # Toi da 4 nen M15 = 1 tieng
+            cooldown = 4       # Cho 4 nen sau khi dong lenh
             
-            # Nguong phu hop voi baseline 15% cua Strong Label
-            for threshold in [0.18, 0.22, 0.28]:
-                signal_mask = max_trade_probs >= threshold
-                
-                # CHI tinh WR tren cac sample co target KHONG PHAI Hold (class 2)
-                # Ly do: Khi model signal Buy/Sell nhung thi truong di ngang (Hold),
-                # do KHONG PHAI la loss - do la scratch trade (hoa von)
-                non_hold_mask = target_dir != 2
-                eval_mask = signal_mask & non_hold_mask
-                
-                total_signal = signal_mask.sum().item()
-                total_eval = eval_mask.sum().item()
-                correct_signal = ((trade_dirs == target_dir) & eval_mask).sum().item()
-                
-                signal_acc = correct_signal/total_eval if total_eval > 0 else 0
-                trades_per_day = total_signal / total_days if total_days > 0 else 0
-                win_rate = signal_acc * 100
-                current_edge = win_rate - be_wr
-                
-                # Tinh % signal roi vao vung Hold (scratch rate)
-                hold_signals = (signal_mask & ~non_hold_mask).sum().item()
-                scratch_pct = hold_signals / total_signal * 100 if total_signal > 0 else 0
-                
-                if threshold == 0.22:
-                    edge = current_edge
-                    
-                log(f"  -> [Threshold {threshold}] WR: {win_rate:.1f}% | Edge: {current_edge:+.1f}% | Signals: {total_signal} ({trades_per_day:.1f}/day) | Scratch: {scratch_pct:.0f}%")
+            signal_mask_sim = max_trade_probs >= threshold_sim
+            valid_df = test_dataset.valid_df
+            n_samples = len(valid_df)
             
-            # === PnL SIMULATION (Triple-Barrier với ATR) ===
-            # Chỉ chạy ở epoch cuối để không làm chậm training
-            if epoch == args.epochs - 1:
-                threshold_sim = 0.22
-                spread = 2.0  # pip spread cho XAUUSD
-                tp_mult = 1.0  # TP = 1.0 × ATR
-                sl_mult = 0.5  # SL = 0.5 × ATR
-                max_hold = 4   # Tối đa 4 nến (= target_shift)
-                
-                signal_mask_sim = max_trade_probs >= threshold_sim
-                signal_indices = torch.where(signal_mask_sim)[0].cpu().numpy()
-                
-                valid_df = test_dataset.valid_df
-                df_index = valid_df.index
-                
-                wins = 0
-                losses = 0
-                scratches = 0
-                total_pnl = 0.0
-                trade_results = []
-                
-                for idx in signal_indices:
-                    if idx >= len(valid_df):
-                        continue
-                    row = valid_df.iloc[idx]
-                    entry_price = row['close']
-                    atr_val = row.get('atr', 1.5)
-                    if atr_val <= 0:
-                        atr_val = 1.5
+            wins = 0
+            losses = 0
+            scratches = 0
+            total_pnl = 0.0
+            trade_results = []
+            trade_positions = []
+            consecutive_losses = 0
+            max_consec_losses = 0
+            max_drawdown = 0.0
+            equity_peak = 0.0
+            equity = 0.0
+            
+            next_allowed = 0
+            
+            for idx in range(n_samples):
+                if idx < next_allowed:
+                    continue
+                if not signal_mask_sim[idx]:
+                    continue
+                if idx + max_hold >= n_samples:
+                    continue
                     
-                    direction = trade_dirs[idx].item()  # 0=Sell, 1=Buy
+                row = valid_df.iloc[idx]
+                entry_price = row['close']
+                atr_val = row.get('atr', 1.5)
+                if atr_val <= 0 or np.isnan(atr_val):
+                    atr_val = 1.5
+                
+                direction = trade_dirs[idx].item()
+                
+                tp_dist = atr_val * tp_mult
+                sl_dist = atr_val * sl_mult
+                
+                if direction == 1:  # BUY
+                    real_entry = entry_price + spread / 2
+                    tp_price = real_entry + tp_dist
+                    sl_price = real_entry - sl_dist
+                else:  # SELL
+                    real_entry = entry_price - spread / 2
+                    tp_price = real_entry - tp_dist
+                    sl_price = real_entry + sl_dist
+                
+                result = 'scratch'
+                pnl = 0.0
+                close_candle = idx + max_hold
+                
+                for k in range(1, max_hold + 1):
+                    fi = idx + k
+                    fh = valid_df.iloc[fi]['high']
+                    fl = valid_df.iloc[fi]['low']
                     
-                    tp_dist = atr_val * tp_mult
-                    sl_dist = atr_val * sl_mult
-                    
-                    if direction == 1:  # BUY
-                        tp_price = entry_price + tp_dist
-                        sl_price = entry_price - sl_dist
-                    else:  # SELL
-                        tp_price = entry_price - tp_dist
-                        sl_price = entry_price + sl_dist
-                    
-                    # Duyệt từng nến tương lai
-                    result = 'scratch'
-                    pnl = 0.0
-                    for k in range(1, max_hold + 1):
-                        future_idx = idx + k
-                        if future_idx >= len(valid_df):
+                    if direction == 1:
+                        if fl <= sl_price:
+                            result = 'loss'
+                            pnl = -sl_dist
+                            close_candle = fi
                             break
-                        future_row = valid_df.iloc[future_idx]
-                        fh = future_row['high']
-                        fl = future_row['low']
-                        
-                        if direction == 1:  # BUY
-                            if fl <= sl_price:
-                                result = 'loss'
-                                pnl = -sl_dist - spread
-                                break
-                            if fh >= tp_price:
-                                result = 'win'
-                                pnl = tp_dist - spread
-                                break
-                        else:  # SELL
-                            if fh >= sl_price:
-                                result = 'loss'
-                                pnl = -sl_dist - spread
-                                break
-                            if fl <= tp_price:
-                                result = 'win'
-                                pnl = tp_dist - spread
-                                break
-                    
-                    if result == 'scratch':
-                        close_future = valid_df.iloc[min(idx + max_hold, len(valid_df) - 1)]['close']
-                        if direction == 1:
-                            pnl = (close_future - entry_price) - spread
-                        else:
-                            pnl = (entry_price - close_future) - spread
-                    
-                    if result == 'win':
-                        wins += 1
-                    elif result == 'loss':
-                        losses += 1
+                        if fh >= tp_price:
+                            result = 'win'
+                            pnl = tp_dist
+                            close_candle = fi
+                            break
                     else:
-                        scratches += 1
-                    total_pnl += pnl
-                    trade_results.append(pnl)
+                        if fh >= sl_price:
+                            result = 'loss'
+                            pnl = -sl_dist
+                            close_candle = fi
+                            break
+                        if fl <= tp_price:
+                            result = 'win'
+                            pnl = tp_dist
+                            close_candle = fi
+                            break
                 
-                total_trades = wins + losses + scratches
-                if total_trades > 0:
-                    gross_win = sum(p for p in trade_results if p > 0)
-                    gross_loss = abs(sum(p for p in trade_results if p < 0))
-                    pf = gross_win / gross_loss if gross_loss > 0 else 999.0
-                    avg_win = gross_win / max(wins, 1)
-                    avg_loss = gross_loss / max(losses, 1)
-                    
-                    log(f"  >> [PnL SIM] Trades: {total_trades} | Win: {wins} | Loss: {losses} | Scratch: {scratches}")
-                    log(f"  >> [PnL SIM] Total PnL: {total_pnl:+.1f} pip | PF: {pf:.2f} | AvgWin: {avg_win:.1f} | AvgLoss: {avg_loss:.1f}")
-                    log(f"  >> [PnL SIM] TP={tp_mult}×ATR | SL={sl_mult}×ATR | Spread={spread} pip | MaxHold={max_hold} candles")
+                if result == 'scratch':
+                    close_price = valid_df.iloc[close_candle]['close']
+                    if direction == 1:
+                        pnl = close_price - real_entry
+                    else:
+                        pnl = real_entry - close_price
+                
+                next_allowed = close_candle + cooldown
+                
+                if result == 'win':
+                    wins += 1
+                    consecutive_losses = 0
+                elif result == 'loss':
+                    losses += 1
+                    consecutive_losses += 1
+                    max_consec_losses = max(max_consec_losses, consecutive_losses)
+                else:
+                    scratches += 1
+                    if pnl < 0:
+                        consecutive_losses += 1
+                        max_consec_losses = max(max_consec_losses, consecutive_losses)
+                    else:
+                        consecutive_losses = 0
+                
+                total_pnl += pnl
+                equity += pnl
+                equity_peak = max(equity_peak, equity)
+                current_dd = equity_peak - equity
+                max_drawdown = max(max_drawdown, current_dd)
+                
+                trade_results.append(pnl)
+                trade_positions.append(idx)
+            
+            total_trades = wins + losses + scratches
+            trades_per_day = total_trades / total_days if total_days > 0 else 0
+            
+            if total_trades > 0:
+                gross_win = sum(p for p in trade_results if p > 0)
+                gross_loss = abs(sum(p for p in trade_results if p < 0))
+                pf = gross_win / gross_loss if gross_loss > 0 else 999.0
+                real_wr = wins / total_trades * 100
+                
+                quarter = n_samples // 4
+                q_counts = [0, 0, 0, 0]
+                for pos in trade_positions:
+                    qi = min(pos // quarter, 3) if quarter > 0 else 0
+                    q_counts[qi] += 1
+                dist_std = np.std(q_counts)
+                dist_str = f"Q1:{q_counts[0]}|Q2:{q_counts[1]}|Q3:{q_counts[2]}|Q4:{q_counts[3]}"
+                
+                edge = total_pnl
+                
+                log(f"  >> [PnL] Trades:{total_trades} ({trades_per_day:.1f}/d) | W:{wins} L:{losses} S:{scratches} | WR:{real_wr:.1f}%")
+                log(f"  >> [PnL] PnL:{total_pnl:+.1f}pip | PF:{pf:.2f} | MaxDD:{max_drawdown:.1f}pip | MaxLoseStreak:{max_consec_losses}")
+                log(f"  >> [PnL] Dist: {dist_str} (StdDev:{dist_std:.1f})")
+            else:
+                edge = -100.0
+                log(f"  >> [PnL] Khong co lenh nao (threshold qua cao)")
             
             scheduler.step(val_avg)
             
