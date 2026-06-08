@@ -12,13 +12,15 @@ sys.stderr.reconfigure(encoding='utf-8')
 # --- Cấu hình ---
 SYNC_STATE_FILE = "data/sync_state.json"
 PROJECT_ROOT = "D:/DungLA/client1"
-IGNORE_DIRS = [".git", "temp", "logs", "data", "__pycache__", ".vscode", "v8_training", "workspaces", "tools"]
+IGNORE_DIRS = [".git", "temp", "logs", "__pycache__", ".vscode", "v8_training", "workspaces", "tools"]
+# Trong thư mục data, chỉ sync data/v8_splits (bỏ qua data/raw, data/processed...)
+DATA_ALLOWED_SUBDIRS = ["v8_splits"]
 TARGET_NODES = [
     {"id": "ARGO2", "ip": "192.168.1.18", "user": "dungla", "path": "D:/DungLA/Argo"},
     {"id": "ARGO3", "ip": "192.168.1.16", "user": "dungla", "path": "D:/DungLA/Argo"}
 ]
 # Các loại file cần theo dõi để đồng bộ
-WATCHED_EXTENSIONS = [".py", ".json", ".yaml", ".md"]
+WATCHED_EXTENSIONS = [".py", ".json", ".yaml", ".md", ".parquet"]
 
 def get_last_sync_time():
     """Lấy thời gian đồng bộ thành công gần nhất."""
@@ -44,6 +46,11 @@ def get_modified_files(last_sync):
     for root, dirs, files in os.walk(PROJECT_ROOT):
         # Loại bỏ các thư mục không cần thiết
         dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+        
+        # Trong thư mục data/, chỉ giữ các subdirs được phép
+        rel_root = os.path.relpath(root, PROJECT_ROOT).replace("\\", "/")
+        if rel_root == "data":
+            dirs[:] = [d for d in dirs if d in DATA_ALLOWED_SUBDIRS]
         
         for file in files:
             # Chỉ lấy các file trong danh sách theo dõi
