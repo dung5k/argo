@@ -315,10 +315,10 @@ def main():
             
             # === PnL SIMULATION (Triple-Barrier + ATR) - THUOC DO DUY NHAT ===
             threshold_sim = 0.22
-            spread = 2.0       # pip spread XAUUSD
-            tp_mult = 1.0      # TP = 1.0 x ATR
-            sl_mult = 0.5      # SL = 0.5 x ATR
-            max_hold = 4       # Toi da 4 nen M15 = 1 tieng
+            spread = 0.3       # pip spread XAUUSD (san tot: 0.2-0.5)
+            tp_mult = 2.0      # TP = 2.0 x ATR
+            sl_mult = 1.5      # SL = 1.5 x ATR
+            max_hold = 8       # Toi da 8 nen M15 = 2 tieng
             cooldown = 4       # Cho 4 nen sau khi dong lenh
             
             signal_mask_sim = max_trade_probs >= threshold_sim
