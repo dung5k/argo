@@ -45,3 +45,9 @@ MACHINE_INFO.md
 node_modules/!.agent/*.py
 
 tools/telegram_bridge_extension/node_modules/
+
+# Models and large files
+*.pt
+*.pth
+*.vsix
+xgb_model.json
