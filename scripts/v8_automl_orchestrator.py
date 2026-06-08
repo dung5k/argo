@@ -34,7 +34,7 @@ def send_tele(msg):
 def load_queue():
     if not os.path.exists(QUEUE_FILE):
         return []
-    with open(QUEUE_FILE, "r", encoding="utf-8") as f:
+    with open(QUEUE_FILE, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 def save_queue(q):
