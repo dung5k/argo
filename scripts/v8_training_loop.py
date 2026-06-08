@@ -150,8 +150,12 @@ def main():
         except Exception as e:
             log(f"Lỗi đọc strategy_config.json: {e}")
             
-    criterion = nn.CrossEntropyLoss()
-    log("Using Standard CrossEntropyLoss (5 Balanced Classes: 20% each)")
+    # Class weights: inverse of class proportions (15%, 10%, 50%, 10%, 15%)
+    # Boost learning on rare but important Strong signals
+    class_weights = torch.tensor([1.0/0.15, 1.0/0.10, 1.0/0.50, 1.0/0.10, 1.0/0.15]).to(device)
+    class_weights = class_weights / class_weights.sum() * 5.0  # normalize to sum=5
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
+    log(f"Using Weighted CrossEntropyLoss (label_smoothing=0.1, weights={[f'{w:.2f}' for w in class_weights.tolist()]})")
         
     optimizer = optim.AdamW(model.parameters(), lr=strat_lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
@@ -289,12 +293,17 @@ def main():
             total_samples = len(test_dataset)
             total_days = total_samples / 60.0  # 60 candles per session day
             
-            # Trade dua tren nhan Manh (Strong Buy = 4, Strong Sell = 0)
+            # Chi su dung tin hieu Strong Buy (4) va Strong Sell (0) lam tin hieu vao lenh
             prob_s2 = all_probs[:, 0]
             prob_b2 = all_probs[:, 4]
             max_trade_probs, trade_dirs = torch.max(torch.stack([prob_s2, prob_b2], dim=1), dim=1)
-            # trade_dirs: 0 = Sell2, 1 = Buy2
-            trade_dirs = torch.where(trade_dirs == 0, torch.tensor(0).to(device), torch.tensor(4).to(device))
+            # trade_dirs: 0 = Sell2 (Sell), 1 = Buy2 (Buy)
+            
+            # Map target ve cung dinh dang huong (0=Sell, 1=Buy, 2=Hold)
+            is_target_sell = (all_targets == 0) | (all_targets == 1)
+            is_target_buy = (all_targets == 3) | (all_targets == 4)
+            target_dir = torch.where(is_target_buy, torch.tensor(1).to(device), 
+                            torch.where(is_target_sell, torch.tensor(0).to(device), torch.tensor(2).to(device)))
             
             train_avg = total_loss/len(train_loader) if len(train_loader) > 0 else 0
             val_avg = val_loss/len(test_loader) if len(test_loader) > 0 else 0
@@ -306,19 +315,19 @@ def main():
             be_wr = 51.5
             edge = -100.0
             
-            for threshold in [0.3, 0.35, 0.4]:
+            # Nguong phu hop voi baseline 15% cua Strong Label
+            for threshold in [0.18, 0.22, 0.28]:
                 signal_mask = max_trade_probs >= threshold
-                predicted_actions = torch.where(signal_mask, trade_dirs, torch.zeros_like(trade_dirs))
                 
                 total_signal = signal_mask.sum().item()
-                correct_signal = ((predicted_actions == all_targets) & signal_mask).sum().item()
+                correct_signal = ((trade_dirs == target_dir) & signal_mask).sum().item()
                 
                 signal_acc = correct_signal/total_signal if total_signal > 0 else 0
                 trades_per_day = total_signal / total_days if total_days > 0 else 0
                 win_rate = signal_acc * 100
                 current_edge = win_rate - be_wr
                 
-                if threshold == 0.35:
+                if threshold == 0.22:
                     edge = current_edge
                     
                 log(f"  -> [Threshold {threshold}] WR: {win_rate:.1f}% | Edge: {current_edge:+.1f}% | Signals: {total_signal} ({trades_per_day:.1f}/day)")

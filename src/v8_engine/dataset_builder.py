@@ -24,6 +24,7 @@ class V8DatasetBuilder(Dataset):
         from src.v8_engine.nlp_tokenizer import NLPTokenizer
         from src.v8_engine.mtf_processor import MTFProcessor
         from src.v8_engine.order_block_detector import OrderBlockDetector
+        from src.v8_engine.indicators import add_all_indicators
         
         fd = FractalDetector(
             window_size=config.get('fractal_params', {}).get('window_size', 5),
@@ -42,6 +43,14 @@ class V8DatasetBuilder(Dataset):
             df_proc = ob.detect(df_proc)
             # 4. Map ID
             df_proc['token_id'] = df_proc['market_structure_token'].map(self.token2id)
+            # 5. Indicators & Time
+            df_proc = add_all_indicators(df_proc)
+            
+            # Time features (chỉ cần làm cho M15 là đủ, nhưng cứ tính chung)
+            df_proc['hour_sin'] = np.sin(2 * np.pi * df_proc.index.hour / 24.0)
+            df_proc['hour_cos'] = np.cos(2 * np.pi * df_proc.index.hour / 24.0)
+            df_proc['day_sin'] = np.sin(2 * np.pi * df_proc.index.dayofweek / 7.0)
+            df_proc['day_cos'] = np.cos(2 * np.pi * df_proc.index.dayofweek / 7.0)
             
             # Đổi tên cột để chuẩn bị merge (ngoại trừ open, high, low, close, volume)
             rename_dict = {}
@@ -74,25 +83,25 @@ class V8DatasetBuilder(Dataset):
             except Exception as e:
                 print(f"Lỗi đọc strategy_config.json: {e}")
 
-        # Target: 5 classes (Balanced 20% each)
-        # 0: Strong Sell (Sell 2), 1: Weak Sell (Sell 1), 2: Hold, 3: Weak Buy (Buy 1), 4: Strong Buy (Buy 2)
+        # Target: 5 classes (Hold-heavy distribution)
+        # 0: Strong Sell (15%), 1: Weak Sell (10%), 2: Hold (50%), 3: Weak Buy (10%), 4: Strong Buy (15%)
         diff = self.df['close'].shift(target_shift) - self.df['close']
         
         valid_diff = diff.dropna()
         if len(valid_diff) > 0:
-            p20 = np.percentile(valid_diff, 20.0)
-            p40 = np.percentile(valid_diff, 40.0)
-            p60 = np.percentile(valid_diff, 60.0)
-            p80 = np.percentile(valid_diff, 80.0)
+            p15 = np.percentile(valid_diff, 15.0)
+            p25 = np.percentile(valid_diff, 25.0)
+            p75 = np.percentile(valid_diff, 75.0)
+            p85 = np.percentile(valid_diff, 85.0)
         else:
-            p20, p40, p60, p80 = 0, 0, 0, 0
+            p15, p25, p75, p85 = 0, 0, 0, 0
             
         conditions = [
-            diff < p20,
-            (diff >= p20) & (diff < p40),
-            (diff >= p40) & (diff < p60),
-            (diff >= p60) & (diff < p80),
-            diff >= p80
+            diff < p15,
+            (diff >= p15) & (diff < p25),
+            (diff >= p25) & (diff < p75),
+            (diff >= p75) & (diff < p85),
+            diff >= p85
         ]
         choices = [0, 1, 2, 3, 4]
         
@@ -144,17 +153,38 @@ class V8DatasetBuilder(Dataset):
         x_h1 = self._get_seq(row_time, self.h1_hist, self.h1_idx, self.h1_pos)
         x_h4 = self._get_seq(row_time, self.h4_hist, self.h4_idx, self.h4_pos)
         
-        # Lấy continuous features (Order Blocks)
-        # Điểm mạnh: Ta có thể lấy OB của cả M15, H1, H4!
-        # Tạm thời lấy các features từ row (đã được merge_mtf backward fill)
+        # Lấy continuous features (Order Blocks + Indicators + PA + Time)
+        # 9 OB features + 4 Time features + (9 indicators * 3 TFs) = 9 + 4 + 27 = 40 features
         ob_features = [
             row.get('in_ob_up', 0.0), row.get('in_ob_dn', 0.0), row.get('ob_strength', 0.0),
             row.get('in_ob_up_h1', 0.0), row.get('in_ob_dn_h1', 0.0), row.get('ob_strength_h1', 0.0),
             row.get('in_ob_up_h4', 0.0), row.get('in_ob_dn_h4', 0.0), row.get('ob_strength_h4', 0.0)
         ]
-        # Xử lý NaN
-        ob_features = [0.0 if np.isnan(v) else float(v) for v in ob_features]
-        cont_x = torch.tensor(ob_features, dtype=torch.float)
+        time_features = [
+            row.get('hour_sin', 0.0), row.get('hour_cos', 0.0),
+            row.get('day_sin', 0.0), row.get('day_cos', 0.0)
+        ]
+        
+        def get_inds(r, suffix=""):
+            return [
+                r.get(f'rsi{suffix}', 50.0) / 100.0, # normalize 0-1
+                r.get(f'macd_hist{suffix}', 0.0),
+                r.get(f'dist_ema50{suffix}', 0.0),
+                r.get(f'dist_ema200{suffix}', 0.0),
+                r.get(f'body_size{suffix}', 0.0),
+                r.get(f'upper_wick{suffix}', 0.0),
+                r.get(f'lower_wick{suffix}', 0.0)
+            ]
+            
+        m15_inds = get_inds(row, "")
+        h1_inds = get_inds(row, "_h1")
+        h4_inds = get_inds(row, "_h4")
+        
+        all_cont = ob_features + time_features + m15_inds + h1_inds + h4_inds
+        
+        # Xử lý NaN lần cuối
+        all_cont = [0.0 if np.isnan(v) else float(v) for v in all_cont]
+        cont_x = torch.tensor(all_cont, dtype=torch.float)
         
         y = torch.tensor(row['target'], dtype=torch.long)
         

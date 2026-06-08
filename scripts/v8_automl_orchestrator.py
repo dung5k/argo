@@ -163,8 +163,8 @@ def parse_log(node, opt_id):
         if "Ep 10" in line:
             is_ep10 = True
         
-        # Chỉ lấy Edge của Threshold 0.35 ở Epoch 10
-        if is_ep10 and "Threshold 0.35" in line:
+        # Chỉ lấy Edge của Threshold 0.22 ở Epoch 10
+        if is_ep10 and "Threshold 0.22" in line:
             m = re.search(r'Edge:\s*([+\-]?[\d.]+)%', line)
             if m:
                 edges.append(float(m.group(1)))
@@ -220,8 +220,8 @@ def main():
                         task["reason"] = f"Early stop: Edge {avg_edge:+.2f}% after {splits} splits"
                         
             # --- TỰ ĐỘNG BƠM THÊM NHIỆM VỤ NẾU CẠN KIỆT ---
-            if len(pending_tasks) == 0 and len(running_tasks) == 0:
-                report.append("⚠️ Hàng đợi trống! Đang tự động sinh thêm 10 cấu hình mới...")
+            if len(pending_tasks) == 0:
+                report.append("⏳ Hàng đợi trống! Đang tự động sinh thêm 10 cấu hình mới...")
                 last_id = 0
                 if q:
                     last_task = q[-1]["id"]
