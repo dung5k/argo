@@ -316,12 +316,12 @@ def main():
             log(f"  -> Prob [S2]: {min_probs[0]:.4f}~{max_probs[0]:.4f} | [S1]: {min_probs[1]:.4f}~{max_probs[1]:.4f} | [H]: {min_probs[2]:.4f}~{max_probs[2]:.4f} | [B1]: {min_probs[3]:.4f}~{max_probs[3]:.4f} | [B2]: {min_probs[4]:.4f}~{max_probs[4]:.4f}")
             
             # === PnL SIMULATION (Triple-Barrier + ATR) - THUOC DO DUY NHAT ===
-            threshold_sim = 0.22
-            spread = 0.3       # pip spread XAUUSD (san tot: 0.2-0.5)
-            tp_mult = 2.0      # TP = 2.0 x ATR
-            sl_mult = 1.5      # SL = 1.5 x ATR
-            max_hold = 8       # Toi da 8 nen M15 = 2 tieng
-            cooldown = 4       # Cho 4 nen sau khi dong lenh
+            threshold_sim = 0.30   # Tang tu 0.22 -> chi bat lenh xac suat cao
+            spread = 0.3           # pip spread XAUUSD (san tot: 0.2-0.5)
+            tp_mult = 3.0          # TP = 3.0 x ATR (R:R = 2:1)
+            sl_mult = 1.5          # SL = 1.5 x ATR
+            max_hold = 12          # Toi da 12 nen M15 = 3 tieng
+            cooldown = 4           # Cho 4 nen sau khi dong lenh
             
             signal_mask_sim = max_trade_probs >= threshold_sim
             valid_df = test_dataset.valid_df
