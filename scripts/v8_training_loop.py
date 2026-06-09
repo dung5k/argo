@@ -491,6 +491,15 @@ def main():
         else:
             consecutive_bad_splits = 0
             log(f"[GOOD] Split {split_id} CO Edge (Best: {split_best_edge:.1f}%). Reset count.")
+            # Luu bo nao co thanh tich + vao Hall of Fame
+            import shutil
+            hof_dir = os.path.join("v8_configs", "hall_of_fame")
+            os.makedirs(hof_dir, exist_ok=True)
+            hof_name = f"brain_{args.opt_id}_S{split_id}_PnL{split_best_edge:+.0f}.pt"
+            hof_path = os.path.join(hof_dir, hof_name)
+            if os.path.exists(best_model_path):
+                shutil.copy2(best_model_path, hof_path)
+                log(f"[SAVED] {hof_name} -> Hall of Fame")
             
         if consecutive_bad_splits >= max_bad_splits:
             log(f"=== EARLY STOPPING GLOBAL: Dung toan bo qua trinh train vi {max_bad_splits} splits lien tiep Edge < 0 ===")
