@@ -163,6 +163,8 @@ def main():
     
     checkpoint_path = os.path.join("v8_configs", f"checkpoint_{args.node_id}.pt")
     best_model_path = os.path.join("v8_configs", f"best_model_{args.node_id}.pt")
+    # Luu rieng theo OPT ID de khong bi ghi de
+    final_model_path = os.path.join("v8_configs", f"best_model_{args.node_id}_{args.opt_id}.pt")
     
     start_split_idx = 0
     start_epoch = 0
@@ -507,6 +509,12 @@ def main():
     log(f"=== Best Val Loss: {best_loss:.6f} ===")
     log(f"=== Ly do dung: DA HOAN THANH toan bo {len(train_files)} walk-forward splits ===")
     log(f"{'='*60}")
+    
+    # Luu model rieng theo OPT ID
+    import shutil
+    if os.path.exists(best_model_path):
+        shutil.copy2(best_model_path, final_model_path)
+        log(f"=== Da luu model vao {final_model_path} ===")
 
 if __name__ == "__main__":
     try:
