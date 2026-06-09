@@ -76,13 +76,15 @@ def check_node_running(node):
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             err_out = stderr.read().decode('utf-8', errors='ignore').strip()
             if err_out:
-                print(f"[{node}] Lỗi khi check psutil: {err_out}")
+                with open("logs/orchestrator_debug.log", "a", encoding="utf-8") as lf:
+                    lf.write(f"{time.ctime()} - [{node}] Lỗi khi check psutil: {err_out}\n")
             client.close()
             if "ModuleNotFoundError" in err_out or "NameError" in err_out:
                 return None
             return "True" in out
         except Exception as e:
-            print(f"[{node}] Lỗi kết nối SSH khi check: {e}")
+            with open("logs/orchestrator_debug.log", "a", encoding="utf-8") as lf:
+                lf.write(f"{time.ctime()} - [{node}] Lỗi kết nối SSH khi check: {e}\n")
             return None
 
 def kill_node(node):
@@ -148,7 +150,8 @@ def spawn_task(node, task):
             client.exec_command(f'powershell -Command "Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList \'cmd /c {bat_file}\'"', timeout=15)
             client.close()
         except Exception as e:
-            print(f"[{node}] Lỗi SSH khi spawn: {e}")
+            with open("logs/orchestrator_debug.log", "a", encoding="utf-8") as lf:
+                lf.write(f"{time.ctime()} - [{node}] Lỗi SSH khi spawn: {e}\n")
 
 def parse_log(node, opt_id):
     """Đọc file log và tính Edge trung bình. Trả về (is_done, splits_done, avg_edge)"""
