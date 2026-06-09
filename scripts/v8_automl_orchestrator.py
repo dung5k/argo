@@ -68,10 +68,10 @@ def check_node_running(node):
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
             if node == "ARGO2":
-                remote_py = "C:/Users/dungla/AppData/Local/Programs/Python/Python39/python.exe"
+                remote_py = "C:/argo/venv/Scripts/python.exe"
             else:
                 remote_py = "D:/DungLA/Python39/python.exe"
-            cmd = f'{remote_py} -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
+            cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
             stdin, stdout, stderr = client.exec_command(cmd, timeout=15)
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             err_out = stderr.read().decode('utf-8', errors='ignore').strip()
@@ -99,10 +99,15 @@ def kill_node(node):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
-            client.exec_command('python -c "import psutil; [p.terminate() for p in psutil.process_iter([\'name\', \'cmdline\']) if p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\']]"', timeout=15)
+            if node == "ARGO2":
+                remote_py = "C:/argo/venv/Scripts/python.exe"
+            else:
+                remote_py = "D:/DungLA/Python39/python.exe"
+            client.exec_command(f'"{remote_py}" -c "import psutil; [p.terminate() for p in psutil.process_iter([\'name\', \'cmdline\']) if p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\']]"', timeout=15)
             client.close()
-        except:
-            pass
+        except Exception as e:
+            with open("logs/orchestrator_debug.log", "a", encoding="utf-8") as lf:
+                lf.write(f"{time.ctime()} - [{node}] Lỗi SSH khi kill: {e}\n")
 
 def spawn_task(node, task):
     """Khởi động tiến trình training trên node với cấu hình của task"""
@@ -134,7 +139,7 @@ def spawn_task(node, task):
             
             # Create wrapper bat file on remote
             if node == "ARGO2":
-                py_exe = "C:/Users/dungla/AppData/Local/Programs/Python/Python39/python.exe"
+                py_exe = "C:/argo/venv/Scripts/python.exe"
             else:
                 py_exe = "D:/DungLA/Python39/python.exe"
                 

@@ -728,10 +728,10 @@
     "layers": 4,
     "lr": 0.00057,
     "base_timeframe": "M15",
-    "status": "RUNNING",
+    "status": "FAILED_EARLY",
     "assigned_node": "ARGO1",
     "score": null,
-    "reason": null
+    "reason": "Early stop: PnL -9.5 pip after 8 splits"
   },
   {
     "id": "OPT-80",
@@ -748,10 +748,10 @@
     "layers": 6,
     "lr": 0.00015,
     "base_timeframe": "M5",
-    "status": "RUNNING",
+    "status": "FAILED_EARLY",
     "assigned_node": "ARGO3",
     "score": null,
-    "reason": null
+    "reason": "Early stop: PnL -52.0 pip after 5 splits"
   },
   {
     "id": "OPT-82",
@@ -778,28 +778,28 @@
     "layers": 7,
     "lr": 0.00046,
     "base_timeframe": "M15",
-    "status": "RUNNING",
+    "status": "FAILED",
     "assigned_node": "ARGO2",
     "score": null,
-    "reason": null
+    "reason": "Crash/Killed unexpectedly"
   },
   {
     "id": "OPT-85",
     "layers": 7,
     "lr": 0.00084,
     "base_timeframe": "M5",
-    "status": "PENDING",
-    "assigned_node": null,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
     "score": null,
-    "reason": null
+    "reason": "Crash/Killed unexpectedly"
   },
   {
     "id": "OPT-86",
     "layers": 7,
     "lr": 0.00014,
     "base_timeframe": "M5",
-    "status": "PENDING",
-    "assigned_node": null,
+    "status": "RUNNING",
+    "assigned_node": "ARGO1",
     "score": null,
     "reason": null
   },
@@ -808,6 +808,206 @@
     "layers": 4,
     "lr": 0.00026,
     "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-88",
+    "layers": 5,
+    "lr": 0.00045,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-89",
+    "layers": 4,
+    "lr": 0.00042,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-90",
+    "layers": 4,
+    "lr": 0.00051,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-91",
+    "layers": 6,
+    "lr": 0.00035,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-92",
+    "layers": 7,
+    "lr": 0.00064,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-93",
+    "layers": 5,
+    "lr": 0.00034,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-94",
+    "layers": 4,
+    "lr": 0.00099,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-95",
+    "layers": 4,
+    "lr": 0.00044,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-96",
+    "layers": 7,
+    "lr": 0.00035,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-97",
+    "layers": 7,
+    "lr": 0.00018,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-98",
+    "layers": 6,
+    "lr": 0.00096,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-99",
+    "layers": 7,
+    "lr": 0.00094,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-100",
+    "layers": 6,
+    "lr": 0.00041,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-101",
+    "layers": 5,
+    "lr": 0.00093,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-102",
+    "layers": 5,
+    "lr": 0.00093,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-103",
+    "layers": 4,
+    "lr": 0.00065,
+    "base_timeframe": "M15",
+    "status": "RUNNING",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-104",
+    "layers": 5,
+    "lr": 0.00032,
+    "base_timeframe": "M5",
+    "status": "RUNNING",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-105",
+    "layers": 7,
+    "lr": 0.00058,
+    "base_timeframe": "M5",
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-106",
+    "layers": 5,
+    "lr": 0.00058,
+    "base_timeframe": "M15",
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-107",
+    "layers": 6,
+    "lr": 0.00059,
+    "base_timeframe": "M5",
     "status": "PENDING",
     "assigned_node": null,
     "score": null,
