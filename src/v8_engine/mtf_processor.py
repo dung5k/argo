@@ -9,34 +9,36 @@ class MTFProcessor:
     def __init__(self, config: dict):
         pass
 
-    def merge_mtf(self, df_m15: pd.DataFrame, df_h1: pd.DataFrame, df_h4: pd.DataFrame) -> pd.DataFrame:
+    def merge_mtf(self, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame) -> pd.DataFrame:
         """
-        Gộp dữ liệu M15 với H1 và H4.
+        Gộp dữ liệu Base với Mid và High.
         Yêu cầu Index của DataFrames phải là DatetimeIndex.
         Giả định Timestamp trên Index là thời điểm BẮT ĐẦU nến.
         """
-        if not isinstance(df_m15.index, pd.DatetimeIndex):
-            raise ValueError("M15 Index phải là DatetimeIndex")
+        if not isinstance(df_base.index, pd.DatetimeIndex):
+            raise ValueError("Base Index phải là DatetimeIndex")
             
-        df_m15 = df_m15.sort_index()
-        df_h1 = df_h1.sort_index()
-        df_h4 = df_h4.sort_index()
+        df_base = df_base.sort_index()
+        df_mid = df_mid.sort_index()
+        df_high = df_high.sort_index()
         
-        df_h1_renamed = df_h1.add_suffix('_h1')
-        df_h4_renamed = df_h4.add_suffix('_h4')
+        df_mid_renamed = df_mid.add_suffix('_mid')
+        df_high_renamed = df_high.add_suffix('_high')
         
-        # Dịch chuyển Index của H1/H4 từ "Thời điểm mở nến" sang "Thời điểm đóng nến"
-        # Để đảm bảo nến M15 tại 14:15 chỉ map với nến H1 đã đóng lúc 14:00 (tức là nến mở lúc 13:00)
-        df_h1_closed = df_h1_renamed.copy()
-        df_h1_closed.index = df_h1_closed.index + pd.Timedelta(hours=1)
+        # Dịch chuyển Index của Mid/High từ "Thời điểm mở nến" sang "Thời điểm đóng nến"
+        mid_delta = df_mid.index[1] - df_mid.index[0] if len(df_mid) > 1 else pd.Timedelta(hours=1)
+        high_delta = df_high.index[1] - df_high.index[0] if len(df_high) > 1 else pd.Timedelta(hours=4)
         
-        df_h4_closed = df_h4_renamed.copy()
-        df_h4_closed.index = df_h4_closed.index + pd.Timedelta(hours=4)
+        df_mid_closed = df_mid_renamed.copy()
+        df_mid_closed.index = df_mid_closed.index + mid_delta
+        
+        df_high_closed = df_high_renamed.copy()
+        df_high_closed.index = df_high_closed.index + high_delta
         
         # Merge_asof backward
         merged = pd.merge_asof(
-            df_m15, 
-            df_h1_closed, 
+            df_base, 
+            df_mid_closed, 
             left_index=True, 
             right_index=True, 
             direction='backward'
@@ -44,7 +46,7 @@ class MTFProcessor:
         
         merged = pd.merge_asof(
             merged, 
-            df_h4_closed, 
+            df_high_closed, 
             left_index=True, 
             right_index=True, 
             direction='backward'

@@ -37,21 +37,29 @@ def load_queue():
     with open(QUEUE_FILE, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
+def get_active_nodes():
+    try:
+        with open("v8_configs/v8_training_config.json", "r", encoding="utf-8-sig") as f:
+            cfg = json.load(f)
+            return cfg.get("system", {}).get("active_nodes", ["ARGO1", "ARGO2", "ARGO3"])
+    except:
+        return list(NODES.keys())
+
 def save_queue(q):
     with open(QUEUE_FILE, "w", encoding="utf-8") as f:
         json.dump(q, f, indent=2)
 
 def check_node_running(node):
-    """Trả về True nếu python đang chạy script training trên node này"""
+    """Trả về True nếu python đang chạy script training trên node này, False nếu không, None nếu lỗi kết nối"""
     if node == "ARGO1":
         try:
             res = subprocess.run(
-                ["powershell", "-Command", "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object { $_.CommandLine -match 'v8_training_loop' } | Select-Object ProcessId"],
+                ['python', '-c', "import psutil; print(any(p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and 'v8_training_loop' in ' '.join(p.info['cmdline']) and '-c' not in p.info['cmdline'] for p in psutil.process_iter(['name', 'cmdline'])))"],
                 capture_output=True, text=True, timeout=5
             )
-            return "ProcessId" in res.stdout
+            return "True" in res.stdout
         except:
-            return False
+            return None
     else:
         ip = NODES[node]["ip"]
         user = NODES[node]["user"]
@@ -59,18 +67,29 @@ def check_node_running(node):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
-            stdin, stdout, stderr = client.exec_command('powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'python.exe\'\\" | Where-Object { $_.CommandLine -match \'v8_training_loop\' } | Select-Object ProcessId"')
+            if node == "ARGO2":
+                remote_py = "C:/Users/dungla/AppData/Local/Programs/Python/Python39/python.exe"
+            else:
+                remote_py = "D:/DungLA/Python39/python.exe"
+            cmd = f'{remote_py} -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
+            stdin, stdout, stderr = client.exec_command(cmd, timeout=15)
             out = stdout.read().decode('utf-8', errors='ignore').strip()
+            err_out = stderr.read().decode('utf-8', errors='ignore').strip()
+            if err_out:
+                print(f"[{node}] Lỗi khi check psutil: {err_out}")
             client.close()
-            return "ProcessId" in out
-        except:
-            return False
+            if "ModuleNotFoundError" in err_out or "NameError" in err_out:
+                return None
+            return "True" in out
+        except Exception as e:
+            print(f"[{node}] Lỗi kết nối SSH khi check: {e}")
+            return None
 
 def kill_node(node):
     """Kill process training trên node"""
     print(f"[{node}] Đang Kill tiến trình...")
     if node == "ARGO1":
-        subprocess.run('powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'python.exe\'\\" | Where-Object {$_.CommandLine -match \'v8_training_loop\'} | Invoke-CimMethod -MethodName Terminate"', shell=True)
+        subprocess.run(['python', '-c', "import psutil; [p.terminate() for p in psutil.process_iter(['name', 'cmdline']) if p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and 'v8_training_loop' in ' '.join(p.info['cmdline']) and '-c' not in p.info['cmdline']]"])
     else:
         ip = NODES[node]["ip"]
         user = NODES[node]["user"]
@@ -78,23 +97,25 @@ def kill_node(node):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
-            client.exec_command('powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'python.exe\'\\" | Where-Object {$_.CommandLine -match \'v8_training_loop\'} | Invoke-CimMethod -MethodName Terminate"')
+            client.exec_command('python -c "import psutil; [p.terminate() for p in psutil.process_iter([\'name\', \'cmdline\']) if p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\']]"', timeout=15)
             client.close()
         except:
             pass
 
 def spawn_task(node, task):
     """Khởi động tiến trình training trên node với cấu hình của task"""
-    print(f"[{node}] Đang spawn task {task['id']} (Layers: {task['layers']}, LR: {task['lr']})")
-    opt_id = task['id']
     layers = task['layers']
     lr = task['lr']
+    opt_id = task['id']
+    tf = task.get("base_timeframe", "M5")
+    
+    print(f"[{node}] Đang spawn task {opt_id} [TF={tf}]...")
     
     if node == "ARGO1":
         bat_path = os.path.abspath(f"temp/train_{node}_{opt_id}.bat")
         py_path = os.path.abspath("scripts/v8_training_loop.py")
         with open(bat_path, "w", encoding="utf-8") as f:
-            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id}\n')
+            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id} --base_timeframe {tf}\n')
         
         user = NODES[node]["user"]
         cmd = f'schtasks /create /tn "V8_{node}_AutoML" /tr "{bat_path}" /sc once /st 00:00 /ru "{user}" /it /f ; schtasks /run /tn "V8_{node}_AutoML"'
@@ -111,11 +132,11 @@ def spawn_task(node, task):
             
             # Create wrapper bat file on remote
             if node == "ARGO2":
-                py_exe = "D:\\argo\\venv\\Scripts\\python.exe"
+                py_exe = "C:/Users/dungla/AppData/Local/Programs/Python/Python39/python.exe"
             else:
                 py_exe = "D:/DungLA/Python39/python.exe"
                 
-            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_training_loop.py --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id} > logs/argo_cmd_{opt_id}.log 2>&1\n'
+            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_training_loop.py --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id} --base_timeframe {tf} > logs/argo_cmd_{opt_id}.log 2>&1\n'
             
             sftp = client.open_sftp()
             bat_file = f'{remote_base}/auto_{node.lower()}.bat'
@@ -124,7 +145,7 @@ def spawn_task(node, task):
             sftp.close()
             
             # Using Invoke-WmiMethod for remote spawn because schtasks fails sometimes and wmic is removed in Win11
-            client.exec_command(f'powershell -Command "Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList \'cmd /c {bat_file}\'"')
+            client.exec_command(f'powershell -Command "Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList \'cmd /c {bat_file}\'"', timeout=15)
             client.close()
         except Exception as e:
             print(f"[{node}] Lỗi SSH khi spawn: {e}")
@@ -145,14 +166,14 @@ def parse_log(node, opt_id):
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
-            stdin, stdout, stderr = client.exec_command(f'powershell -Command "Get-Content {remote_base}/{log_file}"')
+            stdin, stdout, stderr = client.exec_command(f'powershell -Command "Get-Content {remote_base}/{log_file}"', timeout=15)
             raw = stdout.read().decode('utf-8', errors='ignore')
             client.close()
         except:
             pass
             
     if not raw:
-        return False, 0, 0.0
+        return False, 0, 17, 0.0
         
     is_done = "DA HOAN THANH" in raw
     
@@ -190,6 +211,7 @@ def main():
     while True:
         try:
             q = load_queue()
+            active_nodes = get_active_nodes()
             
             # Thống kê
             running_tasks = [t for t in q if t["status"] == "RUNNING"]
@@ -197,33 +219,44 @@ def main():
             completed = [t for t in q if t["status"] in ["COMPLETED", "FAILED_EARLY"]]
             
             report = []
-            report.append("🔄 **AUTO-ML STATUS REPORT**")
-            report.append(f"📦 Tổng hàng đợi: {len(q)} (Đang chạy: {len(running_tasks)}, Chờ: {len(pending_tasks)}, Xong: {len(completed)})")
+            
+            report.append("🌟 **AUTO-ML STATUS REPORT**")
+            report.append(f"📊 Tổng hàng đợi: {len(q)} (Đang chạy: {len(running_tasks)}, Chờ: {len(pending_tasks)}, Xong: {len(completed)})")
+            report.append(f"🟢 Nodes kích hoạt: {', '.join(active_nodes)}")
             
             # --- KIỂM TRA TRẠNG THÁI CÁC MÁY ĐANG CHẠY ---
             for task in running_tasks:
                 node = task["assigned_node"]
+                if node not in active_nodes:
+                    continue
                 opt_id = task["id"]
+                tf = task.get("base_timeframe", "M5")
                 is_alive = check_node_running(node)
+                
+                if is_alive is None:
+                    # SSH/Lỗi kết nối hoặc lỗi môi trường, không phán xét, skip qua
+                    report.append(f"⚠️ {node} mất kết nối hoặc lỗi kiểm tra. Đang tạm bỏ qua.")
+                    continue
+                    
                 is_done, splits, total_splits, avg_pnl = parse_log(node, opt_id)
                 
                 if not is_alive and not is_done:
                     # Chết bất đắc kỳ tử
                     task["status"] = "FAILED"
                     task["reason"] = "Crash/Killed unexpectedly"
-                    report.append(f"❌ {opt_id} trên {node} bị CRASH. [L={task['layers']}, LR={task['lr']}]")
+                    report.append(f"💀 {opt_id} [{tf}] trên {node} bị CRASH. | Số lớp: {task['layers']} | LR: {task['lr']}")
                 elif is_done:
                     task["status"] = "COMPLETED"
                     task["score"] = avg_pnl
-                    report.append(f"✅ {opt_id} trên {node} XONG ({splits}/{total_splits} splits). PnL TB: {avg_pnl:+.1f}pip [L={task['layers']}, LR={task['lr']}]")
+                    report.append(f"✅ {opt_id} [{tf}] trên {node} XONG ({splits}/{total_splits} splits). PnL TB: {avg_pnl:+.1f}pip | Số lớp: {task['layers']} | LR: {task['lr']}")
                 else:
                     # Đang chạy, check early stopping
-                    report.append(f"▶️ {node} đang cày {opt_id} ({splits}/{total_splits} splits, PnL TB: {avg_pnl:+.1f}pip) [L={task['layers']}, LR={task['lr']}]")
+                    report.append(f"⚡ {node} đang cày {opt_id} [{tf}] ({splits}/{total_splits} splits, PnL TB: {avg_pnl:+.1f}pip) | Số lớp: {task['layers']} | LR: {task['lr']}")
                     if splits >= 5 and avg_pnl < -5.0:
-                        report.append(f"  👉 CẢNH BÁO: Option này rác! Kích hoạt EARLY STOPPING.")
+                        report.append(f"  🗑️ CẢNH BÁO: Option này rác! Kích hoạt EARLY STOPPING.")
                         kill_node(node)
                         task["status"] = "FAILED_EARLY"
-                        task["reason"] = f"Early stop: Edge {avg_edge:+.2f}% after {splits} splits"
+                        task["reason"] = f"Early stop: PnL {avg_pnl:+.1f} pip after {splits} splits"
                         
             # --- TỰ ĐỘNG BƠM THÊM NHIỆM VỤ NẾU CẠN KIỆT ---
             if len(pending_tasks) == 0:
@@ -240,8 +273,9 @@ def main():
                 for i in range(1, 11):
                     new_opt = {
                         "id": f"OPT-{last_id + i}",
-                        "layers": random.randint(2, 6),
+                        "layers": random.randint(4, 7),
                         "lr": round(random.uniform(0.0001, 0.001), 5),
+                        "base_timeframe": random.choice(["M5", "M15"]),
                         "status": "PENDING",
                         "assigned_node": None,
                         "score": None,
@@ -253,23 +287,17 @@ def main():
                 report.append(f"✅ Đã nạp thành công 10 cấu hình tiếp theo (OPT-{last_id+1} đến OPT-{last_id+10}).")
 
             # --- PHÂN BỔ VIỆC CHO MÁY RẢNH ---
-            active_nodes = [t["assigned_node"] for t in q if t["status"] == "RUNNING"]
-            for node in NODES.keys():
-                if node not in active_nodes:
-                    # Nếu node không được đánh dấu là running, kiểm tra xem nó có thực sự rảnh ko
-                    if check_node_running(node):
-                        # Node đang chạy một tiến trình (có thể do user manual bật), bỏ qua
-                        continue
-                        
-                    # Tìm task PENDING
-                    pending = [t for t in q if t["status"] == "PENDING"]
-                    if pending:
-                        next_task = pending[0]
-                        spawn_task(node, next_task)
-                        next_task["status"] = "RUNNING"
-                        next_task["assigned_node"] = node
-                        report.append(f"🎯 Đã nạp {next_task['id']} vào máy {node}.")
-                        active_nodes.append(node)
+            pending_tasks = [t for t in q if t["status"] == "PENDING"]
+            for node in active_nodes:
+                if node in NODES:
+                    is_alive = check_node_running(node)
+                    if is_alive == False:  # Chỉ phân công nếu node thực sự kết nối được và rảnh
+                        if pending_tasks:
+                            task = pending_tasks.pop(0)
+                            task["status"] = "RUNNING"
+                            task["assigned_node"] = node
+                            spawn_task(node, task)
+                            report.append(f"🎯 Đã nạp {task['id']} vào máy {node}.")
                         
             # Cập nhật lại Queue
             save_queue(q)
@@ -284,7 +312,7 @@ def main():
             with open("logs/orchestrator_crash.log", "a", encoding="utf-8") as f:
                 f.write(f"{time.ctime()} - Lỗi Orchestrator: {e}\n{error_trace}\n")
             
-        time.sleep(60) # Lặp lại mỗi 1 phút thay vì 5 phút
+        time.sleep(180) # Lặp lại mỗi 3 phút thay vì 1 phút
 
 if __name__ == "__main__":
     main()

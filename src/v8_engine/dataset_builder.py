@@ -10,7 +10,7 @@ class V8DatasetBuilder(Dataset):
     Gộp Pipeline: Đọc dữ liệu, Detect Fractal, Map Tokens, OB, và tạo Dataset cho PyTorch.
     Xử lý độc lập cho M15, H1, H4, sau đó merge lại để không bị leak data.
     """
-    def __init__(self, config: dict, data_m15: pd.DataFrame, data_h1: pd.DataFrame, data_h4: pd.DataFrame):
+    def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame):
         self.config = config
         self.vocab = config.get('nlp_tokenizer_params', {}).get('vocabulary', ["HH", "HL", "LH", "LL", "BOS_UP", "BOS_DN", "CHOCH_UP", "CHOCH_DN", "FAKE_BOS"])
         
@@ -61,16 +61,16 @@ class V8DatasetBuilder(Dataset):
                 df_proc = df_proc.rename(columns=rename_dict)
             return df_proc
             
-        print("Processing M15 Features...")
-        self.df_m15 = process_tf(data_m15)
-        print("Processing H1 Features...")
-        self.df_h1 = process_tf(data_h1, "_h1")
-        print("Processing H4 Features...")
-        self.df_h4 = process_tf(data_h4, "_h4")
+        print("Processing Base Features...")
+        self.df_base = process_tf(df_base)
+        print("Processing Mid Features...")
+        self.df_mid = process_tf(df_mid, "_mid")
+        print("Processing High Features...")
+        self.df_high = process_tf(df_high, "_high")
         
         # Merge MTF
         mtf = MTFProcessor(config)
-        self.df = mtf.merge_mtf(self.df_m15, self.df_h1, self.df_h4)
+        self.df = mtf.merge_mtf(self.df_base, self.df_mid, self.df_high)
         
         # Đọc cấu hình Auto-ML
         strategy_config_path = "v8_configs/strategy_config.json"
@@ -82,6 +82,9 @@ class V8DatasetBuilder(Dataset):
                     target_shift = strat_cfg.get("target_shift", -2)
             except Exception as e:
                 print(f"Lỗi đọc strategy_config.json: {e}")
+
+        if config.get("system", {}).get("base_timeframe", "M15") == "M5":
+            target_shift = target_shift * 3
 
         # Target: 5 classes (Hold-heavy distribution)
         # 0: Strong Sell (15%), 1: Weak Sell (10%), 2: Hold (50%), 3: Weak Buy (10%), 4: Strong Buy (15%)
@@ -117,9 +120,9 @@ class V8DatasetBuilder(Dataset):
             idx_to_pos = {idx: i for i, idx in enumerate(history_indices)}
             return history_list, history_indices, idx_to_pos
             
-        self.m15_hist, self.m15_idx, self.m15_pos = build_history_index(self.df_m15, 'token_id')
-        self.h1_hist, self.h1_idx, self.h1_pos = build_history_index(self.df_h1, 'token_id_h1')
-        self.h4_hist, self.h4_idx, self.h4_pos = build_history_index(self.df_h4, 'token_id_h4')
+        self.m15_hist, self.m15_idx, self.m15_pos = build_history_index(self.df_base, 'token_id')
+        self.h1_hist, self.h1_idx, self.h1_pos = build_history_index(self.df_mid, 'token_id_mid')
+        self.h4_hist, self.h4_idx, self.h4_pos = build_history_index(self.df_high, 'token_id_high')
 
     def __len__(self):
         return len(self.valid_df)

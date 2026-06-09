@@ -2,43 +2,812 @@
   {
     "id": "OPT-1",
     "layers": 3,
-    "lr": 0.0003,
-    "status": "PENDING",
-    "assigned_node": null,
+    "lr": 0.00089,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
     "score": null,
-    "reason": null
+    "reason": "Crash/Killed unexpectedly"
   },
   {
     "id": "OPT-2",
-    "layers": 4,
-    "lr": 0.001,
-    "status": "PENDING",
-    "assigned_node": null,
+    "layers": 6,
+    "lr": 0.00036,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
     "score": null,
-    "reason": null
+    "reason": "Crash/Killed unexpectedly"
   },
   {
     "id": "OPT-3",
-    "layers": 4,
-    "lr": 0.0005,
-    "status": "PENDING",
-    "assigned_node": null,
+    "layers": 5,
+    "lr": 0.00037,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
     "score": null,
-    "reason": null
+    "reason": "Crash/Killed unexpectedly"
   },
   {
     "id": "OPT-4",
+    "layers": 6,
+    "lr": 0.00028,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-5",
+    "layers": 2,
+    "lr": 0.00048,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-6",
+    "layers": 6,
+    "lr": 0.00041,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-7",
     "layers": 5,
+    "lr": 0.00042,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-8",
+    "layers": 6,
+    "lr": 0.00095,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-9",
+    "layers": 3,
+    "lr": 0.00066,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-10",
+    "layers": 5,
+    "lr": 0.00019,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-11",
+    "layers": 2,
+    "lr": 0.0006,
+    "status": "FAILED",
+    "assigned_node": "ARGO1",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-12",
+    "layers": 2,
+    "lr": 0.00068,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-13",
+    "layers": 5,
+    "lr": 0.00072,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-14",
+    "layers": 2,
+    "lr": 0.00021,
+    "status": "FAILED",
+    "assigned_node": "ARGO1",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-15",
+    "layers": 2,
+    "lr": 0.00062,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-16",
+    "layers": 5,
+    "lr": 0.00045,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-17",
+    "layers": 3,
+    "lr": 0.0001,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-18",
+    "layers": 4,
+    "lr": 0.00032,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-19",
+    "layers": 6,
+    "lr": 0.00054,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-20",
+    "layers": 4,
+    "lr": 0.00054,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-21",
+    "layers": 3,
+    "lr": 0.00091,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-22",
+    "layers": 5,
+    "lr": 0.00074,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-23",
+    "layers": 6,
+    "lr": 0.00093,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-24",
+    "layers": 5,
+    "lr": 0.00062,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-25",
+    "layers": 2,
+    "lr": 0.00076,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-26",
+    "layers": 6,
+    "lr": 0.00078,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-27",
+    "layers": 6,
+    "lr": 0.00084,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-28",
+    "layers": 3,
+    "lr": 0.00017,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-29",
+    "layers": 2,
+    "lr": 0.00039,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-30",
+    "layers": 6,
+    "lr": 0.00073,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-31",
+    "layers": 2,
+    "lr": 0.00046,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-32",
+    "layers": 4,
+    "lr": 0.00082,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-33",
+    "layers": 6,
+    "lr": 0.00019,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-34",
+    "layers": 6,
+    "lr": 0.0005,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-35",
+    "layers": 6,
+    "lr": 0.00069,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-36",
+    "layers": 3,
+    "lr": 0.00091,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-37",
+    "layers": 3,
+    "lr": 0.0006,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-38",
+    "layers": 4,
+    "lr": 0.00038,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-39",
+    "layers": 4,
+    "lr": 0.00012,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-40",
+    "layers": 5,
+    "lr": 0.00092,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-41",
+    "layers": 3,
+    "lr": 0.0004,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-42",
+    "layers": 5,
+    "lr": 0.00014,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-43",
+    "layers": 3,
+    "lr": 0.00077,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-44",
+    "layers": 4,
+    "lr": 0.00055,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-45",
+    "layers": 6,
+    "lr": 0.00065,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-46",
+    "layers": 6,
+    "lr": 0.00077,
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-48",
+    "layers": 4,
+    "lr": 0.00065,
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly",
+    "base_timeframe": "M15"
+  },
+  {
+    "id": "OPT-49",
+    "layers": 5,
+    "lr": 0.00091,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-50",
+    "layers": 7,
+    "lr": 0.00093,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-51",
+    "layers": 7,
+    "lr": 0.00088,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-52",
+    "layers": 5,
+    "lr": 0.00059,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-53",
+    "layers": 4,
+    "lr": 0.00053,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-54",
+    "layers": 6,
+    "lr": 0.00015,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-55",
+    "layers": 4,
+    "lr": 0.00017,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-56",
+    "layers": 7,
+    "lr": 0.0006,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-57",
+    "layers": 6,
+    "lr": 0.00078,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-58",
+    "layers": 7,
+    "lr": 0.00025,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-59",
+    "layers": 5,
+    "lr": 0.00046,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-60",
+    "layers": 7,
+    "lr": 0.00081,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-61",
+    "layers": 6,
     "lr": 0.0003,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-62",
+    "layers": 6,
+    "lr": 0.00094,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-63",
+    "layers": 4,
+    "lr": 0.00041,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-64",
+    "layers": 7,
+    "lr": 0.0009,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-65",
+    "layers": 5,
+    "lr": 0.00098,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-66",
+    "layers": 4,
+    "lr": 0.0005,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-67",
+    "layers": 5,
+    "lr": 0.00031,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-68",
+    "layers": 6,
+    "lr": 0.00066,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-69",
+    "layers": 6,
+    "lr": 0.00075,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-70",
+    "layers": 6,
+    "lr": 0.00079,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-71",
+    "layers": 5,
+    "lr": 0.00038,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-72",
+    "layers": 6,
+    "lr": 0.00046,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-73",
+    "layers": 7,
+    "lr": 0.00024,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-74",
+    "layers": 7,
+    "lr": 0.0001,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-75",
+    "layers": 7,
+    "lr": 0.00079,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-76",
+    "layers": 7,
+    "lr": 0.00029,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-77",
+    "layers": 5,
+    "lr": 0.00078,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-78",
+    "layers": 4,
+    "lr": 0.00098,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-79",
+    "layers": 4,
+    "lr": 0.00057,
+    "base_timeframe": "M15",
+    "status": "RUNNING",
+    "assigned_node": "ARGO1",
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-80",
+    "layers": 6,
+    "lr": 0.00065,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-81",
+    "layers": 6,
+    "lr": 0.00015,
+    "base_timeframe": "M5",
+    "status": "RUNNING",
+    "assigned_node": "ARGO3",
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-82",
+    "layers": 4,
+    "lr": 0.00022,
+    "base_timeframe": "M5",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-83",
+    "layers": 6,
+    "lr": 0.00051,
+    "base_timeframe": "M15",
+    "status": "FAILED",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": "Crash/Killed unexpectedly"
+  },
+  {
+    "id": "OPT-84",
+    "layers": 7,
+    "lr": 0.00046,
+    "base_timeframe": "M15",
+    "status": "RUNNING",
+    "assigned_node": "ARGO2",
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-85",
+    "layers": 7,
+    "lr": 0.00084,
+    "base_timeframe": "M5",
     "status": "PENDING",
     "assigned_node": null,
     "score": null,
     "reason": null
   },
   {
-    "id": "OPT-5",
-    "layers": 3,
-    "lr": 0.0001,
+    "id": "OPT-86",
+    "layers": 7,
+    "lr": 0.00014,
+    "base_timeframe": "M5",
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-87",
+    "layers": 4,
+    "lr": 0.00026,
+    "base_timeframe": "M15",
     "status": "PENDING",
     "assigned_node": null,
     "score": null,

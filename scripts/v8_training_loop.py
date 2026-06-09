@@ -20,7 +20,12 @@ sys.stderr.reconfigure(encoding='utf-8')
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.v8_engine.transformer_model import V8TransformerModel
 from src.v8_engine.dataset_builder import V8DatasetBuilder
+from datetime import timedelta
 
+# Load M1 Data globally
+print("Loading M1 Tick Data for Training Loop Validation...")
+df_m1 = pd.read_parquet("data/XAUUSDm_M1_2024_2026.parquet")
+print("M1 Data loaded.")
 
 def get_args():
     parser = argparse.ArgumentParser(description="V8 Training Loop")
@@ -31,6 +36,7 @@ def get_args():
     parser.add_argument("--batch_size", type=int, default=0, help="Batch size (0 = use config default)")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint")
     parser.add_argument("--opt_id", type=str, default="", help="AutoML Option ID for logging")
+    parser.add_argument("--base_timeframe", type=str, default="", help="Override base timeframe (M5 or M15)")
     return parser.parse_args()
 
 def main():
@@ -62,8 +68,16 @@ def main():
         log("Config not found!")
         return
         
-    with open(config_path, "r", encoding="utf-8") as f:
+    # Doc cau hinh
+    with open("v8_configs/v8_training_config.json", "r", encoding="utf-8-sig") as f:
         config = json.load(f)
+        
+    if args.base_timeframe:
+        if 'system' not in config:
+            config['system'] = {}
+        config['system']['base_timeframe'] = args.base_timeframe
+        
+    base_freq = config.get('system', {}).get('base_timeframe', 'M5')
         
     config['transformer_params']['num_layers'] = args.layers
     
@@ -173,7 +187,7 @@ def main():
     if args.resume and os.path.exists(checkpoint_path):
         try:
             log(f"Loading checkpoint from {checkpoint_path}...")
-            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
             model.load_state_dict(checkpoint['model_state'])
             optimizer.load_state_dict(checkpoint['optimizer_state'])
             if 'scheduler_state' in checkpoint:
@@ -198,7 +212,10 @@ def main():
         log(f"No splits found in {splits_dir}")
         return
         
-    train_files = sorted(glob.glob(os.path.join(splits_dir, "*_train.parquet")))
+    train_files = sorted(
+        glob.glob(os.path.join(splits_dir, "*_train.parquet")),
+        key=lambda x: int(os.path.basename(x).split('_')[1]) if '_' in os.path.basename(x) else 0
+    )
     if len(train_files) == 0:
         log("No training data found.")
         return
@@ -216,18 +233,32 @@ def main():
         if start_epoch == 0:
             log(f"--- Processing Split {split_id} ---")
             
-        df_train = pd.read_parquet(train_file)
-        df_train_h1 = df_train.resample('1h').agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
-        df_train_h4 = df_train.resample('4h').agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
+        df_train_m1 = pd.read_parquet(train_file)
+        df_test_m1 = pd.read_parquet(test_file)
         
-        train_dataset = V8DatasetBuilder(config, df_train, df_train_h1, df_train_h4)
+        base_tf_cfg = config.get("system", {}).get("base_timeframe", "M15")
+        if base_tf_cfg == "M5":
+            base_freq, mid_freq, high_freq = "5min", "15min", "1h"
+        else:
+            base_freq, mid_freq, high_freq = "15min", "1h", "4h"
+            
+        def resample_df(df_m1, freq):
+            if 'tick_volume' in df_m1.columns and 'volume' not in df_m1.columns:
+                df_m1 = df_m1.rename(columns={'tick_volume': 'volume'})
+            return df_m1.resample(freq).agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
+            
+        df_train_base = resample_df(df_train_m1, base_freq)
+        df_train_mid = resample_df(df_train_m1, mid_freq)
+        df_train_high = resample_df(df_train_m1, high_freq)
+        
+        train_dataset = V8DatasetBuilder(config, df_train_base, df_train_mid, df_train_high)
         train_loader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
         
-        df_test = pd.read_parquet(test_file)
-        df_test_h1 = df_test.resample('1h').agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
-        df_test_h4 = df_test.resample('4h').agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
+        df_test_base = resample_df(df_test_m1, base_freq)
+        df_test_mid = resample_df(df_test_m1, mid_freq)
+        df_test_high = resample_df(df_test_m1, high_freq)
         
-        test_dataset = V8DatasetBuilder(config, df_test, df_test_h1, df_test_h4)
+        test_dataset = V8DatasetBuilder(config, df_test_base, df_test_mid, df_test_high)
         test_loader = DataLoader(test_dataset, batch_size=bs, shuffle=False)
         
         # Reset best_loss per split? Or keep global? Walk-forward usually optimizes per split or global
@@ -373,33 +404,44 @@ def main():
                 pnl = 0.0
                 close_candle = idx + max_hold
                 
-                for k in range(1, max_hold + 1):
-                    fi = idx + k
-                    fh = valid_df.iloc[fi]['high']
-                    fl = valid_df.iloc[fi]['low']
-                    
-                    if direction == 1:
-                        if fl <= sl_price:
-                            result = 'loss'
-                            pnl = -sl_dist
-                            close_candle = fi
-                            break
-                        if fh >= tp_price:
-                            result = 'win'
-                            pnl = tp_dist
-                            close_candle = fi
-                            break
-                    else:
-                        if fh >= sl_price:
-                            result = 'loss'
-                            pnl = -sl_dist
-                            close_candle = fi
-                            break
-                        if fl <= tp_price:
-                            result = 'win'
-                            pnl = tp_dist
-                            close_candle = fi
-                            break
+                # M1 Evaluation Window
+                entry_time = valid_df.index[idx]
+                start_m1 = entry_time + timedelta(minutes=15)
+                end_m1 = start_m1 + timedelta(minutes=max_hold * 15)
+                
+                trade_m1 = df_m1.loc[start_m1:end_m1]
+                
+                if not trade_m1.empty:
+                    for m1_time, m1_row in trade_m1.iterrows():
+                        fh = m1_row['high']
+                        fl = m1_row['low']
+                        
+                        if direction == 1:
+                            if fl <= sl_price:
+                                result = 'loss'
+                                pnl = -sl_dist
+                                minutes_passed = (m1_time - entry_time).total_seconds() / 60
+                                close_candle = idx + int(minutes_passed // 15)
+                                break
+                            if fh >= tp_price:
+                                result = 'win'
+                                pnl = tp_dist
+                                minutes_passed = (m1_time - entry_time).total_seconds() / 60
+                                close_candle = idx + int(minutes_passed // 15)
+                                break
+                        else:
+                            if fh >= sl_price:
+                                result = 'loss'
+                                pnl = -sl_dist
+                                minutes_passed = (m1_time - entry_time).total_seconds() / 60
+                                close_candle = idx + int(minutes_passed // 15)
+                                break
+                            if fl <= tp_price:
+                                result = 'win'
+                                pnl = tp_dist
+                                minutes_passed = (m1_time - entry_time).total_seconds() / 60
+                                close_candle = idx + int(minutes_passed // 15)
+                                break
                 
                 if result == 'scratch':
                     close_price = valid_df.iloc[close_candle]['close']
@@ -482,7 +524,7 @@ def main():
         # Kết thúc 1 Split, Load lại bộ não tốt nhất của Split này (tránh Overfitting vào epoch cuối)
         if os.path.exists(best_model_path):
             log(f"--- [Walk-Forward] Load lai Model tot nhat (Loss: {best_loss:.4f}) de mang sang Split tiep theo ---")
-            model.load_state_dict(torch.load(best_model_path, map_location=device))
+            model.load_state_dict(torch.load(best_model_path, map_location=device, weights_only=True))
             
         # Kiểm tra Early Stopping theo Split (Sau khi kết thúc toàn bộ epochs của split)
         if split_best_edge < 0:
@@ -493,9 +535,11 @@ def main():
             log(f"[GOOD] Split {split_id} CO Edge (Best: {split_best_edge:.1f}%). Reset count.")
             # Luu bo nao co thanh tich + vao Hall of Fame
             import shutil
+            import datetime
+            ts = datetime.datetime.now().strftime("%y%m%d_%H%M")
             hof_dir = os.path.join("v8_configs", "hall_of_fame")
             os.makedirs(hof_dir, exist_ok=True)
-            hof_name = f"brain_{args.opt_id}_S{split_id}_PnL{split_best_edge:+.0f}.pt"
+            hof_name = f"brain_{args.opt_id}_S{split_id}_PnL{split_best_edge:+.0f}_{ts}.pt"
             hof_path = os.path.join(hof_dir, hof_name)
             if os.path.exists(best_model_path):
                 shutil.copy2(best_model_path, hof_path)

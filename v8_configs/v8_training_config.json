@@ -2,10 +2,12 @@
   "system": {
     "version": "v8.0.0",
     "strict_no_repaint": true,
-    "log_level": "DEBUG"
+    "log_level": "DEBUG",
+    "base_timeframe": "M5",
+    "active_nodes": ["ARGO1", "ARGO2", "ARGO3"]
   },
   "data": {
-    "symbol": "LTCUSD",
+    "symbol": "XAUUSD",
     "timeframes": ["M15", "H1", "H4"],
     "train_data_path": "data/LTCUSD_M15.csv",
     "test_data_path": "temp/test_data_m15.csv"
