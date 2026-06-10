@@ -122,7 +122,7 @@ def spawn_task(node, task):
         bat_path = os.path.abspath(f"temp/train_{node}_{opt_id}.bat")
         py_path = os.path.abspath("scripts/v8_training_loop.py")
         with open(bat_path, "w", encoding="utf-8") as f:
-            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id} --base_timeframe {tf}\n')
+            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --node_id {node} --layers {layers} --lr {lr} --epochs 6 --opt_id {opt_id} --base_timeframe {tf}\n')
         
         user = NODES[node]["user"]
         cmd = f'schtasks /create /tn "V8_{node}_AutoML" /tr "{bat_path}" /sc once /st 00:00 /ru "{user}" /it /f ; schtasks /run /tn "V8_{node}_AutoML"'
@@ -143,7 +143,7 @@ def spawn_task(node, task):
             else:
                 py_exe = "D:/DungLA/Python39/python.exe"
                 
-            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_training_loop.py --node_id {node} --layers {layers} --lr {lr} --epochs 3 --opt_id {opt_id} --base_timeframe {tf} > logs/argo_cmd_{opt_id}.log 2>&1\n'
+            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_training_loop.py --node_id {node} --layers {layers} --lr {lr} --epochs 6 --opt_id {opt_id} --base_timeframe {tf} > logs/argo_cmd_{opt_id}.log 2>&1\n'
             
             sftp = client.open_sftp()
             bat_file = f'{remote_base}/auto_{node.lower()}.bat'
@@ -195,7 +195,7 @@ def parse_log(node, opt_id):
     pnl_values = []
     is_last_ep = False
     for line in raw.split('\n'):
-        if "Ep 3" in line:
+        if "Ep 6" in line:
             is_last_ep = True
         
         # Lay PnL o epoch cuoi cua moi split
@@ -282,7 +282,7 @@ def main():
                     new_opt = {
                         "id": f"OPT-{last_id + i}",
                         "layers": random.randint(4, 7),
-                        "lr": round(random.uniform(0.0001, 0.001), 5),
+                        "lr": round(random.uniform(0.00005, 0.00030), 5),
                         "base_timeframe": random.choice(["M5", "M15"]),
                         "status": "PENDING",
                         "assigned_node": None,

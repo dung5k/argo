@@ -37,7 +37,7 @@
     "embedding_dim": 64,
     "num_heads": 4,
     "num_layers": 3,
-    "dropout": 0.1,
+    "dropout": 0.2,
     "context_dim": 128,
     "num_classes": 5
   },

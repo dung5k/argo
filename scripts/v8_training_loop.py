@@ -172,8 +172,8 @@ def main():
     criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
     log(f"Using Weighted CrossEntropyLoss (label_smoothing=0.1, weights={[f'{w:.2f}' for w in class_weights.tolist()]})")
         
-    optimizer = optim.AdamW(model.parameters(), lr=strat_lr, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+    optimizer = optim.AdamW(model.parameters(), lr=strat_lr, weight_decay=1e-3)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=1e-6)
     
     checkpoint_path = os.path.join("v8_configs", f"checkpoint_{args.node_id}.pt")
     best_model_path = os.path.join("v8_configs", f"best_model_{args.node_id}.pt")
@@ -275,7 +275,7 @@ def main():
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = strat_lr
 
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=1e-6)
         
         split_best_edge = -100.0
         torch.cuda.empty_cache()
@@ -502,7 +502,7 @@ def main():
                 edge = -100.0
                 log(f"  >> [PnL] Khong co lenh nao (threshold qua cao)")
             
-            scheduler.step(val_avg)
+            scheduler.step()
             
             # Save state
             if val_avg < best_loss:
