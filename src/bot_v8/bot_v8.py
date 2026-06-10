@@ -64,7 +64,16 @@ class V8TradeManager:
         self.symbol = symbol
         
     def execute_trade(self, action_name: str, price: float, atr: float):
-        # Kiểm tra giới hạn số lệnh nhồi tối đa (MAX_OPEN_POSITIONS)
+        # 1. Reversal logic: Đóng các vị thế ngược chiều trước khi vào lệnh mới
+        positions = mt5.positions_get(symbol=self.symbol)
+        if positions is not None:
+            opposing_type = mt5.ORDER_TYPE_SELL if action_name == "STRONG_BUY" else mt5.ORDER_TYPE_BUY
+            for pos in positions:
+                if pos.magic == MAGIC_NUMBER and pos.type == opposing_type:
+                    log(f"🔄 [Reversal] Tín hiệu {action_name} ngược chiều với vị thế {pos.ticket}. Đóng vị thế cũ...")
+                    self.close_position(pos)
+                    
+        # 2. Kiểm tra giới hạn số lệnh nhồi tối đa (MAX_OPEN_POSITIONS)
         positions = mt5.positions_get(symbol=self.symbol)
         active_count = 0
         if positions is not None:
@@ -116,6 +125,50 @@ class V8TradeManager:
             
         log(f"✅ [TradeManager] Khớp lệnh thành công! Ticket: {result.order}")
         return True
+
+    def modify_sl_tp(self, ticket: int, sl: float, tp: float):
+        request = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "symbol": self.symbol,
+            "position": ticket,
+            "sl": sl,
+            "tp": tp,
+            "magic": MAGIC_NUMBER
+        }
+        result = mt5.order_send(request)
+        if result.retcode != mt5.TRADE_RETCODE_DONE:
+            log(f"❌ [TradeManager] Lỗi sửa SL/TP cho lệnh {ticket}: {result.retcode} - {result.comment}")
+            return False
+        log(f"✅ [TradeManager] Đã sửa SL/TP thành công cho lệnh {ticket}!")
+        return True
+
+    def manage_open_positions(self, current_atr: float):
+        positions = mt5.positions_get(symbol=self.symbol)
+        if positions is None:
+            return
+            
+        for pos in positions:
+            if pos.magic == MAGIC_NUMBER:
+                tick = mt5.symbol_info_tick(self.symbol)
+                if not tick: continue
+                
+                # Buy position breakeven logic
+                if pos.type == mt5.ORDER_TYPE_BUY:
+                    current_price = tick.bid
+                    profit = current_price - pos.price_open
+                    if profit >= current_atr and (pos.sl < pos.price_open or pos.sl == 0.0):
+                        new_sl = pos.price_open
+                        log(f"🛡️ [Breakeven] Lệnh BUY {pos.ticket} đạt lợi nhuận +{profit:.2f} (>= ATR {current_atr:.2f}). Dịch SL về Entry {new_sl:.2f}...")
+                        self.modify_sl_tp(pos.ticket, new_sl, pos.tp)
+                        
+                # Sell position breakeven logic
+                elif pos.type == mt5.ORDER_TYPE_SELL:
+                    current_price = tick.ask
+                    profit = pos.price_open - current_price
+                    if profit >= current_atr and (pos.sl > pos.price_open or pos.sl == 0.0):
+                        new_sl = pos.price_open
+                        log(f"🛡️ [Breakeven] Lệnh SELL {pos.ticket} đạt lợi nhuận +{profit:.2f} (>= ATR {current_atr:.2f}). Dịch SL về Entry {new_sl:.2f}...")
+                        self.modify_sl_tp(pos.ticket, new_sl, pos.tp)
 
     def check_time_stops(self):
         positions = mt5.positions_get(symbol=self.symbol)
@@ -195,6 +248,8 @@ def bot_background_loop():
     while True:
         try:
             trade_manager.check_time_stops()
+            if gui_atr > 0.0:
+                trade_manager.manage_open_positions(gui_atr)
             
             rates = mt5.copy_rates_from_pos(actual_sym, mt5.TIMEFRAME_M1, 0, 50000)
             if rates is None or len(rates) < 48000:
