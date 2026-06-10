@@ -64,9 +64,9 @@ class V8DatasetBuilder(Dataset):
         print("Processing Base Features...")
         self.df_base = process_tf(df_base)
         print("Processing Mid Features...")
-        self.df_mid = process_tf(df_mid, "_mid")
+        self.df_mid = process_tf(df_mid, "_h1")
         print("Processing High Features...")
-        self.df_high = process_tf(df_high, "_high")
+        self.df_high = process_tf(df_high, "_h4")
         
         # Merge MTF
         mtf = MTFProcessor(config)
@@ -121,8 +121,8 @@ class V8DatasetBuilder(Dataset):
             return history_list, history_indices, idx_to_pos
             
         self.m15_hist, self.m15_idx, self.m15_pos = build_history_index(self.df_base, 'token_id')
-        self.h1_hist, self.h1_idx, self.h1_pos = build_history_index(self.df_mid, 'token_id_mid')
-        self.h4_hist, self.h4_idx, self.h4_pos = build_history_index(self.df_high, 'token_id_high')
+        self.h1_hist, self.h1_idx, self.h1_pos = build_history_index(self.df_mid, 'token_id_h1')
+        self.h4_hist, self.h4_idx, self.h4_pos = build_history_index(self.df_high, 'token_id_h4')
 
     def __len__(self):
         return len(self.valid_df)

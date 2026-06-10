@@ -22,8 +22,12 @@ class MTFProcessor:
         df_mid = df_mid.sort_index()
         df_high = df_high.sort_index()
         
-        df_mid_renamed = df_mid.add_suffix('_mid')
-        df_high_renamed = df_high.add_suffix('_high')
+        # Check if df_mid/df_high columns already have standard suffixes to prevent duplicate suffixing
+        has_mid_suffix = any(col.endswith('_mid') or col.endswith('_h1') for col in df_mid.columns)
+        has_high_suffix = any(col.endswith('_high') or col.endswith('_h4') for col in df_high.columns)
+        
+        df_mid_renamed = df_mid if has_mid_suffix else df_mid.add_suffix('_mid')
+        df_high_renamed = df_high if has_high_suffix else df_high.add_suffix('_high')
         
         # Dịch chuyển Index của Mid/High từ "Thời điểm mở nến" sang "Thời điểm đóng nến"
         mid_delta = df_mid.index[1] - df_mid.index[0] if len(df_mid) > 1 else pd.Timedelta(hours=1)
