@@ -40,6 +40,7 @@ gui_probs = {'buy': 0.0, 'sell': 0.0}
 gui_price = 0.0
 gui_atr = 0.0
 gui_sym = SYMBOL
+gui_threshold = 0.35
 
 log_dir = os.path.join(_ROOT, "logs")
 os.makedirs(log_dir, exist_ok=True)
@@ -237,8 +238,10 @@ def bot_background_loop():
     log(f"Đã kết nối MT5. Mã giao dịch thực tế: {actual_sym}")
     gui_status = f"Đã kết nối {actual_sym}"
     
+    global gui_threshold
     data_processor = V8DataProcessor(config, log_callback=log)
     inference_engine = V8InferenceEngine(MODEL_NAME, config_path, log_callback=log)
+    gui_threshold = inference_engine.threshold
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
@@ -327,14 +330,15 @@ def update_ui(root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info):
     bw = int(w * buy_p)
     sw = int(w * sell_p)
     
-    buy_color = "#00ff77" if buy_p >= 0.3 else "#007733"
-    sell_color = "#ff3333" if sell_p >= 0.3 else "#882222"
+    # Tô sáng màu rực rỡ chỉ khi một bên chiến thắng vượt ngưỡng và thỏa mãn biên lệch min_delta (0.05)
+    buy_color = "#00ff77" if (buy_p >= gui_threshold and buy_p > sell_p and (buy_p - sell_p) >= 0.05) else "#007733"
+    sell_color = "#ff3333" if (sell_p >= gui_threshold and sell_p > buy_p and (sell_p - buy_p) >= 0.05) else "#882222"
     
     canvas_pred.create_rectangle(0, 0, bw, 24, fill=buy_color, outline="")
     canvas_pred.create_rectangle(w - sw, 0, w, 24, fill=sell_color, outline="")
     
-    thr_x_buy = int(w * 0.30)
-    thr_x_sell = int(w - w * 0.30)
+    thr_x_buy = int(w * gui_threshold)
+    thr_x_sell = int(w - w * gui_threshold)
     canvas_pred.create_line(thr_x_buy, 0, thr_x_buy, 24, fill="#ffcc00", dash=(2, 2))
     canvas_pred.create_line(thr_x_sell, 0, thr_x_sell, 24, fill="#ffcc00", dash=(2, 2))
     

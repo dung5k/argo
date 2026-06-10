@@ -87,11 +87,14 @@ class V8InferenceEngine:
         confidence = prob_h
         action_name = "HOLD"
         
-        if prob_b2 >= self.threshold and prob_b2 > prob_s2:
+        # Thêm biên lệch tối thiểu (min_delta) để tránh tín hiệu xung đột lưỡng lự
+        min_delta = 0.05
+        
+        if prob_b2 >= self.threshold and prob_b2 > prob_s2 and (prob_b2 - prob_s2) >= min_delta:
             signal = 4
             confidence = prob_b2
             action_name = "STRONG_BUY"
-        elif prob_s2 >= self.threshold and prob_s2 > prob_b2:
+        elif prob_s2 >= self.threshold and prob_s2 > prob_b2 and (prob_s2 - prob_b2) >= min_delta:
             signal = 0
             confidence = prob_s2
             action_name = "STRONG_SELL"
