@@ -30,7 +30,7 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-MODEL_NAME = "best_model_ARGO3_OPT-6.pt"
+MODEL_NAME = "best_model_ARGO3_OPT-217.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
