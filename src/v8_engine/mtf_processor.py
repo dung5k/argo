@@ -22,12 +22,22 @@ class MTFProcessor:
         df_mid = df_mid.sort_index()
         df_high = df_high.sort_index()
         
-        # Check if df_mid/df_high columns already have standard suffixes to prevent duplicate suffixing
-        has_mid_suffix = any(col.endswith('_mid') or col.endswith('_h1') for col in df_mid.columns)
-        has_high_suffix = any(col.endswith('_high') or col.endswith('_h4') for col in df_high.columns)
+        # Rename columns to avoid collisions on open, high, low, close, volume while keeping existing suffixes
+        rename_mid = {}
+        for col in df_mid.columns:
+            if col in ['open', 'high', 'low', 'close', 'volume']:
+                rename_mid[col] = f"{col}_mid"
+            elif not col.endswith('_mid') and not col.endswith('_h1'):
+                rename_mid[col] = f"{col}_mid"
+        df_mid_renamed = df_mid.rename(columns=rename_mid)
         
-        df_mid_renamed = df_mid if has_mid_suffix else df_mid.add_suffix('_mid')
-        df_high_renamed = df_high if has_high_suffix else df_high.add_suffix('_high')
+        rename_high = {}
+        for col in df_high.columns:
+            if col in ['open', 'high', 'low', 'close', 'volume']:
+                rename_high[col] = f"{col}_high"
+            elif not col.endswith('_high') and not col.endswith('_h4'):
+                rename_high[col] = f"{col}_high"
+        df_high_renamed = df_high.rename(columns=rename_high)
         
         # Dịch chuyển Index của Mid/High từ "Thời điểm mở nến" sang "Thời điểm đóng nến"
         mid_delta = df_mid.index[1] - df_mid.index[0] if len(df_mid) > 1 else pd.Timedelta(hours=1)

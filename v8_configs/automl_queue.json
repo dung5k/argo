@@ -1924,7 +1924,7 @@
     "reason": "Crash/Killed unexpectedly"
   },
   {
-    "id": "OPT-V8B-199",
+    "id": "OPT-V8C-8199",
     "layers": 4,
     "lr": 6e-05,
     "base_timeframe": "M15",
@@ -1934,19 +1934,9 @@
     "reason": null
   },
   {
-    "id": "OPT-200",
+    "id": "OPT-V8C-200",
     "layers": 6,
     "lr": 0.00013,
-    "base_timeframe": "M15",
-    "status": "FAILED",
-    "assigned_node": "ARGO2",
-    "score": null,
-    "reason": "Crash/Killed unexpectedly"
-  },
-  {
-    "id": "OPT-V8B-201",
-    "layers": 4,
-    "lr": 0.00029,
     "base_timeframe": "M15",
     "status": "RUNNING",
     "assigned_node": "ARGO2",
@@ -1954,9 +1944,9 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-202",
-    "layers": 6,
-    "lr": 0.00017,
+    "id": "OPT-V8C-8201",
+    "layers": 4,
+    "lr": 0.00029,
     "base_timeframe": "M15",
     "status": "RUNNING",
     "assigned_node": "ARGO3",
@@ -1964,7 +1954,17 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-203",
+    "id": "OPT-V8C-8202",
+    "layers": 6,
+    "lr": 0.00017,
+    "base_timeframe": "M15",
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
+    "reason": null
+  },
+  {
+    "id": "OPT-V8C-8203",
     "layers": 6,
     "lr": 0.00014,
     "base_timeframe": "M5",
@@ -1974,7 +1974,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-204",
+    "id": "OPT-V8C-8204",
     "layers": 4,
     "lr": 9e-05,
     "base_timeframe": "M15",
@@ -1984,7 +1984,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-205",
+    "id": "OPT-V8C-8205",
     "layers": 5,
     "lr": 0.00016,
     "base_timeframe": "M5",
@@ -1994,17 +1994,17 @@
     "reason": null
   },
   {
-    "id": "OPT-206",
+    "id": "OPT-V8C-206",
     "layers": 5,
     "lr": 0.0003,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO3",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -18.1 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-207",
+    "id": "OPT-V8C-8207",
     "layers": 4,
     "lr": 0.00019,
     "base_timeframe": "M5",
@@ -2014,17 +2014,17 @@
     "reason": null
   },
   {
-    "id": "OPT-208",
+    "id": "OPT-V8C-208",
     "layers": 4,
     "lr": 0.00022,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -5.5 pip after 8 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-209",
+    "id": "OPT-V8C-8209",
     "layers": 6,
     "lr": 0.0001,
     "base_timeframe": "M5",
@@ -2034,17 +2034,17 @@
     "reason": null
   },
   {
-    "id": "OPT-210",
+    "id": "OPT-V8C-210",
     "layers": 6,
     "lr": 0.00027,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO3",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -7.0 pip after 8 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-211",
+    "id": "OPT-V8C-8211",
     "layers": 5,
     "lr": 0.00014,
     "base_timeframe": "M5",
@@ -2054,17 +2054,17 @@
     "reason": null
   },
   {
-    "id": "OPT-212",
+    "id": "OPT-V8C-212",
     "layers": 7,
     "lr": 0.00024,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -10.1 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-213",
+    "id": "OPT-V8C-8213",
     "layers": 7,
     "lr": 0.00027,
     "base_timeframe": "M5",
@@ -2074,27 +2074,27 @@
     "reason": null
   },
   {
-    "id": "OPT-214",
+    "id": "OPT-V8C-214",
     "layers": 6,
     "lr": 0.00018,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO3",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -26.4 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-215",
+    "id": "OPT-V8C-215",
     "layers": 4,
     "lr": 0.00025,
     "base_timeframe": "M5",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -59.2 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-216",
+    "id": "OPT-V8C-8216",
     "layers": 6,
     "lr": 0.00022,
     "base_timeframe": "M5",
@@ -2104,17 +2104,17 @@
     "reason": null
   },
   {
-    "id": "OPT-217",
+    "id": "OPT-V8C-217",
     "layers": 7,
     "lr": 0.00011,
     "base_timeframe": "M5",
-    "status": "COMPLETED",
-    "assigned_node": "ARGO3",
-    "score": 63.1,
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
     "reason": null
   },
   {
-    "id": "OPT-V8B-218",
+    "id": "OPT-V8C-8218",
     "layers": 4,
     "lr": 7e-05,
     "base_timeframe": "M5",
@@ -2124,7 +2124,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-219",
+    "id": "OPT-V8C-8219",
     "layers": 4,
     "lr": 0.00013,
     "base_timeframe": "M5",
@@ -2134,7 +2134,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-220",
+    "id": "OPT-V8C-8220",
     "layers": 6,
     "lr": 0.00012,
     "base_timeframe": "M5",
@@ -2144,17 +2144,17 @@
     "reason": null
   },
   {
-    "id": "OPT-221",
+    "id": "OPT-V8C-221",
     "layers": 4,
     "lr": 0.00028,
     "base_timeframe": "M5",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -36.1 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-222",
+    "id": "OPT-V8C-8222",
     "layers": 5,
     "lr": 6e-05,
     "base_timeframe": "M15",
@@ -2164,7 +2164,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-223",
+    "id": "OPT-V8C-8223",
     "layers": 5,
     "lr": 0.00027,
     "base_timeframe": "M15",
@@ -2174,7 +2174,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-224",
+    "id": "OPT-V8C-8224",
     "layers": 7,
     "lr": 6e-05,
     "base_timeframe": "M5",
@@ -2184,7 +2184,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-225",
+    "id": "OPT-V8C-8225",
     "layers": 7,
     "lr": 0.00018,
     "base_timeframe": "M5",
@@ -2194,7 +2194,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-226",
+    "id": "OPT-V8C-8226",
     "layers": 5,
     "lr": 0.00022,
     "base_timeframe": "M5",
@@ -2204,17 +2204,17 @@
     "reason": null
   },
   {
-    "id": "OPT-227",
+    "id": "OPT-V8C-227",
     "layers": 4,
     "lr": 0.00018,
     "base_timeframe": "M5",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -42.2 pip after 5 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-228",
+    "id": "OPT-V8C-8228",
     "layers": 4,
     "lr": 0.0001,
     "base_timeframe": "M15",
@@ -2224,7 +2224,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-229",
+    "id": "OPT-V8C-8229",
     "layers": 6,
     "lr": 0.00026,
     "base_timeframe": "M15",
@@ -2234,7 +2234,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-230",
+    "id": "OPT-V8C-8230",
     "layers": 7,
     "lr": 0.00026,
     "base_timeframe": "M5",
@@ -2244,7 +2244,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-231",
+    "id": "OPT-V8C-8231",
     "layers": 7,
     "lr": 0.00019,
     "base_timeframe": "M5",
@@ -2254,17 +2254,17 @@
     "reason": null
   },
   {
-    "id": "OPT-232",
+    "id": "OPT-V8C-232",
     "layers": 4,
     "lr": 0.00029,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -18.1 pip after 8 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-233",
+    "id": "OPT-V8C-8233",
     "layers": 6,
     "lr": 8e-05,
     "base_timeframe": "M15",
@@ -2274,7 +2274,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-234",
+    "id": "OPT-V8C-8234",
     "layers": 5,
     "lr": 0.0001,
     "base_timeframe": "M15",
@@ -2284,7 +2284,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-235",
+    "id": "OPT-V8C-8235",
     "layers": 4,
     "lr": 0.0001,
     "base_timeframe": "M15",
@@ -2294,17 +2294,17 @@
     "reason": null
   },
   {
-    "id": "OPT-236",
+    "id": "OPT-V8C-236",
     "layers": 7,
     "lr": 0.0001,
     "base_timeframe": "M15",
-    "status": "COMPLETED",
-    "assigned_node": "ARGO3",
-    "score": 77.75499999999998,
+    "status": "PENDING",
+    "assigned_node": null,
+    "score": null,
     "reason": null
   },
   {
-    "id": "OPT-V8B-237",
+    "id": "OPT-V8C-8237",
     "layers": 7,
     "lr": 0.00027,
     "base_timeframe": "M5",
@@ -2314,17 +2314,17 @@
     "reason": null
   },
   {
-    "id": "OPT-238",
+    "id": "OPT-V8C-238",
     "layers": 4,
     "lr": 7e-05,
     "base_timeframe": "M15",
-    "status": "FAILED_EARLY",
-    "assigned_node": "ARGO1",
+    "status": "PENDING",
+    "assigned_node": null,
     "score": null,
-    "reason": "Early stop: PnL -5.1 pip after 11 splits"
+    "reason": null
   },
   {
-    "id": "OPT-V8B-239",
+    "id": "OPT-V8C-8239",
     "layers": 7,
     "lr": 0.0001,
     "base_timeframe": "M5",
@@ -2334,7 +2334,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-240",
+    "id": "OPT-V8C-8240",
     "layers": 5,
     "lr": 0.00018,
     "base_timeframe": "M5",
@@ -2344,7 +2344,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-241",
+    "id": "OPT-V8C-8241",
     "layers": 7,
     "lr": 0.00026,
     "base_timeframe": "M5",
@@ -2354,7 +2354,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-242",
+    "id": "OPT-V8C-8242",
     "layers": 5,
     "lr": 0.00019,
     "base_timeframe": "M15",
@@ -2364,7 +2364,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-243",
+    "id": "OPT-V8C-8243",
     "layers": 7,
     "lr": 0.00015,
     "base_timeframe": "M15",
@@ -2374,7 +2374,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-244",
+    "id": "OPT-V8C-8244",
     "layers": 5,
     "lr": 0.00021,
     "base_timeframe": "M5",
@@ -2384,7 +2384,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-245",
+    "id": "OPT-V8C-8245",
     "layers": 4,
     "lr": 8e-05,
     "base_timeframe": "M15",
@@ -2394,7 +2394,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-246",
+    "id": "OPT-V8C-8246",
     "layers": 7,
     "lr": 0.00011,
     "base_timeframe": "M5",
@@ -2404,7 +2404,7 @@
     "reason": null
   },
   {
-    "id": "OPT-V8B-247",
+    "id": "OPT-V8C-8247",
     "layers": 5,
     "lr": 0.00026,
     "base_timeframe": "M15",

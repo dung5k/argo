@@ -187,7 +187,10 @@ def main():
     if args.resume and os.path.exists(checkpoint_path):
         try:
             log(f"Loading checkpoint from {checkpoint_path}...")
-            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
+            try:
+                checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
+            except TypeError:
+                checkpoint = torch.load(checkpoint_path, map_location=device)
             model.load_state_dict(checkpoint['model_state'])
             optimizer.load_state_dict(checkpoint['optimizer_state'])
             if 'scheduler_state' in checkpoint:
@@ -524,7 +527,11 @@ def main():
         # Kết thúc 1 Split, Load lại bộ não tốt nhất của Split này (tránh Overfitting vào epoch cuối)
         if os.path.exists(best_model_path):
             log(f"--- [Walk-Forward] Load lai Model tot nhat (Loss: {best_loss:.4f}) de mang sang Split tiep theo ---")
-            model.load_state_dict(torch.load(best_model_path, map_location=device, weights_only=True))
+            try:
+                best_model_state = torch.load(best_model_path, map_location=device, weights_only=True)
+            except TypeError:
+                best_model_state = torch.load(best_model_path, map_location=device)
+            model.load_state_dict(best_model_state)
             
         # Kiểm tra Early Stopping theo Split (Sau khi kết thúc toàn bộ epochs của split)
         if split_best_edge < 0:
