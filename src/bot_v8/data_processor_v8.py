@@ -74,20 +74,26 @@ class V8DataProcessor:
 
     def process_live_data(self, df_m1: pd.DataFrame):
         try:
-            df_m15 = self.resample_m1_to_tf(df_m1, '15T') # M15
-            df_h1 = self.resample_m1_to_tf(df_m1, '1h')
-            df_h4 = self.resample_m1_to_tf(df_m1, '4h')
+            base_tf_cfg = self.config.get("system", {}).get("base_timeframe", "M15")
+            if base_tf_cfg == "M5":
+                freq_base, freq_mid, freq_high = '5T', '15T', '1h'
+            else:
+                freq_base, freq_mid, freq_high = '15T', '1h', '4h'
+                
+            df_base = self.resample_m1_to_tf(df_m1, freq_base)
+            df_mid = self.resample_m1_to_tf(df_m1, freq_mid)
+            df_high = self.resample_m1_to_tf(df_m1, freq_high)
             
             # Need minimum data for indicators (SMA 200 needs 200 candles)
-            if len(df_h4) < 200:
-                self.log(f"❌ [V8DataProcessor] Lỗi: Cần ít nhất 200 nến H4 (hiện có {len(df_h4)}). Hãy kéo dữ liệu MT5 dài hơn!")
+            if len(df_high) < 200:
+                self.log(f"❌ [V8DataProcessor] Lỗi: Cần ít nhất 200 nến high_freq (hiện có {len(df_high)}). Hãy kéo dữ liệu MT5 dài hơn!")
                 return False, None
                 
-            proc_m15 = self._process_tf(df_m15)
-            proc_h1 = self._process_tf(df_h1, "_h1")
-            proc_h4 = self._process_tf(df_h4, "_h4")
+            proc_base = self._process_tf(df_base)
+            proc_mid = self._process_tf(df_mid, "_h1")
+            proc_high = self._process_tf(df_high, "_h4")
             
-            df = self.mtf.merge_mtf(proc_m15, proc_h1, proc_h4)
+            df = self.mtf.merge_mtf(proc_base, proc_mid, proc_high)
             
             # Lấy dòng cuối cùng (hiện tại)
             row = df.iloc[-1]
@@ -104,9 +110,9 @@ class V8DataProcessor:
                     history = history[-self.seq_len:]
                 return torch.tensor(history, dtype=torch.long)
 
-            x_m15 = get_seq(proc_m15, 'token_id').unsqueeze(0)
-            x_h1 = get_seq(proc_h1, 'token_id_h1').unsqueeze(0)
-            x_h4 = get_seq(proc_h4, 'token_id_h4').unsqueeze(0)
+            x_m15 = get_seq(proc_base, 'token_id').unsqueeze(0)
+            x_h1 = get_seq(proc_mid, 'token_id_h1').unsqueeze(0)
+            x_h4 = get_seq(proc_high, 'token_id_h4').unsqueeze(0)
             
             ob_features = [
                 row.get('in_ob_up', 0.0), row.get('in_ob_dn', 0.0), row.get('ob_strength', 0.0),

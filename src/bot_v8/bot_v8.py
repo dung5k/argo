@@ -245,7 +245,10 @@ def bot_background_loop():
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
-    gui_status = "Sẵn sàng, chờ nến M15..."
+    base_tf_cfg = config.get("system", {}).get("base_timeframe", "M15")
+    resample_freq = '5T' if base_tf_cfg == "M5" else '15T'
+    
+    gui_status = f"Sẵn sàng, chờ nến {base_tf_cfg}..."
     log("✅ Bot đã sẵn sàng. Đang vào vòng lặp giám sát...")
     
     while True:
@@ -265,8 +268,8 @@ def bot_background_loop():
             df_m1.set_index('time', inplace=True)
             df_m1.rename(columns={'tick_volume': 'volume'}, inplace=True)
             
-            df_m15 = data_processor.resample_m1_to_tf(df_m1, '15T')
-            current_last_candle_time = df_m15.index[-1]
+            df_base = data_processor.resample_m1_to_tf(df_m1, resample_freq)
+            current_last_candle_time = df_base.index[-1]
             
             # Update gui info if tick is available
             tick = mt5.symbol_info_tick(actual_sym)
@@ -275,10 +278,10 @@ def bot_background_loop():
             if last_candle_time is None:
                 last_candle_time = current_last_candle_time
                 gui_status = f"Đồng bộ nến {last_candle_time.strftime('%H:%M')}"
-                log(f"[Sync] Đã đồng bộ nến M15 gần nhất: {last_candle_time}")
+                log(f"[Sync] Đã đồng bộ nến {base_tf_cfg} gần nhất: {last_candle_time}")
             elif current_last_candle_time > last_candle_time:
                 gui_status = f"Nến {current_last_candle_time.strftime('%H:%M')} vừa đóng. Analyzing..."
-                log(f"🔔 [TÍN HIỆU] Nến M15 mới đóng: {current_last_candle_time}. Đang phân tích...")
+                log(f"🔔 [TÍN HIỆU] Nến {base_tf_cfg} mới đóng: {current_last_candle_time}. Đang phân tích...")
                 
                 success, tensors = data_processor.process_live_data(df_m1)
                 if success and tensors is not None:
