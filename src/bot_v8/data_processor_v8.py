@@ -84,6 +84,11 @@ class V8DataProcessor:
             df_mid = self.resample_m1_to_tf(df_m1, freq_mid)
             df_high = self.resample_m1_to_tf(df_m1, freq_high)
             
+            # Loại bỏ dòng cuối cùng của mỗi khung thời gian vì đây là nến hiện tại chưa đóng cửa (tránh lỗi Repaint)
+            df_base = df_base.iloc[:-1]
+            df_mid = df_mid.iloc[:-1]
+            df_high = df_high.iloc[:-1]
+            
             # Need minimum data for indicators (SMA 200 needs 200 candles)
             if len(df_high) < 200:
                 self.log(f"❌ [V8DataProcessor] Lỗi: Cần ít nhất 200 nến high_freq (hiện có {len(df_high)}). Hãy kéo dữ liệu MT5 dài hơn!")
