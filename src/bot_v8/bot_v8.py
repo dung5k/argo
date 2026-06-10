@@ -30,7 +30,7 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-MODEL_NAME = "brain_OPT-12_EWC_PnL+44.pt"
+MODEL_NAME = "best_model_ARGO3_OPT-6.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
