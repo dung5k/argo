@@ -31,7 +31,7 @@ TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
 # MODEL_NAME cũ bị Model Collapse (100% STRONG_BUY) → Swap sang OPT-238 (Review Board 2026-06-11)
-MODEL_NAME = "brain_OPT-238_S9_PnL+134_260610_2158.pt"
+MODEL_NAME = "brain_OPT-1_S17_PnL+163_FULL.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
