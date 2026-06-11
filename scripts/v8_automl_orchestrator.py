@@ -54,7 +54,7 @@ def check_node_running(node):
     if node == "ARGO1":
         try:
             res = subprocess.run(
-                ['python', '-c', "import psutil; print(any(p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and 'v8_training_loop' in ' '.join(p.info['cmdline']) and '-c' not in p.info['cmdline'] for p in psutil.process_iter(['name', 'cmdline'])))"],
+                ['python', '-c', "import psutil; print(any(p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and ('v8_training_loop' in ' '.join(p.info['cmdline']) or 'v8_train_full' in ' '.join(p.info['cmdline'])) and '-c' not in p.info['cmdline'] for p in psutil.process_iter(['name', 'cmdline'])))"],
                 capture_output=True, text=True, timeout=5
             )
             return "True" in res.stdout
@@ -71,7 +71,7 @@ def check_node_running(node):
                 remote_py = "C:/argo/venv/Scripts/python.exe"
             else:
                 remote_py = "D:/DungLA/Python39/python.exe"
-            cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
+            cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and (\'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) or \'v8_train_full\' in \' \'.join(p.info[\'cmdline\'])) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
             stdin, stdout, stderr = client.exec_command(cmd, timeout=15)
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             err_out = stderr.read().decode('utf-8', errors='ignore').strip()
@@ -91,7 +91,7 @@ def kill_node(node):
     """Kill process training trên node"""
     print(f"[{node}] Đang Kill tiến trình...")
     if node == "ARGO1":
-        subprocess.run(['python', '-c', "import psutil; [p.terminate() for p in psutil.process_iter(['name', 'cmdline']) if p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and 'v8_training_loop' in ' '.join(p.info['cmdline']) and '-c' not in p.info['cmdline']]"])
+        subprocess.run(['python', '-c', "import psutil; [p.terminate() for p in psutil.process_iter(['name', 'cmdline']) if p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and ('v8_training_loop' in ' '.join(p.info['cmdline']) or 'v8_train_full' in ' '.join(p.info['cmdline'])) and '-c' not in p.info['cmdline']]"])
     else:
         ip = NODES[node]["ip"]
         user = NODES[node]["user"]
@@ -103,7 +103,7 @@ def kill_node(node):
                 remote_py = "C:/argo/venv/Scripts/python.exe"
             else:
                 remote_py = "D:/DungLA/Python39/python.exe"
-            client.exec_command(f'"{remote_py}" -c "import psutil; [p.terminate() for p in psutil.process_iter([\'name\', \'cmdline\']) if p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and \'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) and \'-c\' not in p.info[\'cmdline\']]"', timeout=15)
+            client.exec_command(f'"{remote_py}" -c "import psutil; [p.terminate() for p in psutil.process_iter([\'name\', \'cmdline\']) if p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and (\'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) or \'v8_train_full\' in \' \'.join(p.info[\'cmdline\'])) and \'-c\' not in p.info[\'cmdline\']]"', timeout=15)
             client.close()
         except Exception as e:
             with open("logs/orchestrator_debug.log", "a", encoding="utf-8") as lf:
