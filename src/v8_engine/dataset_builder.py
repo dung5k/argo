@@ -9,6 +9,7 @@ class V8DatasetBuilder(Dataset):
     """
     Gộp Pipeline: Đọc dữ liệu, Detect Fractal, Map Tokens, OB, và tạo Dataset cho PyTorch.
     Xử lý độc lập cho M15, H1, H4, sau đó merge lại để không bị leak data.
+    """
     def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame, label_thresholds=None):
         self.config = config
         self.vocab = config.get('nlp_tokenizer_params', {}).get('vocabulary', ["HH", "HL", "LH", "LL", "BOS_UP", "BOS_DN", "CHOCH_UP", "CHOCH_DN", "FAKE_BOS"])
