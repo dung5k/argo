@@ -74,6 +74,10 @@ class V8FullTrainer:
         print("Filtering out Asian session (keeping 08:00 - 22:59 server time)...")
         df_m1 = df_m1[(df_m1.index.hour >= 8) & (df_m1.index.hour <= 22)].copy()
         
+        # CHỐNG DATA LEAKAGE: Cắt bỏ toàn bộ dữ liệu từ 24/01/2026 trở đi
+        print("Truncating data strictly before 2026-01-24 to prevent leakage into the test set...")
+        df_m1 = df_m1[df_m1.index < '2026-01-24'].copy()
+        
         # Resample base, mid, high
         print(f"Resampling datasets (Base: {self.base_freq}, Mid: {self.mid_freq}, High: {self.high_freq})...")
         def resample_df(df, freq):
