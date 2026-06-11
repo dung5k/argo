@@ -10,7 +10,7 @@ class V8DatasetBuilder(Dataset):
     Gộp Pipeline: Đọc dữ liệu, Detect Fractal, Map Tokens, OB, và tạo Dataset cho PyTorch.
     Xử lý độc lập cho M15, H1, H4, sau đó merge lại để không bị leak data.
     """
-    def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame, label_thresholds=None):
+    def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame):
         self.config = config
         self.vocab = config.get('nlp_tokenizer_params', {}).get('vocabulary', ["HH", "HL", "LH", "LL", "BOS_UP", "BOS_DN", "CHOCH_UP", "CHOCH_DN", "FAKE_BOS"])
         
@@ -86,8 +86,9 @@ class V8DatasetBuilder(Dataset):
         if config.get("system", {}).get("base_timeframe", "M15") == "M5":
             target_shift = target_shift * 3
 
-        # Target: 5 classes (Hold-heavy distribution)
-        # 0: Strong Sell (15%), 1: Weak Sell (10%), 2: Hold (50%), 3: Weak Buy (10%), 4: Strong Buy (15%)
+        # Target: 5 classes with FIXED percentage change thresholds
+        # Normalized by close price → consistent across 2021 ($1700) to 2025 ($2800)
+        # 0: Strong Sell, 1: Weak Sell, 2: Hold, 3: Weak Buy, 4: Strong Buy
         
         # --- TRIPLE-BARRIER LABELING ---
         look_forward = abs(target_shift)
@@ -115,26 +116,25 @@ class V8DatasetBuilder(Dataset):
         diff = pd.Series(diff, index=self.df.index)
         # -------------------------------
         
-        if label_thresholds is not None:
-            p15, p25, p75, p85 = label_thresholds
-        else:
-            valid_diff = diff.dropna()
-            if len(valid_diff) > 0:
-                p15 = np.percentile(valid_diff, 15.0)
-                p25 = np.percentile(valid_diff, 25.0)
-                p75 = np.percentile(valid_diff, 75.0)
-                p85 = np.percentile(valid_diff, 85.0)
-            else:
-                p15, p25, p75, p85 = 0, 0, 0, 0
-                
-        self.thresholds = (p15, p25, p75, p85)
-            
+        # --- FIXED PERCENTAGE THRESHOLDS ---
+        # Normalize diff by close price to get percentage change
+        diff_pct = (diff / close) * 100.0
+        
+        # Fixed thresholds (% change). Hold zone intentionally WIDER than signal zones.
+        # For M15 shift=-4 (1 hour): Strong signal ≈ ±0.12%, Weak ≈ ±0.04%
+        # These thresholds are CONSTANT regardless of year or volatility regime
+        pct_strong = 0.12   # Strong Buy/Sell: > 0.12% change (~$3 at $2500 gold)
+        pct_weak = 0.04     # Weak Buy/Sell: 0.04% - 0.12% (~$1-$3)
+                            # Hold: within ±0.04% (~$1) - noise zone
+        
+        self.thresholds = (-pct_strong, -pct_weak, pct_weak, pct_strong)
+        
         conditions = [
-            diff < p15,
-            (diff >= p15) & (diff < p25),
-            (diff >= p25) & (diff < p75),
-            (diff >= p75) & (diff < p85),
-            diff >= p85
+            diff_pct < -pct_strong,                              # 0: Strong Sell
+            (diff_pct >= -pct_strong) & (diff_pct < -pct_weak),  # 1: Weak Sell
+            (diff_pct >= -pct_weak) & (diff_pct < pct_weak),     # 2: Hold
+            (diff_pct >= pct_weak) & (diff_pct < pct_strong),    # 3: Weak Buy
+            diff_pct >= pct_strong                               # 4: Strong Buy
         ]
         choices = [0, 1, 2, 3, 4]
         

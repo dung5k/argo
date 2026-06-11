@@ -186,6 +186,7 @@ def parse_log(node, opt_id):
         return False, 0, 25, 0.0
         
     is_done = "FULL_TRAIN_DONE" in raw
+    is_early_stopped = "Early stopping triggered" in raw
     
     # Parse total epochs from "Starting training for X epochs"
     total_epochs = 25
@@ -193,16 +194,21 @@ def parse_log(node, opt_id):
     if m_total:
         total_epochs = int(m_total.group(1))
     
-    # Parse completed epochs: "==> Epoch X/Y Completed | Average Loss: Z"
-    epoch_losses = []
+    # Parse completed epochs: "==> Epoch X/Y Completed | Train Loss: Z | Val Loss: W"
+    epoch_data = []
     for line in raw.split('\n'):
-        m = re.search(r'Epoch (\d+)/(\d+) Completed \| Average Loss: ([\d.]+)', line)
+        m = re.search(r'Epoch (\d+)/(\d+) Completed \| Train Loss: ([\d.]+) \| Val Loss: ([\d.]+)', line)
         if m:
-            epoch_losses.append(float(m.group(3)))
+            epoch_data.append({
+                'epoch': int(m.group(1)),
+                'train_loss': float(m.group(3)),
+                'val_loss': float(m.group(4)),
+                'is_best': '** BEST **' in line
+            })
                 
-    epochs_done = len(epoch_losses)
-    last_loss = epoch_losses[-1] if epoch_losses else 0.0
-    return is_done, epochs_done, total_epochs, last_loss
+    epochs_done = len(epoch_data)
+    last_val_loss = epoch_data[-1]['val_loss'] if epoch_data else 0.0
+    return (is_done or is_early_stopped), epochs_done, total_epochs, last_val_loss
 
 def main():
     print("Khởi động AutoML Orchestrator...")
