@@ -17,12 +17,14 @@ from src.v8_engine.transformer_model import V8TransformerModel
 from src.v8_engine.dataset_builder import V8DatasetBuilder
 
 class V8FullTrainer:
-    def __init__(self, model_name: str, config_path: str, epochs: int, lr: float, batch_size: int):
+    def __init__(self, model_name: str, config_path: str, epochs: int, lr: float, batch_size: int, scratch: bool = False, layers: int = 3):
         self.model_name = model_name
         self.config_path = config_path
         self.epochs = epochs
         self.lr = lr
         self.batch_size = batch_size
+        self.scratch = scratch
+        self.layers = layers
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Load config
@@ -43,6 +45,13 @@ class V8FullTrainer:
             self.base_freq, self.mid_freq, self.high_freq = "15min", "1h", "4h"
 
     def load_model(self):
+        if self.scratch:
+            print(f"Initializing a fresh model from scratch with {self.layers} layers...")
+            self.config['transformer_params']['num_layers'] = self.layers
+            model = V8TransformerModel(self.config)
+            model.to(self.device)
+            return model
+            
         m_path = os.path.join(_ROOT, "v8_configs", "hall_of_fame", self.model_name)
         if not os.path.exists(m_path):
             raise FileNotFoundError(f"Model path not found: {m_path}")
@@ -74,9 +83,9 @@ class V8FullTrainer:
         print("Filtering out Asian session (keeping 08:00 - 22:59 server time)...")
         df_m1 = df_m1[(df_m1.index.hour >= 8) & (df_m1.index.hour <= 22)].copy()
         
-        # CHỐNG DATA LEAKAGE: Cắt bỏ toàn bộ dữ liệu từ 24/01/2026 trở đi
-        print("Truncating data strictly before 2026-01-24 to prevent leakage into the test set...")
-        df_m1 = df_m1[df_m1.index < '2026-01-24'].copy()
+        # CHỐNG DATA LEAKAGE: Cắt bỏ toàn bộ dữ liệu từ 01/01/2026 trở đi
+        print("Truncating data strictly before 2026-01-01 to prevent leakage into the test set...")
+        df_m1 = df_m1[df_m1.index < '2026-01-01'].copy()
         
         # Resample base, mid, high
         print(f"Resampling datasets (Base: {self.base_freq}, Mid: {self.mid_freq}, High: {self.high_freq})...")
@@ -145,6 +154,8 @@ def main():
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--scratch", action="store_true", help="Initialize model from scratch instead of loading weights")
+    parser.add_argument("--layers", type=int, default=3, help="Number of layers if training from scratch")
     
     args = parser.parse_args()
     
@@ -155,7 +166,9 @@ def main():
         config_path=config_path,
         epochs=args.epochs,
         lr=args.lr,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        scratch=args.scratch,
+        layers=args.layers
     )
     
     trainer.train()
