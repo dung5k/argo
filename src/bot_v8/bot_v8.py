@@ -361,7 +361,16 @@ def bot_background_loop():
                                 log(f"🚨 [CIRCUIT BREAKER] Model Collapse phát hiện! {circuit_breaker_count} tín hiệu {current_dir} liên tiếp. TẠM DỪNG GIAO DỊCH.")
                             gui_status = f"⚠️ Circuit Breaker TRIPPED ({current_dir})"
                         elif signal == 4 or signal == 0:
-                            trade_manager.execute_trade(action, price, atr)
+                            candle_hour = current_last_candle_time.hour
+                            candle_day = current_last_candle_time.dayofweek
+                            if candle_day == 4:
+                                log("⏸️ [Time Filter] Hôm nay là Thứ 6, tạm ngưng giao dịch để bảo toàn lợi nhuận.")
+                                gui_status = "⏸️ Nghỉ trade Thứ 6"
+                            elif candle_hour in [10, 14, 17]:
+                                log(f"⏸️ [Time Filter] Khung giờ {candle_hour}:00 rủi ro cao, bỏ qua tín hiệu.")
+                                gui_status = f"⏸️ Tránh bão lúc {candle_hour}:00"
+                            else:
+                                trade_manager.execute_trade(action, price, atr)
                             
                 last_candle_time = current_last_candle_time
                 
