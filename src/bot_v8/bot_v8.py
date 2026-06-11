@@ -253,12 +253,15 @@ def bot_background_loop():
         config = json.load(f)
         
     mt5_manager = MT5DataManager(log_callback=log, target_sym=SYMBOL, config_path=os.path.join(_ROOT, "v8_configs", "unified_config.json"))
-    mt5_manager.scan_terminals_and_map()
     
-    if not mt5.initialize():
-        gui_status = "LỖI KHỞI TẠO MT5"
-        log("❌ KHÔNG THỂ KHỞI TẠO MT5. Kiểm tra lại MT5!")
-        return
+    # Thử kết nối MT5 trực tiếp TRƯỚC (không gọi shutdown)
+    mt5_path = r"D:\mt5\MetaTrader 5 EXNESS\terminal64.exe"
+    if not mt5.initialize(path=mt5_path, timeout=30000):
+        log(f"⚠️ mt5.initialize(path) failed: {mt5.last_error()}. Trying bare init...")
+        if not mt5.initialize():
+            gui_status = "LỖI KHỞI TẠO MT5"
+            log(f"❌ KHÔNG THỂ KHỞI TẠO MT5. Error: {mt5.last_error()}")
+            return
 
     if mt5.terminal_info() is None:
         gui_status = "LỖI KẾT NỐI MT5"
