@@ -89,6 +89,13 @@ class V8TradeManager:
             log(f"❌ [TradeManager] Không lấy được giá tick cho {self.symbol}")
             return False
             
+        # 0. Kiểm tra khung giờ giao dịch (Chỉ cho phép vào lệnh: 08:00 - 21:59 UTC broker time)
+        broker_datetime = datetime.fromtimestamp(tick.time, tz=timezone.utc)
+        broker_hour = broker_datetime.hour
+        if broker_hour < 8 or broker_hour >= 22:
+            log(f"⚠️ [TradeManager] Từ chối vào lệnh. Ngoài khung giờ được phép open (Giờ server: {broker_datetime.strftime('%H:%M')} UTC).")
+            return False
+            
         tp_dist = atr * TP_MULT
         sl_dist = atr * SL_MULT
         
@@ -187,6 +194,24 @@ class V8TradeManager:
                     log(f"⚠️ [Time Stop] Lệnh {pos.ticket} đã ôm {duration_minutes:.1f} phút. Đang đóng lệnh...")
                     self.close_position(pos)
 
+    def check_session_stops(self):
+        positions = mt5.positions_get(symbol=self.symbol)
+        if positions is None or len(positions) == 0:
+            return
+            
+        tick = mt5.symbol_info_tick(self.symbol)
+        if not tick: return
+        
+        broker_datetime = datetime.fromtimestamp(tick.time, tz=timezone.utc)
+        broker_hour = broker_datetime.hour
+        
+        # Đóng lệnh cưỡng bức khi ngoài phiên NY (23:00 - 07:59 broker time)
+        if broker_hour >= 23 or broker_hour < 8:
+            for pos in positions:
+                if pos.magic == MAGIC_NUMBER:
+                    log(f"⚠️ [Session Stop] Kết thúc phiên NY (Giờ server: {broker_datetime.strftime('%H:%M')} UTC). Cưỡng bức đóng lệnh {pos.ticket}...")
+                    self.close_position(pos)
+
     def close_position(self, pos):
         tick = mt5.symbol_info_tick(self.symbol)
         if not tick: return False
@@ -254,6 +279,7 @@ def bot_background_loop():
     while True:
         try:
             trade_manager.check_time_stops()
+            trade_manager.check_session_stops()
             if gui_atr > 0.0:
                 trade_manager.manage_open_positions(gui_atr)
             

@@ -383,6 +383,11 @@ def main():
                 if idx + max_hold >= n_samples:
                     continue
                     
+                entry_time = valid_df.index[idx]
+                # Chỉ cho phép vào lệnh trước khi đóng NY 1 tiếng (8:00 - 21:59)
+                if entry_time.hour >= 22 or entry_time.hour < 8:
+                    continue
+                    
                 row = valid_df.iloc[idx]
                 entry_price = row['close']
                 atr_val = row.get('atr', 1.5)
@@ -408,7 +413,6 @@ def main():
                 close_candle = idx + max_hold
                 
                 # M1 Evaluation Window
-                entry_time = valid_df.index[idx]
                 start_m1 = entry_time + timedelta(minutes=15)
                 end_m1 = start_m1 + timedelta(minutes=max_hold * 15)
                 
@@ -419,6 +423,14 @@ def main():
                         fh = m1_row['high']
                         fl = m1_row['low']
                         
+                        # Đóng lệnh cưỡng bức khi kết thúc phiên NY (23:00)
+                        if m1_time.hour >= 23 or m1_time.hour < 8:
+                            result = 'scratch'
+                            pnl = (m1_row['close'] - real_entry) if direction == 1 else (real_entry - m1_row['close'])
+                            minutes_passed = (m1_time - entry_time).total_seconds() / 60
+                            close_candle = idx + int(minutes_passed // 15)
+                            break
+                            
                         if direction == 1:
                             if fl <= sl_price:
                                 result = 'loss'
@@ -447,6 +459,15 @@ def main():
                                 break
                 
                 if result == 'scratch':
+                    # Kiểm tra đóng lệnh cưỡng bức tại cấp nến M15
+                    for h_idx in range(idx + 1, close_candle + 1):
+                        if h_idx >= n_samples:
+                            break
+                        check_time = valid_df.index[h_idx]
+                        if check_time.hour >= 23 or check_time.hour < 8:
+                            close_candle = h_idx
+                            break
+                    close_candle = min(close_candle, n_samples - 1)
                     close_price = valid_df.iloc[close_candle]['close']
                     if direction == 1:
                         pnl = close_price - real_entry
