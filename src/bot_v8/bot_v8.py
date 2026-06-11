@@ -30,7 +30,8 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-MODEL_NAME = "best_model_ARGO3_OPT-217.pt"
+# MODEL_NAME cũ bị Model Collapse (100% STRONG_BUY) → Swap sang OPT-238 (Review Board 2026-06-11)
+MODEL_NAME = "brain_OPT-238_S9_PnL+134_260610_2158.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
@@ -41,6 +42,12 @@ gui_price = 0.0
 gui_atr = 0.0
 gui_sym = SYMBOL
 gui_threshold = 0.35
+
+# --- Circuit Breaker: Chống Model Collapse ---
+CIRCUIT_BREAKER_LIMIT = 20  # Pause nếu >20 tín hiệu liên tiếp cùng chiều
+circuit_breaker_count = 0
+circuit_breaker_last_dir = None
+circuit_breaker_tripped = False
 
 log_dir = os.path.join(_ROOT, "logs")
 os.makedirs(log_dir, exist_ok=True)
@@ -270,8 +277,9 @@ def bot_background_loop():
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
-    base_tf_cfg = config.get("system", {}).get("base_timeframe", "M15")
-    resample_freq = '5T' if base_tf_cfg == "M5" else '15T'
+    # Override: OPT-238 model trained on M15, force M15 regardless of shared config
+    base_tf_cfg = "M15"  # Hardcode for OPT-238. TODO: auto-detect from model metadata
+    resample_freq = '15T'
     
     gui_status = f"Sẵn sàng, chờ nến {base_tf_cfg}..."
     log("✅ Bot đã sẵn sàng. Đang vào vòng lặp giám sát...")
@@ -328,7 +336,28 @@ def bot_background_loop():
                         
                         log(f"📊 [Phân tích] Giá: {price} | ATR: {atr:.2f} | Tín hiệu: {action} (Độ tin cậy: {conf*100:.1f}%)")
                         
-                        if signal == 4 or signal == 0:
+                        # --- Circuit Breaker Logic ---
+                        global circuit_breaker_count, circuit_breaker_last_dir, circuit_breaker_tripped
+                        current_dir = 'BUY' if signal == 4 else ('SELL' if signal == 0 else 'HOLD')
+                        
+                        if current_dir != 'HOLD':
+                            if current_dir == circuit_breaker_last_dir:
+                                circuit_breaker_count += 1
+                            else:
+                                circuit_breaker_count = 1
+                                circuit_breaker_last_dir = current_dir
+                                circuit_breaker_tripped = False
+                        else:
+                            circuit_breaker_count = 0
+                            circuit_breaker_last_dir = None
+                            circuit_breaker_tripped = False
+                        
+                        if circuit_breaker_count >= CIRCUIT_BREAKER_LIMIT:
+                            if not circuit_breaker_tripped:
+                                circuit_breaker_tripped = True
+                                log(f"🚨 [CIRCUIT BREAKER] Model Collapse phát hiện! {circuit_breaker_count} tín hiệu {current_dir} liên tiếp. TẠM DỪNG GIAO DỊCH.")
+                            gui_status = f"⚠️ Circuit Breaker TRIPPED ({current_dir})"
+                        elif signal == 4 or signal == 0:
                             trade_manager.execute_trade(action, price, atr)
                             
                 last_candle_time = current_last_candle_time
