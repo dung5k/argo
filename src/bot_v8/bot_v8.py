@@ -280,9 +280,13 @@ def bot_background_loop():
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
-    # Override: OPT-238 model trained on M15, force M15 regardless of shared config
-    base_tf_cfg = "M15"  # Hardcode for OPT-238. TODO: auto-detect from model metadata
-    resample_freq = '15T'
+    # Auto-detect from model name
+    if "8202" in MODEL_NAME or "V8C" in MODEL_NAME:
+        base_tf_cfg = "M5"
+        resample_freq = '5T'
+    else:
+        base_tf_cfg = "M15"
+        resample_freq = '15T'
     
     gui_status = f"Sẵn sàng, chờ nến {base_tf_cfg}..."
     log("✅ Bot đã sẵn sàng. Đang vào vòng lặp giám sát...")

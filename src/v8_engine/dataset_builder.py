@@ -9,8 +9,7 @@ class V8DatasetBuilder(Dataset):
     """
     Gộp Pipeline: Đọc dữ liệu, Detect Fractal, Map Tokens, OB, và tạo Dataset cho PyTorch.
     Xử lý độc lập cho M15, H1, H4, sau đó merge lại để không bị leak data.
-    """
-    def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame):
+    def __init__(self, config: dict, df_base: pd.DataFrame, df_mid: pd.DataFrame, df_high: pd.DataFrame, label_thresholds=None):
         self.config = config
         self.vocab = config.get('nlp_tokenizer_params', {}).get('vocabulary', ["HH", "HL", "LH", "LL", "BOS_UP", "BOS_DN", "CHOCH_UP", "CHOCH_DN", "FAKE_BOS"])
         
@@ -90,14 +89,19 @@ class V8DatasetBuilder(Dataset):
         # 0: Strong Sell (15%), 1: Weak Sell (10%), 2: Hold (50%), 3: Weak Buy (10%), 4: Strong Buy (15%)
         diff = self.df['close'].shift(target_shift) - self.df['close']
         
-        valid_diff = diff.dropna()
-        if len(valid_diff) > 0:
-            p15 = np.percentile(valid_diff, 15.0)
-            p25 = np.percentile(valid_diff, 25.0)
-            p75 = np.percentile(valid_diff, 75.0)
-            p85 = np.percentile(valid_diff, 85.0)
+        if label_thresholds is not None:
+            p15, p25, p75, p85 = label_thresholds
         else:
-            p15, p25, p75, p85 = 0, 0, 0, 0
+            valid_diff = diff.dropna()
+            if len(valid_diff) > 0:
+                p15 = np.percentile(valid_diff, 15.0)
+                p25 = np.percentile(valid_diff, 25.0)
+                p75 = np.percentile(valid_diff, 75.0)
+                p85 = np.percentile(valid_diff, 85.0)
+            else:
+                p15, p25, p75, p85 = 0, 0, 0, 0
+                
+        self.thresholds = (p15, p25, p75, p85)
             
         conditions = [
             diff < p15,

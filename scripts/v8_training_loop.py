@@ -261,7 +261,7 @@ def main():
         df_test_mid = resample_df(df_test_m1, mid_freq)
         df_test_high = resample_df(df_test_m1, high_freq)
         
-        test_dataset = V8DatasetBuilder(config, df_test_base, df_test_mid, df_test_high)
+        test_dataset = V8DatasetBuilder(config, df_test_base, df_test_mid, df_test_high, label_thresholds=train_dataset.thresholds)
         test_loader = DataLoader(test_dataset, batch_size=bs, shuffle=False)
         
         # Reset best_loss per split? Or keep global? Walk-forward usually optimizes per split or global
@@ -420,14 +420,20 @@ def main():
                 trade_m1 = df_m1.loc[start_m1:end_m1]
                 
                 if not trade_m1.empty:
-                    for m1_time, m1_row in trade_m1.iterrows():
-                        fh = m1_row['high']
-                        fl = m1_row['low']
+                    m1_times = trade_m1.index
+                    m1_highs = trade_m1['high'].values
+                    m1_lows = trade_m1['low'].values
+                    m1_closes = trade_m1['close'].values
+                    
+                    for i in range(len(m1_times)):
+                        m1_time = m1_times[i]
+                        fh = m1_highs[i]
+                        fl = m1_lows[i]
                         
                         # Đóng lệnh cưỡng bức khi kết thúc phiên NY (23:00)
                         if m1_time.hour >= 23 or m1_time.hour < 8:
                             result = 'scratch'
-                            pnl = (m1_row['close'] - real_entry) if direction == 1 else (real_entry - m1_row['close'])
+                            pnl = (m1_closes[i] - real_entry) if direction == 1 else (real_entry - m1_closes[i])
                             minutes_passed = (m1_time - entry_time).total_seconds() / 60
                             close_candle = idx + int(minutes_passed // 15)
                             break
