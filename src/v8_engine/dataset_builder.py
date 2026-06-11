@@ -140,6 +140,14 @@ class V8DatasetBuilder(Dataset):
         
         self.df['target'] = np.select(conditions, choices, default=2)
         
+        # --- MASKING LOSS: Set target = -1 for restricted hours ---
+        h = self.df.index.hour
+        asian_mask = (h >= 23) | (h < 8)
+        ny_open_mask = (h >= 15) & (h <= 18)
+        ignore_mask = asian_mask | ny_open_mask
+        self.df.loc[ignore_mask, 'target'] = -1
+        # --------------------------------------------------------
+        
         self.valid_df = self.df.dropna(subset=['target']).copy()
         
         # --- Pre-build sequences cho O(1) __getitem__ ---

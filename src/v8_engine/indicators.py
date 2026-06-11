@@ -61,6 +61,7 @@ def add_all_indicators(df):
     
     # Fix NaNs resulting from 0 ATR
     df_out.replace([np.inf, -np.inf], 0.0, inplace=True)
-    df_out.fillna(0.0, inplace=True)
+    num_cols = df_out.select_dtypes(include=[np.number]).columns
+    df_out[num_cols] = df_out[num_cols].fillna(0.0)
     
     return df_out

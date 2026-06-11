@@ -326,6 +326,18 @@ def bot_background_loop():
                 
                 success, tensors = data_processor.process_live_data(df_m1)
                 if success and tensors is not None:
+                    # --- TIME FILTER (Masking Loss Architecture) ---
+                    import datetime
+                    utc_now = datetime.datetime.utcnow()
+                    h = utc_now.hour
+                    if (h >= 23) or (h < 8) or (15 <= h <= 18):
+                        log(f"⏸️ [TIME FILTER] Bỏ qua phân tích nến {current_last_candle_time} (Khung giờ cấm: Phiên Á / Đầu Phiên Mỹ).")
+                        gui_status = "Bỏ qua (Time Filter)"
+                        gui_action = "HOLD"
+                        last_candle_time = current_last_candle_time
+                        continue
+                    # -----------------------------------------------
+                    
                     res = inference_engine.predict(tensors)
                     if "error" not in res:
                         signal = res['signal']

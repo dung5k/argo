@@ -233,6 +233,7 @@ def main():
             report.append(f"🟢 Nodes kích hoạt: {', '.join(active_nodes)}")
             
             # --- KIỂM TRA TRẠNG THÁI CÁC MÁY ĐANG CHẠY ---
+            assigned_nodes = [t["assigned_node"] for t in running_tasks if t.get("assigned_node")]
             for task in running_tasks:
                 node = task["assigned_node"]
                 if node not in active_nodes:
@@ -265,6 +266,13 @@ def main():
                         kill_node(node)
                         task["status"] = "FAILED_EARLY"
                         task["reason"] = f"Early stop: PnL {avg_pnl:+.1f} pip after {splits} splits"
+                        
+            # Thêm báo cáo cho các máy đang bận cày tay (không nằm trong queue)
+            for node in active_nodes:
+                if node in NODES and node not in assigned_nodes:
+                    is_alive = check_node_running(node)
+                    if is_alive:
+                        report.append(f"🔥 {node} đang bận cày tay (Manual Training / Full Train) ngoài hệ thống AutoML.")
                         
             # --- TỰ ĐỘNG BƠM THÊM NHIỆM VỤ NẾU CẠN KIỆT ---
             if len(pending_tasks) == 0:

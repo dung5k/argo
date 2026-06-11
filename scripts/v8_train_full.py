@@ -110,7 +110,7 @@ class V8FullTrainer:
         # Weighted CrossEntropyLoss to balance HOLD vs trading classes
         class_weights = torch.tensor([1.0/0.15, 1.0/0.10, 1.0/0.50, 1.0/0.10, 1.0/0.15]).to(self.device)
         class_weights = class_weights / class_weights.sum() * 5.0
-        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1, ignore_index=-1)
         
         optimizer = optim.AdamW(model.parameters(), lr=self.lr, weight_decay=1e-4)
         

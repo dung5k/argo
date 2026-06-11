@@ -169,7 +169,7 @@ def main():
     # Boost learning on rare but important Strong signals
     class_weights = torch.tensor([1.0/0.15, 1.0/0.10, 1.0/0.50, 1.0/0.10, 1.0/0.15]).to(device)
     class_weights = class_weights / class_weights.sum() * 5.0  # normalize to sum=5
-    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
+    criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1, ignore_index=-1)
     log(f"Using Weighted CrossEntropyLoss (label_smoothing=0.1, weights={[f'{w:.2f}' for w in class_weights.tolist()]})")
         
     optimizer = optim.AdamW(model.parameters(), lr=strat_lr, weight_decay=1e-3)

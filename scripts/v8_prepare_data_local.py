@@ -6,9 +6,8 @@ def prepare_v8_data_local():
     print("Loading M1 Data from 2021 to 2026...")
     df = pd.read_parquet("data/XAUUSDm_M1_2021_2026.parquet")
     
-    # Filter session (8 to 22)
-    df_session = df[(df.index.hour >= 8) & (df.index.hour <= 22)].copy()
-    print(f"Total rows after filtering Asian session: {len(df_session)} / {len(df)}")
+    df_session = df.copy()
+    print(f"Total rows (keeping 24/7 continuous sequence): {len(df_session)}")
     
     out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "v8_splits"))
     os.makedirs(out_dir, exist_ok=True)
