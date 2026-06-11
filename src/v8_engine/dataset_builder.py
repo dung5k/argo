@@ -88,7 +88,32 @@ class V8DatasetBuilder(Dataset):
 
         # Target: 5 classes (Hold-heavy distribution)
         # 0: Strong Sell (15%), 1: Weak Sell (10%), 2: Hold (50%), 3: Weak Buy (10%), 4: Strong Buy (15%)
-        diff = self.df['close'].shift(target_shift) - self.df['close']
+        
+        # --- TRIPLE-BARRIER LABELING ---
+        look_forward = abs(target_shift)
+        close = self.df['close']
+        atr = self.df.get('atr', pd.Series(1.5, index=self.df.index)).fillna(1.5)
+        
+        # 1. Base difference
+        diff = close.shift(target_shift) - close
+        
+        # 2. Check future lows and highs in the window
+        future_min = self.df['low'].rolling(window=look_forward, min_periods=1).min().shift(-look_forward)
+        future_max = self.df['high'].rolling(window=look_forward, min_periods=1).max().shift(-look_forward)
+        
+        # 3. Penalize Stop-Loss hits
+        sl_dist = 1.5 * atr
+        
+        # Buy Stop-Hunt Trap: It looked like a buy (diff > 0) but SL was hit first
+        buy_stopped = future_min <= (close - sl_dist)
+        diff = np.where((diff > 0) & buy_stopped, -sl_dist, diff)
+        
+        # Sell Stop-Hunt Trap: It looked like a sell (diff < 0) but SL was hit first
+        sell_stopped = future_max >= (close + sl_dist)
+        diff = np.where((diff < 0) & sell_stopped, sl_dist, diff)
+        
+        diff = pd.Series(diff, index=self.df.index)
+        # -------------------------------
         
         if label_thresholds is not None:
             p15, p25, p75, p85 = label_thresholds

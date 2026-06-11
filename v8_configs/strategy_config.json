@@ -4,5 +4,5 @@
     "learning_rate_base": 0.0005,
     "enable_fvg_features": false,
     "batch_size": 8,
-    "confidence_threshold": 0.35
+    "confidence_threshold": 0.30
 }
