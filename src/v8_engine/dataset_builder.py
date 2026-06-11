@@ -121,11 +121,11 @@ class V8DatasetBuilder(Dataset):
         diff_pct = (diff / close) * 100.0
         
         # Fixed thresholds (% change). Hold zone intentionally WIDER than signal zones.
-        # For M15 shift=-4 (1 hour): Strong signal ≈ ±0.12%, Weak ≈ ±0.06%
+        # For M15 shift=-4 (1 hour): Strong signal ≈ ±0.12%, Weak ≈ ±0.04%
         # These thresholds are CONSTANT regardless of year or volatility regime
         pct_strong = 0.12   # Strong Buy/Sell: > 0.12% change (~$3 at $2500 gold)
-        pct_weak = 0.06     # Weak Buy/Sell: 0.06% - 0.12% (~$1.5-$3)
-                            # Hold: within ±0.06% (~$1.5) - noise zone
+        pct_weak = 0.04     # Weak Buy/Sell: 0.04% - 0.12% (~$1-$3)
+                            # Hold: within ±0.04% (~$1) - noise zone
         
         self.thresholds = (-pct_strong, -pct_weak, pct_weak, pct_strong)
         
