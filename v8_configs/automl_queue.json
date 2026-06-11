@@ -1,38 +1,8 @@
 [
   {
-    "id": "OPT-1",
-    "layers": 4,
-    "lr": 0.00029,
-    "base_timeframe": "M15",
-    "status": "RUNNING",
-    "assigned_node": "ARGO1",
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-2",
-    "layers": 4,
-    "lr": 0.00021,
-    "base_timeframe": "M5",
-    "status": "RUNNING",
-    "assigned_node": "ARGO2",
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-3",
-    "layers": 4,
-    "lr": 0.00022,
-    "base_timeframe": "M5",
-    "status": "RUNNING",
-    "assigned_node": "ARGO3",
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-4",
-    "layers": 4,
-    "lr": 0.00025,
+    "id": "V82-1",
+    "layers": 3,
+    "lr": 1e-5,
     "base_timeframe": "M15",
     "status": "PENDING",
     "assigned_node": null,
@@ -40,39 +10,9 @@
     "reason": null
   },
   {
-    "id": "OPT-5",
-    "layers": 7,
-    "lr": 0.00011,
-    "base_timeframe": "M5",
-    "status": "PENDING",
-    "assigned_node": null,
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-6",
-    "layers": 7,
-    "lr": 0.00021,
-    "base_timeframe": "M5",
-    "status": "PENDING",
-    "assigned_node": null,
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-7",
-    "layers": 6,
-    "lr": 0.00016,
-    "base_timeframe": "M15",
-    "status": "PENDING",
-    "assigned_node": null,
-    "score": null,
-    "reason": null
-  },
-  {
-    "id": "OPT-8",
+    "id": "V82-2",
     "layers": 5,
-    "lr": 0.00024,
+    "lr": 1e-5,
     "base_timeframe": "M15",
     "status": "PENDING",
     "assigned_node": null,
@@ -80,9 +20,9 @@
     "reason": null
   },
   {
-    "id": "OPT-9",
+    "id": "V82-3",
     "layers": 7,
-    "lr": 0.0002,
+    "lr": 1e-5,
     "base_timeframe": "M15",
     "status": "PENDING",
     "assigned_node": null,
@@ -90,10 +30,10 @@
     "reason": null
   },
   {
-    "id": "OPT-10",
-    "layers": 7,
-    "lr": 0.00021,
-    "base_timeframe": "M5",
+    "id": "V82-4",
+    "layers": 4,
+    "lr": 1e-5,
+    "base_timeframe": "M15",
     "status": "PENDING",
     "assigned_node": null,
     "score": null,

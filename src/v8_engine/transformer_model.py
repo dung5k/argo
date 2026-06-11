@@ -22,7 +22,9 @@ class V8PositionalEncoding(nn.Module):
 class V8TransformerModel(nn.Module):
     """
     Mô hình NLP Transformer Multi-Timeframe ứng dụng cho Trading.
-    Sử dụng Concatenated Self-Attention để thay thế Cross-Attention phức tạp.
+    V8.2: Sửa kiến trúc theo kết quả Audit đồng thuận:
+      - PE riêng cho từng Timeframe (không còn PE chung chồng chéo)
+      - Trích xuất token cuối cả 3 TF (H4, H1, M15) thay vì chỉ M15
     """
     def __init__(self, config: dict):
         super(V8TransformerModel, self).__init__()
@@ -31,6 +33,7 @@ class V8TransformerModel(nn.Module):
         self.nhead = params.get('num_heads', 4)
         self.num_layers = params.get('num_layers', 3)
         self.dropout = params.get('dropout', 0.1)
+        self.seq_len = config.get('nlp_tokenizer_params', {}).get('max_sequence_length', 50)
         
         vocab_params = config.get('nlp_tokenizer_params', {})
         self.vocab_size = len(vocab_params.get('vocabulary', [])) + 1 # +1 for PAD
@@ -39,6 +42,9 @@ class V8TransformerModel(nn.Module):
         self.embedding = nn.Embedding(self.vocab_size, self.d_model)
         # Timeframe Embedding to avoid Positional Collision (0: H4, 1: H1, 2: M15)
         self.tf_embedding = nn.Embedding(3, self.d_model)
+        
+        # [FIX 1.1] PE riêng cho từng Timeframe — tránh gán vị trí tuyệt đối chồng chéo
+        # Mỗi TF có PE độc lập, phản ánh tính chất song song (parallel) của giá
         self.pos_encoder = V8PositionalEncoding(self.d_model, self.dropout, max_len=5000)
         
         encoder_layers = nn.TransformerEncoderLayer(
@@ -54,9 +60,13 @@ class V8TransformerModel(nn.Module):
         # Continuous features shape: 34 (9 OB + 4 Time + 7 indicators * 3 TFs = 34)
         self.cont_dim = 34
         
-        # Layer gộp Token Feature và Continuous Feature
+        # [FIX 2.1] fc_combine nhận token cuối cả 3 TF: 3 * d_model + cont_dim
+        # Trước đây chỉ dùng 1 * d_model (chỉ M15) → bottleneck thông tin
         self.fc_combine = nn.Sequential(
-            nn.Linear(self.d_model + self.cont_dim, self.d_model),
+            nn.Linear(3 * self.d_model + self.cont_dim, self.d_model * 2),
+            nn.GELU(),
+            nn.Dropout(self.dropout),
+            nn.Linear(self.d_model * 2, self.d_model),
             nn.GELU(),
             nn.Dropout(self.dropout)
         )
@@ -70,7 +80,7 @@ class V8TransformerModel(nn.Module):
     def forward(self, x_m15, x_h1, x_h4, cont_x):
         """
         x_m15, x_h1, x_h4: [batch, seq_len]
-        cont_x: [batch, 9]
+        cont_x: [batch, 34]
         """
         # Lấy Timeframe ID cho từng frame: 0=H4, 1=H1, 2=M15
         device = x_m15.device
@@ -83,20 +93,32 @@ class V8TransformerModel(nn.Module):
         emb_h1 = self.embedding(x_h1) * math.sqrt(self.d_model) + self.tf_embedding(tf_h1)
         emb_m15 = self.embedding(x_m15) * math.sqrt(self.d_model) + self.tf_embedding(tf_m15)
         
+        # [FIX 1.1] PE riêng cho từng TF trước khi nối
+        # Mỗi TF có chuỗi vị trí bắt đầu từ 0 → seq_len-1
+        # Phản ánh đúng: token cuối của H4 và token cuối của M15 đều ở "hiện tại" (t=0)
+        emb_h4 = self.pos_encoder(emb_h4)
+        emb_h1 = self.pos_encoder(emb_h1)
+        emb_m15 = self.pos_encoder(emb_m15)
+        
         # Nối lại: [batch, 3 * seq_len, d_model]
         # H4 đứng đầu để cung cấp context dài hạn nhất, H1 ở giữa, M15 ở cuối
         emb_concat = torch.cat([emb_h4, emb_h1, emb_m15], dim=1)
         
-        # Đưa toàn bộ chuỗi concat qua Positional Encoding một lần duy nhất
-        emb_concat = self.pos_encoder(emb_concat)
-        
         out = self.transformer_encoder(emb_concat)
         
-        # Lấy Output của token M15 cuối cùng (Nằm ở vị trí cuối cùng của chuỗi concat)
-        last_token_out = out[:, -1, :] 
+        # [FIX 2.1] Trích xuất token cuối cùng của CẢ 3 khung thời gian
+        # Thay vì chỉ lấy token cuối M15, lấy đại diện từ cả H4 và H1
+        # Tận dụng triệt để tính toán Attention đã chạy cho toàn bộ chuỗi
+        seq = self.seq_len
+        h4_last = out[:, seq - 1, :]       # Token cuối H4 (vị trí seq_len - 1)
+        h1_last = out[:, 2 * seq - 1, :]   # Token cuối H1 (vị trí 2*seq_len - 1)
+        m15_last = out[:, -1, :]            # Token cuối M15 (vị trí cuối cùng)
         
-        # Nối với Continuous Features (Order Block)
-        combined = torch.cat([last_token_out, cont_x], dim=1)
+        # Concatenate 3 token đại diện: [batch, 3 * d_model]
+        mtf_features = torch.cat([h4_last, h1_last, m15_last], dim=1)
+        
+        # Nối với Continuous Features (Order Block + Indicators + Time)
+        combined = torch.cat([mtf_features, cont_x], dim=1)
         features = self.fc_combine(combined)
         
         # Ép qua LayerNorm

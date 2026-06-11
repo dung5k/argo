@@ -120,9 +120,9 @@ def spawn_task(node, task):
     
     if node == "ARGO1":
         bat_path = os.path.abspath(f"temp/train_{node}_{opt_id}.bat")
-        py_path = os.path.abspath("scripts/v8_training_loop.py")
+        py_path = os.path.abspath("scripts/v8_train_full.py")
         with open(bat_path, "w", encoding="utf-8") as f:
-            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --node_id {node} --layers {layers} --lr {lr} --epochs 6 --opt_id {opt_id} --base_timeframe {tf}\n')
+            f.write(f'@echo off\nset PYTHONIOENCODING=utf-8\ncd /d "%~dp0\\.."\n"C:\\Users\\GiggaMan\\AppData\\Local\\Programs\\Python\\Python39\\python.exe" "{py_path}" --model brain_{opt_id}_{node}.pt --layers {layers} --lr 1e-5 --epochs 25 --scratch --batch_size 128 --node_id {node} --opt_id {opt_id}\n')
         
         user = NODES[node]["user"]
         cmd = f'schtasks /create /tn "V8_{node}_AutoML" /tr "{bat_path}" /sc once /st 00:00 /ru "{user}" /it /f ; schtasks /run /tn "V8_{node}_AutoML"'
@@ -140,10 +140,12 @@ def spawn_task(node, task):
             # Create wrapper bat file on remote
             if node == "ARGO2":
                 py_exe = "C:/argo/venv/Scripts/python.exe"
+                bs = 32
             else:
                 py_exe = "D:/DungLA/Python39/python.exe"
+                bs = 64
                 
-            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_training_loop.py --node_id {node} --layers {layers} --lr {lr} --epochs 6 --opt_id {opt_id} --base_timeframe {tf} > logs/argo_cmd_{opt_id}.log 2>&1\n'
+            bat_content = f'@echo off\ncd /d "{remote_base}"\n"{py_exe}" scripts/v8_train_full.py --model brain_{opt_id}_{node}.pt --layers {layers} --lr 1e-5 --epochs 25 --scratch --batch_size {bs} --node_id {node} --opt_id {opt_id}\n'
             
             sftp = client.open_sftp()
             bat_file = f'{remote_base}/auto_{node.lower()}.bat'
@@ -159,7 +161,7 @@ def spawn_task(node, task):
                 lf.write(f"{time.ctime()} - [{node}] Lỗi SSH khi spawn: {e}\n")
 
 def parse_log(node, opt_id):
-    """Đọc file log và tính Edge trung bình. Trả về (is_done, splits_done, avg_edge)"""
+    """Đọc file log của v8_train_full.py. Trả về (is_done, epochs_done, total_epochs, last_loss)"""
     log_file = f"logs/v8_train_{node}_{opt_id}.log"
     raw = ""
     if node == "ARGO1":
@@ -181,36 +183,26 @@ def parse_log(node, opt_id):
             pass
             
     if not raw:
-        return False, 0, 17, 0.0
+        return False, 0, 25, 0.0
         
-    is_done = "DA HOAN THANH" in raw
+    is_done = "FULL_TRAIN_DONE" in raw
     
-    # Tim tong so splits
-    total_splits = 17  # default
-    m_total = re.search(r'Found (\d+) walk-forward splits', raw)
+    # Parse total epochs from "Starting training for X epochs"
+    total_epochs = 25
+    m_total = re.search(r'Starting training for (\d+) epochs', raw)
     if m_total:
-        total_splits = int(m_total.group(1))
+        total_epochs = int(m_total.group(1))
     
-    # Tim tat ca PnL cua cac split (epoch cuoi = Ep 3)
-    pnl_values = []
-    is_last_ep = False
+    # Parse completed epochs: "==> Epoch X/Y Completed | Average Loss: Z"
+    epoch_losses = []
     for line in raw.split('\n'):
-        if "Ep 6" in line:
-            is_last_ep = True
-        
-        # Lay PnL o epoch cuoi cua moi split
-        if is_last_ep and "[PnL] PnL:" in line:
-            m = re.search(r'PnL:([+\-]?[\d.]+)pip', line)
-            if m:
-                pnl_values.append(float(m.group(1)))
-                is_last_ep = False
+        m = re.search(r'Epoch (\d+)/(\d+) Completed \| Average Loss: ([\d.]+)', line)
+        if m:
+            epoch_losses.append(float(m.group(3)))
                 
-    if not pnl_values:
-        return is_done, 0, total_splits, 0.0
-        
-    splits_done = len(pnl_values)
-    avg_pnl = sum(pnl_values) / len(pnl_values)
-    return is_done, splits_done, total_splits, avg_pnl
+    epochs_done = len(epoch_losses)
+    last_loss = epoch_losses[-1] if epoch_losses else 0.0
+    return is_done, epochs_done, total_epochs, last_loss
 
 def main():
     print("Khởi động AutoML Orchestrator...")
@@ -247,7 +239,7 @@ def main():
                     report.append(f"⚠️ {node} mất kết nối hoặc lỗi kiểm tra. Đang tạm bỏ qua.")
                     continue
                     
-                is_done, splits, total_splits, avg_pnl = parse_log(node, opt_id)
+                is_done, epochs_done, total_epochs, last_loss = parse_log(node, opt_id)
                 
                 if not is_alive and not is_done:
                     # Chết bất đắc kỳ tử
@@ -256,16 +248,14 @@ def main():
                     report.append(f"💀 {opt_id} [{tf}] trên {node} bị CRASH. | Số lớp: {task['layers']} | LR: {task['lr']}")
                 elif is_done:
                     task["status"] = "COMPLETED"
-                    task["score"] = avg_pnl
-                    report.append(f"✅ {opt_id} [{tf}] trên {node} XONG ({splits}/{total_splits} splits). PnL TB: {avg_pnl:+.1f}pip | Số lớp: {task['layers']} | LR: {task['lr']}")
+                    task["score"] = last_loss
+                    report.append(f"✅ {opt_id} [{tf}] trên {node} XONG ({epochs_done}/{total_epochs} epochs). Loss: {last_loss:.4f} | Số lớp: {task['layers']}")
                 else:
-                    # Đang chạy, check early stopping
-                    report.append(f"⚡ {node} đang cày {opt_id} [{tf}] ({splits}/{total_splits} splits, PnL TB: {avg_pnl:+.1f}pip) | Số lớp: {task['layers']} | LR: {task['lr']}")
-                    if splits >= 5 and avg_pnl < -5.0:
-                        report.append(f"  🗑️ CẢNH BÁO: Option này rác! Kích hoạt EARLY STOPPING.")
-                        kill_node(node)
-                        task["status"] = "FAILED_EARLY"
-                        task["reason"] = f"Early stop: PnL {avg_pnl:+.1f} pip after {splits} splits"
+                    # Đang chạy
+                    if epochs_done > 0:
+                        report.append(f"⚡ {node} đang cày {opt_id} [{tf}] (Epoch {epochs_done}/{total_epochs}, Loss: {last_loss:.4f}) | Số lớp: {task['layers']}")
+                    else:
+                        report.append(f"⏳ {node} đang khởi tạo {opt_id} [{tf}] (Đang nạp dữ liệu...) | Số lớp: {task['layers']}")
                         
             # Thêm báo cáo cho các máy đang bận cày tay (không nằm trong queue)
             for node in active_nodes:

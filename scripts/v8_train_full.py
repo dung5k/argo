@@ -17,7 +17,7 @@ from src.v8_engine.transformer_model import V8TransformerModel
 from src.v8_engine.dataset_builder import V8DatasetBuilder
 
 class V8FullTrainer:
-    def __init__(self, model_name: str, config_path: str, epochs: int, lr: float, batch_size: int, scratch: bool = False, layers: int = 3):
+    def __init__(self, model_name: str, config_path: str, epochs: int, lr: float, batch_size: int, scratch: bool = False, layers: int = 3, log_file: str = ""):
         self.model_name = model_name
         self.config_path = config_path
         self.epochs = epochs
@@ -25,6 +25,7 @@ class V8FullTrainer:
         self.batch_size = batch_size
         self.scratch = scratch
         self.layers = layers
+        self.log_file = log_file
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Load config
@@ -110,11 +111,15 @@ class V8FullTrainer:
         # Weighted CrossEntropyLoss to balance HOLD vs trading classes
         class_weights = torch.tensor([1.0/0.15, 1.0/0.10, 1.0/0.50, 1.0/0.10, 1.0/0.15]).to(self.device)
         class_weights = class_weights / class_weights.sum() * 5.0
-        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1, ignore_index=-1)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1, reduction='none')
         
         optimizer = optim.AdamW(model.parameters(), lr=self.lr, weight_decay=1e-4)
         
-        print(f"\nStarting training for {self.epochs} epochs with LR={self.lr} on device={self.device}...")
+        log_msg = f"\nStarting training for {self.epochs} epochs with LR={self.lr} on device={self.device}..."
+        print(log_msg)
+        if self.log_file:
+            with open(self.log_file, 'a', encoding='utf-8') as lf:
+                lf.write(log_msg + '\n')
         for epoch in range(self.epochs):
             model.train()
             total_loss = 0.0
@@ -128,17 +133,25 @@ class V8FullTrainer:
                 
                 optimizer.zero_grad()
                 out = model(x_m15, x_h1, x_h4, cont_x)
-                loss = criterion(out, y)
+                mask = (y != -1).float()
+                y_safe = torch.where(y == -1, torch.tensor(2, device=out.device), y)
+                raw_loss = criterion(out, y_safe)
+                loss = (raw_loss * mask).sum() / mask.sum().clamp(min=1.0)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
                 
                 total_loss += loss.item()
                 if (step + 1) % 50 == 0:
-                    print(f"Epoch {epoch+1}/{self.epochs} | Step {step+1}/{len(loader)} | Loss: {loss.item():.4f}")
+                    step_msg = f"Epoch {epoch+1}/{self.epochs} | Step {step+1}/{len(loader)} | Loss: {loss.item():.4f}"
+                    print(step_msg)
                     
             avg_loss = total_loss / len(loader)
-            print(f"==> Epoch {epoch+1} Completed | Average Loss: {avg_loss:.4f}")
+            epoch_msg = f"==> Epoch {epoch+1}/{self.epochs} Completed | Average Loss: {avg_loss:.4f}"
+            print(epoch_msg)
+            if self.log_file:
+                with open(self.log_file, 'a', encoding='utf-8') as lf:
+                    lf.write(epoch_msg + '\n')
             
         # Save final model
         base_name = os.path.splitext(self.model_name)[0]
@@ -146,7 +159,11 @@ class V8FullTrainer:
         out_path = os.path.join(_ROOT, "v8_configs", "hall_of_fame", out_name)
         
         torch.save(model.state_dict(), out_path)
-        print(f"\n✅ SUCCESS: Full training complete! Model saved to: {out_path}")
+        done_msg = f"\nFULL_TRAIN_DONE: Model saved to {out_path}"
+        print(done_msg)
+        if self.log_file:
+            with open(self.log_file, 'a', encoding='utf-8') as lf:
+                lf.write(done_msg + '\n')
 
 def main():
     parser = argparse.ArgumentParser(description="Full Dataset Training for V8 Brains")
@@ -156,10 +173,17 @@ def main():
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--scratch", action="store_true", help="Initialize model from scratch instead of loading weights")
     parser.add_argument("--layers", type=int, default=3, help="Number of layers if training from scratch")
+    parser.add_argument("--node_id", type=str, default="ARGO1", help="Node ID for log file naming")
+    parser.add_argument("--opt_id", type=str, default="", help="AutoML Option ID for log file naming")
     
     args = parser.parse_args()
     
     config_path = os.path.join(_ROOT, "v8_configs", "v8_training_config.json")
+    
+    # Create log file path for orchestrator to read
+    log_suffix = f"_{args.opt_id}" if args.opt_id else ""
+    log_file = os.path.join(_ROOT, "logs", f"v8_train_{args.node_id}{log_suffix}.log")
+    os.makedirs(os.path.join(_ROOT, "logs"), exist_ok=True)
     
     trainer = V8FullTrainer(
         model_name=args.model,
@@ -168,7 +192,8 @@ def main():
         lr=args.lr,
         batch_size=args.batch_size,
         scratch=args.scratch,
-        layers=args.layers
+        layers=args.layers,
+        log_file=log_file
     )
     
     trainer.train()
