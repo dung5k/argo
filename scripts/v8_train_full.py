@@ -110,17 +110,20 @@ class V8FullTrainer:
 
     def prepare_datasets(self):
         """
-        [FIX 2] Split data into Train (2021-2024) and Validation (2025 H1).
+        Split data: Train (2021 - Jun 2025), Validation (Jul - Dec 2025).
+        Test set: 2026 (kept completely separate, not loaded here).
         Returns two DataLoaders: train_loader and val_loader.
         """
         df_m1 = self._prepare_m1_data()
         
         # Split M1 data BEFORE resampling to avoid leakage at boundary
-        train_cutoff = '2025-01-01'
-        val_cutoff = '2025-07-01'
+        # Train: 2021-01-01 to 2025-06-30 (~4.5 years)
+        # Val:   2025-07-01 to 2025-12-31 (~6 months)
+        # Test:  2026 (excluded by _prepare_m1_data cutoff)
+        train_cutoff = '2025-07-01'
         
         df_m1_train = df_m1[df_m1.index < train_cutoff].copy()
-        df_m1_val = df_m1[(df_m1.index >= train_cutoff) & (df_m1.index < val_cutoff)].copy()
+        df_m1_val = df_m1[df_m1.index >= train_cutoff].copy()
         
         print(f"Train period: {df_m1_train.index[0]} to {df_m1_train.index[-1]} ({len(df_m1_train):,} M1 rows)")
         print(f"Validation period: {df_m1_val.index[0]} to {df_m1_val.index[-1]} ({len(df_m1_val):,} M1 rows)")
