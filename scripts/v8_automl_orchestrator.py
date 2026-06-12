@@ -49,12 +49,16 @@ def save_queue(q):
     with open(QUEUE_FILE, "w", encoding="utf-8") as f:
         json.dump(q, f, indent=2)
 
-def check_node_running(node):
+def check_node_running(node, opt_id=None):
     """Trả về True nếu python đang chạy script training trên node này, False nếu không, None nếu lỗi kết nối"""
+    
+    # Chuẩn bị string check opt_id
+    opt_check = f" and '{opt_id}' in ' '.join(p.info['cmdline'])" if opt_id else ""
+    
     if node == "ARGO1":
         try:
             res = subprocess.run(
-                ['python', '-c', "import psutil; print(any(p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and ('v8_training_loop' in ' '.join(p.info['cmdline']) or 'v8_train_full' in ' '.join(p.info['cmdline'])) and '-c' not in p.info['cmdline'] for p in psutil.process_iter(['name', 'cmdline'])))"],
+                ['python', '-c', f"import psutil; print(any(p.info['name'] and 'python' in p.info['name'].lower() and p.info['cmdline'] and ('v8_training_loop' in ' '.join(p.info['cmdline']) or 'v8_train_full' in ' '.join(p.info['cmdline'])){opt_check} and '-c' not in p.info['cmdline'] for p in psutil.process_iter(['name', 'cmdline'])))"],
                 capture_output=True, text=True, timeout=5
             )
             return "True" in res.stdout
@@ -66,12 +70,12 @@ def check_node_running(node):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=5)
+            client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=15)
             if node == "ARGO2":
                 remote_py = "C:/argo/venv/Scripts/python.exe"
             else:
                 remote_py = "D:/DungLA/Python39/python.exe"
-            cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and (\'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) or \'v8_train_full\' in \' \'.join(p.info[\'cmdline\'])) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
+            cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and (\'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) or \'v8_train_full\' in \' \'.join(p.info[\'cmdline\'])){opt_check} and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
             stdin, stdout, stderr = client.exec_command(cmd, timeout=45)
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             err_out = stderr.read().decode('utf-8', errors='ignore').strip()
@@ -243,7 +247,7 @@ def main():
                 opt_id = task["id"]
                 tf = task.get("base_timeframe", "M5")
                 print(f"Đang check_node_running cho {node} (RUNNING tasks)...")
-                is_alive = check_node_running(node)
+                is_alive = check_node_running(node, opt_id=opt_id)
                 print(f"Kết quả check_node_running {node}: {is_alive}")
                 
                 if is_alive is None:
@@ -273,18 +277,27 @@ def main():
                                     ip = NODES[t_node]["ip"]
                                     user = NODES[t_node]["user"]
                                     remote_base = NODES[t_node]["remote_base"]
-                                    remote_model_path = f"{remote_base}/v8_training/models/brain_{t_opt_id}_{t_node}_FULL.pt"
                                     
                                     import paramiko
                                     client = paramiko.SSHClient()
                                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                                    client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=30)
+                                    client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=15)
                                     sftp = client.open_sftp()
+                                    remote_model_path = f"{remote_base}/v8_configs/hall_of_fame/brain_{t_opt_id}_{t_node}_FULL.pt"
                                     sftp.get(remote_model_path, local_model_path)
+                                    
+                                    # Copy backtest report if exists
+                                    remote_report_path = f"{remote_base}/v8_configs/hall_of_fame/backtest_advanced_{t_opt_id}_{t_node}.txt"
+                                    local_report_path = os.path.abspath(f"v8_configs/hall_of_fame/backtest_advanced_{t_opt_id}_{t_node}.txt")
+                                    try:
+                                        sftp.get(remote_report_path, local_report_path)
+                                    except:
+                                        pass
+                                    
                                     sftp.close()
                                     client.close()
                                 else:
-                                    src_path = os.path.abspath(f"v8_training/models/brain_{t_opt_id}_{t_node}_FULL.pt")
+                                    src_path = os.path.abspath(f"v8_configs/hall_of_fame/brain_{t_opt_id}_{t_node}_FULL.pt")
                                     if os.path.exists(src_path):
                                         import shutil
                                         shutil.copy2(src_path, local_model_path)

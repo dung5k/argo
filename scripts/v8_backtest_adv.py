@@ -34,7 +34,7 @@ def main():
         
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    state_dict = torch.load(args.model, map_location=device, weights_only=False)
+    state_dict = torch.load(args.model, map_location=device)
     layer_indices = [int(k.split('.')[2]) for k in state_dict.keys() if k.startswith('transformer_encoder.layers.')]
     num_layers = max(layer_indices) + 1 if layer_indices else 3
     

@@ -275,15 +275,18 @@ class V8FullTrainer:
         if self.log_file:
             with open(self.log_file, 'a', encoding='utf-8') as lf:
                 lf.write(done_msg + '\n')
-                
+
         # [AUTO-BACKTEST] Chạy test nâng cao nếu model tốt (Val Loss <= 1.4500)
         if best_val_loss <= 1.4500:
             print(f"Bộ não {self.model_name} đạt chuẩn (Loss: {best_val_loss:.4f} <= 1.45). Đang tự động chạy Backtest nâng cao...")
             try:
                 import subprocess
-                out_txt = out_path.replace(".pt", "_backtest.txt")
+                clean_name = base_name[6:] if base_name.startswith("brain_") else base_name
+                report_name = f"backtest_advanced_{clean_name}.txt"
+                out_txt = os.path.join(_ROOT, "v8_configs", "hall_of_fame", report_name)
+                
                 py_exe = sys.executable
-                cmd = f'"{py_exe}" scripts/v8_backtest_adv.py --model "{out_path}" > "{out_txt}" 2>&1'
+                cmd = f'"{py_exe}" scripts/v8_backtest_adv.py --model "{out_name}" > "{out_txt}" 2>&1'
                 subprocess.run(cmd, shell=True)
                 print(f"✅ Đã lưu kết quả test nâng cao vào: {out_txt}")
                 if self.log_file:
