@@ -72,7 +72,7 @@ def check_node_running(node):
             else:
                 remote_py = "D:/DungLA/Python39/python.exe"
             cmd = f'"{remote_py}" -c "import psutil; print(any(p.info[\'name\'] and \'python\' in p.info[\'name\'].lower() and p.info[\'cmdline\'] and (\'v8_training_loop\' in \' \'.join(p.info[\'cmdline\']) or \'v8_train_full\' in \' \'.join(p.info[\'cmdline\'])) and \'-c\' not in p.info[\'cmdline\'] for p in psutil.process_iter([\'name\', \'cmdline\'])))"'
-            stdin, stdout, stderr = client.exec_command(cmd, timeout=15)
+            stdin, stdout, stderr = client.exec_command(cmd, timeout=45)
             out = stdout.read().decode('utf-8', errors='ignore').strip()
             err_out = stderr.read().decode('utf-8', errors='ignore').strip()
             if err_out:
@@ -212,11 +212,15 @@ def parse_log(node, opt_id):
 
 def main():
     print("Khởi động AutoML Orchestrator...")
+    print("Gửi tin nhắn Telegram khởi động...")
     send_tele("🚀 **AUTO-ML ORCHESTRATOR ĐÃ KHỞI ĐỘNG**\nHệ thống bắt đầu tự động điều phối hàng đợi các Option và đánh giá Early Stopping liên tục.")
+    print("Bắt đầu vòng lặp chính...")
     
     while True:
         try:
+            print("Đang load queue...")
             q = load_queue()
+            print("Đang get active nodes...")
             active_nodes = get_active_nodes()
             
             # Thống kê
@@ -238,7 +242,9 @@ def main():
                     continue
                 opt_id = task["id"]
                 tf = task.get("base_timeframe", "M5")
+                print(f"Đang check_node_running cho {node} (RUNNING tasks)...")
                 is_alive = check_node_running(node)
+                print(f"Kết quả check_node_running {node}: {is_alive}")
                 
                 if is_alive is None:
                     # SSH/Lỗi kết nối hoặc lỗi môi trường, không phán xét, skip qua
@@ -323,12 +329,16 @@ def main():
             # Thêm báo cáo cho các máy đang bận cày tay (không nằm trong queue)
             for node in active_nodes:
                 if node in NODES and node not in assigned_nodes:
+                    print(f"Đang check_node_running cho {node} (cày tay)...")
                     is_alive = check_node_running(node)
+                    print(f"Kết quả {node} cày tay: {is_alive}")
                     if is_alive:
                         report.append(f"🔥 {node} đang bận cày tay (Manual Training / Full Train) ngoài hệ thống AutoML.")
                         
             # --- TỰ ĐỘNG BƠM THÊM NHIỆM VỤ NẾU CẠN KIỆT ---
+            print("Kiểm tra pending tasks...")
             if len(pending_tasks) == 0:
+                print("Bơm thêm tasks...")
                 report.append("⏳ Hàng đợi trống! Đang tự động sinh thêm 10 cấu hình mới...")
                 last_id = 0
                 if q:
@@ -356,23 +366,30 @@ def main():
                 report.append(f"✅ Đã nạp thành công 10 cấu hình tiếp theo (OPT-{last_id+1} đến OPT-{last_id+10}).")
 
             # --- PHÂN BỔ VIỆC CHO MÁY RẢNH ---
+            print("Đang phân bổ việc...")
             pending_tasks = [t for t in q if t["status"] == "PENDING"]
             for node in active_nodes:
                 if node in NODES:
+                    print(f"Đang check_node_running cho phân bổ {node}...")
                     is_alive = check_node_running(node)
+                    print(f"Kết quả phân bổ {node}: {is_alive}")
                     if is_alive == False:  # Chỉ phân công nếu node thực sự kết nối được và rảnh
                         if pending_tasks:
                             task = pending_tasks.pop(0)
                             task["status"] = "RUNNING"
                             task["assigned_node"] = node
+                            print(f"Đang spawn task {task['id']} trên {node}...")
                             spawn_task(node, task)
                             report.append(f"🎯 Đã nạp {task['id']} vào máy {node}.")
                         
             # Cập nhật lại Queue
+            print("Lưu queue...")
             save_queue(q)
             
             # Gửi báo cáo
+            print("Gửi báo cáo...")
             send_tele('\n'.join(report))
+            print("Hoàn tất vòng lặp, chuẩn bị sleep...")
             
         except Exception as e:
             import traceback
