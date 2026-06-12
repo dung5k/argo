@@ -255,11 +255,68 @@ def main():
                 elif is_done:
                     task["status"] = "COMPLETED"
                     task["score"] = last_loss
-                    report.append(f"✅ {opt_id} [{tf}] trên {node} XONG ({epochs_done}/{total_epochs} epochs). Loss: {last_loss:.4f} | Số lớp: {task['layers']}")
+                    report.append(f"✅ {opt_id} [{tf}] trên {node} XONG ({epochs_done}/{total_epochs} epochs). Val Loss: {last_loss:.4f} | Số lớp: {task['layers']}")
+                    
+                    if last_loss >= 1.3000:
+                        report.append(f"🔍 Bộ não {opt_id} đạt chuẩn (Score >= 1.3000). Đang tải về và tự động chạy Backtest Nâng cao...")
+                        import threading
+                        def run_advanced_test(t_opt_id, t_node):
+                            try:
+                                local_model_path = os.path.abspath(f"v8_configs/hall_of_fame/brain_{t_opt_id}_{t_node}_FULL.pt")
+                                if t_node != "ARGO1":
+                                    ip = NODES[t_node]["ip"]
+                                    user = NODES[t_node]["user"]
+                                    remote_base = NODES[t_node]["remote_base"]
+                                    remote_model_path = f"{remote_base}/v8_training/models/brain_{t_opt_id}_{t_node}_FULL.pt"
+                                    
+                                    import paramiko
+                                    client = paramiko.SSHClient()
+                                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                                    client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=30)
+                                    sftp = client.open_sftp()
+                                    sftp.get(remote_model_path, local_model_path)
+                                    sftp.close()
+                                    client.close()
+                                else:
+                                    src_path = os.path.abspath(f"v8_training/models/brain_{t_opt_id}_{t_node}_FULL.pt")
+                                    if os.path.exists(src_path):
+                                        import shutil
+                                        shutil.copy2(src_path, local_model_path)
+                                
+                                if os.path.exists(local_model_path):
+                                    out_txt = os.path.abspath(f"v8_configs/hall_of_fame/backtest_{t_opt_id}_{t_node}.txt")
+                                    if t_node != "ARGO1":
+                                        try:
+                                            client = paramiko.SSHClient()
+                                            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                                            client.connect(ip, username=user, key_filename=os.path.expanduser("~/.ssh/id_rsa"), timeout=30)
+                                            sftp = client.open_sftp()
+                                            sftp.get(remote_model_path.replace(".pt", "_backtest.txt"), out_txt)
+                                            sftp.close()
+                                            client.close()
+                                        except Exception:
+                                            pass
+                                    else:
+                                        src_txt = os.path.abspath(f"v8_configs/hall_of_fame/brain_{t_opt_id}_{t_node}_FULL_backtest.txt")
+                                        if os.path.exists(src_txt):
+                                            import shutil
+                                            shutil.copy2(src_txt, out_txt)
+                                            
+                                    if os.path.exists(out_txt):
+                                        with open(out_txt, "r", encoding="utf-8") as f:
+                                            res = f.read()
+                                        lines = res.splitlines()
+                                        summary = "\n".join(lines[-13:]) if len(lines) >= 13 else res
+                                        msg = f"🏆 HOÀN TẤT BACKTEST TỰ ĐỘNG CHO {t_opt_id} ({t_node})\nĐã lưu file: backtest_{t_opt_id}_{t_node}.txt\n\nXem trước:\n```\n{summary}\n```"
+                                        send_tele(msg)
+                            except Exception as e:
+                                send_tele(f"⚠️ Lỗi khi chạy auto-backtest cho {t_opt_id}: {e}")
+                        
+                        threading.Thread(target=run_advanced_test, args=(opt_id, node)).start()
                 else:
                     # Đang chạy
                     if epochs_done > 0:
-                        report.append(f"⚡ {node} đang cày {opt_id} [{tf}] (Epoch {epochs_done}/{total_epochs}, Loss: {last_loss:.4f}) | Số lớp: {task['layers']}")
+                        report.append(f"⚡ {node} đang cày {opt_id} [{tf}] (Epoch {epochs_done}/{total_epochs}, Val Loss: {last_loss:.4f}) | Số lớp: {task['layers']}")
                     else:
                         report.append(f"⏳ {node} đang khởi tạo {opt_id} [{tf}] (Đang nạp dữ liệu...) | Số lớp: {task['layers']}")
                         

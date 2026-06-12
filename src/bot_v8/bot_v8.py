@@ -30,8 +30,8 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-# MODEL_NAME cập nhật sang siêu phẩm V82-1 (3 layers, M15) với Ngưỡng 60%
-MODEL_NAME = "brain_V82-1_ARGO1_FULL.pt"
+# MODEL_NAME cập nhật sang siêu phẩm OPT-1 (6 layers, M5) - Kiểu Cày Cuốc, Coverage cao
+MODEL_NAME = "brain_OPT-1_ARGO1_FULL.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
@@ -342,8 +342,8 @@ def bot_background_loop():
                         # --- TIME FILTER (08:00 - 22:00 Server Time) ---
                         h = current_last_candle_time.hour
                         if h < 8 or h >= 22:
-                            gui_action = f"NGỦ (AI tính: {action})"
-                            gui_status = "⏸️ Đang ngoài giờ Âu/Mỹ (Time Filter)"
+                            gui_action = f"🚫 NGOÀI GIỜ MỞ CỬA (Gợi ý AI: {action})"
+                            gui_status = "⏸️ Hệ thống đang ngủ chờ Phiên Âu/Mỹ"
                             log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
                             last_candle_time = current_last_candle_time
                             continue
@@ -399,11 +399,11 @@ def bot_background_loop():
 def update_ui(root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info):
     global gui_time
     gui_time = datetime.now().strftime('%H:%M:%S')
-    lbl_time.config(text=f"🕒 {gui_time}")
+    lbl_time.config(text=f"🕒 {gui_time} (Mở cửa: 15h00 - 05h00 VN)")
     lbl_status.config(text=f"📡 {gui_status}")
     lbl_action.config(text=f"🎯 Chiến thuật: {gui_action}")
     if 'lbl_config' in globals():
-        lbl_config.config(text=f"⚙️ Giờ: 08:00-22:00 | Ngưỡng: {gui_threshold*100:.0f}%")
+        lbl_config.config(text=f"⚙️ Lot: 0.01 | Ngưỡng: {gui_threshold*100:.0f}% | Anti-Collapse: {CIRCUIT_BREAKER_LIMIT} lệnh")
     lbl_info.config(text=f"💰 Giá: {gui_price:,.2f} | 📏 ATR: {gui_atr:.2f}")
     
     canvas_pred.delete("all")
@@ -479,7 +479,11 @@ def start_overlay_dashboard():
     root.mainloop()
 
 if __name__ == "__main__":
-    t = threading.Thread(target=bot_background_loop)
-    t.daemon = True
-    t.start()
-    start_overlay_dashboard()
+    if "--headless" in sys.argv:
+        print("Starting V8 LIVE BOT in HEADLESS mode (Console only)...")
+        bot_background_loop()
+    else:
+        t = threading.Thread(target=bot_background_loop)
+        t.daemon = True
+        t.start()
+        start_overlay_dashboard()

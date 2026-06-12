@@ -275,6 +275,22 @@ class V8FullTrainer:
         if self.log_file:
             with open(self.log_file, 'a', encoding='utf-8') as lf:
                 lf.write(done_msg + '\n')
+                
+        # [AUTO-BACKTEST] Chạy test nâng cao nếu model tốt (Val Loss <= 1.4500)
+        if best_val_loss <= 1.4500:
+            print(f"Bộ não {self.model_name} đạt chuẩn (Loss: {best_val_loss:.4f} <= 1.45). Đang tự động chạy Backtest nâng cao...")
+            try:
+                import subprocess
+                out_txt = out_path.replace(".pt", "_backtest.txt")
+                py_exe = sys.executable
+                cmd = f'"{py_exe}" scripts/v8_backtest_adv.py --model "{out_path}" > "{out_txt}" 2>&1'
+                subprocess.run(cmd, shell=True)
+                print(f"✅ Đã lưu kết quả test nâng cao vào: {out_txt}")
+                if self.log_file:
+                    with open(self.log_file, 'a', encoding='utf-8') as lf:
+                        lf.write(f"AUTO-BACKTEST DONE: Results saved to {out_txt}\n")
+            except Exception as e:
+                print(f"⚠️ Lỗi khi chạy auto-backtest: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Full Dataset Training for V8 Brains")
