@@ -11,23 +11,26 @@ if _ROOT not in sys.path:
 from src.v8_engine.transformer_model import V8TransformerModel
 
 class V8InferenceEngine:
-    def __init__(self, model_name: str, config_path: str, log_callback=None):
+    def __init__(self, model_name: str, config_path: str, log_callback=None, threshold=None):
         self.log = log_callback or print
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = model_name
         self.config_path = config_path
         self.model = None
-        self.threshold = 0.30
         
-        # Load Strategy config to get threshold if exists
-        strategy_config_path = os.path.join(_ROOT, "v8_configs", "strategy_config.json")
-        if os.path.exists(strategy_config_path):
-            try:
-                with open(strategy_config_path, "r", encoding="utf-8-sig") as f:
-                    strat_cfg = json.load(f)
-                    self.threshold = strat_cfg.get("confidence_threshold", 0.30)
-            except Exception as e:
-                self.log(f"[V8InferenceEngine] Warning reading strategy config: {e}")
+        if threshold is not None:
+            self.threshold = threshold
+        else:
+            self.threshold = 0.30
+            # Load Strategy config to get threshold if exists
+            strategy_config_path = os.path.join(_ROOT, "v8_configs", "strategy_config.json")
+            if os.path.exists(strategy_config_path):
+                try:
+                    with open(strategy_config_path, "r", encoding="utf-8-sig") as f:
+                        strat_cfg = json.load(f)
+                        self.threshold = strat_cfg.get("confidence_threshold", 0.30)
+                except Exception as e:
+                    self.log(f"[V8InferenceEngine] Warning reading strategy config: {e}")
                 
         self.load_model()
 

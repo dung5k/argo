@@ -1,0 +1,24 @@
+{
+    "models": [
+        {
+            "name": "brain_OPT-21_ARGO2_FULL.pt",
+            "threshold": 0.65
+        },
+        {
+            "name": "brain_OPT-29_ARGO3_FULL.pt",
+            "threshold": 0.65
+        },
+        {
+            "name": "brain_OPT-23_ARGO2_FULL.pt",
+            "threshold": 0.65
+        },
+        {
+            "name": "brain_OPT-24_ARGO2_FULL.pt",
+            "threshold": 0.65
+        },
+        {
+            "name": "brain_OPT-16_ARGO1_FULL.pt",
+            "threshold": 0.65
+        }
+    ]
+}

@@ -30,8 +30,8 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-# MODEL_NAME cập nhật sang siêu phẩm OPT-21 (Tân Vương - M15, ARGO2)
-MODEL_NAME = "brain_OPT-21_ARGO2_FULL.pt"
+# CONFIG cập nhật sang cấu hình Ensemble
+ENSEMBLE_CONFIG_PATH = os.path.join(_ROOT, "v8_configs", "ensemble_config.json")
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
@@ -244,8 +244,8 @@ def bot_background_loop():
     global gui_status, gui_action, gui_probs, gui_price, gui_atr, gui_sym
     
     log("="*50)
-    log(f"Khởi động V8 LIVE BOT - {SYMBOL}")
-    log(f"Model: {MODEL_NAME} | Lot: {FIXED_LOT} | Max Hold: {MAX_HOLD_MINUTES}p")
+    log(f"Khởi động V8 LIVE ENSEMBLE BOT - {SYMBOL}")
+    log(f"Config: {ENSEMBLE_CONFIG_PATH} | Lot: {FIXED_LOT} | Max Hold: {MAX_HOLD_MINUTES}p")
     log("="*50)
     
     config_path = os.path.join(_ROOT, "v8_configs", "v8_training_config.json")
@@ -275,18 +275,35 @@ def bot_background_loop():
     
     global gui_threshold
     data_processor = V8DataProcessor(config, log_callback=log)
-    inference_engine = V8InferenceEngine(MODEL_NAME, config_path, log_callback=log)
-    gui_threshold = inference_engine.threshold
+    
+    try:
+        with open(ENSEMBLE_CONFIG_PATH, "r", encoding="utf-8") as f:
+            ensemble_cfg = json.load(f)
+            ensemble_models = ensemble_cfg.get("models", [])
+    except Exception as e:
+        log(f"❌ Lỗi đọc cấu hình Ensemble: {e}")
+        return
+
+    log(f"🧠 Đang khởi tạo ENSEMBLE ({len(ensemble_models)} Models)...")
+    engines = []
+    min_thr = 1.0
+    for m in ensemble_models:
+        eng = V8InferenceEngine(m['name'], config_path, log_callback=log, threshold=m['threshold'])
+        engines.append(eng)
+        if m['threshold'] < min_thr:
+            min_thr = m['threshold']
+            
+    if len(engines) == 0:
+        log("❌ Không có model nào trong cấu hình Ensemble.")
+        return
+        
+    gui_threshold = min_thr
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
-    # Auto-detect from model name
-    if "8202" in MODEL_NAME or "V8C" in MODEL_NAME:
-        base_tf_cfg = "M5"
-        resample_freq = '5T'
-    else:
-        base_tf_cfg = "M15"
-        resample_freq = '15T'
+    # Auto-detect base TF (default M15)
+    base_tf_cfg = "M15"
+    resample_freq = '15T'
     
     gui_status = f"Sẵn sàng, chờ nến {base_tf_cfg}..."
     log("✅ Bot đã sẵn sàng. Đang vào vòng lặp giám sát...")
@@ -326,67 +343,98 @@ def bot_background_loop():
                 
                 success, tensors = data_processor.process_live_data(df_m1)
                 if success and tensors is not None:
-                    res = inference_engine.predict(tensors)
-                    if "error" not in res:
-                        signal = res['signal']
-                        action = res['action']
-                        conf = res['confidence']
-                        price = res['price']
-                        atr = res['atr']
-                        
-                        gui_price = price
-                        gui_atr = atr
-                        gui_probs['buy'] = res['probs']['B2']
-                        gui_probs['sell'] = res['probs']['S2']
-                        
-                        # --- TIME FILTER (08:00 - 22:00 Server Time) ---
-                        h = current_last_candle_time.hour
-                        if h < 8 or h >= 22:
-                            gui_action = f"🚫 NGOÀI GIỜ MỞ CỬA (Gợi ý AI: {action})"
-                            gui_status = "⏸️ Hệ thống đang ngủ chờ Phiên Âu/Mỹ"
-                            log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
-                            last_candle_time = current_last_candle_time
-                            continue
-                        # -----------------------------------------------
-                        
-                        gui_action = action
-                        gui_status = f"Phân tích hoàn tất: {action}"
-                        log(f"📊 [Phân tích] Giá: {price} | ATR: {atr:.2f} | Tín hiệu: {action} (Độ tin cậy: {conf*100:.1f}%)")
-                        
-                        # --- Circuit Breaker Logic ---
-                        global circuit_breaker_count, circuit_breaker_last_dir, circuit_breaker_tripped
-                        current_dir = 'BUY' if signal == 4 else ('SELL' if signal == 0 else 'HOLD')
-                        
-                        if current_dir != 'HOLD':
-                            if current_dir == circuit_breaker_last_dir:
-                                circuit_breaker_count += 1
-                            else:
-                                circuit_breaker_count = 1
-                                circuit_breaker_last_dir = current_dir
-                                circuit_breaker_tripped = False
-                        else:
-                            circuit_breaker_count = 0
-                            circuit_breaker_last_dir = None
-                            circuit_breaker_tripped = False
-                        
-                        if circuit_breaker_count >= CIRCUIT_BREAKER_LIMIT:
-                            if not circuit_breaker_tripped:
-                                circuit_breaker_tripped = True
-                                log(f"🚨 [CIRCUIT BREAKER] Model Collapse phát hiện! {circuit_breaker_count} tín hiệu {current_dir} liên tiếp. TẠM DỪNG GIAO DỊCH.")
-                            gui_status = f"⚠️ Circuit Breaker TRIPPED ({current_dir})"
-                        elif signal == 4 or signal == 0:
-                            candle_hour = current_last_candle_time.hour
-                            candle_day = current_last_candle_time.dayofweek
-                            if candle_day == 4:
-                                log("⏸️ [Time Filter] Hôm nay là Thứ 6, tạm ngưng giao dịch để bảo toàn lợi nhuận.")
-                                gui_status = "⏸️ Nghỉ trade Thứ 6"
-                            elif candle_hour in [10, 14, 17]:
-                                log(f"⏸️ [Time Filter] Khung giờ {candle_hour}:00 rủi ro cao, bỏ qua tín hiệu.")
-                                gui_status = f"⏸️ Tránh bão lúc {candle_hour}:00"
-                            else:
-                                trade_manager.execute_trade(action, price, atr)
+                    max_prob_s2 = 0.0
+                    max_prob_b2 = 0.0
+                    best_action = "HOLD"
+                    best_conf = 0.0
+                    signal = 2
+                    
+                    price = 0.0
+                    atr = 0.0
+                    
+                    for eng in engines:
+                        res = eng.predict(tensors)
+                        if "error" not in res:
+                            probs = res['probs']
+                            price = res['price']
+                            atr = res['atr']
                             
-                last_candle_time = current_last_candle_time
+                            p_s2 = probs['S2']
+                            p_b2 = probs['B2']
+                            
+                            if p_s2 > max_prob_s2:
+                                max_prob_s2 = p_s2
+                            if p_b2 > max_prob_b2:
+                                max_prob_b2 = p_b2
+                                
+                            min_delta = 0.05
+                            if p_b2 >= eng.threshold and p_b2 > p_s2 and (p_b2 - p_s2) >= min_delta:
+                                if p_b2 > best_conf:
+                                    best_conf = p_b2
+                                    best_action = "STRONG_BUY"
+                                    signal = 4
+                            elif p_s2 >= eng.threshold and p_s2 > p_b2 and (p_s2 - p_b2) >= min_delta:
+                                if p_s2 > best_conf:
+                                    best_conf = p_s2
+                                    best_action = "STRONG_SELL"
+                                    signal = 0
+                                    
+                    action = best_action
+                    conf = best_conf
+                    
+                    gui_price = price
+                    gui_atr = atr
+                    gui_probs['buy'] = max_prob_b2
+                    gui_probs['sell'] = max_prob_s2
+                    
+                    # --- TIME FILTER (08:00 - 22:00 Server Time) ---
+                    h = current_last_candle_time.hour
+                    if h < 8 or h >= 22:
+                        gui_action = f"🚫 NGOÀI GIỜ MỞ CỬA (Gợi ý AI: {action})"
+                        gui_status = "⏸️ Hệ thống đang ngủ chờ Phiên Âu/Mỹ"
+                        log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
+                        last_candle_time = current_last_candle_time
+                        continue
+                    # -----------------------------------------------
+                    
+                    gui_action = action
+                    gui_status = f"Phân tích hoàn tất: {action}"
+                    log(f"📊 [Ensemble] Giá: {price} | ATR: {atr:.2f} | Tín hiệu chung: {action} (Max Conf: {conf*100:.1f}%)")
+                        
+                    # --- Circuit Breaker Logic ---
+                    global circuit_breaker_count, circuit_breaker_last_dir, circuit_breaker_tripped
+                    current_dir = 'BUY' if signal == 4 else ('SELL' if signal == 0 else 'HOLD')
+                    
+                    if current_dir != 'HOLD':
+                        if current_dir == circuit_breaker_last_dir:
+                            circuit_breaker_count += 1
+                        else:
+                            circuit_breaker_count = 1
+                            circuit_breaker_last_dir = current_dir
+                            circuit_breaker_tripped = False
+                    else:
+                        circuit_breaker_count = 0
+                        circuit_breaker_last_dir = None
+                        circuit_breaker_tripped = False
+                    
+                    if circuit_breaker_count >= CIRCUIT_BREAKER_LIMIT:
+                        if not circuit_breaker_tripped:
+                            circuit_breaker_tripped = True
+                            log(f"🚨 [CIRCUIT BREAKER] Model Collapse phát hiện! {circuit_breaker_count} tín hiệu {current_dir} liên tiếp. TẠM DỪNG GIAO DỊCH.")
+                        gui_status = f"⚠️ Circuit Breaker TRIPPED ({current_dir})"
+                    elif signal == 4 or signal == 0:
+                        candle_hour = current_last_candle_time.hour
+                        candle_day = current_last_candle_time.dayofweek
+                        if candle_day == 4:
+                            log("⏸️ [Time Filter] Hôm nay là Thứ 6, tạm ngưng giao dịch để bảo toàn lợi nhuận.")
+                            gui_status = "⏸️ Nghỉ trade Thứ 6"
+                        elif candle_hour in [10, 14, 17]:
+                            log(f"⏸️ [Time Filter] Khung giờ {candle_hour}:00 rủi ro cao, bỏ qua tín hiệu.")
+                            gui_status = f"⏸️ Tránh bão lúc {candle_hour}:00"
+                        else:
+                            trade_manager.execute_trade(action, price, atr)
+                            
+            last_candle_time = current_last_candle_time
                 
             time.sleep(POLL_INTERVAL)
             
@@ -454,8 +502,8 @@ def start_overlay_dashboard():
     root.bind("<ButtonRelease-1>", lambda e: setattr(root, 'x', None) or setattr(root, 'y', None))
     root.bind("<B1-Motion>", do_move)
     
-    tk.Label(root, text=f"🔥 {SYMBOL} V8 LIVE 🔥", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
-    tk.Label(root, text=f"🧠 Model: {MODEL_NAME}", fg="#aa66ff", bg="#080b12", font=("Consolas", 9)).pack()
+    tk.Label(root, text=f"🔥 {SYMBOL} V8 ENSEMBLE 🔥", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
+    tk.Label(root, text=f"🧠 Liên minh Top 5 Bộ Não", fg="#aa66ff", bg="#080b12", font=("Consolas", 9)).pack()
     
     global lbl_config
     lbl_config = tk.Label(root, text="⚙️ Đang tải cấu hình...", fg="#00ff77", bg="#080b12", font=("Consolas", 9))
