@@ -286,7 +286,7 @@ class V8FullTrainer:
                 out_txt = os.path.join(_ROOT, "v8_configs", "hall_of_fame", report_name)
                 
                 py_exe = sys.executable
-                cmd = f'"{py_exe}" scripts/v8_backtest_adv.py --model "{out_name}" > "{out_txt}" 2>&1'
+                cmd = f'"{py_exe}" scripts/v8_backtest_adv.py --model "{out_path}" > "{out_txt}" 2>&1'
                 subprocess.run(cmd, shell=True)
                 print(f"✅ Đã lưu kết quả test nâng cao vào: {out_txt}")
                 if self.log_file:
