@@ -30,8 +30,8 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-# MODEL_NAME cập nhật sang siêu phẩm OPT-1 (6 layers, M5) - Kiểu Cày Cuốc, Coverage cao
-MODEL_NAME = "brain_OPT-1_ARGO1_FULL.pt"
+# MODEL_NAME cập nhật sang siêu phẩm OPT-21 (Tân Vương - M15, ARGO2)
+MODEL_NAME = "brain_OPT-21_ARGO2_FULL.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
