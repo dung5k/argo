@@ -37,7 +37,7 @@ ENSEMBLE_CONFIG_PATH = os.path.join(_ROOT, "v8_configs", "ensemble_config.json")
 gui_time = "00:00:00"
 gui_status = "Khởi động..."
 gui_action = "Đang chờ dữ liệu"
-gui_probs = {'buy': 0.0, 'sell': 0.0}
+gui_ensemble_probs = []
 gui_price = 0.0
 gui_atr = 0.0
 gui_sym = SYMBOL
@@ -202,22 +202,8 @@ class V8TradeManager:
                     self.close_position(pos)
 
     def check_session_stops(self):
-        positions = mt5.positions_get(symbol=self.symbol)
-        if positions is None or len(positions) == 0:
-            return
-            
-        tick = mt5.symbol_info_tick(self.symbol)
-        if not tick: return
-        
-        broker_datetime = datetime.fromtimestamp(tick.time, tz=timezone.utc)
-        broker_hour = broker_datetime.hour
-        
-        # Đóng lệnh cưỡng bức khi ngoài phiên NY (23:00 - 07:59 broker time)
-        if broker_hour >= 23 or broker_hour < 8:
-            for pos in positions:
-                if pos.magic == MAGIC_NUMBER:
-                    log(f"⚠️ [Session Stop] Kết thúc phiên NY (Giờ server: {broker_datetime.strftime('%H:%M')} UTC). Cưỡng bức đóng lệnh {pos.ticket}...")
-                    self.close_position(pos)
+        # Time filter is currently disabled, bot runs 24/24
+        pass
 
     def close_position(self, pos):
         tick = mt5.symbol_info_tick(self.symbol)
@@ -241,7 +227,7 @@ class V8TradeManager:
         return True
 
 def bot_background_loop():
-    global gui_status, gui_action, gui_probs, gui_price, gui_atr, gui_sym
+    global gui_status, gui_action, gui_ensemble_probs, gui_price, gui_atr, gui_sym
     
     log("="*50)
     log(f"Khởi động V8 LIVE ENSEMBLE BOT - {SYMBOL}")
@@ -274,7 +260,6 @@ def bot_background_loop():
     gui_status = f"Đã kết nối {actual_sym}"
     
     global gui_threshold
-    data_processor = V8DataProcessor(config, log_callback=log)
     
     try:
         with open(ENSEMBLE_CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -287,9 +272,19 @@ def bot_background_loop():
     log(f"🧠 Đang khởi tạo ENSEMBLE ({len(ensemble_models)} Models)...")
     engines = []
     min_thr = 1.0
+    gui_ensemble_probs.clear()
+    
+    required_tfs = set(m.get('tf', 'M15') for m in ensemble_models)
+    data_processors = {}
+    for tf_str in required_tfs:
+        data_processors[tf_str] = V8DataProcessor(config, base_tf=tf_str, log_callback=log)
+        
     for m in ensemble_models:
         eng = V8InferenceEngine(m['name'], config_path, log_callback=log, threshold=m['threshold'])
+        eng.tf = m.get('tf', 'M15')
         engines.append(eng)
+        short_name = m['name'].replace("brain_", "").replace("_FULL.pt", "")
+        gui_ensemble_probs.append({"name": short_name, "buy": 0.0, "sell": 0.0, "threshold": m['threshold'], "signal": "HOLD", "stats": m.get('stats', '')})
         if m['threshold'] < min_thr:
             min_thr = m['threshold']
             
@@ -301,10 +296,14 @@ def bot_background_loop():
     trade_manager = V8TradeManager(actual_sym)
     
     last_candle_time = None
-    # Auto-detect base TF (default M15)
-    base_tf_cfg = "M15"
-    resample_freq = '15T'
     
+    if "M5" in required_tfs:
+        base_tf_cfg = "M5"
+        resample_freq = '5T'
+    else:
+        base_tf_cfg = "M15"
+        resample_freq = '15T'
+        
     gui_status = f"Sẵn sàng, chờ nến {base_tf_cfg}..."
     log("✅ Bot đã sẵn sàng. Đang vào vòng lặp giám sát...")
     
@@ -326,7 +325,7 @@ def bot_background_loop():
             df_m1.set_index('time', inplace=True)
             df_m1.rename(columns={'tick_volume': 'volume'}, inplace=True)
             
-            df_base = data_processor.resample_m1_to_tf(df_m1, resample_freq)
+            df_base = data_processors[base_tf_cfg].resample_m1_to_tf(df_m1, resample_freq)
             current_last_candle_time = df_base.index[-1]
             
             # Update gui info if tick is available
@@ -341,8 +340,13 @@ def bot_background_loop():
                 gui_status = f"Nến {current_last_candle_time.strftime('%H:%M')} vừa đóng. Analyzing..."
                 log(f"🔔 [TÍN HIỆU] Nến {base_tf_cfg} mới đóng: {current_last_candle_time}. Đang phân tích...")
                 
-                success, tensors = data_processor.process_live_data(df_m1)
-                if success and tensors is not None:
+                tensors_dict = {}
+                for tf_str, dp in data_processors.items():
+                    success, tensors = dp.process_live_data(df_m1)
+                    if success:
+                        tensors_dict[tf_str] = tensors
+                
+                if len(tensors_dict) > 0:
                     max_prob_s2 = 0.0
                     max_prob_b2 = 0.0
                     best_action = "HOLD"
@@ -352,7 +356,11 @@ def bot_background_loop():
                     price = 0.0
                     atr = 0.0
                     
-                    for eng in engines:
+                    for i, eng in enumerate(engines):
+                        tensors = tensors_dict.get(eng.tf)
+                        if tensors is None:
+                            continue
+                            
                         res = eng.predict(tensors)
                         if "error" not in res:
                             probs = res['probs']
@@ -362,6 +370,12 @@ def bot_background_loop():
                             p_s2 = probs['S2']
                             p_b2 = probs['B2']
                             
+                            # Update ensemble probs for UI
+                            gui_ensemble_probs[i]["buy"] = p_b2
+                            gui_ensemble_probs[i]["sell"] = p_s2
+                            
+                            sig_str = "HOLD"
+                            
                             if p_s2 > max_prob_s2:
                                 max_prob_s2 = p_s2
                             if p_b2 > max_prob_b2:
@@ -369,32 +383,34 @@ def bot_background_loop():
                                 
                             min_delta = 0.05
                             if p_b2 >= eng.threshold and p_b2 > p_s2 and (p_b2 - p_s2) >= min_delta:
+                                sig_str = "BUY"
                                 if p_b2 > best_conf:
                                     best_conf = p_b2
                                     best_action = "STRONG_BUY"
                                     signal = 4
                             elif p_s2 >= eng.threshold and p_s2 > p_b2 and (p_s2 - p_b2) >= min_delta:
+                                sig_str = "SELL"
                                 if p_s2 > best_conf:
                                     best_conf = p_s2
                                     best_action = "STRONG_SELL"
                                     signal = 0
+                                    
+                            gui_ensemble_probs[i]["signal"] = sig_str
                                     
                     action = best_action
                     conf = best_conf
                     
                     gui_price = price
                     gui_atr = atr
-                    gui_probs['buy'] = max_prob_b2
-                    gui_probs['sell'] = max_prob_s2
                     
-                    # --- TIME FILTER (08:00 - 22:00 Server Time) ---
-                    h = current_last_candle_time.hour
-                    if h < 8 or h >= 22:
-                        gui_action = f"🚫 NGOÀI GIỜ MỞ CỬA (Gợi ý AI: {action})"
-                        gui_status = "⏸️ Hệ thống đang ngủ chờ Phiên Âu/Mỹ"
-                        log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
-                        last_candle_time = current_last_candle_time
-                        continue
+                    # --- TIME FILTER (08:00 - 22:00 Server Time) - DISABLED ---
+                    # h = current_last_candle_time.hour
+                    # if h < 8 or h >= 22:
+                    #     gui_action = f"🚫 NGOÀI GIỜ MỞ CỬA (Gợi ý AI: {action})"
+                    #     gui_status = "⏸️ Hệ thống đang ngủ chờ Phiên Âu/Mỹ"
+                    #     log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
+                    #     last_candle_time = current_last_candle_time
+                    #     continue
                     # -----------------------------------------------
                     
                     gui_action = action
@@ -451,35 +467,39 @@ def update_ui(root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info):
     lbl_status.config(text=f"📡 {gui_status}")
     lbl_action.config(text=f"🎯 Chiến thuật: {gui_action}")
     if 'lbl_config' in globals():
-        lbl_config.config(text=f"⚙️ Lot: 0.01 | Ngưỡng: {gui_threshold*100:.0f}% | Anti-Collapse: {CIRCUIT_BREAKER_LIMIT} lệnh")
+        lbl_config.config(text=f"⚙️ Lot: 0.01 | Ngưỡng vào lệnh linh hoạt | Anti-Collapse: {CIRCUIT_BREAKER_LIMIT} lệnh")
     lbl_info.config(text=f"💰 Giá: {gui_price:,.2f} | 📏 ATR: {gui_atr:.2f}")
     
     canvas_pred.delete("all")
     w = canvas_pred.winfo_width()
     if w < 10: w = 330
     
-    buy_p = gui_probs.get('buy', 0.0)
-    sell_p = gui_probs.get('sell', 0.0)
-    
-    bw = int(w * buy_p)
-    sw = int(w * sell_p)
-    
-    # Tô sáng màu rực rỡ chỉ khi một bên chiến thắng vượt ngưỡng và thỏa mãn biên lệch min_delta (0.05)
-    buy_color = "#00ff77" if (buy_p >= gui_threshold and buy_p > sell_p and (buy_p - sell_p) >= 0.05) else "#007733"
-    sell_color = "#ff3333" if (sell_p >= gui_threshold and sell_p > buy_p and (sell_p - buy_p) >= 0.05) else "#882222"
-    
-    canvas_pred.create_rectangle(0, 0, bw, 24, fill=buy_color, outline="")
-    canvas_pred.create_rectangle(w - sw, 0, w, 24, fill=sell_color, outline="")
-    
-    thr_x_buy = int(w * gui_threshold)
-    thr_x_sell = int(w - w * gui_threshold)
-    canvas_pred.create_line(thr_x_buy, 0, thr_x_buy, 24, fill="#ffcc00", dash=(2, 2))
-    canvas_pred.create_line(thr_x_sell, 0, thr_x_sell, 24, fill="#ffcc00", dash=(2, 2))
-    
-    txt = f"BUY {buy_p:.1%} | SELL {sell_p:.1%}"
-    if buy_p == 0.0 and sell_p == 0.0:
-        txt = "Chờ Tín Hiệu..."
-    canvas_pred.create_text(w/2, 12, text=txt, fill="white", font=("Consolas", 10, "bold"))
+    row_height = 30
+    for i, model_info in enumerate(gui_ensemble_probs):
+        y_offset = i * row_height
+        buy_p = model_info.get('buy', 0.0)
+        sell_p = model_info.get('sell', 0.0)
+        thr = model_info.get('threshold', 0.65)
+        
+        bw = int(w * buy_p)
+        sw = int(w * sell_p)
+        
+        buy_color = "#00ff77" if model_info.get("signal") == "BUY" else "#007733"
+        sell_color = "#ff3333" if model_info.get("signal") == "SELL" else "#882222"
+        
+        canvas_pred.create_rectangle(0, y_offset, bw, y_offset+24, fill=buy_color, outline="")
+        canvas_pred.create_rectangle(w - sw, y_offset, w, y_offset+24, fill=sell_color, outline="")
+        
+        thr_x_buy = int(w * thr)
+        thr_x_sell = int(w - w * thr)
+        canvas_pred.create_line(thr_x_buy, y_offset, thr_x_buy, y_offset+24, fill="#ffcc00", dash=(2, 2))
+        canvas_pred.create_line(thr_x_sell, y_offset, thr_x_sell, y_offset+24, fill="#ffcc00", dash=(2, 2))
+        
+        txt = f"{model_info.get('name', 'Model')} | B: {buy_p:.1%} S: {sell_p:.1%}"
+        stats_str = model_info.get('stats', '')
+        if stats_str:
+            txt += f" | {stats_str}"
+        canvas_pred.create_text(w/2, y_offset+12, text=txt, fill="white", font=("Consolas", 9, "bold"))
     
     root.after(500, update_ui, root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info)
 
@@ -490,7 +510,10 @@ def start_overlay_dashboard():
     root.attributes('-alpha', 0.92) 
     
     screen_h = root.winfo_screenheight()
-    root.geometry(f"360x220+10+{screen_h - 300}")
+    num_models = len(gui_ensemble_probs) if len(gui_ensemble_probs) > 0 else 5
+    canvas_height = num_models * 30
+    window_height = 180 + canvas_height
+    root.geometry(f"360x{window_height}+10+{screen_h - (window_height + 80)}")
     root.configure(bg='#080b12') 
     
     root.x, root.y = 0, 0
@@ -503,13 +526,13 @@ def start_overlay_dashboard():
     root.bind("<B1-Motion>", do_move)
     
     tk.Label(root, text=f"🔥 {SYMBOL} V8 ENSEMBLE 🔥", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
-    tk.Label(root, text=f"🧠 Liên minh Top 5 Bộ Não", fg="#aa66ff", bg="#080b12", font=("Consolas", 9)).pack()
+    tk.Label(root, text=f"🧠 Liên minh Top {num_models} Bộ Não", fg="#aa66ff", bg="#080b12", font=("Consolas", 9)).pack()
     
     global lbl_config
     lbl_config = tk.Label(root, text="⚙️ Đang tải cấu hình...", fg="#00ff77", bg="#080b12", font=("Consolas", 9))
     lbl_config.pack()
     
-    canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
+    canvas_pred = tk.Canvas(root, height=canvas_height, bg="#1a2235", highlightthickness=0)
     canvas_pred.pack(pady=10, fill=tk.X, padx=15)
     
     lbl_action = tk.Label(root, text="🎯 Chiến thuật: Đang khởi động", fg="#ffcc00", bg="#080b12", font=("Consolas", 9))

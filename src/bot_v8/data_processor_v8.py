@@ -16,9 +16,10 @@ from src.v8_engine.order_block_detector import OrderBlockDetector
 from src.v8_engine.indicators import add_all_indicators
 
 class V8DataProcessor:
-    def __init__(self, config: dict, log_callback=None):
+    def __init__(self, config: dict, base_tf: str = None, log_callback=None):
         self.config = config
         self.log = log_callback or print
+        self.base_tf = base_tf or config.get("system", {}).get("base_timeframe", "M15")
         self.vocab = config.get('nlp_tokenizer_params', {}).get('vocabulary', ["HH", "HL", "LH", "LL", "BOS_UP", "BOS_DN", "CHOCH_UP", "CHOCH_DN", "FAKE_BOS"])
         self.token2id = {token: i+1 for i, token in enumerate(self.vocab)}
         self.token2id['<PAD>'] = 0
@@ -74,7 +75,7 @@ class V8DataProcessor:
 
     def process_live_data(self, df_m1: pd.DataFrame):
         try:
-            base_tf_cfg = self.config.get("system", {}).get("base_timeframe", "M15")
+            base_tf_cfg = self.base_tf
             if base_tf_cfg == "M5":
                 freq_base, freq_mid, freq_high = '5T', '15T', '1h'
             else:
