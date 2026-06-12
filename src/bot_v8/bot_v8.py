@@ -30,8 +30,8 @@ MAX_OPEN_POSITIONS = 4
 TP_MULT = 3.0
 SL_MULT = 1.5
 POLL_INTERVAL = 60
-# MODEL_NAME cũ bị Model Collapse (100% STRONG_BUY) → Swap sang OPT-238 (Review Board 2026-06-11)
-MODEL_NAME = "brain_OPT-1_S17_PnL+163_FULL.pt"
+# MODEL_NAME cập nhật sang siêu phẩm V82-1 (3 layers, M15) với Ngưỡng 60%
+MODEL_NAME = "brain_V82-1_ARGO1_FULL.pt"
 
 # --- GUI Globals ---
 gui_time = "00:00:00"
@@ -326,12 +326,10 @@ def bot_background_loop():
                 
                 success, tensors = data_processor.process_live_data(df_m1)
                 if success and tensors is not None:
-                    # --- TIME FILTER (Masking Loss Architecture) ---
-                    import datetime
-                    utc_now = datetime.datetime.utcnow()
-                    h = utc_now.hour
-                    if (h >= 23) or (h < 8) or (15 <= h <= 18):
-                        log(f"⏸️ [TIME FILTER] Bỏ qua phân tích nến {current_last_candle_time} (Khung giờ cấm: Phiên Á / Đầu Phiên Mỹ).")
+                    # --- TIME FILTER (08:00 - 22:00 Server Time) ---
+                    h = current_last_candle_time.hour
+                    if h < 8 or h >= 22:
+                        log(f"⏸️ [TIME FILTER] Bỏ qua phân tích nến {current_last_candle_time} (Chỉ giao dịch phiên Âu/Mỹ từ 08:00-22:00).")
                         gui_status = "Bỏ qua (Time Filter)"
                         gui_action = "HOLD"
                         last_candle_time = current_last_candle_time
