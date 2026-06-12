@@ -32,11 +32,8 @@ class V8FullTrainer:
         with open(self.config_path, "r", encoding="utf-8") as f:
             self.config = json.load(f)
             
-        # Determine base timeframe based on model name keywords
-        if "8202" in self.model_name or "V8C" in self.model_name:
-            self.base_tf = "M5"
-        else:
-            self.base_tf = "M15"
+        # Use M5 base timeframe as explicitly requested by user
+        self.base_tf = "M5"
             
         print(f"Using base timeframe: {self.base_tf} for model: {self.model_name}")
         

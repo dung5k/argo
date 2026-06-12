@@ -367,7 +367,7 @@ def main():
                         "id": f"OPT-{last_id + i}",
                         "layers": random.randint(4, 7),
                         "lr": round(random.uniform(0.00005, 0.00030), 5),
-                        "base_timeframe": random.choice(["M5", "M15"]),
+                        "base_timeframe": "M5",
                         "status": "PENDING",
                         "assigned_node": None,
                         "score": None,
