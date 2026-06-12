@@ -326,16 +326,6 @@ def bot_background_loop():
                 
                 success, tensors = data_processor.process_live_data(df_m1)
                 if success and tensors is not None:
-                    # --- TIME FILTER (08:00 - 22:00 Server Time) ---
-                    h = current_last_candle_time.hour
-                    if h < 8 or h >= 22:
-                        log(f"⏸️ [TIME FILTER] Bỏ qua phân tích nến {current_last_candle_time} (Chỉ giao dịch phiên Âu/Mỹ từ 08:00-22:00).")
-                        gui_status = "Bỏ qua (Time Filter)"
-                        gui_action = "HOLD"
-                        last_candle_time = current_last_candle_time
-                        continue
-                    # -----------------------------------------------
-                    
                     res = inference_engine.predict(tensors)
                     if "error" not in res:
                         signal = res['signal']
@@ -348,9 +338,19 @@ def bot_background_loop():
                         gui_atr = atr
                         gui_probs['buy'] = res['probs']['B2']
                         gui_probs['sell'] = res['probs']['S2']
+                        
+                        # --- TIME FILTER (08:00 - 22:00 Server Time) ---
+                        h = current_last_candle_time.hour
+                        if h < 8 or h >= 22:
+                            gui_action = f"NGỦ (AI tính: {action})"
+                            gui_status = "⏸️ Đang ngoài giờ Âu/Mỹ (Time Filter)"
+                            log(f"📊 [Phân tích Ẩn] Giá: {price} | Tín hiệu: {action} ({conf*100:.1f}%) -> ⏸️ [TIME FILTER] Bị chặn.")
+                            last_candle_time = current_last_candle_time
+                            continue
+                        # -----------------------------------------------
+                        
                         gui_action = action
                         gui_status = f"Phân tích hoàn tất: {action}"
-                        
                         log(f"📊 [Phân tích] Giá: {price} | ATR: {atr:.2f} | Tín hiệu: {action} (Độ tin cậy: {conf*100:.1f}%)")
                         
                         # --- Circuit Breaker Logic ---
@@ -402,6 +402,8 @@ def update_ui(root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info):
     lbl_time.config(text=f"🕒 {gui_time}")
     lbl_status.config(text=f"📡 {gui_status}")
     lbl_action.config(text=f"🎯 Chiến thuật: {gui_action}")
+    if 'lbl_config' in globals():
+        lbl_config.config(text=f"⚙️ Giờ: 08:00-22:00 | Ngưỡng: {gui_threshold*100:.0f}%")
     lbl_info.config(text=f"💰 Giá: {gui_price:,.2f} | 📏 ATR: {gui_atr:.2f}")
     
     canvas_pred.delete("all")
@@ -454,6 +456,10 @@ def start_overlay_dashboard():
     
     tk.Label(root, text=f"🔥 {SYMBOL} V8 LIVE 🔥", fg="#00ffff", bg="#080b12", font=("Consolas", 11, "bold")).pack(pady=5)
     tk.Label(root, text=f"🧠 Model: {MODEL_NAME}", fg="#aa66ff", bg="#080b12", font=("Consolas", 9)).pack()
+    
+    global lbl_config
+    lbl_config = tk.Label(root, text="⚙️ Đang tải cấu hình...", fg="#00ff77", bg="#080b12", font=("Consolas", 9))
+    lbl_config.pack()
     
     canvas_pred = tk.Canvas(root, height=24, bg="#1a2235", highlightthickness=0)
     canvas_pred.pack(pady=10, fill=tk.X, padx=15)
