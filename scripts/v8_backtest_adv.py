@@ -59,7 +59,7 @@ def main():
     df_test_h4 = df_test.resample('4h').agg({'open':'first', 'high':'max', 'low':'min', 'close':'last', 'volume':'sum'}).dropna()
     
     test_dataset = V8DatasetBuilder(config, df_test, df_test_h1, df_test_h4)
-    test_loader = DataLoader(test_dataset, batch_size=4096, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=1024, shuffle=False)
     
     print("Running predictions...")
     all_probs = []
