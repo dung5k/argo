@@ -463,7 +463,7 @@ def bot_background_loop():
 def update_ui(root, lbl_time, lbl_status, canvas_pred, lbl_action, lbl_info):
     global gui_time
     gui_time = datetime.now().strftime('%H:%M:%S')
-    lbl_time.config(text=f"🕒 {gui_time} (Mở cửa: 15h00 - 05h00 VN)")
+    lbl_time.config(text=f"🕒 {gui_time} (Hoạt động: 24/24)")
     lbl_status.config(text=f"📡 {gui_status}")
     lbl_action.config(text=f"🎯 Chiến thuật: {gui_action}")
     if 'lbl_config' in globals():
